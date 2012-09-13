@@ -1,0 +1,14 @@
+Auto-Grade Assignment 
+Automatically determines grades for students when it can, and provides a list of people that need attention from the TAs.
+
+
+
+<h2>Parameters</h2>
+<table width="100%">
+<tr><td>&#8209;&#8209;autoappealdiff</td><td>The difference between the min/max of all
+reviewer&#39;s scores for an auto appeal (Default 2)</td></tr>
+<tr><td>&#8209;&#8209;defaultscore</td><td>The default score to give to a
+review (Default 2)</td></tr>
+<tr><td>&#8209;&#8209;spotcheckpercent&nbsp;[0.0&#8209;1.0]</td><td> Randomly selects the
+given percentage for spot checking (Default 0.3)</td></tr>
+</table>

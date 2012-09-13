@@ -1,0 +1,456 @@
+<?php
+require_once(dirname(__FILE__)."/common.php");
+require_once("inc/assignment.php");
+require_once("reviewquestions.php");
+
+class PeerReviewAssignment extends Assignment
+{
+    public $submissionQuestion = "";
+
+    public $submissionStartDate    = 0;
+    public $submissionStopDate     = 0;
+    public $reviewStartDate   = 0;
+    public $reviewStopDate    = 0;
+    public $markPostDate      = 0;
+    public $appealStopDate    = 0;
+
+    public $showMarksForReviewsReceived = false;
+    public $showOtherReviews            = false;
+    public $showMarksForOtherReviews    = false;
+    public $showMarksForReviewedSubmissions  = false;
+
+    public $maxSubmissionScore = 0;
+    public $maxReviewScore = 0;
+
+    public $submissionType;
+    public $submissionSettings;
+
+
+    public $dateFormat = "MMMM Do YYYY, HH:mm";
+
+    function __construct(AssignmentID $id = NULL, $name, AssignmentDataManager $dataMgr)
+    {
+        parent::__construct($id, $name, $dataMgr);
+
+        global $NOW;
+
+        $this->submissionStartDate = $NOW;
+        $this->submissionStopDate = $NOW;
+        $this->reviewStartDate = $NOW;
+        $this->reviewStopDate = $NOW;
+        $this->markPostDate = $NOW;
+        $this->appealStopDate = $NOW;
+    }
+
+    function getAssignmentTypeDisplayName()
+    {
+        return "Peer Review";
+    }
+
+    function getHeaderHTML(UserID $user)
+    {
+        global $dataMgr, $NOW;
+        $html = "";
+        if($dataMgr->isInstructor($user))
+        {
+            //#Give us options for editing this assignment
+            $html .= "<table align='left'><tr>\n";
+            $html .= "<td><a title='Edit Peer Review Questions' href='".get_redirect_url("peerreview/editreviewquestions.php?assignmentid=$this->assignmentID")."'><div class='icon editQuestions'></div></a></td>\n";
+            $html .= "<td><a title='Edit Denied/Independent Users' href='".get_redirect_url("peerreview/editdeniedindependentusers.php?assignmentid=$this->assignmentID")."'><div class='icon editDenied'></div></a></td>\n";
+            $html .= "<td><a title='Edit Peer Review Assignments' href='".get_redirect_url("peerreview/editpeerreview.php?assignmentid=$this->assignmentID")."'><div class='icon editPeerAssignment'></div></a></td>\n";
+            $html .= "</tr></table>\n";
+            $html .= "<table width=100%><tr>\n";
+
+            //$this->assignmentStatistics();
+            $numSubmissions   = 0;//$this->numSubmissions();
+            $numReviews  = 0;//$this->numUserReviews();
+
+            $html .= "<td width='33%'><strong>Submission</strong> ($numSubmissions)<br/>\n";
+            $html .= "<table align='left'><tr><td>Start:</td><td id='submissionStartDate$this->assignmentID'/></tr>\n";
+            $html .= "<tr><td>Due:</td><td id='submissionStopDate$this->assignmentID'/></tr></table></td>\n";
+
+            $html .= "<td width='33%'><strong>Reviews</strong> ($numReviews)<br/>\n";
+            $html .= "<table align='left'><tr><td>Start:</td><td id='reviewStartDate$this->assignmentID'/></tr>\n";
+            $html .= "<tr><td>Due:</td><td id='reviewStopDate$this->assignmentID'/></tr></table></td>\n";
+
+            $html .= "<td width='33%'><strong>Marks</strong><br/>\n";
+            $html .= "<table align='left'><tr><td>Post:</td><td id='markPostDate$this->assignmentID'/></tr>\n";
+            $html .= "<tr><td colspan='2'><a href='".get_redirect_url("peerreview/index.php?assignmentid=$this->assignmentID")."'>Go to marking page</a></td></tr></table></td>\n";
+
+            $html .= "</tr></table>\n";
+            $html .= "<table width='100%'><tr><td>Appeal Stop Date: <span id='appealStopDate$this->assignmentID'></span></td></tr></table>\n";
+            $html .= "<script type='text/javascript'>\n";
+            $html .= set_element_to_date("submissionStartDate$this->assignmentID", $this->submissionStartDate, "html", $this->dateFormat, false, true);
+            $html .= set_element_to_date("submissionStopDate$this->assignmentID", $this->submissionStopDate, "html", $this->dateFormat, false, true);
+            $html .= set_element_to_date("reviewStartDate$this->assignmentID", $this->reviewStartDate, "html", $this->dateFormat, false, true);
+            $html .= set_element_to_date("reviewStopDate$this->assignmentID", $this->reviewStopDate, "html", $this->dateFormat, false, true);
+            $html .= set_element_to_date("markPostDate$this->assignmentID", $this->markPostDate, "html", $this->dateFormat, false, true);
+            $html .= set_element_to_date("appealStopDate$this->assignmentID", $this->appealStopDate, "html", $this->dateFormat, false, true);
+            $html .= "</script>\n";
+        }
+        else
+        {
+            //First check if they are allowed to submit
+            if($this->dataMgr->deniedUser($this, $user))
+            {
+                return "You were excluded from this assignment";
+            }
+
+            else
+            {
+                #We need to put the cell for the submission submission
+                $html  = "<table width='100%'>\n";
+                $html .= "<tr><td width=40%>\n";
+                if($this->submissionStopDate < $NOW)
+                {
+                    $html .= "Submission submissions closed\n";
+                }
+                else
+                {
+                    if($this->dataMgr->submissionExists($this, $user))
+                        $html .= "<a href='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$this->assignmentID")."'>Edit submission</a><br>\n";
+                    else
+                        $html .= "<a href='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$this->assignmentID")."''>Write submission</a><br>\n";
+                    $html .= "Due: <span id='submissionStopDate$this->assignmentID'/>";
+                }
+                $html .= "</td>\n";
+                $html .= set_element_to_date("submissionStopDate$this->assignmentID", $this->submissionStopDate, "html", $this->dateFormat);
+
+                #The middle cell contains reviews
+                $html .= "<td width=40%>\n";
+                if($NOW < $this->reviewStartDate)
+                {
+                    $html .= "&nbsp;";
+                }
+                else if($this->reviewStopDate < $NOW)
+                {
+                    $html .= "Review submissions closed";
+                }
+                else
+                {
+                    #Do they have reviews to do?
+                    $reviewAssignments = $this->dataMgr->getAssignedReviews($this, $user);
+                    if($reviewAssignments)
+                    {
+                        $html .= "<table align=left width=100%>";
+
+                        $id = 0;
+                        foreach($reviewAssignments as $matchID)
+                        {
+                            $html .= "<tr><td>";
+                            $temp=$id+1;
+                            $html .= "<a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$this->assignmentID&review=$id")."''>Peer Review $temp</a>";
+                            $html .= "</td><td>";
+                            if($this->dataMgr->reviewAnswersExist($this, $matchID))
+                            {
+                                $html .= "Complete";
+                            } else {
+                                $html .= "Not Complete";
+                            }
+
+                            $html .= "</td><tr>";
+                            $id = $id+1;
+                        }
+                        $html .= "</table>";
+                        $html .= "Due: <span id='reviewStopDate$this->assignmentID'/>";
+                        $html .= set_element_to_date("reviewStopDate$this->assignmentID", $this->reviewStopDate, "html", $this->dateFormat);
+                    }
+                    else
+                    {
+                        $html .= "No assigned reviews";
+                    }
+                }
+                $html .= "</td>\n";
+
+                #The last cell contains a link to view their marks
+                $html .= "<td width=20%>";
+                if($this->dataMgr->submissionExists($this, $user) && $this->markPostDate < $NOW)
+                {
+                    $html .= "<a href='".get_redirect_url("peerreview/viewmarks.php?assignmentid=$this->assignmentID")."''>View Marks</a>";
+                    #Display this user's marks
+                    $html .= "<br><table align='left' width='100%'>\n";
+                    $html .= "<tr><td>Submission:</td><td>". $this->dataMgr->getSubmissionMark($this, $this->getSubmissionID($user))->getSummaryString() ."</td></tr>\n";
+
+                    $reviewAssignments = $this->dataMgr->getAssignedReviews($this, $user);
+                    $id = 0;
+                    foreach($reviewAssignments as $matchID)
+                    {
+                        $html .= "<tr><td>Review $id:</td><td>". $this->dataMgr->getReviewMark($this, $matchID)->getSummaryString()."</td></tr>\n";
+                        $id++;
+                    }
+
+                    $html .= "</table>";
+                }
+                else
+                {
+                    $html .= "&nbsp;";
+                }
+                $html .= "</td></tr>";
+            }
+            $html .= "</table>";
+        }
+        return $html;
+    }
+
+
+    function _loadFromPost($POST)
+    {
+        global $PEER_REVIEW_SUBMISSION_TYPES;
+
+        $this->submissionQuestion = $POST['submissionQuestion'];
+
+        #Validate the submission times
+        #TODO: should probably do something smarter here
+        $this->submissionStartDate  = intval($POST['submissionStartDateSeconds']);
+        $this->submissionStopDate  = intval($POST['submissionStopDateSeconds']);
+
+        #Validate the review times
+        $this->reviewStartDate  = intval($POST['reviewStartDateSeconds']);
+        $this->reviewStopDate  = intval($POST['reviewStopDateSeconds']);
+
+        #Now validate the mark post date
+        $this->markPostDate = intval($POST['markPostDateSeconds']);
+        $this->appealStopDate = intval($POST['appealStopDateSeconds']);
+
+        $this->maxSubmissionScore = floatval($POST["maxSubmissionScore"]);
+        $this->maxReviewScore = floatval($POST["maxReviewScore"]);
+
+        $this->showMarksForReviewsReceived = array_key_exists('showMarksForReviewsReceived', $POST);
+        $this->showOtherReviews = array_key_exists('showOtherReviews', $POST);
+        $this->showMarksForOtherReviews = array_key_exists('showMarksForOtherReviews', $POST);
+        $this->showMarksForReviewedSubmissions = array_key_exists('showMarksForReviewedSubmissions', $POST);
+
+        //Figure out what type of submission they have chosen
+        $this->submissionType = $POST["submissionType"];
+        if(array_key_exists($this->submissionType, $PEER_REVIEW_SUBMISSION_TYPES))
+        {
+            //Load up this critter's settings
+            $submissionSettingsType = $this->submissionType."SubmissionSettings";
+            $this->submissionSettings = new $submissionSettingsType();
+            $this->submissionSettings->loadFromPost($POST);
+        }
+        else
+        {
+            throw new Exception("Unhandled submission type '$this->submissionType'");
+        }
+    }
+
+    function showForUser(UserID $user)
+    {
+        //Is this user an instructor?
+        global $dataMgr, $NOW;
+        if($dataMgr->isInstructor($user))
+            return true;
+
+        //Otherwise, we need to compare against the start date
+        return $this->submissionStartDate < $NOW;
+    }
+
+    function _getFormHTML()
+    {
+        global $PEER_REVIEW_SUBMISSION_TYPES;
+        $html  = "<table align='left' width='100%'>\n";
+        $html .= "<tr><td>Submission&nbsp;Question</td></tr><tr><td colspan=2><textarea name='submissionQuestion' id='submissionQuestion' cols='60' rows='10' class='mceEditor'/>".htmlentities($this->submissionQuestion)."</textarea></td></tr>\n";
+
+        //Now we need to show the pickers for the different types of submissions
+        $html .= "</table>\n";
+        $html .= "<table>\n";
+        $html .= "<tr><td>&nbsp;</td></tr>\n";
+        $html .= "<tr><td width='190'>Submission&nbsp;Type</td><td align='left'><select name='submissionType' id='submissionTypeSelect'/>";
+        foreach($PEER_REVIEW_SUBMISSION_TYPES as $type => $displayName)
+        {
+            $tmp = '';
+            if($type == $this->submissionType)
+                $tmp = "selected";
+            $html .= "<option value='$type' $tmp>$displayName</option>\n";
+        }
+        $html .= "</select>\n";
+        $html .= "</td></tr>\n";
+        $html .= "</table>\n";
+        $html .= "<div id='submissionTypeDivContainer'>\n";
+        foreach($PEER_REVIEW_SUBMISSION_TYPES as $type => $displayName)
+        {
+            $html .= "<div id='$type'>\n";
+            if($type == $this->submissionType) {
+                $html .= $this->submissionSettings->getFormHTML();
+            }else{
+                $settingsType = $type."SubmissionSettings";
+                $settings = new $settingsType();
+                $html .= $settings->getFormHTML();
+            }
+            $html .= "</div>\n";
+        }
+        $html .= "</div>\n";
+
+        $html .= "<script type='text/javascript'>
+        $('#submissionTypeSelect').change(function(){
+            $('#' + this.value).show().siblings().hide();
+        });
+        $('#submissionTypeSelect').change();
+        </script>\n";
+
+        $html .= "<table align='left' width='100%'>\n";
+        $html .= "<tr><td width=190>&nbsp;</td></tr>\n";
+        $html .= "<tr><td>Submission&nbsp;Start&nbsp;Date</td><td><input type='text' name='submissionStartDate' id='submissionStartDate' /></td></tr>\n";
+        $html .= "<tr><td>Submission&nbsp;Stop&nbsp;Date</td><td><input type='text' name='submissionStopDate' id='submissionStopDate'/></td></tr>\n";
+        $html .= "<tr><td>&nbsp;</td></tr>\n";
+        $html .= "<tr><td>Review&nbsp;Start&nbsp;Date</td><td><input type='text' name='reviewStartDate' id='reviewStartDate' /></td></tr>\n";
+        $html .= "<tr><td>Review&nbsp;Stop&nbsp;Date</td><td><input type='text' name='reviewStopDate' id='reviewStopDate' /></td></tr>\n";
+        $html .= "<tr><td>&nbsp;</td></tr>\n";
+        $html .= "<tr><td>Mark&nbsp;Post&nbsp;Date</td><td><input type='text' name='markPostDate' id='markPostDate' /></td></tr>\n";
+        $html .= "<tr><td>&nbsp;</td></tr>\n";
+        $html .= "<tr><td>Max&nbsp;Submission&nbsp;Score</td><td><input type='text' name='maxSubmissionScore' id='maxSubmissionScore' value='$this->maxSubmissionScore'/></td></tr>\n";
+        $html .= "<tr><td>Max&nbsp;Review&nbsp;Score</td><td><input type='text' name='maxReviewScore' id='maxReviewScore' value='$this->maxReviewScore'/></td></tr>\n";
+        $html .= "<tr><td>&nbsp;</td></tr>\n";
+        $html .= "<tr><td>Appeal&nbsp;Stop&nbsp;Date</td><td><input type='text' name='appealStopDate' id='appealStopDate' /></td></tr>\n";
+        $html .= "<tr><td>&nbsp;</td></tr>\n";
+
+
+        $tmp = '';
+        if($this->showMarksForReviewsReceived)
+            $tmp = 'checked';
+        $html .= "<tr><td style='text-align:right'><input type='checkbox' name='showMarksForReviewsReceived' $tmp /></td><td>Show the marks/comments that were given to the reviews that authors recieve</td></tr>\n";
+
+        $tmp = '';
+        if($this->showOtherReviews)
+            $tmp = 'checked';
+        $html .= "<tr><td style='text-align:right'><input type='checkbox' name='showOtherReviews' $tmp /></td><td>Show the other reviews that were given to the papers that students reviewed</td></tr>\n";
+
+        $tmp = '';
+        if($this->showMarksForOtherReviews)
+            $tmp = 'checked';
+        $html .= "<tr><td style='text-align:right'><input type='checkbox' name='showMarksForOtherReviews' $tmp /></td><td>Show the marks/comments for other reviews that were given to the papers that students reviewed</td></tr>\n";
+
+        $tmp = '';
+        if($this->showMarksForReviewedSubmissions)
+            $tmp = 'checked';
+        $html .= "<tr><td style='text-align:right'><input type='checkbox' name='showMarksForReviewedSubmissions' $tmp /></td><td>Show the marks/comments for submissions that students reviewed</td></tr>\n";
+
+        $html .= "<tr><td>&nbsp;</td></tr>\n";
+        $html .= "</table>";
+
+        $html .= "<input type='hidden' name='submissionStartDateSeconds' id='submissionStartDateSeconds' />\n";
+        $html .= "<input type='hidden' name='submissionStopDateSeconds' id='submissionStopDateSeconds' />\n";
+        $html .= "<input type='hidden' name='reviewStartDateSeconds' id='reviewStartDateSeconds' />\n";
+        $html .= "<input type='hidden' name='reviewStopDateSeconds' id='reviewStopDateSeconds' />\n";
+        $html .= "<input type='hidden' name='markPostDateSeconds' id='markPostDateSeconds' />\n";
+        $html .= "<input type='hidden' name='appealStopDateSeconds' id='appealStopDateSeconds' />\n";
+        return $html;
+    }
+
+    protected function _duplicate()
+    {
+        $duplicate = clone $this;
+        return $duplicate;
+    }
+
+    function finalizeDuplicateFromBase(Assignment $baseAssignment)
+    {
+        foreach($baseAssignment->getReviewQuestions() as $question)
+        {
+            $question->questionID = NULL;
+            $this->dataMgr->saveReviewQuestion($this, $question);
+        }
+    }
+
+    function _getValidationCode()
+    {
+        global $PEER_REVIEW_SUBMISSION_TYPES;
+        $code = "$('#submissionStartDateSeconds').val(moment($('#submissionStartDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
+        $code .= "$('#submissionStopDateSeconds').val(moment($('#submissionStopDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
+        $code .= "$('#reviewStartDateSeconds').val(moment($('#reviewStartDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
+        $code .= "$('#reviewStopDateSeconds').val(moment($('#reviewStopDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
+        $code .= "$('#markPostDateSeconds').val(moment($('#markPostDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
+        $code .= "$('#appealStopDateSeconds').val(moment($('#appealStopDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
+
+        //Now we have to build the validators for each of the different types
+        foreach($PEER_REVIEW_SUBMISSION_TYPES as $type => $displayType)
+        {
+            $code .= "if($('#submissionTypeSelect').val() == '$type'){\n";
+            $settingsType = $type."SubmissionSettings";
+            $settings = new $settingsType();
+            $code .= $settings->getValidationCode();
+            $code .= "}";
+        }
+        return $code;
+    }
+
+    function _getFormScripts()
+    {
+        $code  = init_tiny_mce(false);
+        $code .= $this->getScriptForDatePickers('submissionStartDate','submissionStopDate',$this->submissionStartDate, $this->submissionStopDate);
+        $code .= $this->getScriptForDatePickers('reviewStartDate','reviewStopDate', $this->reviewStartDate, $this->reviewStopDate);
+        $code .= "<script type='text/javascript'> $('#markPostDate').datetimepicker({ defaultDate : new Date(".($this->markPostDate*1000).")}); </script>\n";
+        $code .= "<script type='text/javascript'> $('#appealStopDate').datetimepicker({ defaultDate : new Date(".($this->appealStopDate*1000).")}); </script>\n";
+        $code .= set_element_to_date("markPostDate", $this->markPostDate);
+        $code .= set_element_to_date("appealStopDate", $this->appealStopDate);
+        return $code;
+    }
+
+    #Function for the date pickers
+    static private function getScriptForDatePickers($startID, $stopID, $startDate='', $stopDate='')
+    {
+        $minDate = 'null';
+        $maxDate = 'null';
+        if($startDate != '')
+            $minDate = "new Date(".($startDate*1000).")";
+        if($stopDate != '')
+            $maxDate = "new Date(".($stopDate*1000).")";
+        return "  <script type='text/javascript'>
+                $('#$startID').datetimepicker({
+                    maxDate: $maxDate,
+                    showOtherMonths: true,
+                    selectOtherMonths: true,
+                    defaultDate : $minDate,
+                    onClose: function(dateText, inst) {
+                        var endDateTextBox = $('#$stopID');
+                        if (endDateTextBox.val() != '') {
+                            var testStartDate = new Date(dateText);
+                            var v = endDateTextBox.val();
+                            var testEndDate = new Date(endDateTextBox.val());
+                            if (testStartDate > testEndDate)
+                                endDateTextBox.val(dateText);
+                        }
+                        else {
+                            endDateTextBox.val(dateText);
+                        }
+                    },
+                    onSelect: function (selectedDateTime){
+                        var start = $(this).datetimepicker('getDate');
+                        var d = new Date($('#$stopID').datetimepicker('getDate'));
+                        $('#$stopID').datetimepicker('option', 'minDate', new Date(start.getTime()));
+                        $('#$stopID').val(zeroFill(d.getMonth() + 1, 2) + '/' + zeroFill(d.getDate(), 2) + '/' + d.getFullYear() + ' ' + zeroFill(d.getHours(), 2) + ':' + zeroFill(d.getMinutes(), 2));
+                    },
+                });
+                $('#$stopID').datetimepicker({
+                    minDateTime: $minDate,
+                    showOtherMonths: true,
+                    selectOtherMonths: true,
+                    defaultDate : $maxDate,
+                    onClose: function(dateText, inst) {
+                        var startDateTextBox = $('#$startID');
+                        if (startDateTextBox.val() != '') {
+                            var testStartDate = new Date(startDateTextBox.val());
+                            var testEndDate = new Date(dateText);
+                            if (testStartDate > testEndDate)
+                                startDateTextBox.val(dateText);
+                        }
+                        else {
+                            startDateTextBox.val(dateText);
+                        }
+                    },
+                    onSelect: function (selectedDateTime){
+                        var end = $(this).datetimepicker('getDate');
+                        var d = new Date($('#$startID').datetimepicker('getDate'));
+                        $('#$startID').datetimepicker('option', 'maxDate', new Date(end.getTime()));
+                        $('#$startID').val(zeroFill(d.getMonth() + 1, 2) + '/' + zeroFill(d.getDate(), 2) + '/' + d.getFullYear() + ' ' + zeroFill(d.getHours(), 2) + ':' + zeroFill(d.getMinutes(), 2));
+                    }
+    });".
+        set_element_to_date($startID, $startDate, "val", "MM/DD/YYYY HH:mm", false, true).
+        set_element_to_date($stopID, $stopDate, "val", "MM/DD/YYYY HH:mm", false, true).
+       "</script>";
+    }
+
+};
+
+?>

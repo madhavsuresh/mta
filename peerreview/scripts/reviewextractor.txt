@@ -1,0 +1,12 @@
+Extract Review Question
+Displays the result of a rewview question for each submitted essay.
+
+
+
+<h2>Parameters</h2>
+<table width="100%">
+<tr><td>&#8209;&#8209;question&nbsp;[int]<br>&#8209;q&nbsp;[int]</td><td>The
+zero based index of the question you are trying to extract.</td></tr>
+<tr><td>&#8209;&#8209;instructor</td><td>Include instructor generated reviews
+in the output</td></tr>
+</table>

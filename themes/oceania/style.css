@@ -1,0 +1,272 @@
+/*
+Design by Free CSS Templates
+http://www.freecsstemplates.org
+Released for free under a Creative Commons Attribution 3.0 License
+
+Name       : Oceania
+Description: A two-column, fixed-width design with a bright color scheme.
+Version    : 1.0
+Released   : 20120208
+*/
+
+* {
+	margin: 0;
+	/*padding: 0;*/
+}
+
+a {
+	color: #1D68AB;
+	text-decoration: underline;
+}
+
+a:hover {
+	text-decoration: none;
+}
+
+html {
+	background: #CFD5DE url(images/img01.jpg) top left repeat-x;
+}
+
+body {
+	/*background: url(images/img02.jpg) top center no-repeat;*/
+	/*line-height: 1.5em;*/
+	color: #4B4C43;
+	/*font-size: 10.0pt;*/
+}
+
+body,input {
+	font-family: Arial, sans-serif;
+}
+
+/*br.clearfix {*/
+br{
+	clear: both;
+}
+
+strong {
+	color: #333333;
+}
+
+h1,h2,h3,h4 {
+	text-shadow: 0 2px 0 #FFFFFF;
+	margin-top: 0.8em;
+	margin-bottom: 0.8em;
+}
+
+h2,h3,h4 {
+	color: #27587D;
+}
+
+h1 {
+	color: #001C56;
+	font-size: 1.5em;
+}
+
+h2 {
+	font-size: 1.25em;
+}
+
+h3 {
+	font-size: 1.25em;
+}
+
+h4 {
+	font-size: 1.0em;
+}
+
+img.alignleft {
+	margin: 5px 20px 20px 0;
+	float: left;
+}
+
+img.aligntop {
+	margin: 5px 0 20px 0;
+}
+
+p {
+	margin-bottom: 1.5em;
+}
+
+ul {
+	margin-bottom: 1.5em;
+}
+
+ul h4 {
+	margin-bottom: 0.35em;
+}
+
+.box {
+	overflow: hidden;
+	margin: 0 0 0.3em 0;
+}
+
+.rowType0
+{
+    /*width: 100%;*/
+    background-color: #E0E0E0;
+}
+.rowType1
+{
+    /*width: 100%;*/
+    /* background-color: #ffffff */
+}
+.errorField{
+    width:75%;
+    padding:5px;
+    float:left;
+}
+
+.errorMsg{
+    display:none;
+    clear:both;
+    color:#f00;
+    padding-left:30px;
+    padding-right:30px;
+}
+
+
+#content {
+	float: left;
+	padding: 40px;
+	width: 816px;
+	background: #EAEEF2 url(images/img05.jpg) top left repeat-x;;
+	border-radius: 10px;
+	border: solid 2px #FFFFFF;
+	text-shadow: 0 1px 0 #FFFFFF;
+}
+
+#footer {
+	margin: 50px 0 120px 0;
+	text-align: center;
+	color: #626E7F;
+	text-shadow: 0 1px 0 #FFFFFF;
+}
+
+#footer a {
+	color: #626E7F;
+}
+
+#header {
+	background: #2C84AF url(images/img03.jpg) top left no-repeat;
+	color: #FFFFFF;
+	height: 100px;
+	position: relative;
+	padding: 40px;
+	border-radius: 10px;
+	border-top: solid 1px #96D0F7;
+	border-bottom: solid 1px #0C3459;
+}
+
+#logo {
+	top: 40px;
+	height: 100px;
+	position: absolute;
+	left: 40px;
+	line-height: 100px;
+}
+
+#logo a {
+	text-decoration: none;
+	color: #FFFFFF;
+}
+
+#logo h1 {
+	font-size: 2.8em;
+	color: #FFFFFF;
+	text-shadow: 0 2px 2px #0E3E68;
+}
+
+#menu {
+	height: 62px;
+	right: 40px;
+	line-height: 62px;
+	top: 115px;
+	position: absolute;
+}
+
+#menu a {
+	/* text-transform: lowercase; */
+	text-decoration: none;
+	color: #FFFFFF;
+	font-size: 1.25em;
+}
+
+#menu ul {
+	padding: 0 25px 0 25px;
+	list-style: none;
+}
+
+#menu ul li {
+	padding: 10px 15px 10px 15px;
+	display: inline;
+	text-shadow: 0 1px 1px #0E3E68;
+}
+
+#menu ul li.current_page_item {
+	background: #56AFD8 url(images/img04.jpg) top left no-repeat;
+	border-top: solid 1px #82D9ED;
+	border-bottom: solid 1px #24627C;
+	border-radius: 5px;
+}
+
+#menu ul li.last {
+	padding-right: 0;
+}
+
+#page {
+	position: relative;
+	margin: 20px 0 20px 0;
+	padding: 0;
+	width: 980px;
+}
+
+#page .section-list {
+	padding-left: 0;
+	list-style: none;
+}
+
+#page .section-list li {
+	clear: both;
+	padding: 25px 0 25px 0;
+}
+
+/*
+#page ul {
+	list-style: none;
+}
+
+#page ul li {
+	padding: 15px 0 15px 0;
+	border-top: dotted 1px #C5CDD8;
+}
+
+#page ul li.first {
+	padding-top: 0;
+	border-top: 0;
+}*/
+
+a.editmarklink:link    {
+  /* Applies to all unvisited links */
+  text-decoration:  none;
+  } 
+a.editmarklink:visited {
+  /* Applies to all visited links */
+  text-decoration:  none;
+  } 
+a.editmarklink:hover   {
+  /* Applies to links under the pointer */
+  text-decoration:  none;
+  } 
+a.editmarklink:active  {
+  /* Applies to activated links */
+  text-decoration:  none;
+  }
+
+
+#wrapper {
+	position: relative;
+	margin: 0 auto 0 auto;
+	padding: 5px 0 0 0;
+	width: 900px;
+}
+

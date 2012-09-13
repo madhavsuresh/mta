@@ -1,0 +1,13 @@
+Compute Reviewer Assignment
+Computes the reviewer assignment. Make sure that all of your
+denied/independent users are set at this point.
+
+
+
+<h2>Parameters</h2>
+<table width="100%">
+<tr><td>&#8209;&#8209;numreviews&nbsp;[int]</td><td>The number of reviews to assign for each
+student (Default 2)</td></tr>
+<tr><td>&#8209;&#8209;clobber</td><td>Without this option, the assignment is only updated
+so that only reviewers who have not reviewed anything are switched if need be.</td></tr>
+</table>

@@ -1,0 +1,146 @@
+<?php
+
+/** Cleans up a string for printing
+ */
+function cleanString($string)
+{
+    $string = str_replace( array("\xe2\x80\x98", "\xe2\x80\x99", "\xe2\x80\x9c", "\xe2\x80\x9d", "\xe2\x80\x93", "\xe2\x80\x94", "\xe2\x80\xa6"),
+                           array("'", "'", '"', '"', '-', '--', '...'),
+                           #array("&lsquo;", "&rsquo;", '&ldquo;', '&rdquo;', '&ndash;', '&mdash;', '&hellip;'),
+                           $string);
+    // Next, replace their Windows-1252 equivalents.
+    $string = str_replace( array(chr(145), chr(146), chr(147), chr(148), chr(150), chr(151), chr(133)),
+                           array("'", "'", '"', '"', '-', '--', '...'),
+                           #array("&lsquo;", "&rsquo;", '&ldquo;', '&rdquo;', '&ndash;', '&mdash;', '&hellip;'),
+                           $string);
+    $string = str_replace("\n", "<br>", htmlentities($string, ENT_QUOTES ));
+    return $string;
+}
+
+/** Makes a float into a pretty string
+ */
+function precisionFloat($value, $place=2){
+    $value = $value * pow(10, $place + 1);
+    $value = floor($value);
+    $value = (float) $value/10;
+    (float) $modSquad = ($value - floor($value));
+    $value = floor($value);
+    if ($modSquad > .5){
+            $value++;
+    }
+    return $value / (pow(10, $place));
+}
+
+function fixedGlob($str)
+{
+    $ret = glob($str);
+    if(!$ret){
+        return array();
+    }
+    return $ret;
+}
+
+function file_size($size)
+{
+    $filesizename = array(" Bytes", " KB", " MB", " GB", " TB", " PB", " EB", " ZB", " YB");
+    return $size ? round($size/pow(1024, ($i = floor(log($size, 1024)))), 2) . $filesizename[$i] : '0 Bytes';
+}
+
+function optional_from_get($varname, $default=NULL)
+{
+    global $_GET;
+    if(!array_key_exists($varname, $_GET))
+    {
+        return $default;
+    }
+    return $_GET[$varname];
+}
+
+function require_from_get($varname)
+{
+    global $SITEURL, $_GET;
+    if(!array_key_exists($varname, $_GET))
+    {
+        throw new Exception("Missing $varname in GET");
+    }
+    return $_GET[$varname];
+}
+
+function get_url_to_main()
+{
+    return get_redirect_url("index.php");
+}
+
+function redirect_to_main()
+{
+    header("Location: ".get_url_to_main());
+    exit();
+}
+
+function get_redirect_url($page)
+{
+    global $dataMgr, $SITEURL, $PRETTYURLS;
+
+    if($dataMgr->courseID)
+    {
+        $prefix = $SITEURL;
+        $suffix="?";
+        $questionPos = strpos($page, '?');
+        if($questionPos === 0)
+        {
+            if($PRETTYURLS)
+            {
+                return $page;
+            }
+            else
+            {
+                return $page."&courseid=$dataMgr->courseID";
+            }
+        }
+        else if($questionPos !== FALSE)
+            $suffix='&';
+
+        if($PRETTYURLS)
+        {
+            return $prefix.$dataMgr->courseName."/".$page;
+        }
+        else
+        {
+            return $prefix.$page.$suffix."courseid=$dataMgr->courseID";
+        }
+    }
+    else
+    {
+        return $SITEURL.$page;
+    }
+}
+
+function redirect_to_page($page)
+{
+    header("Location: ".get_redirect_url($page));
+    exit();
+}
+
+function page_not_found()
+{
+    die("This page is invalid!");
+    //header("HTTP/1.0 404 Not Found");
+    exit();
+}
+
+function get_html_purifier()
+{
+    global $HTML_PURIFIER;
+    if($HTML_PURIFIER === NULL)
+    {
+        $config = HTMLPurifier_Config::createDefault();
+        // configuration goes here:
+        $config->set('Core.Encoding', 'UTF-8'); // replace with your encoding
+        $config->set('HTML.Doctype', 'XHTML 1.0 Transitional'); // replace with your doctype
+
+        $HTML_PURIFIER = new HTMLPurifier($config);
+    }
+    return $HTML_PURIFIER;
+}
+
+?>

@@ -1,0 +1,2 @@
+Word Count
+Computes the wordcount of all the essays for the assignment.

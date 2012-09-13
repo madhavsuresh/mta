@@ -1,0 +1,55 @@
+.icon
+{
+    width:16px;
+    height:16px;
+}
+
+.edit
+{
+    background-image:url(images/document_edit.png);
+}
+
+.delete
+{
+    background-image:url(images/dialog_close.png);
+}
+
+.moveUp
+{
+    background-image:url(images/go_up.png);
+}
+
+.moveDown
+{
+    background-image:url(images/go_down.png);
+}
+
+.editQuestions
+{
+    background-image:url(images/applications-education-university.png);
+}
+
+.editDenied
+{
+    background-image:url(images/meeting-participant-no-response.png);
+}
+
+.editPeerAssignment
+{
+    background-image:url(images/list-add-user.png);
+}
+
+.duplicate
+{
+    background-image:url(images/edit-copy.png);
+}
+
+.script
+{
+    background-image:url(images/text-x-python.png);
+}
+
+.new
+{
+    background-image:url(images/document-new.png);
+}

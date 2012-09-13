@@ -1,0 +1,12 @@
+Compute Independents
+Automatically determines who is an independent reviewer and who is not. The results are saved, so any changes you have made will be clobbered by running this script.
+
+
+
+<h2>Parameters</h2>
+<table width="100%">
+<tr><td>&#8209;&#8209;minscore [int]</td><td>The minimum score needed to be
+good (Default 2)</td></tr>
+<tr><td>&#8209;&#8209;numconsecutive [int]</td><td>The number of consecutive
+good reviews to be independent (Default 2)</td></tr>
+</table>

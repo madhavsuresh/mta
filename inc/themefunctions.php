@@ -227,6 +227,7 @@ function render_exception_page($exception)
     global $SITEMASTER, $content, $_SESSION, $_GET, $_POST;
     $content  = "<h1>Exception!</h1>";
     $content .= cleanString($exception);
+    //$content .= cleanString($exception->getMessage());
 
     $dump  = $exception."\n\n";
     $dump .= "URL: ".$_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"]."\n\n";

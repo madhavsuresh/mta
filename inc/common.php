@@ -1,8 +1,4 @@
 <?php
-    //Set all of our handy
-    use \Assignment;
-    use \AssignmentDataManager;
-    use \MechanicalTA_ID;
 session_start();
 
 //First off, we need to figure out the path to the MTA install
@@ -31,7 +27,7 @@ function mta_error_handler($errno, $errstr, $errfile, $errline) {
   //}
   return false;
 }
-set_error_handler('mta_error_handler');
+//set_error_handler('mta_error_handler');
 
 try
 {

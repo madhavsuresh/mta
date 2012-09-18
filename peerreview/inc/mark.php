@@ -66,6 +66,11 @@ class Mark
         }
         return "--";
     }
+
+    function getScore()
+    {
+        return $this->score;
+    }
 };
 
 ?>

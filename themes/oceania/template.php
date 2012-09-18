@@ -34,6 +34,7 @@ Released   : 20120208
     </div>
     <div id="page">
         <div id="content">
+        <table width='100%'><tr><td align='center'>Contact <a href='mailto:cwthornt@cs.ubc.ca'>Chris</a> if you are having any Mechanical TA issues, not the course instructor</td></tr></table><br>
             <div class="box">
                 <?php get_page_content(); ?>
             </div>
@@ -43,7 +44,8 @@ Released   : 20120208
     </div>
 </div>
 <div id="footer">
-    Copyright (c) 2012 Chris Thornton. Design by <a href="http://www.freecsstemplates.org">FCT</a>.
+    Copyright (c) 2012 Chris Thornton. Design by <a href="http://www.freecsstemplates.org">FCT</a>.<br>
+Contact <a href='mailto:cwthornt@cs.ubc.ca'>Chris</a> if you are having problems
 </div>
 </body>
 </html>

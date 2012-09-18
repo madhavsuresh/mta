@@ -50,7 +50,7 @@
         {
             $html  = "<table align='left' width='100%'>\n";
 
-            $html .= "<tr><td>Question&nbsp;Name</td><td><input type='text' name='name' id='name' value='".htmlentities($this->name, ENT_COMPAT|ENT_QUOTES|ENT_HTML401)."' size='50'/><div class=errorMsg><div class='errorField' id='error_name'></div></td></tr>\n";
+            $html .= "<tr><td>Question&nbsp;Name</td><td><input type='text' name='name' id='name' value='".htmlentities($this->name, ENT_COMPAT|ENT_QUOTES)."' size='50'/><div class=errorMsg><div class='errorField' id='error_name'></div></td></tr>\n";
             $html .= "<tr><td>&nbsp;</td></tr>\n";
             $html .= "<tr><td>Question</td><td><textarea name='question' id='question' cols='60' rows='10'/>$this->question</textarea></td></tr>\n";
             $html .= "<tr><td>&nbsp;</td></tr>\n";

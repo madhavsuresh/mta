@@ -29,7 +29,7 @@ abstract class Assignment
     {
         $html  = "<h2>General Settings</h2>";
         $html .= "<table align='left' width='100%'>\n";
-        $html .= "<tr><td>Assignment&nbsp;Name</td><td><input type='text' name='assignmentName' id='assignmentName' value='".htmlentities($this->name, ENT_COMPAT|ENT_QUOTES|ENT_HTML401)."' size='60'/></td></tr>\n";
+        $html .= "<tr><td>Assignment&nbsp;Name</td><td><input type='text' name='assignmentName' id='assignmentName' value='".htmlentities($this->name, ENT_COMPAT|ENT_QUOTES)."' size='60'/></td></tr>\n";
         $html .= "</table>\n";
         $html .= "<h2>".$this->getAssignmentTypeDisplayName()." Settings</h2>";
 

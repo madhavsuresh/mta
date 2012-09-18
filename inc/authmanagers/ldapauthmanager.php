@@ -7,9 +7,9 @@ class LDAPAuthManager extends AuthManager
     private $host = 'ldap.cs.ubc.ca';
     private $port= 389;
     private $basedn = 'ou=People,dc=cs,dc=ubc,dc=ca';
-    function __construct($registrationType)
+    function __construct($registrationType, $dataMgr)
     {
-        parent::__construct($registrationType);
+        parent::__construct($registrationType, $dataMgr);
 
     }
     function checkAuthentication($username, $password) {

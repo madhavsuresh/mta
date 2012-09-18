@@ -25,11 +25,11 @@ class ArticleResponseSubmission extends Submission
 
     function _getHTML($showHidden)
     {
-        $html = "<h3>Article<h2>\n";
+        $html = "<h3>Article</h3>\n";
         $html .= "<a href='".$this->submissionSettings->articles[$this->articleIndex]->link."'>".$this->submissionSettings->articles[$this->articleIndex]->name."</a>\n";
-        $html .= "<h3>Outline</h3>\n";
+        $html .= "<h3>Outline + Thesis</h3>\n";
         $html .= $this->outline;
-        $html .= "<h3>Submission</h3>\n";
+        $html .= "<h3>Essay</h3>\n";
         $html .= $this->response;
         return $html;
     }
@@ -59,12 +59,12 @@ class ArticleResponseSubmission extends Submission
         $html .= "</select><br>";
         $html .= "<div class=errorMsg><div class='errorField' id='error_article'></div></div><br>\n";
 
-        $html .= "<h3>Outline</h3>\n";
+        $html .= "<h3>Outline + Thesis</h3>\n";
         $html .= "<textarea name='outline' cols='60' rows='40' class='mceEditor'>\n";
         $html .= htmlentities($this->outline);
         $html .= "</textarea><br>\n";
 
-        $html .= "<h3>Submission</h3>\n";
+        $html .= "<h3>Essay</h3>\n";
         $html .= "<textarea name='response' cols='60' rows='40' class='mceEditor'>\n";
         $html .= htmlentities($this->response);
         $html .= "</textarea><br>\n";

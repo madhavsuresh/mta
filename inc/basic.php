@@ -58,12 +58,47 @@ function optional_from_get($varname, $default=NULL)
 
 function require_from_get($varname)
 {
-    global $SITEURL, $_GET;
+    global $_GET;
     if(!array_key_exists($varname, $_GET))
     {
         throw new Exception("Missing $varname in GET");
     }
     return $_GET[$varname];
+}
+
+function require_from_post($varname)
+{
+    global $_POST;
+    if(!array_key_exists($varname, $_POST))
+    {
+        throw new Exception("Missing $varname in POST");
+    }
+    return $_POST[$varname];
+}
+
+function require_from_array($varname, &$array)
+{
+    if(!array_key_exists($varname, $array))
+    {
+        throw new Exception("Missing $varname in array");
+    }
+    return $array[$varname];
+}
+
+function shuffle_assoc( $array )
+{
+    $keys = array_keys( $array );
+    mt_shuffle( $keys );
+    return array_merge( array_flip( $keys ) , $array );
+}
+
+function mt_shuffle(&$items) {
+    for ($i = count($items) - 1; $i > 0; $i--){
+        $j = mt_rand(0, $i);
+        $tmp = $items[$i];
+        $items[$i] = $items[$j];
+        $items[$j] = $tmp;
+    }
 }
 
 function get_url_to_main()

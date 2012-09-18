@@ -13,8 +13,8 @@ try
 
     $assignment = get_peerreview_assignment();
 
-    $beforeReviewStart = $NOW < $assignment->submissionStartDate;
-    $afterReviewStop   = $assignment->submissionStopDate < $NOW;
+    $beforeReviewStart = $NOW < $assignment->reviewStartDate;
+    $afterReviewStop   = $assignment->reviewStopDate < $NOW;
     if(array_key_exists("review", $_GET)){
         #We're in student mode
         $id = $_GET["review"];

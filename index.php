@@ -8,7 +8,7 @@ try
         //Nope, run up the course picker for people
         $content .= "<h1>Course Select</h1>";
         //TODO: Make this display a list that doesn't suck
-        $content .= "<a href='/430/'>CPSC 430</a>";
+        $content .= "<a href='https://www.cs.ubc.ca/mta/430/'>CPSC 430</a>";
 
         render_page();
     }

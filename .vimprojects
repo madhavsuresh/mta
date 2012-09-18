@@ -16,11 +16,12 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
   datamanager.php
   ids.php
   themefunctions.php
+  script.php
   datamanagers=datamanagers{
    pdodatamanager.php
   }
   authmanagers=authmanagers{
-   ldap.php
+   ldapauthmanager.php
    multilevel.php
    pdoauthmanager.php
   }
@@ -57,6 +58,9 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
   viewmarks.php
   assignmarks.php
   scripts=scripts{
+   assignreviews.php
+   computeindependents.php
+   downloadsubmissions.php
   }
   inc=inc{
    appeal.php

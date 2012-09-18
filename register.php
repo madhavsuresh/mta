@@ -85,6 +85,7 @@ try
     //We need to show the registration page
     $title .= " | Register";
 
+    $content .= "Use your CS account username/password to enroll in the course. Even if you are on the wait list, you will be able to get an account from <a href='https://www.cs.ubc.ca/ugrad/getacct/getacct.jsp'>here</a>. If you can't remember your password, you can reset your password <a href='https://www.cs.ubc.ca/ugrad/getacct/getacct.jsp'>here</a><br><br>";
     $content .= $authMgr->getRegistrationFormHTML($username, $firstname, $lastname, $studentid);
 
 

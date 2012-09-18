@@ -11,8 +11,8 @@ try
     #Get this assignment's data
     $assignment = get_peerreview_assignment();
 
-    $beforeReviewStart = $NOW < $assignment->submissionStartDate;
-    $afterReviewStop   = $assignment->submissionStopDate < $NOW;
+    $beforeReviewStart = $NOW < $assignment->reviewStartDate;
+    $afterReviewStop   = $assignment->reviewStopDate < $NOW;
 
     if(array_key_exists("reviewid", $_GET)){
         #We're in student mode

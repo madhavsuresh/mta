@@ -218,6 +218,7 @@ function get_user_name($echo=true) {
 function render_page()
 {
     global $MTA_THEME, $authMgr;
+    header("Content-Type: text/html;charset=UTF-8");
     include("themes/".$MTA_THEME."/template.php");
     exit();
 }

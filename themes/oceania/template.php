@@ -13,7 +13,7 @@ Released   : 20120208
 <head>
 <meta name="description" content="" />
 <meta name="keywords" content="" />
-<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta http-equiv="content-type" content="text/html;charset=utf-8" />
 <title><?php get_page_title(); ?> </title>
 <?php get_page_headers(); ?>
 </head>

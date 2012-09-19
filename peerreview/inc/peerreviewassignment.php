@@ -103,7 +103,9 @@ class PeerReviewAssignment extends Assignment
                 $html .= "<tr><td width=40%>\n";
                 if($this->submissionStopDate < $NOW)
                 {
-                    $html .= "Submission submissions closed\n";
+                    $html .= "Submissions closed\n";
+                    if($this->dataMgr->submissionExists($this, $user))
+                        $html .= "<br>(Received)";
                 }
                 else
                 {

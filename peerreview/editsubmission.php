@@ -61,7 +61,7 @@ try
         $content .= "</div><div class='box'>\n";
         $content .= "<h1>" . $dataMgr->getUserDisplayName($authorID)."'s Submission</h1>\n";
 
-        $content .= "<form id='submission' action='".get_redirect_url("peerreview/submitsubmission.php?assignmentid=$assignment->assignmentID&$authorInGet$closeOnDone")."' method='post'>\n";
+        $content .= "<form id='submission' action='".get_redirect_url("peerreview/submitsubmission.php?assignmentid=$assignment->assignmentID&$authorInGet$closeOnDone")."' method='post' accept-charset='UTF-8'>\n";
         try {
             $submission = $assignment->getSubmission($authorID);
         } catch(Exception $e) {

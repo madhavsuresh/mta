@@ -62,7 +62,7 @@ class EssaySubmission extends Submission
         }
 
         $html .= "<textarea name='text' cols='60' rows='40' class='mceEditor'>\n";
-        $html .= htmlentities($this->text);
+        $html .= htmlentities($this->text, ENT_COMPAT|ENT_HTML401,'UTF-8');
         $html .= "</textarea><br>\n";
 
         return $html;

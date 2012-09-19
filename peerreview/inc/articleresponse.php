@@ -61,12 +61,12 @@ class ArticleResponseSubmission extends Submission
 
         $html .= "<h3>Outline + Thesis</h3>\n";
         $html .= "<textarea name='outline' cols='60' rows='40' class='mceEditor'>\n";
-        $html .= htmlentities($this->outline);
+        $html .= htmlentities($this->outline, ENT_COMPAT|ENT_HTML401, 'UTF-8');
         $html .= "</textarea><br>\n";
 
         $html .= "<h3>Essay</h3>\n";
         $html .= "<textarea name='response' cols='60' rows='40' class='mceEditor'>\n";
-        $html .= htmlentities($this->response);
+        $html .= htmlentities($this->response, ENT_COMPAT|ENT_HTML401,'UTF-8');
         $html .= "</textarea><br>\n";
 
         return $html;

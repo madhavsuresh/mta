@@ -32,6 +32,7 @@ class PDODataManager extends DataManager
 
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
         $this->db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
+//        $this->db->exec("SET NAMES 'utf8';");
 
         $this->isUserQuery = $this->db->prepare("SELECT userID FROM users WHERE userID=? && userType IN ('instructor', 'student');");
         $this->isStudentQuery = $this->db->prepare("SELECT userID FROM users WHERE userID=? && userType = 'student';");

@@ -79,7 +79,7 @@ class AssignReviewsPeerReviewScript extends Script
             else
                 $score = 0;
 
-            if(array_key_exists($author, $assignmentIndependent))
+            if(false && array_key_exists($author, $assignmentIndependent))
                 $independents[$author] = $score;
             else
                 $supervised[$author] = $score;
@@ -130,14 +130,18 @@ class AssignReviewsPeerReviewScript extends Script
     private function getReviewAssignment($students)
     {
         mt_srand($this->seed);
+        print_r($students);
         for($i = 0; $i < $this->maxAttempts; $i++)
         {
             try {
-                return $this->_getReviewAssignment($students);
+                $res = $this->_getReviewAssignment($students); 
+                return $res;
             }catch(Exception $e){
                 //They didn't get it
+                echo "Failed\n";
             }
         }
+        die("Failed");
         throw new Exception("Could not get a reviewer assignment - try increasing the number of attempts or the score noise. If that fails, play with your seeds and hope for the best.");
     }
 
@@ -180,12 +184,17 @@ class AssignReviewsPeerReviewScript extends Script
                 $assigned[] = $this->popNextReviewer($student, $assigned, $reviewers);
             }
             //Reallocate the order of the assignment by the sum of reviewer scores
-            uasort($assignment, function($a, $b) { return $this->getReviewerScores($a) > $this->getReviewerScores($b); });
+            uasort($assignment, array($this, "compareReviewerScores"));
         }
         return $assignment;
     }
 
-    function getReviewerScores($array)
+    private function compareReviewerScores($a, $b)
+    {
+        return $this->getReviewerScores($a) > $this->getReviewerScores($b);
+    }
+
+    private function getReviewerScores($array)
     {
         $score = 0;
         foreach($array as $reviewer)

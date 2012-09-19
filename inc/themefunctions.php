@@ -218,7 +218,7 @@ function get_user_name($echo=true) {
 function render_page()
 {
     global $MTA_THEME, $authMgr;
-    header("Content-Type: text/html;charset=UTF-8");
+    header("Content-Type: text/html; charset=utf-8");
     include("themes/".$MTA_THEME."/template.php");
     exit();
 }
@@ -227,8 +227,8 @@ function render_exception_page($exception)
 {
     global $SITEMASTER, $content, $_SESSION, $_GET, $_POST;
     $content  = "<h1>Exception!</h1>";
-    $content .= cleanString($exception);
-    //$content .= cleanString($exception->getMessage());
+    //$content .= cleanString($exception);
+    $content .= cleanString($exception->getMessage());
 
     $dump  = $exception."\n\n";
     $dump .= "URL: ".$_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"]."\n\n";

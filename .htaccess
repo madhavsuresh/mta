@@ -1,12 +1,13 @@
 #Redirect all non SSL connections to the main page
 #Supposedly modrewrite makes this not suck, but I don't
 #have any idea on how to actually do that properly
-#SSLRequireSSL
-#ErrorDocument 403 https://www.cs.ubc.ca/mta/
+SSLRequireSSL
+ErrorDocument 403 https://www.cs.ubc.ca/mta/
 
 RewriteEngine on
-RewriteBase /~chris/mta/
-#RewriteBase /~cs430/mta/
+#RewriteBase /~chris/mta/
+#RewriteBase /~cs430/mtanew/
+RewriteBase /~cs430/mta/
 # Make sure it's not a real directory
 RewriteCond %{REQUEST_FILENAME} !-d
 # Make sure it's not a real file

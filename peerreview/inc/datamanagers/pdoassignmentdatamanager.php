@@ -147,7 +147,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $assignment->showMarksForReviewsReceived = $res->showMarksForReviewsReceived;
         $assignment->showOtherReviews            = $res->showOtherReviews;
         $assignment->showMarksForOtherReviews    = $res->showMarksForOtherReviews;
-        $assignment->showMarksForOtherReviews    = $res->showMarksForOtherReviews;
+        $assignment->showMarksForReviewedSubmissions = $res->showMarksForReviewedSubmissions;
 
         //Now we need to get the settings for our type
         if(!array_key_exists($assignment->submissionType, $PEER_REVIEW_SUBMISSION_TYPES))
@@ -172,7 +172,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
         else
         {
-            $sh = $this->db->prepare("UPDATE peer_review_assignment SET submissionQuestion=?, submissionType=?, submissionStartDate=FROM_UNIXTIME(?), submissionStopDate=FROM_UNIXTIME(?), reviewStartDate=FROM_UNIXTIME(?), reviewStopDate=FROM_UNIXTIME(?), markPostDate=FROM_UNIXTIME(?), appealStopDate=FROM_UNIXTIME(?), maxSubmissionScore=?, maxReviewScore=?, showMarksForReviewsReceived=?, showOtherReviews=?, showMarksForOtherReviews=? WHERE assignmentID=?;");
+            $sh = $this->db->prepare("UPDATE peer_review_assignment SET submissionQuestion=?, submissionType=?, submissionStartDate=FROM_UNIXTIME(?), submissionStopDate=FROM_UNIXTIME(?), reviewStartDate=FROM_UNIXTIME(?), reviewStopDate=FROM_UNIXTIME(?), markPostDate=FROM_UNIXTIME(?), appealStopDate=FROM_UNIXTIME(?), maxSubmissionScore=?, maxReviewScore=?, showMarksForReviewsReceived=?, showOtherReviews=?, showMarksForOtherReviews=?, showMarksForReviewedSubmissions=? WHERE assignmentID=?;");
         }
         $sh->execute(array(
             $assignment->submissionQuestion,
@@ -188,6 +188,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             $assignment->showMarksForReviewsReceived,
             $assignment->showOtherReviews,
             $assignment->showMarksForOtherReviews,
+            $assignment->showMarksForReviewedSubmissions,
             $assignment->assignmentID
         ));
 

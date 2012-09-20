@@ -177,7 +177,7 @@ class PeerReviewAssignment extends Assignment
                     $id = 0;
                     foreach($reviewAssignments as $matchID)
                     {
-                        $html .= "<tr><td>Review $id:</td><td>". $this->dataMgr->getReviewMark($this, $matchID)->getSummaryString()."</td></tr>\n";
+                        $html .= "<tr><td>Review ".($id+1).":</td><td>". $this->dataMgr->getReviewMark($this, $matchID)->getSummaryString()."</td></tr>\n";
                         $id++;
                     }
 

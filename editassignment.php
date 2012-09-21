@@ -86,14 +86,14 @@ try
         $content .= "</form>\n";
 
         //The validate script
-        $content .= "<script> $(document).ready(function(){ $('#assignment').submit(function() {";
+        $content .= "<script type='text/javascript'> $(document).ready(function(){ $('#assignment').submit(function() {";
         $content .= "var error = false;";
         $content .= $assignment->getValidationCode();
         $content .= "if(error){return false;}else{return true;}\n";
         $content .= "}); }); </script>\n";
 
         //Any extra scripts
-        $content .= $assignment->_getFormScripts();
+        $content .= $assignment->getFormScripts();
 
         render_page();
     }

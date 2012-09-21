@@ -71,7 +71,7 @@ class GroupPickerAssignment extends Assignment
         return ($dataMgr->isInstructor($userID) || $NOW > $this->startDate);
     }
 
-    function getHeaderHTML(UserID $userID)
+    function _getHeaderHTML(UserID $userID)
     {
         global $dataMgr, $NOW;
         if($dataMgr->isInstructor($userID))

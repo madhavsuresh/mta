@@ -48,12 +48,15 @@ class PDODataManager extends DataManager
         $this->getUserDisplayNameQuery = $this->db->prepare("SELECT firstName, lastName FROM users WHERE userID=?;");
         $this->numUserTypeQuery = $this->db->prepare("SELECT COUNT(userID) FROM users WHERE courseID=? && userType=?;");
         $this->assignmentExistsQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE assignmentID=?;");
+        $this->assignmentFieldsQuery = $this->db->prepare("SELECT password, passwordMessage FROM assignments WHERE assignmentID=?;");
+        $this->getEnteredPasswordQuery = $this->db->prepare("SELECT userID from assignment_password_entered WHERE assignmentID = ? && userID = ?;");
+        $this->userEnteredPasswordQuery = $this->db->prepare("INSERT INTO assignment_password_entered (assignmentID, userID) VALUES (?, ?);");
 
 
         $this->addAssignmentToCourseQuery = $this->db->prepare( "INSERT INTO assignments (courseID, name, displayPriority, assignmentType) SELECT :courseID, :name, COUNT(courseID), :type FROM assignments WHERE courseID=:courseID;",
                                                                 array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
         $this->removeAssignmentFromCourseQuery = $this->db->prepare("DELETE FROM assignments WHERE assignmentID = ?;");
-        $this->updateAssignmentQuery = $this->db->prepare("UPDATE assignments SET name=? WHERE assignmentID = ?;");
+        $this->updateAssignmentQuery = $this->db->prepare("UPDATE assignments SET name=?, password=?, passwordMessage=? WHERE assignmentID = ?;");
         //$this->getConfigPropertyQuery = $this->db->prepare("SELECT *;");
         //$this->assignmentSwapDisplayOrderQuery = $this->db->prepare("UPDATE assignments SET
 
@@ -282,6 +285,17 @@ class PDODataManager extends DataManager
         $this->db->commit();
     }
 
+    function hasEnteredPassword(AssignmentID $assignmentID, UserID $userID)
+    {
+        $this->getEnteredPasswordQuery->execute(array($assignmentID, $userID));
+        return $this->getEnteredPasswordQuery->fetch() != null;
+    }
+
+    function userEnteredPassword(AssignmentID $assignmentID, UserID $userID)
+    {
+        $this->userEnteredPasswordQuery->execute(array($assignmentID, $userID));
+    }
+
     function moveAssignmentDown(AssignmentID $id)
     {
         $this->db->beginTransaction();
@@ -309,7 +323,16 @@ class PDODataManager extends DataManager
     }
     protected function updateAssignment(Assignment $assignment)
     {
-        $this->updateAssignmentQuery->execute(array($assignment->name, $assignment->assignmentID));
+        $this->updateAssignmentQuery->execute(array($assignment->name, $assignment->password, $assignment->passwordMessage, $assignment->assignmentID));
+    }
+
+    protected function populateGeneralAssignmentFields(Assignment $assignment)
+    {
+        $this->assignmentFieldsQuery->execute(array($assignment->assignmentID));
+        $res = $this->assignmentFieldsQuery->fetch();
+
+        $assignment->password = $res->password;
+        $assignment->passwordMessage = $res->passwordMessage;
     }
 }
 ?>

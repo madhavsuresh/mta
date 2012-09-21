@@ -5,6 +5,8 @@ abstract class Assignment
     public $assignmentID;
     public $name;
     public $assignmenType;
+    public $password = NULL;
+    public $passwordMessage = NULL;
     protected $dataMgr;
 
     function __construct(AssignmentID $assignmentID = NULL, $name, AssignmentDataManager $dataMgr)
@@ -21,6 +23,18 @@ abstract class Assignment
         if(!array_key_exists("assignmentName", $POST))
             throw new Exception("Missing 'assignmentName' in POST");
         $this->name = $POST['assignmentName'];
+
+        if(array_key_exists("assignmentUsePassword", $POST))
+        {
+            $this->password = require_from_array("assignmentPassword", $POST);
+            $this->passwordMessage = require_from_array("assignmentPasswordMessage", $POST);
+        }
+        else
+        {
+            $this->password = null;
+            $this->passwordMessage = null;
+        }
+
         //Pass it off to the subclass
         $this->_loadFromPost($POST);
     }
@@ -30,12 +44,42 @@ abstract class Assignment
         $html  = "<h2>General Settings</h2>";
         $html .= "<table align='left' width='100%'>\n";
         $html .= "<tr><td>Assignment&nbsp;Name</td><td><input type='text' name='assignmentName' id='assignmentName' value='".htmlentities($this->name, ENT_COMPAT|ENT_QUOTES)."' size='60'/></td></tr>\n";
+        $tmp = "";
+        if($this->password)
+            $tmp = "checked";
+        $html .= "<tr><td>Require&nbsp;Password</td><td><input type='checkbox' name='assignmentUsePassword' id='assignmentUsePassword' $tmp /></td></tr>\n";
         $html .= "</table>\n";
+        $html .= "<div id='assignmentPasswordDiv'>";
+        $html .= "<table align='left' width='100%'>\n";
+        $html .= "<tr><td>Password</td><td><input type='text' name='assignmentPassword' id='assignmentPassword' value='".htmlentities($this->password, ENT_COMPAT|ENT_QUOTES)."' size='60'/></td></tr>\n";
+        $html .= "<tr><td>Password Message</td><td></td></tr>\n";
+        $html .= "<tr><td colspan='2'>";
+        $html .= "<textarea name='assignmentPasswordMessage' cols='60' rows='40' class='mceEditor'>\n";
+        $html .= htmlentities($this->passwordMessage, ENT_COMPAT|ENT_HTML401,'UTF-8');
+        $html .= "</textarea><br>\n";
+        $html .= "</table>\n";
+        $html .= "</div>";
         $html .= "<h2>".$this->getAssignmentTypeDisplayName()." Settings</h2>";
 
         $html .= $this->_getFormHTML();
 
         return $html;
+    }
+
+    function getFormScripts()
+    {
+        $code  = "<script type='text/javascript'> $(document).ready(function(){\n";
+        if(!$this->password)
+            $code .= "$('#assignmentPasswordDiv').css('display','none');\n";
+        $code .= "$('#assignmentUsePassword').click(function(){";
+        $code .= "if ($('#assignmentUsePassword').is(':checked')) {";
+        $code .= "   $('#assignmentPasswordDiv').show();";
+        $code .= "} else {";
+        $code .= "   $('#assignmentPasswordDiv').hide();";
+        $code .= "} });";
+        $code .= "});</script>\n";
+        $code .= $this->_getFormScripts();
+        return $code;
     }
 
     function __call($name, $arguments)
@@ -61,13 +105,24 @@ abstract class Assignment
         return $duplicate;
     }
 
+    function getHeaderHTML(UserID $userID)
+    {
+        global $dataMgr;
+        if($this->password && $dataMgr->isStudent($userID) && !$dataMgr->hasEnteredPassword($this->assignmentID, $userID))
+        {
+            //Show a link to the password button
+            return "<a href='".get_redirect_url("enterpassword.php?assignmentid=$this->assignmentID")."'>Enter Password</a><br><br>";
+        }
+        return $this->_getHeaderHTML($userID);
+    }
+
     function _getValidationCode() { return NULL; }
     function _getFormScripts() { return null; }
     function _getFormHTML() { return null; }
 
     function finalizeDuplicateFromBase(Assignment $baseAssignment) {}
 
-    abstract function getHeaderHTML(UserID $userid);
+    abstract function _getHeaderHTML(UserID $userid);
     abstract protected function _duplicate();
     abstract protected function _loadFromPost($POST);
     abstract function getAssignmentTypeDisplayName();

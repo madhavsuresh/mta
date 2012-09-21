@@ -47,7 +47,7 @@ class PeerReviewAssignment extends Assignment
         return "Peer Review";
     }
 
-    function getHeaderHTML(UserID $user)
+    function _getHeaderHTML(UserID $user)
     {
         global $dataMgr, $NOW;
         $html = "";

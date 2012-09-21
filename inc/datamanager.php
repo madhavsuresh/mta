@@ -73,6 +73,7 @@ abstract class DataManager
         require_once(MTA_ROOTPATH .$type."/inc/".$type."assignment.php");
         $assignmentType = $type . "Assignment";
         $assignment = $this->assignmentDataManagers[$type]->loadAssignment($assignmentID);
+        $this->populateGeneralAssignmentFields($assignment);
 
         return $assignment;
     }
@@ -93,6 +94,7 @@ abstract class DataManager
     abstract function getAssignmentHeader(AssignmentID $id);
     abstract function moveAssignmentUp(AssignmentID $id);
     abstract function moveAssignmentDown(AssignmentID $id);
+    protected abstract function populateGeneralAssignmentFields(Assignment $assignment);
     protected abstract function removeAssignmentFromCourse(AssignmentID $id);
     protected abstract function addAssignmentToCourse($name, $type);
     protected abstract function updateAssignment(Assignment $assignment);
@@ -127,10 +129,7 @@ abstract class DataManager
             $assignment->assignmentID = $this->addAssignmentToCourse($assignment->name, $type);
             $added = true;
         }
-        else
-        {
-            $this->updateAssignment($assignment);
-        }
+        $this->updateAssignment($assignment);
 
         //We have to remove the assignment if anything else fails
         try

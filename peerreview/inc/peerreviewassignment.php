@@ -171,13 +171,13 @@ class PeerReviewAssignment extends Assignment
                     $html .= "<a href='".get_redirect_url("peerreview/viewmarks.php?assignmentid=$this->assignmentID")."''>View Marks</a>";
                     #Display this user's marks
                     $html .= "<br><table align='left' width='100%'>\n";
-                    $html .= "<tr><td>Submission:</td><td>". $this->dataMgr->getSubmissionMark($this, $this->getSubmissionID($user))->getSummaryString() ."</td></tr>\n";
+                    $html .= "<tr><td>Submission:</td><td>". $this->dataMgr->getSubmissionMark($this, $this->getSubmissionID($user))->getSummaryString($this->maxSubmissionScore) ."</td></tr>\n";
 
                     $reviewAssignments = $this->dataMgr->getAssignedReviews($this, $user);
                     $id = 0;
                     foreach($reviewAssignments as $matchID)
                     {
-                        $html .= "<tr><td>Review ".($id+1).":</td><td>". $this->dataMgr->getReviewMark($this, $matchID)->getSummaryString()."</td></tr>\n";
+                        $html .= "<tr><td>Review ".($id+1).":</td><td>". $this->dataMgr->getReviewMark($this, $matchID)->getSummaryString($this->maxReviewScore)."</td></tr>\n";
                         $id++;
                     }
 

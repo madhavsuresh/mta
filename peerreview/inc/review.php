@@ -15,7 +15,7 @@ class Review
     function getHTML($showHiddenQuestions=false)
     {
         #The first line contains the score that this review gave, we need to gobble it up
-        $html = "<h2>Score: ".precisionFloat($this->getScore())."<h2>\n";
+        $html = "<h2>Score for Submission: ".precisionFloat($this->getScore())."<h2>\n";
 
         #Now we can start loading up questions
         foreach($this->assignment->getReviewQuestions() as $question)

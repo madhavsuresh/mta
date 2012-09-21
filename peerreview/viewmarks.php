@@ -57,8 +57,8 @@ try
             $html .= $submission->getHTML();
             if($showSubmissionMark)
             {
-                $html .= "<h2>Mark</h2>\n";
-                $html .= $assignment->getSubmissionMark($submissionID)->getHTML();
+                $html .= "<h2 class='altHeader'>Submission Mark</h2>\n";
+                $html .= $assignment->getSubmissionMark($submissionID)->getHTML($assignment->maxSubmissionScore);
             }
 
             $reviews = $assignment->getReviewsForSubmission($submissionID);
@@ -70,8 +70,8 @@ try
                 {
                     $html .= "<h1>My Review</h1>\n";
                     $html .= $review->getHTML();
-                    $html .= "<h2>Mark</h2>\n";
-                    $html .= $assignment->getReviewMark($review->matchID)->getHTML();
+                    $html .= "<h2 class='altHeader'>My Review Mark</h2>\n";
+                    $html .= $assignment->getReviewMark($review->matchID)->getHTML($assignment->maxReviewScore);
                     $reviewCount++;
                     break;
                 }
@@ -115,8 +115,8 @@ try
                         $html .= $review->getHTML();
                         if($showReviewMarks && !$dataMgr->isInstructor($review->reviewerID))
                         {
-                            $html .= "<h2>Mark</h2>\n";
-                            $html .= $assignment->getReviewMark($review->matchID)->getHTML();
+                            $html .= "<h2 class='altHeader'>Review $reviewCount Mark</h2>\n";
+                            $html .= $assignment->getReviewMark($review->matchID)->getHTML($assignment->maxReviewScore);
                         }
                     }
                     $reviewIndex++;

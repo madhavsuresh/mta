@@ -39,11 +39,13 @@ class Mark
         return NULL;
     }
 
-    function getHTML()
+    function getHTML($outOf=null)
     {
         if($this->isValid)
         {
-            $html = "$this->score\n";
+            $html = "$this->score";
+            if(!is_null($outOf))
+                $html .= "/$outOf";
             if($this->isAutomatic) {
                 $html .= "<br/><br/>This mark was assigned automatically\n";
             } else if($this->comments){
@@ -55,11 +57,13 @@ class Mark
         return $html;
     }
 
-    function getSummaryString()
+    function getSummaryString($outOf=null)
     {
         if($this->isValid)
         {
             $str = precisionFloat($this->score);
+            if(!is_null($outOf))
+                $str .= "/$outOf";
             if(strlen($this->comments) != 0)
                 $str .= "+";
             return $str;

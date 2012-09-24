@@ -61,15 +61,13 @@ class PeerReviewAssignment extends Assignment
             $html .= "</tr></table>\n";
             $html .= "<table width=100%><tr>\n";
 
-            //$this->assignmentStatistics();
-            $numSubmissions   = 0;//$this->numSubmissions();
-            $numReviews  = 0;//$this->numUserReviews();
+            $stats = $this->getAssignmentStatistics();
 
-            $html .= "<td width='33%'><strong>Submission</strong> ($numSubmissions)<br/>\n";
+            $html .= "<td width='33%'><strong>Submission</strong> ($stats->numSubmissions/$stats->numPossibleSubmissions)<br/>\n";
             $html .= "<table align='left'><tr><td>Start:</td><td id='submissionStartDate$this->assignmentID'/></tr>\n";
             $html .= "<tr><td>Due:</td><td id='submissionStopDate$this->assignmentID'/></tr></table></td>\n";
 
-            $html .= "<td width='33%'><strong>Reviews</strong> ($numReviews)<br/>\n";
+            $html .= "<td width='33%'><strong>Reviews</strong> ($stats->numStudentReviews/$stats->numPossibleStudentReviews)<br/>\n";
             $html .= "<table align='left'><tr><td>Start:</td><td id='reviewStartDate$this->assignmentID'/></tr>\n";
             $html .= "<tr><td>Due:</td><td id='reviewStopDate$this->assignmentID'/></tr></table></td>\n";
 
@@ -78,7 +76,8 @@ class PeerReviewAssignment extends Assignment
             $html .= "<tr><td colspan='2'><a href='".get_redirect_url("peerreview/index.php?assignmentid=$this->assignmentID")."'>Go to marking page</a></td></tr></table></td>\n";
 
             $html .= "</tr></table>\n";
-            $html .= "<table width='100%'><tr><td>Appeal Stop Date: <span id='appealStopDate$this->assignmentID'></span></td></tr></table>\n";
+            $html .= "<table width='100%'><tr><td>Appeal Stop Date: <span id='appealStopDate$this->assignmentID'></span></td></tr>";
+            $html .= "<tr><td>There are $stats->numPendingAppeals pending appeals</td></tr></table>\n";
             $html .= "<script type='text/javascript'>\n";
             $html .= set_element_to_date("submissionStartDate$this->assignmentID", $this->submissionStartDate, "html", $this->dateFormat, false, true);
             $html .= set_element_to_date("submissionStopDate$this->assignmentID", $this->submissionStopDate, "html", $this->dateFormat, false, true);
@@ -180,8 +179,15 @@ class PeerReviewAssignment extends Assignment
                         $html .= "<tr><td>Review ".($id+1).":</td><td>". $this->dataMgr->getReviewMark($this, $matchID)->getSummaryString($this->maxReviewScore)."</td></tr>\n";
                         $id++;
                     }
-
                     $html .= "</table>";
+
+                    $hasUpdate = false;
+                    foreach($this->dataMgr->getMatchesForSubmission($this, $this->getSubmissionID($user)) as $matchID)
+                    {
+                        $hasUpdate |= $this->dataMgr->hasNewAppealMessage($this, $matchID);
+                    }
+                    if($hasUpdate)
+                        $html .= "(Appeal Updated)\n";
                 }
                 else
                 {
@@ -451,6 +457,27 @@ class PeerReviewAssignment extends Assignment
         set_element_to_date($startID, $startDate, "val", "MM/DD/YYYY HH:mm", false, true).
         set_element_to_date($stopID, $stopDate, "val", "MM/DD/YYYY HH:mm", false, true).
        "</script>";
+    }
+
+    function getAssignmentsBefore($maxAssignments = 4)
+    {
+        global $dataMgr;
+        //Get all the assignments
+        $assignmentHeaders = $dataMgr->getAssignmentHeaders();
+        $assignments = array();
+        foreach($assignmentHeaders as $header)
+        {
+            if($header->assignmentType == "peerreview")
+            {
+                $assignment = $dataMgr->getAssignment($header->assignmentID, "peerreview");
+                if($assignment->reviewStopDate < $this->reviewStartDate)
+                    $assignments[] = $assignment;
+            }
+        }
+        //Sort the assignments based on their date
+        usort($assignments, function($a, $b) { return $a->reviewStopDate < $b->reviewStopDate; } );
+
+        return array_splice($assignments, 0, $maxAssignments);
     }
 
 };

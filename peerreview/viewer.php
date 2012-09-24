@@ -37,6 +37,15 @@ try
             $content .= "<h2>Mark</h2>\n";
             $content .= $assignment->getReviewMark($matchID)->getHTML();
         }
+        else if($type == "spotcheck")
+        {
+            $matchID = new SubmissionID(require_from_get("submissionid$i"));
+            $content .= "<h1>Spot Check</h1>";
+            $content .= "<form action='".get_redirect_url("peerreview/submitspotcheck.php?assignmentid=$assignment->assignmentID")."' method='post'>\n";
+            $content .= $assignment->getSpotCheck($matchID)->getFormHTML();
+            $content .= "<br><br><input type='submit' value='Save' />\n";
+            $content .= "</form>\n";
+        }
         else
         {
             $content .= "<h1>Can't display item $i</h1>\n";

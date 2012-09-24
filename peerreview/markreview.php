@@ -18,6 +18,10 @@ try
     $content .= "<h1>".$dataMgr->getUserDisplayName($review->reviewerID)."'s Review</h1>\n";
     $content .= $review->getHTML(true);
 
+    $content .= "<h1>".$dataMgr->getUserDisplayName($review->reviewerID)."'s Current Review Score</h1>\n";
+    //TODO: Remove this hardcoded bit
+    $content .= precisionFloat(compute_peer_review_score_for_assignments($review->reviewerID, $assignment->getAssignmentsBefore(4)))."%";
+
     $content .= "<form id='mark' action='".get_redirect_url("peerreview/submitmark.php?assignmentid=$assignment->assignmentID&type=review&matchid=$matchID")."' method='post'>\n";
     $content .= $assignment->getReviewMark($matchID)->getFormHTML();
     $content .= "<br><br><input type='submit' value='Submit' />\n";

@@ -309,6 +309,13 @@ class PDODataManager extends DataManager
         $this->db->commit();
     }
 
+    function getCourses()
+    {
+        $sh = $this->db->prepare("SELECT name, displayName, courseID FROM course;");
+        $sh->execute(array());
+        return $sh->fetchall();
+    }
+
     protected function removeAssignmentFromCourse(AssignmentID $id)
     {
         $this->removeAssignmentFromCourseQuery->execute(array($id));

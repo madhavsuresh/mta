@@ -39,10 +39,13 @@ try
     $scoreMap = $assignment->getMatchScoreMap();
     $deniedUsers = $assignment->getDeniedUsers();
     $appealMap = $assignment->getReviewAppealMap();
+    $spotCheckMap = $assignment->getSpotCheckMap();
+    $stats = $assignment->getAssignmentStatistics();
+    $displayMap = $dataMgr->getUserDisplayMap();
 
     //Start making the big table
-    //$content .= "<h1>Submissions (".$assignment->numSubmissions()."/".$assignment->numPossibleSubmissions().") and Reviews (".$assignment->numUserReviews()."/".$assignment->numPossibleReviews().")</h1>";
-    //$content .= "There are ".$assignment->numUnmarkedSubmissions()." unmarked submissions and ".$assignment->numUnmarkedReviews()." unmarked reviews <br>\n";
+    $content .= "<h1>Submissions (".$stats->numSubmissions."/".$stats->numPossibleSubmissions.") and Reviews (".$stats->numStudentReviews."/".$stats->numPossibleStudentReviews.")</h1>";
+    $content .= "There are ".$stats->numUnmarkedSubmissions." unmarked submissions, ".$stats->numUnmarkedReviews." unmarked reviews, ".$stats->numPendingAppeals." pending appeals and ".$stats->numPendingSpotChecks." pending spot checks<br><br>\n";
 
     if($hideBlank) {
         $content .= "<a href='".get_redirect_url("?assignmentid=$assignment->assignmentID&hideblank=0&hideedit=$hideEdit")."'>Show Blank Submissions</a>\n";
@@ -59,7 +62,7 @@ try
     $content .= "<table width='100%'>\n";
     $currentRowIndex = 0;
     $currentRowType = 0;
-    foreach($dataMgr->getUserDisplayMap() as $authorID => $authorName)
+    foreach($displayMap as $authorID => $authorName)
     {
         $authorID = new UserID($authorID);
         if(!$dataMgr->isStudent($authorID) || $assignment->deniedUser($authorID) || ($hideBlank && array_key_exists($authorID->id, $submissionAuthors)))
@@ -174,9 +177,9 @@ try
         {
             $content .= "<table>";
             $args = "type0=submission&submissionid0=$submissionID";
+            $i=1;
             if(array_key_exists($submissionID->id, $reviewMap))
             {
-                $i=1;
                 foreach($reviewMap[$submissionID->id] as $reviewObj)
                 {
                     if($reviewObj->exists)
@@ -188,7 +191,12 @@ try
             }
             $content .= "<tr><td><a href='viewer.php?assignmentid=$assignment->assignmentID&$args'>View All Reviews</a></td></tr>";
             $content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid=$submissionID&reviewer=anonymous&close=1")."'>Add Anonymous Review</a></td></tr>\n";
-            $content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid=$submissionID&reviewer=instructor&close=1")."'>Add Instructor Review</a></td></tr>\n";
+            $content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid$i=$submissionID&reviewer=instructor&close=1")."'>Add Instructor Review</a></td></tr>\n";
+            if(array_key_exists($submissionID->id, $spotCheckMap))
+            {
+                $spotCheck = $spotCheckMap[$submissionID->id];
+                $content .= "<tr><td><br><a  target='_blank' href='viewer.php?assignmentid=$assignment->assignmentID&$args&type$i=spotcheck&submissionid$i=$submissionID'>Spot check by ".$dataMgr->getUserDisplayName($spotCheck->checkerID)."<br>(".$spotCheck->getStatusString().")</a></td></tr>";
+            }
             $content .= "</table>";
         }
 

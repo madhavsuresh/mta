@@ -32,8 +32,6 @@ class AssignReviewsPeerReviewScript extends Script
     function executeAndGetResult()
     {
         global $dataMgr;
-        //Get all the assignments
-        $assignmentHeaders = $dataMgr->getAssignmentHeaders();
 
         $currentAssignment = get_peerreview_assignment();
 
@@ -44,19 +42,7 @@ class AssignReviewsPeerReviewScript extends Script
         $this->seed = require_from_post("seed");
         $this->scoreMap = array();
 
-        $assignments = array();
-        foreach($assignmentHeaders as $header)
-        {
-            if($header->assignmentType == "peerreview")
-            {
-                $assignment = $dataMgr->getAssignment($header->assignmentID, "peerreview");
-                if($assignment->reviewStopDate < $currentAssignment->reviewStartDate)
-                    $assignments[] = $assignment;
-            }
-        }
-        //Sort the assignments based on their date
-        usort($assignments, function($a, $b) { return $a->reviewStopDate < $b->reviewStopDate; } );
-
+        $assignments = $currentAssignment->getAssignmentsBefore($windowSize);
         $userNameMap = $dataMgr->getUserDisplayMap();
         $authors = $currentAssignment->getAuthorSubmissionMap();
         $assignmentIndependent = $currentAssignment->getIndependentUsers();
@@ -65,19 +51,7 @@ class AssignReviewsPeerReviewScript extends Script
         $supervised = array();
         foreach($authors as $author => $essayID)
         {
-            $scores = array();
-            for($i = 0; $i < sizeof($assignments) && $i < $windowSize; $i++)
-            {
-                $assignment = $assignments[$i];
-                foreach($assignment->getAssignedReviews(new UserID($author)) as $matchID)
-                {
-                    $scores[] = $assignment->getReviewMark($matchID)->getScore() * 1.0 / $assignment->maxReviewScore;
-                }
-            }
-            if(sizeof($scores))
-                $score = array_reduce($scores, function($a, $b) { return $a+$b; }) * 1.0 / sizeof($scores);
-            else
-                $score = 0;
+            $score = compute_peer_review_score_for_assignments(new UserID($author), $assignments);
 
             if(false && array_key_exists($author, $assignmentIndependent))
                 $independents[$author] = $score;
@@ -96,8 +70,6 @@ class AssignReviewsPeerReviewScript extends Script
         $html .= $this->getTableForAssignment($independentAssignment, $independents);
         $html .= "<h2>Supervised</h2>\n";
         $html .= $this->getTableForAssignment($supervisedAssignment, $supervised);
-
-
 
         foreach($independentAssignment as $author => $reviewers)
             $reviewerAssignment[$authors[$author]->id] = $reviewers;
@@ -134,7 +106,7 @@ class AssignReviewsPeerReviewScript extends Script
         for($i = 0; $i < $this->maxAttempts; $i++)
         {
             try {
-                $res = $this->_getReviewAssignment($students); 
+                $res = $this->_getReviewAssignment($students);
                 return $res;
             }catch(Exception $e){
                 //They didn't get it

@@ -34,19 +34,7 @@ class ComputeIndependentsPeerReviewScript extends Script
         $windowSize = require_from_post("windowsize");
         $independentThreshold = require_from_post("threshold");
 
-        $assignments = array();
-        foreach($assignmentHeaders as $header)
-        {
-            if($header->assignmentType == "peerreview")
-            {
-                $assignment = $dataMgr->getAssignment($header->assignmentID, "peerreview");
-                if($assignment->reviewStopDate < $currentAssignment->reviewStartDate)
-                    $assignments[] = $assignment;
-            }
-        }
-        //Sort the assignments based on their date
-        usort($assignments, function($a, $b) { return $a->reviewStopDate < $b->reviewStopDate; } );
-
+        $assignments = $currentAssignment->getAssignmentsBefore($windowSize);
         $userNameMap = $dataMgr->getUserDisplayMap();
         $students = $dataMgr->getStudents();
         $independents = array();
@@ -57,19 +45,7 @@ class ComputeIndependentsPeerReviewScript extends Script
         foreach($students as $student)
         {
             $html .= "<tr class='rowType$currentRowType'><td>".$userNameMap[$student->id]."</td><td>";
-            $scores = array();
-            for($i = 0; $i < sizeof($assignments) && $i < $windowSize; $i++)
-            {
-                $assignment = $assignments[$i];
-                foreach($assignment->getAssignedReviews($student) as $matchID)
-                {
-                    $scores[] = $assignment->getReviewMark($matchID)->getScore() * 1.0 / $assignment->maxReviewScore;
-                }
-            }
-            if(sizeof($scores))
-                $score= array_reduce($scores, function($a, $b) { return $a+$b; })*100.0 / sizeof($scores);
-            else
-                $score = 0;
+            $score = compute_peer_review_score_for_assignments($student, $assignments);
             $html .= precisionFloat($score);
             $html .= "</td><td>\n";
             if($score >= $independentThreshold)

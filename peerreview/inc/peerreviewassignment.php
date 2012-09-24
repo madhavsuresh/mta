@@ -159,6 +159,8 @@ class PeerReviewAssignment extends Assignment
                     else
                     {
                         $html .= "No assigned reviews";
+                        //TODO: Make this an option
+                        $html .= "<br><a href='".get_redirect_url("peerreview/requestpeerreviews.php?assignmentid=$this->assignmentID")."'>Request Reviews</a>";
                     }
                 }
                 $html .= "</td>\n";

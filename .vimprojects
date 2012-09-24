@@ -5,6 +5,7 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
  index.php
  login.php
  logout.php
+ enterpassword.php
  runscript.php
  register.php
  inc=inc{
@@ -38,10 +39,12 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
   }
  }
  peerreview=peerreview{
+  assignmarks.php
+  copymarks.php
   delete.php
-  editdeniedindependentusers.php
   editappeal.php
   editappealmessage.php
+  editdeniedindependentusers.php
   editpeerreview.php
   editreview.php
   editreviewquestions.php
@@ -50,13 +53,14 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
   markreview.php
   marksubmission.php
   reviewerassignment.php
-  submitmark.php
   submitappeal.php
+  submitmark.php
   submitreview.php
   submitsubmission.php
+  submitspotcheck.php
+  requestpeerreviews.php
   viewer.php
   viewmarks.php
-  assignmarks.php
   scripts=scripts{
    assignreviews.php
    computeindependents.php
@@ -68,6 +72,7 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
    common.php
    essay.php
    mark.php
+   spotcheck.php
    peerreviewassignment.php
    review.php
    reviewquestions.php

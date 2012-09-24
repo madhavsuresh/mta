@@ -65,7 +65,7 @@ try
     foreach($displayMap as $authorID => $authorName)
     {
         $authorID = new UserID($authorID);
-        if(!$dataMgr->isStudent($authorID) || $assignment->deniedUser($authorID) || ($hideBlank && array_key_exists($authorID->id, $submissionAuthors)))
+        if(!$dataMgr->isStudent($authorID) || $assignment->deniedUser($authorID) || ($hideBlank && !array_key_exists($authorID->id, $submissionAuthors)))
         {
             continue;
         }

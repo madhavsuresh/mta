@@ -24,7 +24,7 @@ try
     asort($authors, SORT_NUMERIC);
 
     //$instructors = $dataMgr->getInstructors();
-    $instructors = array(new UserID(120), new UserID(126), new UserID(141), new UserID(141));
+    $instructors = array(new UserID(120), new UserID(120), new UserID(126),new UserID(126), new UserID(123),new UserID(123),new UserID(141), new UserID(141), new UserID(141), new UserID(141));
     $i = 0;
 
     function createMatch($sub, $user)

@@ -66,6 +66,8 @@ try
             //Do the first pass, and see if we can find this user's submission
             foreach($reviews as $review)
             {
+                if(sizeof($review->answers) == 0)
+                    continue;
                 if($review->reviewerID->id == $USERID->id)
                 {
                     $html .= "<h1>My Review</h1>\n";
@@ -86,6 +88,8 @@ try
                 {
                     if($review->reviewerID->id != $USERID->id)
                     {
+                        if(sizeof($review->answers) == 0)
+                            continue;
                         $reviewCount++;
 
                         if($dataMgr->isInstructor($review->reviewerID)) {

@@ -42,9 +42,9 @@ class PDODataManager extends DataManager
         $this->getAssignmentHeadersQuery = $this->db->prepare("SELECT assignmentID, name, assignmentType, displayPriority FROM assignments WHERE courseID = ? ORDER BY displayPriority DESC;");
         $this->getAssignmentHeaderQuery = $this->db->prepare("SELECT name, assignmentType, displayPriority FROM assignments WHERE assignmentID = ?;");
         $this->getUsernameQuery = $this->db->prepare("SELECT username FROM users WHERE userID=?;");
-        $this->getUsersQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? ORDER BY lastName;");
-        $this->getStudentsQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? && userType = 'student' ORDER BY lastName;");
-        $this->getUserDisplayMapQuery = $this->db->prepare("SELECT userID, firstName, lastName FROM users WHERE courseID=? ORDER BY lastName;");
+        $this->getUsersQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? ORDER BY lastName, firstName;");
+        $this->getStudentsQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? && userType = 'student' ORDER BY lastName, firstName;");
+        $this->getUserDisplayMapQuery = $this->db->prepare("SELECT userID, firstName, lastName FROM users WHERE courseID=? ORDER BY lastName, firstName;");
         $this->getUserDisplayNameQuery = $this->db->prepare("SELECT firstName, lastName FROM users WHERE userID=?;");
         $this->numUserTypeQuery = $this->db->prepare("SELECT COUNT(userID) FROM users WHERE courseID=? && userType=?;");
         $this->assignmentExistsQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE assignmentID=?;");

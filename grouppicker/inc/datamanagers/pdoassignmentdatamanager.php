@@ -110,7 +110,7 @@ class PDOGroupPickerAssignmentDataManager extends AssignmentDataManager
 
     function getGroups(GroupPickerAssignment $assignment)
     {
-        $sh = $this->db->prepare("SELECT userID, groupIndex FROM group_picker_assignment_selections WHERE assignmentID=?;");
+        $sh = $this->db->prepare("SELECT groups.userID, groupIndex FROM group_picker_assignment_selections groups JOIN users ON users.userID = groups.userID WHERE assignmentID=? ORDER BY lastName, firstName;");
         $sh->execute(array($assignment->assignmentID));
 
         $groups = array();

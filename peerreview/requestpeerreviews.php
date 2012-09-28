@@ -15,6 +15,11 @@ try
     $possibleSubmissions = array();
     $userIsIndependent = array_key_exists($USERID, $independents);
 
+    if(sizeof($assignment->getAssignedReviews($USERID)) != 0)
+    {
+        redirect_to_main();
+    }
+
     foreach($authorMap as $author => $submissionID)
     {
         if($userIsIndependent == array_key_exists($author, $independents))

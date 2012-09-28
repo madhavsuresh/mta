@@ -68,7 +68,7 @@ class EssaySubmission extends Submission
             $html .= "<div class=errorMsg><div class='errorField' id='error_topic'></div></div><br>\n";
         }
 
-        $html .= "<textarea name='text' cols='60' rows='40' class='mceEditor' id='essayEdit'>\n";
+        $html .= "<textarea name='text' cols='60' rows='40' class='mceEditor' id='essayEdit' accept-charset='utf-8'>\n";
         $html .= htmlentities($this->text, ENT_COMPAT|ENT_HTML401,'UTF-8');
         $html .= "</textarea><br>\n";
         $html .= "<div class=errorMsg><div class='errorField' id='error_essay'></div></div><br>\n";

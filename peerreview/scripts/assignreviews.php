@@ -53,7 +53,7 @@ class AssignReviewsPeerReviewScript extends Script
         {
             $score = compute_peer_review_score_for_assignments(new UserID($author), $assignments);
 
-            if(false && array_key_exists($author, $assignmentIndependent))
+            if(array_key_exists($author, $assignmentIndependent))
                 $independents[$author] = $score;
             else
                 $supervised[$author] = $score;

@@ -115,7 +115,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
                 $assignment->saveSubmissionMark(new Mark($medScore, null, true), $submissionID);
 
                 //Do we need to assign a spot check to this one?
-                if(1.0*$medScore/$assignment->maxSubmissionScore >= $highSpotCheckThreshold || 1.0*mt_rand()/$mt_getrandmax() <= $randomSpotCheckProb )
+                if(1.0*$medScore/$assignment->maxSubmissionScore >= $highSpotCheckThreshold || 1.0*mt_rand()/mt_getrandmax() <= $randomSpotCheckProb )
                 {
                     $pendingSpotChecks[] = $submissionID->id;
                 }

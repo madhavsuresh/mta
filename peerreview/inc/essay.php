@@ -39,6 +39,13 @@ class EssaySubmission extends Submission
         $code .= "if($('#topicSelect').val() == 'NULL') {";
         $code .= "$('#error_topic').html('You must select a topic');\n";
         $code .= "$('#error_topic').parent().show();\n";
+        $code .= "error = true;}\n";
+
+        $code .= "$('#error_essay').html('').parent().hide();\n";
+        //TODO: Make this a setting in an essay
+        $code .= "if(getStats('essayEdit').words > 350) {";
+        $code .= "$('#error_essay').html('Essays must not be longer than 300 words');\n";
+        $code .= "$('#error_essay').parent().show();\n";
         $code .= "error = true;}";
         return $code;
     }
@@ -61,9 +68,10 @@ class EssaySubmission extends Submission
             $html .= "<div class=errorMsg><div class='errorField' id='error_topic'></div></div><br>\n";
         }
 
-        $html .= "<textarea name='text' cols='60' rows='40' class='mceEditor'>\n";
+        $html .= "<textarea name='text' cols='60' rows='40' class='mceEditor' id='essayEdit'>\n";
         $html .= htmlentities($this->text, ENT_COMPAT|ENT_HTML401,'UTF-8');
         $html .= "</textarea><br>\n";
+        $html .= "<div class=errorMsg><div class='errorField' id='error_essay'></div></div><br>\n";
 
         return $html;
     }

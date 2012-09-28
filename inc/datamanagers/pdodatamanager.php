@@ -223,8 +223,8 @@ class PDODataManager extends DataManager
 
     function getInstructors()
     {
-        $sh = $this->prepareQuery("getInstructorsQuery", "SELECT userID FROM users WHERE userType='instructor' && course=?;");
-        $sh->execute($this->courseID);
+        $sh = $this->prepareQuery("getInstructorsQuery", "SELECT userID FROM users WHERE userType='instructor' && courseID=?;");
+        $sh->execute(array($this->courseID));
         $instructors = array();
         while($res = $sh->fetch())
             $instructors[] = $res->userID;

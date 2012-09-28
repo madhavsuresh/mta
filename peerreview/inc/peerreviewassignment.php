@@ -461,6 +461,11 @@ class PeerReviewAssignment extends Assignment
        "</script>";
     }
 
+    function getPasswordLockedHTML()
+    {
+        return "<a href='".get_redirect_url("peerreview/viewquestion.php?assignmentid=$this->assignmentID")."'>View Question</a><br>";
+    }
+
     function getAssignmentsBefore($maxAssignments = 4)
     {
         global $dataMgr;

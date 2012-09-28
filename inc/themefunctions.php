@@ -193,6 +193,15 @@ $code = "<script type='text/javascript'>
 		],
 
 	});
+    // Returns text statistics for the specified editor by id
+    function getStats(id) {
+        var body = tinymce.get(id).getBody(), text = tinymce.trim(body.innerText || body.textContent);
+
+        return {
+            chars: text.length,
+            words: text.split(/[\w\u2019\'-]+/).length
+        };
+    }
 </script>";
 
 	if ($echo) {

@@ -111,10 +111,14 @@ abstract class Assignment
         if($this->password && $dataMgr->isStudent($userID) && !$dataMgr->hasEnteredPassword($this->assignmentID, $userID))
         {
             //Show a link to the password button
-            return "<a href='".get_redirect_url("enterpassword.php?assignmentid=$this->assignmentID")."'>Enter Password</a><br><br>";
+            $html = $this->getPasswordLockedHTML();;
+            $html .= "<a href='".get_redirect_url("enterpassword.php?assignmentid=$this->assignmentID")."'>Enter Password</a><br><br>";
+            return $html;
         }
         return $this->_getHeaderHTML($userID);
     }
+
+    function getPasswordLockedHTML() { }
 
     function _getValidationCode() { return NULL; }
     function _getFormScripts() { return null; }

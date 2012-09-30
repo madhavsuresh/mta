@@ -192,7 +192,7 @@
                 {
                     $html .= " checked";
                 }
-                $html .= ">&nbsp;".cleanString($this->options[$i]->label)."</td>\n";
+                $html .= "><label for='qid$this->questionID"."_$i'>&nbsp;".cleanString($this->options[$i]->label)."</label></td>\n";
             }
             $html .= "</tr></table>\n";
             return $html;

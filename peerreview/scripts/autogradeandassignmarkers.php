@@ -94,7 +94,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             $authorID = new UserID($authorID);
 
             //We don't want to overwrite anything
-            if($assignment->getSubmissionMark($submissionID)->isValid)
+            if($assignment->getSubmissionMark($submissionID)->isValid && !$assignment->getSubmissionMark($submissionID)->isAutomatic)
                 continue;
 
             $reviews = array_filter($reviewMap[$submissionID->id], function($x) { return $x->exists; });
@@ -120,7 +120,10 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
                 //Do we need to assign a spot check to this one?
                 if(1.0*$medScore/$assignment->maxSubmissionScore >= $highSpotCheckThreshold || 1.0*mt_rand()/mt_getrandmax() <= $randomSpotCheckProb )
                 {
-                    $pendingSpotChecks[] = $submissionID->id;
+                    $obj = new stdClass;
+                    $obj->submissionID = $submissionID->id;
+                    $obj->authorID = $authorID->id;
+                    $pendingSpotChecks[] = $obj;
                 }
 
                 //Update the reviewer's  marks
@@ -241,6 +244,16 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             //Is there an instructor already assigned to this paper?
             if(array_reduce($reviewMap[$submissionID], function($res,$item)use(&$instructors){return in_array($item->reviewerID->id, $instructors); }))
                 continue;
+
+            //If there already is something that has been assigned, skip it
+            try
+            {
+                $check = $assignment->getSpotCheck(new SubmissionID($submissionID));
+                if($check->status != "pending")
+                    continue;
+            }catch(Exception $e){
+                //We failed to find a spot check
+            }
 
             $assignment->saveSpotCheck(new SpotCheck(new SubmissionID($submissionID), new UserID($instructorID)));
 

@@ -368,7 +368,7 @@ class PeerReviewAssignment extends Assignment
 
     function finalizeDuplicateFromBase(Assignment $baseAssignment)
     {
-        foreach($baseAssignment->getReviewQuestions() as $question)
+        foreach(array_reverse($baseAssignment->getReviewQuestions()) as $question)
         {
             $question->questionID = NULL;
             $this->dataMgr->saveReviewQuestion($this, $question);

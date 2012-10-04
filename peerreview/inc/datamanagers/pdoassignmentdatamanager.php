@@ -903,7 +903,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $sh->execute(array($assignment->assignmentID));
         $stats->numUnmarkedReviews = $stats->numStudentReviews - $sh->fetch()->c;
 
-        $sh = $this->prepareQuery("numPendingAppealsQuery","SELECT COUNT(matches.matchID) as c FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON (messages.appealMessageID < messages2.appealMessageID) && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && users.userType='student';");
+        $sh = $this->prepareQuery("numPendingAppealsQuery","SELECT COUNT(matches.matchID) as c FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID && messages.matchID = messages2.matchID && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && users.userType='student';");
         $sh->execute(array($assignment->assignmentID));
         $stats->numPendingAppeals = $sh->fetch()->c;
 
@@ -1006,7 +1006,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getReviewAppealMap(PeerReviewAssignment $assignment)
     {
-        $sh = $this->prepareQuery("getReviewAppealMapQuery", "SELECT matches.matchID, users.userType='student' as needsResponse FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON (messages.appealMessageID < messages2.appealMessageID) && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && messages.appealType = 'review';");
+        $sh = $this->prepareQuery("getReviewAppealMapQuery", "SELECT matches.matchID, users.userType='student' as needsResponse FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID && messages.matchID = messages2.matchID && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && messages.appealType = 'review';");
         $sh->execute(array($assignment->assignmentID));
 
         $map = array();
@@ -1019,7 +1019,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getReviewMarkAppealMap(PeerReviewAssignment $assignment)
     {
-        $sh = $this->prepareQuery("getReviewMarkAppealMapQuery", "SELECT matches.matchID, users.userType='student' as needsResponse FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON (messages.appealMessageID < messages2.appealMessageID) && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && messages.appealType = 'reviewmark';");
+        $sh = $this->prepareQuery("getReviewMarkAppealMapQuery", "SELECT matches.matchID, users.userType='student' as needsResponse FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID && messages.matchID = messages2.matchID && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && messages.appealType = 'reviewmark';");
         $sh->execute(array($assignment->assignmentID));
 
         $map = array();

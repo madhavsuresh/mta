@@ -16,6 +16,10 @@ class DownloadSubmissionsPeerReviewScript extends Script
     {
         return "(None)";
     }
+    function hasParams()
+    {
+        return false;
+    }
     function executeAndGetResult()
     {
         global $dataMgr;
@@ -26,7 +30,8 @@ class DownloadSubmissionsPeerReviewScript extends Script
         $zip = new zipfile();
         foreach($authors as $author => $submissionID)
         {
-            $zip->addFile($assignment->getSubmission($submissionID)->getHTML(), $userNameMap[$author].".html");
+
+            $zip->addFile("<html><body>".$assignment->getSubmission($submissionID)->getHTML()."</body></html>", $userNameMap[$author].".html");
         }
 
         $zippedfile = $zip->file();

@@ -1,5 +1,5 @@
 <?php
-include("inc/common.php");
+require_once("inc/common.php");
 try
 {
     $title .= " | Mark Assignment";
@@ -39,6 +39,7 @@ try
     $scoreMap = $assignment->getMatchScoreMap();
     $deniedUsers = $assignment->getDeniedUsers();
     $appealMap = $assignment->getReviewAppealMap();
+    $markAppealMap = $assignment->getReviewMarkAppealMap();
     $spotCheckMap = $assignment->getSpotCheckMap();
     $stats = $assignment->getAssignmentStatistics();
     $displayMap = $dataMgr->getUserDisplayMap();
@@ -123,7 +124,7 @@ try
         {
             foreach($reviewMap[$submissionID->id] as $reviewObj)
             {
-                $reviewerName = $dataMgr->getUserDisplayName($reviewObj->reviewerID);
+                $reviewerName = $displayMap[$reviewObj->reviewerID->id];
                 $content .= "<tr><td>";
 
                 if($reviewObj->exists)
@@ -155,7 +156,17 @@ try
                             $appealText = "Unanswered Appeal";
                         else
                             $appealText = "Appeal";
-                        $content .= "</tr><td colspan='2'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID")."'>$appealText</a></td>";
+                        $content .= "</tr><td colspan='2'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=review")."'>$appealText</a></td>";
+                    }
+                    //Is there an appeal for this review's mark?
+                    if(array_key_exists($reviewObj->matchID->id, $markAppealMap))
+                    {
+                        //Is this an appeal that needs a response?
+                        if($markAppealMap[$reviewObj->matchID->id])
+                            $appealText = "Unanswered Mark Appeal";
+                        else
+                            $appealText = "Mark Appeal";
+                        $content .= "</tr><td colspan='2'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=reviewmark")."'>$appealText</a></td>";
                     }
                     $content .= "</tr></table></td></tr>";
                 }
@@ -191,11 +202,11 @@ try
             }
             $content .= "<tr><td><a href='viewer.php?assignmentid=$assignment->assignmentID&$args'>View All Reviews</a></td></tr>";
             $content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid=$submissionID&reviewer=anonymous&close=1")."'>Add Anonymous Review</a></td></tr>\n";
-            $content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid$i=$submissionID&reviewer=instructor&close=1")."'>Add Instructor Review</a></td></tr>\n";
+            $content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid=$submissionID&reviewer=instructor&close=1")."'>Add Instructor Review</a></td></tr>\n";
             if(array_key_exists($submissionID->id, $spotCheckMap))
             {
                 $spotCheck = $spotCheckMap[$submissionID->id];
-                $content .= "<tr><td><br><a  target='_blank' href='viewer.php?assignmentid=$assignment->assignmentID&$args&type$i=spotcheck&submissionid$i=$submissionID'>Spot check by ".$dataMgr->getUserDisplayName($spotCheck->checkerID)."<br>(".$spotCheck->getStatusString().")</a></td></tr>";
+                $content .= "<tr><td><br><a  target='_blank' href='viewer.php?assignmentid=$assignment->assignmentID&$args&type$i=spotcheck&submissionid$i=$submissionID'>Spot check by ".$displayMap[$spotCheck->checkerID->id]."<br>(".$spotCheck->getStatusString().")</a></td></tr>";
             }
             $content .= "</table>";
         }

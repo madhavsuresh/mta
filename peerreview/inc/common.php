@@ -36,7 +36,6 @@ class MatchID extends MechanicalTA_ID
 {
 }
 
-
 function compute_peer_review_score_for_assignments(UserID $student, $assignments)
 {
     $scores = array();
@@ -44,11 +43,13 @@ function compute_peer_review_score_for_assignments(UserID $student, $assignments
     {
         foreach($assignment->getAssignedReviews($student) as $matchID)
         {
-            $scores[] = $assignment->getReviewMark($matchID)->getScore() * 1.0 / $assignment->maxReviewScore;
+            $mark = $assignment->getReviewMark($matchID);
+            if($mark->isValid)
+                $scores[] = $mark->getScore() * 1.0 / $assignment->maxReviewScore;
         }
     }
     if(sizeof($scores))
-        return array_reduce($scores, function($a, $b) { return $a+$b; })*100.0 / sizeof($scores);
+        return array_reduce($scores, function($a, $b) { return $a+$b; }) / sizeof($scores);
     else
         return 0;
 }

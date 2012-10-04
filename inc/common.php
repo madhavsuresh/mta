@@ -28,6 +28,8 @@ function mta_error_handler($errno, $errstr, $errfile, $errline) {
   return false;
 }
 //set_error_handler('mta_error_handler');
+#error_reporting(E_ALL);
+#ini_set('display_errors','On');
 
 try
 {

@@ -6,10 +6,12 @@ class AppealMessage
     public $matchID;
     public $authorID;
     public $message;
+    public $appealType;
 
-    function __construct($appealMessageID = NULL, MatchID $matchID, UserID $authorID = NULL, $message="")
+    function __construct($appealMessageID = NULL, $appealType, MatchID $matchID, UserID $authorID = NULL, $message="")
     {
         $this->appealMessageID = $appealMessageID;
+        $this->appealType = $appealType;
         $this->authorID = $authorID;
         $this->matchID = $matchID;
         $this->message = $message;
@@ -33,11 +35,13 @@ class AppealMessage
 class Appeal
 {
     public $matchID;
+    public $appealType;
     public $messages = array();
 
-    function __construct(MatchID $matchID)
+    function __construct(MatchID $matchID, $type)
     {
         $this->matchID = $matchID;
+        $this->appealType = $type;
     }
 
     function getHTML()

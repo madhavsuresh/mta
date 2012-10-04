@@ -7,6 +7,7 @@ abstract class Script
     abstract function getName();
     abstract function getDescription();
     abstract function executeAndGetResult();
+    function hasParams() { return true; }
 }
 
 ?>

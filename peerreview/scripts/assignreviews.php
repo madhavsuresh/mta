@@ -15,7 +15,13 @@ class AssignReviewsPeerReviewScript extends Script
     {
         //TODO: Load the defaults from the config
         $assignment = get_peerreview_assignment();
-        $html  = "<table width='100%'>\n";
+        $html = "";
+        if(sizeof($assignment->getReviewerAssignment()))
+        {
+            $html .= "<h1 style='color:red;'>WARNING: About to overwrite existing review assignments</h1>\n";
+            $html .= "If students have already started to submit answers, it is likely that you will delete them by running this script<br><br><br>\n";
+        }
+        $html .= "<table width='100%'>\n";
         $html .= "<tr><td width='300'>Window size to judge reviewer quality</td><td>";
         $html .= "<input type='text' name='windowsize' id='windowsize' value='4' size='10'/></td></tr>\n";
         $html .= "<tr><td>Num. Reviews to assign</td><td>";
@@ -102,7 +108,7 @@ class AssignReviewsPeerReviewScript extends Script
     private function getReviewAssignment($students)
     {
         mt_srand($this->seed);
-        print_r($students);
+        #print_r($students);
         for($i = 0; $i < $this->maxAttempts; $i++)
         {
             try {
@@ -110,10 +116,8 @@ class AssignReviewsPeerReviewScript extends Script
                 return $res;
             }catch(Exception $e){
                 //They didn't get it
-                echo "Failed\n";
             }
         }
-        die("Failed");
         throw new Exception("Could not get a reviewer assignment - try increasing the number of attempts or the score noise. If that fails, play with your seeds and hope for the best.");
     }
 
@@ -131,7 +135,8 @@ class AssignReviewsPeerReviewScript extends Script
                 $offset = 0;
                 if($i)
                     $offset = pow(10, $i-1);
-                $noise = (mt_rand()*1.0/$randMax * 2 - 1)*0.01;//$this->scoreNoise;
+                $noise = (mt_rand()*1.0/$randMax * 2 - 1)*$this->scoreNoise;
+
                 $obj->score = max(0, min(1, ($score + $noise))) * pow(10, $i) + $offset;
                 $reviewers[] = $obj;
             }

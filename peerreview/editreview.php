@@ -1,5 +1,5 @@
 <?php
-include("inc/common.php");
+require_once("inc/common.php");
 try
 {
     $title .= " | Edit Review";
@@ -56,6 +56,7 @@ try
             $submission = $assignment->getSubmission($submissionID);
             $review = new Review($assignment);
             $review->reviewerID = $USERID;
+            $review->submissionID = $submissionID;
             if($reviewer == "instructor")
                 $reviewerName = "Instructor ".$dataMgr->getUserDisplayName($USERID);
             else if($reviewer == "anonymous")
@@ -69,6 +70,54 @@ try
             //No idea what this is
             throw new Exception("No valid options specified");
         }
+
+        //We need to see if we're running into an issue where someone else has touched
+        if(!array_key_exists("force", $_GET) && (!isset($matchID) || !$assignment->reviewExists($matchID)) && $dataMgr->isInstructor($review->reviewerID))
+        {
+            //Figure out if anyone else has touched this
+            $touches = $assignment->getTouchesForSubmission($review->submissionID);
+
+            //Figure out if we have someone else in this array
+            $maxI = sizeof($touches);
+            for($i = 0; $i < $maxI; $i++)
+            {
+                if($touches[$i]->userID == $review->reviewerID->id)
+                {
+                    unset($touches[$i]);
+                }
+            }
+
+            if(sizeof($touches))
+            {
+                //We need to print the warning message
+                $content .= "<h1>Submission Touched</h1>\n";
+
+                $content .= "This submission has been touched by the following users:<br><br>\n";
+
+                $i = 0;
+                foreach($touches as $touch)
+                {
+                    $content .= $dataMgr->getUserDisplayName(new UserID($touch->userID))." on <span id='touchdate$i' ></span></br>\n";
+                    $content .= set_element_to_date("touchdate$i", $touch->timestamp, "html", $assignment->dateFormat);
+                    $i++;
+                }
+
+                $getArgs="force=1&";
+                foreach($_GET as $arg=>$val) {
+                    $getArgs.="$arg=$val&";
+                }
+                $content .= "<br><a href='?$getArgs'>Force Review Anyways</a>";
+
+                render_page();
+            }
+        }
+
+        //If we're an instructor, we need to touch this
+        if($dataMgr->isInstructor($review->reviewerID))
+        {
+            $assignment->touchSubmission($review->submissionID, $review->reviewerID);
+        }
+
         #We can just override the data on this assignment so that we can force a write
         $beforeReviewStart = false;
         $afterReviewStop   = false;

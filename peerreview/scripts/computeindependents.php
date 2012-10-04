@@ -45,7 +45,7 @@ class ComputeIndependentsPeerReviewScript extends Script
         foreach($students as $student)
         {
             $html .= "<tr class='rowType$currentRowType'><td>".$userNameMap[$student->id]."</td><td>";
-            $score = compute_peer_review_score_for_assignments($student, $assignments);
+            $score = compute_peer_review_score_for_assignments($student, $assignments) * 100;
             $html .= precisionFloat($score);
             $html .= "</td><td>\n";
             if($score >= $independentThreshold)

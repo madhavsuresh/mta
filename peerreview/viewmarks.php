@@ -1,5 +1,5 @@
 <?php
-include("inc/common.php");
+require_once("inc/common.php");
 try
 {
     $title .= " | View Marks";
@@ -61,6 +61,8 @@ try
                 $html .= $assignment->getSubmissionMark($submissionID)->getHTML($assignment->maxSubmissionScore);
             }
 
+            //Figure out this index
+            $assignedReviews = $assignment->getAssignedReviews($USERID);
             $reviews = $assignment->getReviewsForSubmission($submissionID);
             $reviewCount = 0;
             //Do the first pass, and see if we can find this user's submission
@@ -74,6 +76,31 @@ try
                     $html .= $review->getHTML();
                     $html .= "<h2 class='altHeader'>My Review Mark</h2>\n";
                     $html .= $assignment->getReviewMark($review->matchID)->getHTML($assignment->maxReviewScore);
+
+                    $assignedReviewIndex = 0;
+                    foreach($assignedReviews as $mID)
+                    {
+                        if($mID->id == $review->matchID->id){
+                            break;
+                        }
+                        $assignedReviewIndex++;
+                    }
+
+                    //Now we need to do the stuff for appeals
+                    if($assignment->appealExists($review->matchID, "reviewmark"))
+                    {
+                        //Show them a link for editing their appeals
+                        $tmp = "";
+                        if($assignment->hasNewAppealMessage($review->matchID, "reviewmark")) {
+                            $tmp = "(Update)";
+                        }
+                        $html .= "<br><br><a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$assignedReviewIndex&appealtype=reviewmark")."'>View/Respond to Review Mark Appeal $tmp</a><br>";
+                    }
+                    else if($NOW < $assignment->appealStopDate)
+                    {
+                        //Show them a link to launching an appeal
+                        $html .= "<br><br><a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$assignedReviewIndex&appealtype=reviewmark")."'>Appeal Review Mark </a><br>";
+                    }
                     $reviewCount++;
                     break;
                 }
@@ -100,19 +127,19 @@ try
                         if($showAppealLinks)
                         {
                             //Now we need to do the stuff for appeals
-                            if($assignment->appealExists($review->matchID))
+                            if($assignment->appealExists($review->matchID, "review"))
                             {
                                 //Show them a link for editing their appeals
                                 $tmp = "";
-                                if($assignment->hasNewAppealMessage($review->matchID)) {
+                                if($assignment->hasNewAppealMessage($review->matchID, "review")) {
                                     $tmp = "(Update)";
                                 }
-                                $html .= "<a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$reviewIndex")."'>View/Respond to Appeal $tmp</a><br>";
+                                $html .= "<a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$reviewIndex&appealtype=review")."'>View/Respond to Appeal $tmp</a><br>";
                             }
                             else if($NOW < $assignment->appealStopDate)
                             {
                                 //Show them a link to launching an appeal
-                                $html .= "<a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$reviewIndex")."'>Appeal Review</a><br>";
+                                $html .= "<a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$reviewIndex&appealtype=review")."'>Appeal Review</a><br>";
                             }
                         }
 

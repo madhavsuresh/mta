@@ -15,9 +15,16 @@ try
         $closeOnDone = "";
 
     $viewedByStudent = false;
+
+    $appealType = require_from_get("appealtype");
+    if($appealType != "review" && $appealType != "reviewmark") {
+        throw new Exception("Unknown appeal type $appealType");
+    }
+
     //See if we can figure out if this has a student's response
     if(array_key_exists("reviewid", $_GET))
     {
+        $reviewid = intval($_GET["reviewid"]);
         //We can only show this if we're after the post date
         if($NOW < $assignment->markPostDate)
         {
@@ -26,11 +33,27 @@ try
         }
 
         //Figure out if this review exists
-        $reviews = $assignment->getReviewsForSubmission($assignment->getSubmissionID($USERID));
-        if(isset($reviews[$_GET["reviewid"]])) {
-            $review = $reviews[$_GET["reviewid"]];
-        } else {
-            throw new Exception("Invalid review ID");
+        switch($appealType)
+        {
+        case "review":
+            $reviews = $assignment->getReviewsForSubmission($assignment->getSubmissionID($USERID));
+            if(isset($reviews[$reviewid])) {
+                $review = $reviews[$reviewid];
+            } else {
+                throw new Exception("Invalid review ID");
+            }
+            break;
+        case "reviewmark":
+            //Get the specified id
+            $reviews= $assignment->getAssignedReviews($USERID);
+            if(isset($reviews[$reviewid])) {
+                $review = $assignment->getReview($reviews[$reviewid]);
+            } else {
+                throw new Exception("Invalid review ID");
+            }
+            break;
+        default:
+            throw new Exception("Unknown appeal type $appealType");
         }
 
         //If we're after the stop date, we better be sure that this appeal exists
@@ -42,8 +65,19 @@ try
 
         $submission = $assignment->getSubmission($review->matchID);
 
-        if($submission->authorID->id != $USERID->id)
-            throw new Exception("A serious error happened - contact your TA");
+        switch($appealType){
+        case "review":
+            if($submission->authorID->id != $USERID->id)
+                throw new Exception("A serious error happened - contact your TA");
+            break;
+        case "reviewmark":
+            if($review->reviewerID->id != $USERID->id)
+                throw new Exception("A serious error happened - contact your TA");
+            break;
+        default:
+            throw new Exception("Unknown appeal type $appealType");
+        }
+
         $getParams = "reviewid=".$_GET["reviewid"];
         $viewedByStudent = true;
     }
@@ -62,27 +96,32 @@ try
         throw new Exception("No valid object for an appeal");
     }
 
-    $appeal = $assignment->getAppeal($review->matchID);
+    $appeal = $assignment->getAppeal($review->matchID, $appealType);
 
     $content .= init_tiny_mce(false);
     $content .= "<h1>Submission</h1>\n";
     $content .= $submission->getHTML();
     $content .= "<h1>Appealed Review</h1>\n";
     $content .= $review->getHTML();
+    if($appealType == "reviewmark" || $assignment->showMarksForReviewsReceived)
+    {
+        $content .= "<h1>Appealed Review Mark</h1>\n";
+        $content .= $assignment->getReviewMark($review->matchID)->getHTML();
+    }
     $content .= "<h1>Appeal</h1>\n";
     $content .= $appeal->getHTML();
 
     //Add in the form slot
-    $appealMessage = new AppealMessage(null, $review->matchID, $USERID);
+    $appealMessage = new AppealMessage(null, $appealType, $review->matchID, $USERID);
     $content .= "<br class='clear'><h2>Add Message</h2>\n";
-    $content .= "<form id='submission' action='".get_redirect_url("peerreview/submitappeal.php?assignmentid=$assignment->assignmentID&$getParams$closeOnDone")."' method='post'>\n";
+    $content .= "<form id='submission' action='".get_redirect_url("peerreview/submitappeal.php?assignmentid=$assignment->assignmentID&appealtype=$appealType&$getParams$closeOnDone")."' method='post'>\n";
     $content .= $appealMessage->getFormHTML();
     $content .= "<input type='submit' value='Submit' />\n";
     $content .= "</form>\n";
 
     //If we've gotten here, we need to update the review entries that we've shown
     if($viewedByStudent)
-        $assignment->markAppealAsViewedByStudent($review->matchID);
+        $assignment->markAppealAsViewedByStudent($review->matchID, $appealType);
 
     render_page();
 }catch(Exception $e){

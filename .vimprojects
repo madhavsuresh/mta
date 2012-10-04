@@ -2,12 +2,12 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
  becomestudent.php
  config.php
  editassignment.php
+ enterpassword.php
  index.php
  login.php
  logout.php
- enterpassword.php
- runscript.php
  register.php
+ runscript.php
  inc=inc{
   assignment.php
   assignmentdatamanager.php
@@ -16,8 +16,8 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
   common.php
   datamanager.php
   ids.php
-  themefunctions.php
   script.php
+  themefunctions.php
   datamanagers=datamanagers{
    pdodatamanager.php
   }
@@ -28,8 +28,8 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
   }
  }
  grouppicker=grouppicker{
-  viewgroups.php
   editgroups.php
+  viewgroups.php
   inc=inc{
    common.php
    grouppickerassignment.php
@@ -39,11 +39,8 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
   }
  }
  peerreview=peerreview{
-  assignmarks.php
-  copymarks.php
   delete.php
   editappeal.php
-  editappealmessage.php
   editdeniedindependentusers.php
   editpeerreview.php
   editreview.php
@@ -51,22 +48,23 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
   editsubmission.php
   index.php
   markreview.php
-  viewquestion.php
   marksubmission.php
-  reviewerassignment.php
+  requestpeerreviews.php
   submitappeal.php
   submitmark.php
   submitreview.php
-  submitsubmission.php
   submitspotcheck.php
-  requestpeerreviews.php
+  submitsubmission.php
   viewer.php
   viewmarks.php
+  viewquestion.php
+  viewsubmission.php
   scripts=scripts{
    assignreviews.php
-   computeindependents.php
-   downloadsubmissions.php
    autogradeandassignmarkers.php
+   computeindependents.php
+   copymarks.php
+   downloadsubmissions.php
   }
   inc=inc{
    appeal.php
@@ -74,11 +72,12 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
    common.php
    essay.php
    mark.php
-   spotcheck.php
    peerreviewassignment.php
    review.php
    reviewquestions.php
+   spotcheck.php
    submission.php
+   zip.lib.php
    datamanagers=datamanagers{
     pdoassignmentdatamanager.php
    }
@@ -92,7 +91,9 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
   }
  }
  coreui=coreui filter="*"{
+  editorcontent.css
   css=css{
+   jquery-ui-timepicker-addon.css
    oxygen-icons=oxygen-icons {
     icons.css
    }
@@ -104,37 +105,8 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
    jquery-ui-timepicker-addon.js
    jquery-ui.js
    jquery.js
+   moment.min.js
    utils.js
-  }
- }
- data=data {
-  assignmentlist.php
-  passwords.php
-  reviewassign.php
-  users.php
- }
- python=python filter="*.py *.txt"{
-  scriptrunner.py
-  api=api{
-   Assignment.py
-   AssignmentManager.py
-   Essay.py
-   FileManager.py
-   Mark.py
-   PHPExtractor.py
-   Review.py
-   Singleton.py
-   User.py
-   UserManager.py
-   __init__.py
-  }
-  scripts=scripts{
-   backup.py
-   finalgrades.py
-   foo.py
-   getgrades.py
-   backup.txt
-   getgrades.txt
   }
  }
 }

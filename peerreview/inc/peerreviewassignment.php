@@ -99,12 +99,12 @@ class PeerReviewAssignment extends Assignment
             {
                 #We need to put the cell for the submission submission
                 $html  = "<table width='100%'>\n";
-                $html .= "<tr><td width=40%>\n";
+                $html .= "<tr><td width=30%>\n";
                 if($this->submissionStopDate < $NOW)
                 {
                     $html .= "Submissions closed\n";
                     if($this->dataMgr->submissionExists($this, $user))
-                        $html .= "<br>(Received)";
+                        $html .= "<br><a href='".get_redirect_url("peerreview/viewsubmission.php?assignmentid=$this->assignmentID")."'>View Submission</a>";
                 }
                 else
                 {
@@ -166,7 +166,7 @@ class PeerReviewAssignment extends Assignment
                 $html .= "</td>\n";
 
                 #The last cell contains a link to view their marks
-                $html .= "<td width=20%>";
+                $html .= "<td width=30%>";
                 if($this->dataMgr->submissionExists($this, $user) && $this->markPostDate < $NOW)
                 {
                     $html .= "<a href='".get_redirect_url("peerreview/viewmarks.php?assignmentid=$this->assignmentID")."''>View Marks</a>";
@@ -174,22 +174,34 @@ class PeerReviewAssignment extends Assignment
                     $html .= "<br><table align='left' width='100%'>\n";
                     $html .= "<tr><td>Submission:</td><td>". $this->dataMgr->getSubmissionMark($this, $this->getSubmissionID($user))->getSummaryString($this->maxSubmissionScore) ."</td></tr>\n";
 
+                    $hasUpdate = false;
+                    foreach($this->dataMgr->getMatchesForSubmission($this, $this->getSubmissionID($user)) as $matchID)
+                    {
+                        $hasUpdate |= $this->dataMgr->hasNewAppealMessage($this, $matchID, "review");
+                    }
+                    if($hasUpdate)
+                       $html .= "<tr><td colsplan='2'>(Appeal updated)</td></tr>\n";
+
                     $reviewAssignments = $this->dataMgr->getAssignedReviews($this, $user);
                     $id = 0;
                     foreach($reviewAssignments as $matchID)
                     {
                         $html .= "<tr><td>Review ".($id+1).":</td><td>". $this->dataMgr->getReviewMark($this, $matchID)->getSummaryString($this->maxReviewScore)."</td></tr>\n";
+                        if($this->dataMgr->hasNewAppealMessage($this, $matchID, "reviewMark"))
+                        {
+                            $html .= "<tr><td colsplan='2'>(Mark appeal updated)</td></tr>\n";
+                        }
                         $id++;
                     }
-                    $html .= "</table>";
+                    $html .= "</table><br>\n";
 
-                    $hasUpdate = false;
-                    foreach($this->dataMgr->getMatchesForSubmission($this, $this->getSubmissionID($user)) as $matchID)
+
+
+                    if($NOW < $this->appealStopDate)
                     {
-                        $hasUpdate |= $this->dataMgr->hasNewAppealMessage($this, $matchID);
+                        $html .= "Appeals Close:<br> <span id='appealStopDate$this->assignmentID'/>";
+                        $html .= set_element_to_date("appealStopDate$this->assignmentID", $this->appealStopDate, "html", $this->dateFormat);
                     }
-                    if($hasUpdate)
-                        $html .= "(Appeal Updated)\n";
                 }
                 else
                 {

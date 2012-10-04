@@ -1,5 +1,5 @@
 <?php
-include(dirname(__FILE__)."/inc/common.php");
+require_once(dirname(__FILE__)."/inc/common.php");
 try
 {
     session_unset();

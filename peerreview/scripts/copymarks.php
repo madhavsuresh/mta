@@ -1,5 +1,7 @@
 <?php
-include("inc/common.php");
+require_once("peerreview/inc/common.php");
+
+/*
 try
 {
     $dataMgr->requireCourse();
@@ -25,9 +27,10 @@ try
     }
 
 
-    render_page();
+   // render_page();
 
 }catch(Exception $e){
-    render_exception_page($e);
+    //render_exception_page($e);
 }
+*/
 ?>

@@ -102,7 +102,10 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             #Compute the mean score of this one, used for ranking to assign
             $submissionScores[$submissionID->id] =
                 array_reduce(array_map( function($x) { global $scoreMap; if(isset($scoreMap[$x->matchID->id])) { return $scoreMap[$x->matchID->id]; } return 0; }, $reviews),
-                function($v,$w) {return $v+$w; }) / sizeof($reviews);
+                    function($v,$w) {return $v+$w; });
+            if(sizeof($reviews))
+                $submissionScores[$submissionID->id] /= (sizeof($reviews) * $assignment->maxSubmissionScore);
+
 
             #See if this is an independent review
             if(array_reduce($reviews, function($res,$item) use (&$independents) {return $res & array_key_exists($item->reviewerID->id, $independents);}, True) &&
@@ -131,30 +134,27 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
                 //We need to put this into the list of stuff to be marked by a TA
                 if(array_reduce($reviewMap[$submissionID->id], function($res,$item)use(&$instructors){return $item->exists && in_array($item->reviewerID->id, $instructors); }))
                     continue;
-                $pendingSubmissions[] = $submissionID->id;
+                $obj = new stdClass;
+                $obj->submissionID = $submissionID->id;
+                $obj->authorID = $authorID->id;
+                $pendingSubmissions[] = $obj;
             }
         }
-        asort($submissionScores, SORT_NUMERIC);
+        //asort($submissionScores, SORT_NUMERIC);
 
         $instructorJobs = array();
+        $instructorReviewCountMaps = array();
         $assignedJobs = 0;
         foreach($instructors as $instructorID)
         {
             $instructorJobs[$instructorID] = 0;
+            $instructorReviewCountMaps[$instructorID] = $assignment->getNumberOfTimesReviewedByUserMap(new UserID($instructorID));
         }
-
 
         //We need to sort the pending submissions by their reviewer score
         $assignedJobs = 0;
-        foreach($submissionScores as $submissionID=>$score)
+        while(sizeof($pendingSubmissions))
         {
-            if(!in_array($submissionID, $pendingSubmissions))
-                continue;
-
-            //Is there an instructor already assigned to this paper?
-            if(array_reduce($reviewMap[$submissionID], function($res,$item)use(&$instructors){return in_array($item->reviewerID->id, $instructors); }))
-                continue;
-
             $loadDefecits = array();
             //Who gets it?
             foreach($instructors as $instructorID)
@@ -163,6 +163,33 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             }
             $res = array_keys($loadDefecits, max($loadDefecits));
             $instructorID = $res[0];
+
+            //Figure out what submission we should assign to this person
+            $submissionID = null;
+            $bestScore = INF;
+            $bestIndex = 0;
+            foreach($pendingSubmissions as $index => $obj)
+            {
+                //We scale it by 0.5 to make sure that we keep the lexicographical component
+                $s = $submissionScores[$obj->submissionID]*0.5;
+                if(isset($instructorReviewCountMaps[$instructorID][$obj->authorID]))
+                    $s += $instructorReviewCountMaps[$instructorID][$obj->authorID];
+                if($s < $bestScore)
+                {
+                    $bestScore = $s;
+                    $submissionID = $obj->submissionID;
+                    $bestIndex = $index;
+                }
+            }
+            if(is_null($submissionID))
+            {
+                throw new Exception("Failed to find a suitable candidate for an instructor - how the hell can this happen?");
+            }
+            unset($pendingSubmissions[$bestIndex]);
+
+            //Is there an instructor already assigned to this paper?
+            if(array_reduce($reviewMap[$submissionID], function($res,$item)use(&$instructors){return in_array($item->reviewerID->id, $instructors); }))
+                continue;
 
             $assignment->createMatch(new SubmissionID($submissionID), new UserID($instructorID), true);
 
@@ -177,12 +204,8 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         }
 
         //Now do all the spot checks
-        foreach($pendingSpotChecks as $submissionID)
+        while(sizeof($pendingSpotChecks))
         {
-            //Is there an instructor already assigned to this paper?
-            if(array_reduce($reviewMap[$submissionID], function($res,$item)use(&$instructors){return in_array($item->reviewerID->id, $instructors); }))
-                continue;
-
             $loadDefecits = array();
             //Who gets it?
             foreach($instructors as $instructorID)
@@ -191,6 +214,33 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             }
             $res = array_keys($loadDefecits, max($loadDefecits));
             $instructorID = $res[0];
+
+            //Figure out what submission we should assign to this person
+            $submissionID = null;
+            $bestScore = INF;
+            $bestIndex = 0;
+            foreach($pendingSpotChecks as $index => $obj)
+            {
+                //We scale it by 0.5 to make sure that we keep the lexicographical component
+                $s = $submissionScores[$obj->submissionID]*0.5;
+                if(isset($instructorReviewCountMaps[$instructorID][$obj->authorID]))
+                    $s += $instructorReviewCountMaps[$instructorID][$obj->authorID];
+                if($s < $bestScore)
+                {
+                    $bestScore = $s;
+                    $submissionID = $obj->submissionID;
+                    $bestIndex = $index;
+                }
+            }
+            if(is_null($submissionID))
+            {
+                throw new Exception("Failed to find a suitable candidate for an instructor - how the hell can this happen?");
+            }
+            unset($pendingSpotChecks[$bestIndex]);
+
+            //Is there an instructor already assigned to this paper?
+            if(array_reduce($reviewMap[$submissionID], function($res,$item)use(&$instructors){return in_array($item->reviewerID->id, $instructors); }))
+                continue;
 
             $assignment->saveSpotCheck(new SpotCheck(new SubmissionID($submissionID), new UserID($instructorID)));
 

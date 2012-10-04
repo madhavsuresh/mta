@@ -1,5 +1,5 @@
 <?php
-include("inc/common.php");
+require_once("inc/common.php");
 
 if(!$dataMgr->courseID)
 {
@@ -48,8 +48,8 @@ try
         {
             $content .= "<div> Login Failed - Check your password, or contact your TA to make sure your username is valid <br>If you have already been able to log in but are unable to now, this is probably because your account has been switched to your CS ID. Go <a href='https://www.cs.ubc.ca/ugrad/getacct/getacct.jsp'>here</a> to reset your password/find your ID </div>";
         }
-        render_page();
     }
+    render_page();
 }catch(Exception $e){
     render_exception_page($e);
 }

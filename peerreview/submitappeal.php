@@ -11,12 +11,18 @@ try
 
     $closeOnDone = array_key_exists("close", $_GET);
 
+    $appealType = require_from_get("appealtype");
+    if($appealType != "review" && $appealType != "reviewmark") {
+        throw new Exception("Unknown appeal type $appealType");
+    }
+
     //See if we can figure out if this has a student's response
     $appealID = NULL;
     $appealAuthor = $USERID;
     $viewedByStudent = false;
     if(array_key_exists("reviewid", $_GET))
     {
+        $reviewid = intval($_GET["reviewid"]);
         //We can only show this if we're after the post date
         if($NOW < $assignment->markPostDate)
         {
@@ -25,11 +31,27 @@ try
         }
 
         //Figure out if this review exists
-        $reviews = $assignment->getReviewsForSubmission($assignment->getSubmissionID($USERID));
-        if(isset($reviews[$_GET["reviewid"]])) {
-            $review = $reviews[$_GET["reviewid"]];
-        } else {
-            throw new Exception("Invalid review ID");
+        switch($appealType)
+        {
+        case "review":
+            $reviews = $assignment->getReviewsForSubmission($assignment->getSubmissionID($USERID));
+            if(isset($reviews[$reviewid])) {
+                $review = $reviews[$reviewid];
+            } else {
+                throw new Exception("Invalid review ID");
+            }
+            break;
+        case "reviewmark":
+            //Get the specified id
+            $reviews= $assignment->getAssignedReviews($USERID);
+            if(isset($reviews[$reviewid])) {
+                $review = $assignment->getReview($reviews[$reviewid]);
+            } else {
+                throw new Exception("Invalid review ID");
+            }
+            break;
+        default:
+            throw new Exception("Unknown appeal type $appealType");
         }
 
         //If we're after the stop date, we better be sure that this appeal exists
@@ -42,8 +64,18 @@ try
         $submission = $assignment->getSubmission($review->matchID);
         $viewedByStudent = true;
 
-        if($submission->authorID->id != $USERID->id)
-            throw new Exception("A serious error happened - contact your TA");
+        switch($appealType){
+        case "review":
+            if($submission->authorID->id != $USERID->id)
+                throw new Exception("A serious error happened - contact your TA");
+            break;
+        case "reviewmark":
+            if($review->reviewerID->id != $USERID->id)
+                throw new Exception("A serious error happened - contact your TA");
+            break;
+        default:
+            throw new Exception("Unknown appeal type $appealType");
+        }
     }
     else if(array_key_exists("matchid", $_GET))
     {
@@ -68,12 +100,12 @@ try
         throw new Exception("No valid object for an appeal");
     }
 
-    $appealMessage = new AppealMessage($appealID, $review->matchID, $appealAuthor);
+    $appealMessage = new AppealMessage($appealID, $appealType, $review->matchID, $appealAuthor);
     $appealMessage->loadFromPost($_POST);
     $assignment->saveAppealMessage($appealMessage);
 
     $content .= "<h1>Appeal Submitted</h1>\n";
-    $appeal = $assignment->getAppeal($review->matchID);
+    $appeal = $assignment->getAppeal($review->matchID, $appealType);
     $content .= $appeal->getHTML();
 
     if($closeOnDone)
@@ -82,7 +114,7 @@ try
     }
 
     if($viewedByStudent)
-        $assignment->markAppealAsViewedByStudent($review->matchID);
+        $assignment->markAppealAsViewedByStudent($review->matchID, $appealType);
 
     render_page();
 }catch(Exception $e){

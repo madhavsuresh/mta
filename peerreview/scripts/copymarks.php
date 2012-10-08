@@ -1,36 +1,51 @@
 <?php
 require_once("peerreview/inc/common.php");
 
-/*
-try
+class CopyMarksPeerReviewScript extends Script
 {
-    $dataMgr->requireCourse();
-    $authMgr->enforceInstructor();
-
-    $assignment = get_peerreview_assignment();
-    $authors = $assignment->getAuthorSubmissionMap();
-    $scoreMap = $assignment->getMatchScoreMap();
-    $reviewMap = $assignment->getReviewMap();
-
-
-    foreach($reviewMap as $submissionID => $reviewObjs)
+    function getName()
     {
-        $submissionID = new SubmissionID($submissionID);
-        foreach($reviewObjs as $reviewObj)
+        return "Copy Instructor Marks";
+    }
+    function getDescription()
+    {
+        return "Copies instructor marks from the reviews into the essay slots in cases where the mark doesn't alreday exist";
+    }
+    function getFormHTML()
+    {
+        return "(None)";
+    }
+    function hasParams()
+    {
+        return false;
+    }
+    function executeAndGetResult()
+    {
+        global $dataMgr;
+        $assignment = get_peerreview_assignment();
+        $authors = $assignment->getAuthorSubmissionMap();
+        $scoreMap = $assignment->getMatchScoreMap();
+        $reviewMap = $assignment->getReviewMap();
+
+        $html = "";
+        foreach($reviewMap as $submissionID => $reviewObjs)
         {
-            if($dataMgr->isInstructor($reviewObj->reviewerID) && array_key_exists($reviewObj->matchID->id, $scoreMap))
+            $submissionID = new SubmissionID($submissionID);
+            $oldMark = $assignment->getSubmissionMark($submissionID);
+            if($oldMark->isValid)
+                continue;
+
+            foreach($reviewObjs as $reviewObj)
             {
-                $assignment->saveSubmissionMark(new Mark($scoreMap[$reviewObj->matchID->id], ""), $submissionID);
-                $content .= $dataMgr->getUserDisplayName($assignment->getSubmission($submissionID)->authorID).", ".$scoreMap[$reviewObj->matchID->id]."<br>";
+                if($dataMgr->isInstructor($reviewObj->reviewerID) && array_key_exists($reviewObj->matchID->id, $scoreMap))
+                {
+                    $assignment->saveSubmissionMark(new Mark($scoreMap[$reviewObj->matchID->id], ""), $submissionID);
+                    $html .= $dataMgr->getUserDisplayName($assignment->getSubmission($submissionID)->authorID).", ".$scoreMap[$reviewObj->matchID->id]."<br>";
+                }
             }
         }
+        return $html;
     }
-
-
-   // render_page();
-
-}catch(Exception $e){
-    //render_exception_page($e);
 }
-*/
+
 ?>

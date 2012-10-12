@@ -667,7 +667,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         if($res = $sh->fetch())
         {
             //Return the id
-            return $res->userID;
+            return new UserID($res->userID);
         }
         else
         {
@@ -694,7 +694,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         if($res = $sh->fetch())
         {
             //Return the id
-            return $res->userID;
+            return new UserID($res->userID);
         }
         else
         {

@@ -30,10 +30,15 @@ try
 
         //Make the tab widget
         $content .= "<div id='tabs'><ul>";
-        $content .= "<li><a href='#tabs-1'>My Submission</a></li>\n";
+        $tabOffset = 0;
+        if($assignment->submissionExists($USERID))
+        {
+            $content .= "<li><a href='#tabs-1'>My Submission</a></li>\n";
+            $tabIndex++;
+        }
         for($i = 1; $i <= sizeof($assignedReviews); $i++)
         {
-            $tabIndex= $i+1;
+            $tabIndex= $i+$tabOffset;
             $content .= "<li><a href='#tabs-$tabIndex'>Review $i</a></li>\n";
         }
         $content .= "</ul>";
@@ -158,14 +163,19 @@ try
         //Signature: getTabHTML(submissionID, show the submission mark, show reviews, show the review marks, show the appeal buttons)
 
         //The first tab, our submission
-        $content .= "<div id='tabs-1'>\n";
-        $content .= getTabHTML($assignment->getSubmissionID($USERID), true, true, $assignment->showMarksForReviewsReceived, true);
-        $content .= "</div>\n";
+        $tabOffset = 1;
+        if($assignment->submissionExists($USERID))
+        {
+            $content .= "<div id='tabs-$tabOffset'>\n";
+            $content .= getTabHTML($assignment->getSubmissionID($USERID), true, true, $assignment->showMarksForReviewsReceived, true);
+            $content .= "</div>\n";
+            $tabOffset++;
+        }
 
         //Next, we need the other submissions
         for($i = 0; $i < sizeof($assignedReviews); $i++)
         {
-            $tabIndex= $i+2;
+            $tabIndex= $i+$tabOffset;
             $content .= "<div id='tabs-$tabIndex'>\n";
             $content .= getTabHTML($assignment->getSubmissionID($assignedReviews[$i]), $assignment->showMarksForReviewedSubmissions, $assignment->showOtherReviews, $assignment->showMarksForOtherReviews, false);
             $content .= "</div>\n";

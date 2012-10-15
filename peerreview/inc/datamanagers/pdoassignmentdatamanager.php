@@ -531,6 +531,14 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $sh->fetch()->c > 0;
     }
 
+    function reviewDraftExists(PeerReviewAssignment $assignment, MatchID $id)
+    {
+        $sh = $this->prepareQuery("reviewExistsDraftQuery", "SELECT count(*) as c FROM peer_review_assignment_review_answers_drafts WHERE matchID = ?;");
+        $sh->execute(array($id));
+
+        return $sh->fetch()->c > 0;
+    }
+
     function getSubmissionID(PeerReviewAssignment $assignment, MechanicalTA_ID $id)
     {
         switch(get_class($id))
@@ -549,13 +557,6 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         if($res == NULL)
             throw new Exception("Could not find an submission by author '$id'");
         return new SubmissionID($res->submissionID);
-    }
-
-    function reviewAnswersExist(PeerReviewAssignment $assignment, MatchID $matchID)
-    {
-        $sh = $this->prepareQuery("reviewAnswersExistQuery", "SELECT matchID FROM peer_review_assignment_review_answers WHERE matchID = ? LIMIT 1;");
-        $sh->execute(array($matchID));
-        return $sh->fetch() != NULL;
     }
 
     function getSubmissionMark(PeerReviewAssignment $assignment, SubmissionID $submissionID)
@@ -771,11 +772,76 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $review;
     }
 
+    function getReviewDraft(PeerReviewAssignment $assignment, MechanicalTA_ID $id, UserID $reviewer = null)
+    {
+        if(!is_null($reviewer))
+        {
+            //They are looking up the review on a author-reviewer pair
+            if(get_class($id) != "UserID")
+                throw new Exception("This call wanted a user id as the second arg, but got ".get_class($id));
+            //Do the query
+            $sh = $this->prepareQuery("getReviewDraftHeaderByAuthorReviewerPairQuery", "SELECT matchID, peer_review_assignment_matches.submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE assignmentID = ? && peer_review_assignment_submissions.authorID=?, reviewerID = ?;");
+            $sh->execute(array($assignment->assignmentID, $id, $reviewer));
+            $headerRes = $sh->fetch();
+        }
+        else if(get_class($id) == "MatchID")
+        {
+            //We better have a match id
+            $sh = $this->prepareQuery("getReviewDraftHeaderByMatchQuery", "SELECT matchID, peer_review_assignment_matches.submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE matchID=?;");
+            $sh->execute(array($id));
+            $headerRes = $sh->fetch();
+        }
+        else
+        {
+            throw new Exception("Unable to get a review using a ".get_class($id));
+        }
+        if(!$headerRes)
+            throw new Exception("Could not find review");
+
+        $questionSH = $this->prepareQuery("getReviewDraftByMatchQuery", "SELECT questionID, answerInt, answerText FROM peer_review_assignment_review_answers_drafts WHERE matchID=?;");
+        $questionSH->execute(array($headerRes->matchID));
+
+        //Make a new review
+        $review = new Review($assignment);
+        $review->matchID = new MatchID($headerRes->matchID);
+        $review->submissionID = new SubmissionID($headerRes->submissionID);
+        $review->reviewerID = new UserID($headerRes->reviewerID);
+        while($res = $questionSH->fetch())
+        {
+            $answer = new ReviewAnswer();
+            if(!is_null($res->answerText))
+                $answer->text = $res->answerText;
+            if(!is_null($res->answerInt))
+                $answer->int = $res->answerInt;
+
+            $review->answers[$res->questionID] = $answer;
+        }
+        return $review;
+    }
+
     function saveReview(PeerReviewAssignment $assignment, Review $review)
     {
         $this->db->beginTransaction();
         $this->deleteReview($assignment, $review->matchID, false);
         $sh = $this->prepareQuery("insertReviewAnswerQuery", "INSERT INTO peer_review_assignment_review_answers (matchID, questionID, answerInt, answerText) VALUES (?, ?, ?, ?);");
+        foreach($review->answers as $questionID => $answer)
+        {
+            $answerText = NULL;
+            $answerInt = NULL;
+            if(isset($answer->text) && !is_null($answer->text))
+                $answerText = $answer->text;
+            if(isset($answer->int) && !is_null($answer->int))
+                $answerInt = $answer->int;
+            $sh->execute(array($review->matchID, $questionID, $answerInt, $answerText));
+        }
+        $this->db->commit();
+    }
+
+    function saveReviewDraft(PeerReviewAssignment $assignment, Review $review)
+    {
+        $this->db->beginTransaction();
+        $this->deleteReviewDraft($assignment, $review->matchID);
+        $sh = $this->prepareQuery("insertReviewDraftsAnswerQuery", "INSERT INTO peer_review_assignment_review_answers_drafts (matchID, questionID, answerInt, answerText) VALUES (?, ?, ?, ?);");
         foreach($review->answers as $questionID => $answer)
         {
             $answerText = NULL;
@@ -804,6 +870,11 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             }
             $sh->execute(array($id));
         }
+    }
+    function deleteReviewDraft(PeerReviewAssignment $assignment, MatchID $id)
+    {
+        $sh = $this->db->prepare("DELETE FROM peer_review_assignment_review_answers_drafts WHERE matchID = ?;");
+        $sh->execute(array($id));
     }
 
     function getMatchesForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
@@ -922,6 +993,31 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         //This is a beast, all it does is grab a list of submission-reviewer ids for the current assignment, that actually have something in the answers array, ordering by user type then match id
         //It also indicates if a match has answers (questionID != NULL)
         $sh = $this->prepareQuery("getExistingReviewerMapQuery", "SELECT peer_review_assignment_matches.submissionID, peer_review_assignment_matches.reviewerID, peer_review_assignment_review_answers.questionID, peer_review_assignment_matches.matchID, peer_review_assignment_matches.instructorForced FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID LEFT JOIN peer_review_assignment_review_answers ON peer_review_assignment_matches.matchID = peer_review_assignment_review_answers.matchID JOIN users ON peer_review_assignment_matches.reviewerID = users.userID WHERE peer_review_assignment_submissions.assignmentID = ? GROUP BY peer_review_assignment_matches.matchID ORDER BY users.userType, peer_review_assignment_matches.matchID;");
+        $sh->execute(array($assignment->assignmentID));
+        while($res = $sh->fetch())
+        {
+            if(!array_key_exists($res->submissionID, $reviewMap))
+            {
+                $reviewMap[$res->submissionID] = array();
+            }
+            $obj = new stdClass();
+            $obj->reviewerID = new UserID($res->reviewerID);
+            $obj->exists = !is_null($res->questionID);
+            $obj->matchID = new MatchID($res->matchID);
+            $obj->instructorForced = $res->instructorForced;
+            $reviewMap[$res->submissionID][] = $obj;
+        }
+        return $reviewMap;
+    }
+
+    function getReviewDraftMap(PeerReviewAssignment $assignment)
+    {
+        //First, figure out what should be there
+        $reviewMap = array();
+
+        //This is a beast, all it does is grab a list of submission-reviewer ids for the current assignment, that actually have something in the answers array, ordering by user type then match id
+        //It also indicates if a match has answers (questionID != NULL)
+        $sh = $this->prepareQuery("getExistingReviewerDraftMapQuery", "SELECT peer_review_assignment_matches.submissionID, peer_review_assignment_matches.reviewerID, peer_review_assignment_review_answers_drafts.questionID, peer_review_assignment_matches.matchID, peer_review_assignment_matches.instructorForced FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID LEFT JOIN peer_review_assignment_review_answers_drafts ON peer_review_assignment_matches.matchID = peer_review_assignment_review_answers_drafts.matchID JOIN users ON peer_review_assignment_matches.reviewerID = users.userID WHERE peer_review_assignment_submissions.assignmentID = ? GROUP BY peer_review_assignment_matches.matchID ORDER BY users.userType, peer_review_assignment_matches.matchID;");
         $sh->execute(array($assignment->assignmentID));
         while($res = $sh->fetch())
         {

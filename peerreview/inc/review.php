@@ -77,11 +77,20 @@ class Review
         return $html;
     }
 
-    function loadFromPost($POST)
+    function loadFromPost($POST, $hideErrors = false)
     {
         foreach($this->assignment->getReviewQuestions() as $question)
         {
-            $this->answers[$question->questionID->id] = $question->loadAnswerFromPost($POST);
+            try
+            {
+                $ans = $question->loadAnswerFromPost($POST);
+                $this->answers[$question->questionID->id] = $ans;
+            }
+            catch(Exception $e)
+            {
+                if(!$hideErrors)
+                    throw $e;
+            }
         }
     }
 

@@ -142,9 +142,10 @@ class PeerReviewAssignment extends Assignment
                             $temp=$id+1;
                             $html .= "<a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$this->assignmentID&review=$id")."''>Peer Review $temp</a>";
                             $html .= "</td><td>";
-                            if($this->dataMgr->reviewAnswersExist($this, $matchID))
-                            {
+                            if($this->dataMgr->reviewExists($this, $matchID)) {
                                 $html .= "Complete";
+                            } else if($this->dataMgr->reviewDraftExists($this, $matchID)) {
+                                $html .= "In Progress";
                             } else {
                                 $html .= "Not Complete";
                             }
@@ -167,22 +168,26 @@ class PeerReviewAssignment extends Assignment
 
                 #The last cell contains a link to view their marks
                 $html .= "<td width=30%>";
-                if($this->dataMgr->submissionExists($this, $user) && $this->markPostDate < $NOW)
+                $submissionExists = $this->dataMgr->submissionExists($this, $user);
+                $reviewAssignments = $this->dataMgr->getAssignedReviews($this, $user);
+                if(($submissionExists || $reviewAssignments) && $this->markPostDate < $NOW)
                 {
                     $html .= "<a href='".get_redirect_url("peerreview/viewmarks.php?assignmentid=$this->assignmentID")."''>View Marks</a>";
                     #Display this user's marks
                     $html .= "<br><table align='left' width='100%'>\n";
-                    $html .= "<tr><td>Submission:</td><td>". $this->dataMgr->getSubmissionMark($this, $this->getSubmissionID($user))->getSummaryString($this->maxSubmissionScore) ."</td></tr>\n";
-
-                    $hasUpdate = false;
-                    foreach($this->dataMgr->getMatchesForSubmission($this, $this->getSubmissionID($user)) as $matchID)
+                    if($submissionExists)
                     {
-                        $hasUpdate |= $this->dataMgr->hasNewAppealMessage($this, $matchID, "review");
-                    }
-                    if($hasUpdate)
-                       $html .= "<tr><td colsplan='2'>(Appeal updated)</td></tr>\n";
+                        $html .= "<tr><td>Submission:</td><td>". $this->dataMgr->getSubmissionMark($this, $this->getSubmissionID($user))->getSummaryString($this->maxSubmissionScore) ."</td></tr>\n";
 
-                    $reviewAssignments = $this->dataMgr->getAssignedReviews($this, $user);
+                        $hasUpdate = false;
+                        foreach($this->dataMgr->getMatchesForSubmission($this, $this->getSubmissionID($user)) as $matchID)
+                        {
+                            $hasUpdate |= $this->dataMgr->hasNewAppealMessage($this, $matchID, "review");
+                        }
+                        if($hasUpdate)
+                           $html .= "<tr><td colsplan='2'>(Appeal updated)</td></tr>\n";
+                    }
+                    #$reviewAssignments = $this->dataMgr->getAssignedReviews($this, $user);
                     $id = 0;
                     foreach($reviewAssignments as $matchID)
                     {
@@ -194,8 +199,6 @@ class PeerReviewAssignment extends Assignment
                         $id++;
                     }
                     $html .= "</table><br>\n";
-
-
 
                     if($NOW < $this->appealStopDate)
                     {

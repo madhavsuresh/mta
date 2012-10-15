@@ -11,9 +11,10 @@ try
     $authorMap = $assignment->getAuthorSubmissionMap();
     $independents = $assignment->getIndependentUsers();
     $reviewMap = $assignment->getReviewMap();
+    $draftMap = $assignment->getReviewDraftMap();
 
     $possibleSubmissions = array();
-    $userIsIndependent = array_key_exists($USERID, $independents);
+    $userIsIndependent = array_key_exists($USERID->id, $independents);
 
     if(sizeof($assignment->getAssignedReviews($USERID)) != 0)
     {
@@ -24,10 +25,13 @@ try
     {
         if($userIsIndependent == array_key_exists($author, $independents))
         {
+            $count = 0;
             if(array_key_exists($submissionID->id, $reviewMap))
-                $possibleSubmissions[$submissionID->id] = sizeof($reviewMap[$submissionID->id]) + array_reduce($reviewMap[$submissionID->id], function($res,$item) {return $res + ($item->exists); } );
-            else
-                $possibleSubmissions[$submissionID->id] = 0;
+                $count += sizeof($reviewMap[$submissionID->id]) + array_reduce($reviewMap[$submissionID->id], function($res,$item) {return $res + ($item->exists); } );
+            //We also want to count people that have done drafts
+            if(array_key_exists($submissionID->id, $draftMap))
+                $count += sizeof($draftMap[$submissionID->id]);
+            $possibleSubmissions[$submissionID->id] = $count;
         }
     }
 

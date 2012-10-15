@@ -7,6 +7,12 @@ try
     $authMgr->enforceLoggedIn();
 
     $closeOnDone = array_key_exists("close", $_GET);
+    $action = "save";
+    if(require_from_post("saveAction") == "Save Draft")
+    {
+        $action = "draft";
+        $closeOnDone=false;
+    }
 
     #Get this assignment's data
     $assignment = get_peerreview_assignment();
@@ -85,12 +91,27 @@ try
         $review->matchID = $matchID;
         $review->reviewerID = $reviewerID;
 
-        $review->loadFromPost($_POST);
-        $assignment->saveReview($review);
+        $review->loadFromPost($_POST, $action=="draft");
 
-        $content .= "Review saved - check to make sure that it looks right below. You may edit your review by returning to the home page\n";
+        if($action == "save")
+        {
+            $content .= "Review saved - check to make sure that it looks right below. You may edit your review by returning to the home page\n";
+            $assignment->saveReview($review);
+            $assignment->deleteReviewDraft($review->matchID);
+        }
+        else
+        {
+            $content .= "Review draft saved. You may edit your review by returning to the home page\n";
+            $content .= "<br>Note that review drafts are not marked, you must submit it.\n";
+            $assignment->saveReviewDraft($review);
+            $assignment->deleteReview($review->matchID, false);
+        }
         $content .= "<h1>Review</h1>\n";
-        $content .= $assignment->getReview($matchID)->getShortHTML();
+        if($action == "save"){
+            $content .= $assignment->getReview($matchID)->getShortHTML();
+        }else{
+            $content .= $assignment->getReviewDraft($matchID)->getShortHTML();
+        }
     }
 
     if($closeOnDone)

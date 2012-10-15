@@ -30,7 +30,11 @@ try
         $matchID = $reviewAssignments[$id];
 
         $submission = $assignment->getSubmission($matchID);
-        $review = $assignment->getReview($matchID);
+        if($assignment->reviewExists($matchID)){
+            $review = $assignment->getReview($matchID);
+        }else{
+            $review = $assignment->getReviewDraft($matchID);
+        }
         $reviewerName = $dataMgr->getUserDisplayName($reviewerID);
         $getParams = "&reviewid=$id";
     }
@@ -44,7 +48,11 @@ try
             //This is easy, just go load it up
             $matchID = new MatchID($_GET["matchid"]);
             $submission = $assignment->getSubmission($matchID);
-            $review = $assignment->getReview($matchID);
+            if($assignment->reviewExists($matchID)){
+                $review = $assignment->getReview($matchID);
+            }else{
+                $review = $assignment->getReviewDraft($matchID);
+            }
             $reviewerName = $dataMgr->getUserDisplayName($review->reviewerID);
             $getParams = "&matchid=$matchID";
         }
@@ -147,8 +155,9 @@ try
         $content .= $submission->getHTML();
 
         //Get the validate function
-        $content .= "<script> $(document).ready(function(){ $('#review').submit(function() {\n";
+        $content .= "<script> $(document).ready(function(){ $('#saveButton').click(function() {\n";
         $content .= "var error = false;\n";
+        #$content .= "var res = $('#review').find('input[type=\"submit\"]:focus').attr('id');\n";
         $content .= $review->getValidationCode();
         $content .= "return !error;\n";
         $content .= "}); }); </script>\n";
@@ -157,7 +166,7 @@ try
         $content .= "<h1>$reviewerName's Review</h1>\n";
         $content .= "<form id='review' action='".get_redirect_url("peerreview/submitreview.php?assignmentid=$assignment->assignmentID$getParams$closeOnDone")."' method='post'>";
         $content .= $review->getFormHTML();
-        $content .= "<br><br><input type='submit' value='Submit' />\n";
+        $content .= "<br><br><input type='submit' name='saveAction' id='saveButton' value='Submit' /><input type='submit' name='saveAction' value='Save Draft' />\n";
         $content .= "</form>\n";
     }
 

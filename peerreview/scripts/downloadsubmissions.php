@@ -36,11 +36,11 @@ class DownloadSubmissionsPeerReviewScript extends Script
 
         $zippedfile = $zip->file();
         $id = $_GET["assignmentid"];
-        header("Content-Description: File Transfer");
+        #header("Content-Description: File Transfer");
         header("Content-Disposition: attachment; filename=Assignment$id-submissions.zip");
         header("Content-Type: application/zip");
-        header("Content-length: " . strlen($zippedfile)+1 . "\n\n");
-        header("Content-Transfer-Encoding: binary");
+        #header("Content-length: " . strlen($zippedfile)+1 . "\n\n");
+        #header("Content-Transfer-Encoding: binary");
         // output data to the browser
         echo $zippedfile;
         echo 0;

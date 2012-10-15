@@ -42,11 +42,13 @@ try
     $markAppealMap = $assignment->getReviewMarkAppealMap();
     $spotCheckMap = $assignment->getSpotCheckMap();
     $stats = $assignment->getAssignmentStatistics();
+    $userStats = $assignment->getAssignmentStatisticsForUser($USERID);
     $displayMap = $dataMgr->getUserDisplayMap();
 
     //Start making the big table
     $content .= "<h1>Submissions (".$stats->numSubmissions."/".$stats->numPossibleSubmissions.") and Reviews (".$stats->numStudentReviews."/".$stats->numPossibleStudentReviews.")</h1>";
-    $content .= "There are ".$stats->numUnmarkedSubmissions." unmarked submissions, ".$stats->numUnmarkedReviews." unmarked reviews, ".$stats->numPendingAppeals." pending appeals and ".$stats->numPendingSpotChecks." pending spot checks<br><br>\n";
+    $content .= "There are ".$stats->numUnmarkedSubmissions." unmarked submissions, ".$stats->numUnmarkedReviews." unmarked reviews, ".$stats->numPendingAppeals." pending appeals and ".$stats->numPendingSpotChecks." pending spot checks<br>\n";
+    $content .= "You have ".$userStats->numUnmarkedSubmissions." unmarked submissions, ".$userStats->numUnmarkedReviews." unmarked reviews and ".$userStats->numPendingSpotChecks." pending spot checks<br>\n";
 
     if($hideBlank) {
         $content .= "<a href='".get_redirect_url("?assignmentid=$assignment->assignmentID&hideblank=0&hideedit=$hideEdit")."'>Show Blank Submissions</a>\n";

@@ -985,6 +985,25 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $stats;
     }
 
+    function getAssignmentStatisticsForUser(PeerReviewAssignment $assignment, UserID $user)
+    {
+        $stats = new stdClass;
+
+        $sh = $this->prepareQuery("numUnmarkedSubmissionsForUserQuery","SELECT count(*) as c FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_matches matches ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_submission_marks marks ON subs.submissionID = marks.submissionID WHERE marks.score is null && assignmentID=? && matches.reviewerID = ?;");
+        $sh->execute(array($assignment->assignmentID, $userID));
+        $stats->numUnmarkedSubmissions = $sh->fetch()->c;
+
+        $sh = $this->prepareQuery("numUnmarkedReviewsForUserQuery","SELECT count(distinct matches.matchID) as c FROM peer_review_assignment_matches matches LEFT JOIN peer_review_assignment_review_marks marks ON matches.matchID = marks.matchID LEFT JOIN peer_review_assignment_review_answers ans ON ans.matchID = matches.matchID WHERE matches.submissionID IN (SELECT subs.submissionID FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_matches matches ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_submission_marks marks ON subs.submissionID = marks.submissionID WHERE assignmentID=:assignment && matches.reviewerID = :user) && marks.score is NULL && ans.matchID is not null && matches.reviewerID != :user;");
+        $sh->execute(array("assignment"=>$assignment->assignmentID, "user"=>$user));
+        $stats->numUnmarkedReviews = $sh->fetch()->c;
+
+        $sh = $this->prepareQuery("numPendingSpotChecksForUserQuery","SELECT COUNT(*) as c FROM peer_review_assignment_spot_checks checks JOIN peer_review_assignment_submissions subs ON subs.submissionID = checks.submissionID WHERE status = 'pending' && assignmentID = ? && checkerID = ?;");
+        $sh->execute(array($assignment->assignmentID, $user));
+        $stats->numPendingSpotChecks = $sh->fetch()->c;
+
+        return $stats;
+    }
+
     function getReviewMap(PeerReviewAssignment $assignment)
     {
         //First, figure out what should be there

@@ -49,4 +49,3 @@ class DownloadSubmissionsPeerReviewScript extends Script
     }
 }
 
-?>

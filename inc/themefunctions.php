@@ -271,4 +271,3 @@ function get_default_menu_items()
     return $menu;
 }
 
-?>

@@ -201,5 +201,3 @@ class ArticleResponsePDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissi
     }
 }
 
-?>
-

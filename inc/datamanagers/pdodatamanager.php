@@ -231,6 +231,18 @@ class PDODataManager extends DataManager
         return $instructors;
     }
 
+    function getStudentIDMap()
+    {
+        $sh = $this->db->prepare("SELECT userID, studentID FROM users WHERE courseID=?;");
+        $sh->execute(array($this->courseID));
+        $map = array();
+        while($res = $sh->fetch())
+        {
+            $map[$res->userID] = $res->studentID;
+        }
+        return $map;
+    }
+
     function getAssignmentHeaders()
     {
         $this->getAssignmentHeadersQuery->execute(array($this->courseID));
@@ -342,4 +354,3 @@ class PDODataManager extends DataManager
         $assignment->passwordMessage = $res->passwordMessage;
     }
 }
-?>

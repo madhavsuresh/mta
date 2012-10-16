@@ -1,5 +1,7 @@
 <?php
 
+require_once("inc/assignmentgrades.php");
+
 abstract class Assignment
 {
     public $assignmentID;
@@ -126,6 +128,8 @@ abstract class Assignment
 
     function finalizeDuplicateFromBase(Assignment $baseAssignment) {}
 
+    function getGrades() { return null; }
+
     abstract function _getHeaderHTML(UserID $userid);
     abstract protected function _duplicate();
     abstract protected function _loadFromPost($POST);
@@ -150,4 +154,3 @@ class AssignmentHeader
     public $displayPriority;
 }
 
-?>

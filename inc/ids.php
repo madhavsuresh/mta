@@ -26,4 +26,3 @@ class CourseID extends MechanicalTA_ID
 class AssignmentID extends MechanicalTA_ID
 {}
 
-?>

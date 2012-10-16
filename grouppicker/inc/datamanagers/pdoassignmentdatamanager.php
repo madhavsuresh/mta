@@ -169,5 +169,3 @@ class PDOGroupPickerAssignmentDataManager extends AssignmentDataManager
 }
 
 
-?>
-

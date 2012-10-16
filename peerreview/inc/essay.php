@@ -111,4 +111,3 @@ class EssaySubmissionSettings extends SubmissionSettings
     }
 };
 
-?>

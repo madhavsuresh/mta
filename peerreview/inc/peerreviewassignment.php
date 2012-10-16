@@ -502,6 +502,46 @@ class PeerReviewAssignment extends Assignment
         return array_splice($assignments, 0, $maxAssignments);
     }
 
+    function getGrades()
+    {
+        #Figure out the maximum number of reviews that a person did
+        $reviewAssignment = $this->dataMgr->getReviewerAssignment($this);
+        $maxReviews = array_reduce($reviewAssignment, function ($a, $b) { return max(sizeof($a), sizeof($b)); });
+        $authorMap = $this->dataMgr->getAuthorSubmissionMap($this);
+
+        $grades = new AssignmentGrades();
+        $grades->headers[] = "Essay";
+        for($i = 0; $i < $maxReviews; $i++)
+        {
+            $grades->headers[] = "Review ".($i+1);
+        }
+
+        #Insert all the essay marks
+        foreach($authorMap as $authorID => $submissionID)
+        {
+            $mark = $this->dataMgr->getSubmissionMark($this, $submissionID);
+            if($mark->isValid)
+                $grades->gradesForUsers[$authorID] = array(1.0 * $mark->getScore() / $this->maxSubmissionScore);
+        }
+
+        #Now get all of the review marks
+        foreach($reviewAssignment as $submissionID => $reviewAssign)
+        {
+            foreach($reviewAssign as $reviewerID)
+            {
+                if(!array_key_exists($reviewerID->id, $grades->gradesForUsers))
+                     $grades->gradesForUsers[$reviewerID->id] = array("");
+
+                $mark = $this->dataMgr->getReviewMark($this, $this->dataMgr->getReview($this, new SubmissionID($submissionID), $reviewerID)->matchID);
+                if($mark->isAutomatic)
+                    $grades->gradesForUsers[$reviewerID->id][] = "A";
+                else if($mark->isValid)
+                    $grades->gradesForUsers[$reviewerID->id][] =  (1.0 * $mark->getScore() / $this->maxReviewScore);
+            }
+        }
+
+        return $grades;
+    }
+
 };
 
-?>

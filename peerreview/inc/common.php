@@ -54,4 +54,3 @@ function compute_peer_review_score_for_assignments(UserID $student, $assignments
         return 0;
 }
 
-?>

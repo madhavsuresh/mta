@@ -10,4 +10,3 @@ abstract class Script
     function hasParams() { return true; }
 }
 
-?>

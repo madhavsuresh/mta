@@ -8,9 +8,13 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
  logout.php
  register.php
  runscript.php
+ scripts=scripts{
+  downloadgrades.php
+ }
  inc=inc{
   assignment.php
   assignmentdatamanager.php
+  assignmentgrades.php
   authmanager.php
   basic.php
   common.php

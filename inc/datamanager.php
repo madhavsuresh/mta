@@ -144,4 +144,3 @@ abstract class DataManager
 
 };
 
-?>

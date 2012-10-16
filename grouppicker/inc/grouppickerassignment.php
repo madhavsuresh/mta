@@ -136,4 +136,3 @@ class GroupPickerAssignment extends Assignment
     }
 }
 
-?>

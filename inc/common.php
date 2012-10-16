@@ -83,4 +83,3 @@ try
 }catch(Exception $e) {
     render_exception_page($e);
 }
-?>

@@ -69,4 +69,3 @@ class LDAPAuthManager extends AuthManager
     }
 
 }
-?>

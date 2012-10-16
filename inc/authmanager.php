@@ -258,4 +258,3 @@ class DummyAuthManager extends AuthManager
     function supportsGettingStudentID() { return false; }
 }
 
-?>

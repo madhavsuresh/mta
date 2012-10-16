@@ -730,17 +730,29 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         if(!is_null($reviewer))
         {
             //They are looking up the review on a author-reviewer pair
-            if(get_class($id) != "UserID")
-                throw new Exception("This call wanted a user id as the second arg, but got ".get_class($id));
-            //Do the query
-            $sh = $this->prepareQuery("getReviewHeaderByAuthorReviewerPairQuery", "SELECT matchID, peer_review_assignment_matches.submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE assignmentID = ? && peer_review_assignment_submissions.authorID=?, reviewerID = ?;");
-            $sh->execute(array($assignment->assignmentID, $id, $reviewer));
-            $headerRes = $sh->fetch();
+            if(get_class($id) == "UserID")
+            {
+                //Do the query
+                $sh = $this->prepareQuery("getReviewHeaderByAuthorReviewerPairQuery", "SELECT matchID, peer_review_assignment_matches.submissionID as submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE assignmentID = ? && peer_review_assignment_submissions.authorID=? && reviewerID = ?;");
+                $sh->execute(array($assignment->assignmentID, $id, $reviewer));
+                $headerRes = $sh->fetch();
+            }
+            else if(get_class($id) == "SubmissionID")
+            {
+                //We better have a match id
+                $sh = $this->prepareQuery("getReviewHeaderBySubmissionAndReviewerQuery", "SELECT matchID, peer_review_assignment_matches.submissionID as submissionID, reviewerID FROM peer_review_assignment_matches WHERE submissionID =? && reviewerID = ?;");
+                $sh->execute(array($id, $reviewer));
+                $headerRes = $sh->fetch();
+            }
+            else
+            {
+               throw new Exception("This call wanted a user id as the second arg, but got ".get_class($id));
+            }
         }
         else if(get_class($id) == "MatchID")
         {
             //We better have a match id
-            $sh = $this->prepareQuery("getReviewHeaderByMatchQuery", "SELECT matchID, peer_review_assignment_matches.submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE matchID=?;");
+            $sh = $this->prepareQuery("getReviewHeaderByMatchQuery", "SELECT matchID, peer_review_assignment_matches.submissionID as submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE matchID=?;");
             $sh->execute(array($id));
             $headerRes = $sh->fetch();
         }
@@ -1182,5 +1194,3 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $this->$name;
     }
 };
-?>
-

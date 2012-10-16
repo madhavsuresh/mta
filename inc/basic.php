@@ -210,4 +210,3 @@ function median()
     return $median;
 }
 
-?>

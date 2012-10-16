@@ -58,4 +58,3 @@ abstract class SubmissionSettings
     abstract function loadFromPost($POST);
 };
 
-?>

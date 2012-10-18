@@ -34,7 +34,7 @@ try
         if($assignment->submissionExists($USERID))
         {
             $content .= "<li><a href='#tabs-1'>My Submission</a></li>\n";
-            $tabIndex++;
+            $tabOffset++;
         }
         for($i = 1; $i <= sizeof($assignedReviews); $i++)
         {

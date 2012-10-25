@@ -2,7 +2,31 @@
 require_once("inc/common.php");
 try
 {
+    function displaySubmissionWithError($msg = "")
+    {
+        global $authMgr, $_POST, $content;
+
+        $content .= $msg;
+
+        try
+        {
+            $assignment = get_peerreview_assignment();
+            $submissionType = $assignment->submissionType."Submission";
+            $submission = new $submissionType($assignment->submissionSettings);
+            $submission->loadFromPost($_POST);
+            $content .= "<h1>Unsaved Submission</h1>\n";
+            $content .= $submission->getHTML();
+        } catch(Exception $e){
+            //Just eat it
+        }
+        render_page();
+    }
+
     $title .= " | Submit Submission";
+    if(!$authMgr->isLoggedIn())
+    {
+        displaySubmissionWithError("<h2>Session Expired</h2><a href='".get_redirect_url("login.php")."'>Login</a><br><br>");
+    }
     $dataMgr->requireCourse();
     $authMgr->enforceLoggedIn();
 
@@ -32,15 +56,15 @@ try
     #What we do depends on the current action
     if($beforeSubmissionStart)
     {
-        $content .= 'This assignment has not been posted';
+        displaySubmissionWithError('This assignment has not been posted');
     }
     else if($afterSubmissionStop)
     {
-        $content .= 'Submissions can no longer be submitted';
+        displaySubmissionWithError('Submissions can no longer be submitted');
     }
     else if($assignment->deniedUser($authorID))
     {
-        $content .= 'You have been excluded from this assignment';
+        displaySubmissionWithError('You have been excluded from this assignment');
     }
     else #There's no reasy why they can't submit
     {

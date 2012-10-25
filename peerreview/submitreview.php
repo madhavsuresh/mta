@@ -2,7 +2,28 @@
 require_once("inc/common.php");
 try
 {
+    function displayReviewWithError($msg = "")
+    {
+        global $authMgr, $_POST, $content;
+
+        $content .= $msg;
+
+        try
+        {
+            $review = new Review(get_peerreview_assignment());
+            $review->loadFromPost($_POST, true);
+            $content .= "<h1>Unsaved Review</h1>\n";
+            $content .= $review->getHTML();
+        } catch(Exception $e){
+            //Just eat it
+        }
+        render_page();
+    }
     $title .= " | Submit Review";
+    if(!$authMgr->isLoggedIn())
+    {
+        displayReviewWithError("<h2>Session Expired</h2><a href='".get_redirect_url("login.php")."'>Login</a><br><br>");
+    }
     $dataMgr->requireCourse();
     $authMgr->enforceLoggedIn();
 
@@ -74,15 +95,15 @@ try
 
     if($beforeReviewStart)
     {
-        $content .= 'This assignment has not been posted';
+        displayReviewWithError('This assignment has not been posted');
     }
     else if($afterReviewStop)
     {
-        $content .= 'Reviews can no longer be submitted';
+        displayReviewWithError('Reviews can no longer be submitted');
     }
     else if($assignment->deniedUser($reviewerID))
     {
-        $content .= 'You have been excluded from this assignment';
+        displayReviewWithError('You have been excluded from this assignment');
     }
     else
     {

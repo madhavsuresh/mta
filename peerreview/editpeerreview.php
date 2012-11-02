@@ -83,7 +83,7 @@ try
             }
             $validUser = true;
         }
-        else if(!in_array($user, $deniedUsers))
+        else if(!array_key_exists($user, $deniedUsers))
         {
             $userName = "+".$userName;
             $validUser = true;

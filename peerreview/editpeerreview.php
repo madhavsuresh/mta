@@ -64,18 +64,35 @@ try
     }
 
 
-    //$deniedUsers = $assignment->getDeniedUsers();
+    $deniedUsers = $assignment->getDeniedUsers();
     $independentUsers = $assignment->getIndependentUsers();
+    $availibleReviewers = array();
 
     #Pre-process the user names so that they have a star if they are indepednent
     //TODO: Add something to indicate that such a review exists
-    foreach($submissionAuthorMap as $user => $submissionID){
-        if(array_key_exists($user, $independentUsers)){
-            $userDisplayMap[$user] = "*".$userDisplayMap[$user];
-        }else{
-            $userDisplayMap[$user] = "&nbsp;".$userDisplayMap[$user];
+    foreach($userDisplayMap as $user => $userName){
+        if(!$dataMgr->isStudent(new UserID($user)))
+            continue;
+        $validUser = false;
+        if(array_key_exists($user, $submissionAuthorMap))
+        {
+            if(array_key_exists($user, $independentUsers)){
+                $userName = "*".$userName;
+            }else{
+                $userName = "&nbsp;".$userName;
+            }
+            $validUser = true;
         }
-
+        else if(!in_array($user, $deniedUsers))
+        {
+            $userName = "+".$userName;
+            $validUser = true;
+        }
+        if($validUser)
+        {
+            $availibleReviewers[$user] = $userName;
+            $userDisplayMap[$user] = $userName;
+        }
     }
 
     $content .= "<h1>Edit Peer Review Assignments</h1>\n";
@@ -106,13 +123,13 @@ try
         {
             $content .= "<td style='text-align:center'><select name='$submissionID"."_$i' $width>\n";
             $content .= "<option value=''> </option>\n";
-            foreach($submissionAuthorMap as $reviewer => $_){
+            foreach($availibleReviewers as $reviewer => $reviewerName){
                 if($reviewer == $author)
                     continue;
                 $selected = '';
                 if(isset($reviewerAssignment[$submissionID->id][$i]) && $reviewer == $reviewerAssignment[$submissionID->id][$i]->id)
                     $selected = 'selected';
-                $content .= "<option value='$reviewer' $selected>".$userDisplayMap[$reviewer]."</option>\n";
+                $content .= "<option value='$reviewer' $selected>".$reviewerName."</option>\n";
             }
             $content .= "</select></td>\n";
         }

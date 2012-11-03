@@ -724,6 +724,38 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $sh->execute(array($matchID));
     }
 
+    function getMatchID(PeerReviewAssignment $assignment, MechanicalTA_ID $id, UserID $reviewer = null)
+    {
+        if(!is_null($reviewer))
+        {
+            //They are looking up the review on a author-reviewer pair
+            if(get_class($id) == "UserID")
+            {
+                //Do the query
+                $sh = $this->prepareQuery("getMatchIDByAuthorReviewerPairQuery", "SELECT matchID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE assignmentID = ? && peer_review_assignment_submissions.authorID=? && reviewerID = ?;");
+                $sh->execute(array($assignment->assignmentID, $id, $reviewer));
+                $res = $sh->fetch();
+                return new MatchID($res->matchID);
+            }
+            else if(get_class($id) == "SubmissionID")
+            {
+                //We better have a match id
+                $sh = $this->prepareQuery("getMatchIDBySubmissionAndReviewerQuery", "SELECT matchID FROM peer_review_assignment_matches WHERE submissionID =? && reviewerID = ?;");
+                $sh->execute(array($id, $reviewer));
+                $res = $sh->fetch();
+                return new MatchID($res->matchID);
+            }
+            else
+            {
+               throw new Exception("This call wanted a user id as the second arg, but got ".get_class($id));
+            }
+        }
+        else if(get_class($id) == "MatchID")
+        {
+            return $id;
+        }
+        throw new Exception("Unable to get a review using a ".get_class($id));
+    }
 
     function getReview(PeerReviewAssignment $assignment, MechanicalTA_ID $id, UserID $reviewer = null)
     {

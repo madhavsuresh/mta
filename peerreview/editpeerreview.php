@@ -96,13 +96,14 @@ try
     }
 
     $content .= "<h1>Edit Peer Review Assignments</h1>\n";
-    $content .= "A (*) beside a user&#39;s name means they are independent.<br>\n";
+    $content .= "A (*) beside a user&#39;s name means they are independent, while a (+) indicates that the user did not submit an essay, but is not denied from the assignment.<br>\n";
 
     $content .= "<form id='users' action='".get_redirect_url("?assignmentid=$assignment->assignmentID&numcols=$numCols")."' method='post'>";
 
     $content .= "<table width'=%100'>\n";
     $content .= "<tr><td style='text-align:center'><input type='submit' name='action' value='Remove Column' /></td><td style='text-align:center'><input type='submit' name='action' value='Add Column' /></td></tr>\n";
     $content .= "</table><br>\n";
+    $content .= "<div style='overflow:auto;'>\n";
     $content .= "<table align='left' width='100%'>\n";
     $content .= "<tr><td><h2 style='text-align:center'>User</h2></td>\n";
     for($i=1; $i <= $numCols; $i++){
@@ -121,23 +122,40 @@ try
         $content .= "<tr class='rowType$currentRowType'><td width='200px'>$authorName</td>\n";
         for($i = 0; $i < $numCols; $i++)
         {
-            $content .= "<td style='text-align:center'><select name='$submissionID"."_$i' $width>\n";
-            $content .= "<option value=''> </option>\n";
-            foreach($availibleReviewers as $reviewer => $reviewerName){
-                if($reviewer == $author)
-                    continue;
-                $selected = '';
-                if(isset($reviewerAssignment[$submissionID->id][$i]) && $reviewer == $reviewerAssignment[$submissionID->id][$i]->id)
-                    $selected = 'selected';
-                $content .= "<option value='$reviewer' $selected>".$reviewerName."</option>\n";
+            $content .= "<td style='text-align:center'>";
+            $matchID = null;
+            if(isset($reviewerAssignment[$submissionID->id][$i]))
+            {
+                try{
+                    $matchID = $assignment->getMatchID(new UserID($author),  $reviewerAssignment[$submissionID->id][$i]);
+                }catch(Exception $e) {
+                }
             }
-            $content .= "</select></td>\n";
+
+            if(is_null($matchID) || (!$assignment->reviewExists($matchID) && !$assignment->reviewDraftExists($matchID)))
+            {
+                $content .= "<select name='$submissionID"."_$i' $width>\n";
+                $content .= "<option value=''> </option>\n";
+                foreach($availibleReviewers as $reviewer => $reviewerName){
+                    if($reviewer == $author)
+                        continue;
+                    $selected = '';
+                    if(isset($reviewerAssignment[$submissionID->id][$i]) && $reviewer == $reviewerAssignment[$submissionID->id][$i]->id)
+                        $selected = 'selected';
+                    $content .= "<option value='$reviewer' $selected>".$reviewerName."</option>\n";
+                }
+                $content .= "</select>\n";
+            }else{
+                $content .= $userDisplayMap[$reviewerAssignment[$submissionID->id][$i]->id];
+            }
+            $content .= "</td>\n";
         }
         $currentRowType = ($currentRowType+1)%2;
     }
 
     $content .= "<tr><td>&nbsp;</td><td>\n";
     $content .= "</table>\n";
+    $content .= "</div>\n";
     $content .= "<br><input type='submit' name='action' value='Save' />\n";
     $content .= "</form></div>\n";
 

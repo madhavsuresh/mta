@@ -88,6 +88,7 @@ try
             $userName = "+".$userName;
             $validUser = true;
         }
+        $userName = str_replace(" ", "&nbsp;", $userName);
         if($validUser)
         {
             $availibleReviewers[$user] = $userName;
@@ -100,29 +101,34 @@ try
 
     $content .= "<form id='users' action='".get_redirect_url("?assignmentid=$assignment->assignmentID&numcols=$numCols")."' method='post'>";
 
-    $content .= "<table width'=%100'>\n";
+    $content .= "<table >\n";
     $content .= "<tr><td style='text-align:center'><input type='submit' name='action' value='Remove Column' /></td><td style='text-align:center'><input type='submit' name='action' value='Add Column' /></td></tr>\n";
     $content .= "</table><br>\n";
+    $content .= "<table align='left' style='table-layout:fixed;' cellspacing='0'>\n";
+    $content .= "<tr><td><h2 style='text-align:center'>Student</h2></td><td>&nbsp;</td></tr>\n";
+    $currentRowType = 0;
+    foreach($userDisplayMap as $author => $authorName){
+        if(!array_key_exists($author, $submissionAuthorMap))
+            continue;
+        $content .= "<tr ><td class='rowType$currentRowType'><div style='height:1.5em;'>$authorName</div></td><tr>\n";
+        $currentRowType = ($currentRowType+1)%2;
+    }
+    $content .= "</table>\n";
     $content .= "<div style='overflow:auto;'>\n";
-    $content .= "<table align='left' width='100%'>\n";
-    $content .= "<tr><td><h2 style='text-align:center'>User</h2></td>\n";
+    $content .= "<table style='table-layout:fixed' cellspacing='0'>\n";
+    $currentRowType = 0;
+
     for($i=1; $i <= $numCols; $i++){
         $content .= "<td><h2 style='text-align:center'>Reviewer $i</h2></td>";
     }
-    $content .= "</tr>\n";
-
-    $currentRowType = 0;
-    $width = 450/$numCols;
-    $width = "style='width:$width px'";
-
     foreach($userDisplayMap as $author => $authorName){
         if(!array_key_exists($author, $submissionAuthorMap))
             continue;
         $submissionID = $submissionAuthorMap[$author];
-        $content .= "<tr class='rowType$currentRowType'><td width='200px'>$authorName</td>\n";
+        $content .= "<tr class='rowType$currentRowType'>\n";
         for($i = 0; $i < $numCols; $i++)
         {
-            $content .= "<td style='text-align:center'>";
+            $content .= "<td><div style='height:1.5em;text-align:center'>";
             $matchID = null;
             if(isset($reviewerAssignment[$submissionID->id][$i]))
             {
@@ -134,7 +140,7 @@ try
 
             if(is_null($matchID) || (!$assignment->reviewExists($matchID) && !$assignment->reviewDraftExists($matchID)))
             {
-                $content .= "<select name='$submissionID"."_$i' $width>\n";
+                $content .= "<select name='$submissionID"."_$i' width='100%'>\n";
                 $content .= "<option value=''> </option>\n";
                 foreach($availibleReviewers as $reviewer => $reviewerName){
                     if($reviewer == $author)
@@ -148,7 +154,7 @@ try
             }else{
                 $content .= $userDisplayMap[$reviewerAssignment[$submissionID->id][$i]->id];
             }
-            $content .= "</td>\n";
+            $content .= "</div></td>\n";
         }
         $currentRowType = ($currentRowType+1)%2;
     }

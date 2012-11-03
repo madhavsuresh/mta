@@ -994,11 +994,11 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         $stats = new stdClass;
 
-        $sh = $this->prepareQuery("numSubmissionsQuery", "SELECT count(submissionID) as c FROM peer_review_assignment_submissions WHERE assignmentID=?;");
+        $sh = $this->prepareQuery("numSubmissionsQuery", "SELECT count(*) as c FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_denied denied ON subs.assignmentID = denied.assignmentID && subs.authorID = denied.userID WHERE denied.userID is null && subs.assignmentID=?;");
         $sh->execute(array($assignment->assignmentID));
         $stats->numSubmissions = $sh->fetch()->c;
 
-        $sh = $this->prepareQuery("numPossibleSubmissionsQuery", "SELECT count(users.userID) as c from users LEFT JOIN peer_review_assignment_denied denied ON users.userID = denied.userID WHERE (assignmentID is null || assignmentID != ?) && userType = 'student';");
+        $sh = $this->prepareQuery("numPossibleSubmissionsQuery", "SELECT count(*) as c from users WHERE userType = 'student' && userID not in (SELECT users.userID from users LEFT JOIN peer_review_assignment_denied denied ON users.userID = denied.userID WHERE assignmentID = ?);");
         $sh->execute(array($assignment->assignmentID));
         $stats->numPossibleSubmissions = $sh->fetch()->c;
         $sh = $this->prepareQuery("numStudentReviewsQuery","SELECT count(distinct matches.matchID) as c FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID JOIN peer_review_assignment_review_answers ans ON matches.matchID = ans.matchID WHERE assignmentID=? && instructorForced = 0;");
@@ -1010,7 +1010,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $sh->execute(array($assignment->assignmentID));
         $stats->numPossibleStudentReviews = $sh->fetch()->c;
 
-        $sh = $this->prepareQuery("numUnmarkedSubmissionsQuery","SELECT COUNT(*) as c FROM peer_review_assignment_submissions subs JOIN peer_review_assignment_submission_marks marks ON subs.submissionID = marks.submissionID WHERE assignmentID=?;");
+        $sh = $this->prepareQuery("numUnmarkedSubmissionsQuery","SELECT COUNT(*) as c FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_denied denied ON subs.assignmentID = denied.assignmentID && subs.authorID = denied.userID JOIN peer_review_assignment_submission_marks marks ON subs.submissionID = marks.submissionID WHERE denied.userID is null && subs.assignmentID=?;");
         $sh->execute(array($assignment->assignmentID));
         $stats->numUnmarkedSubmissions = $stats->numSubmissions - $sh->fetch()->c;
 

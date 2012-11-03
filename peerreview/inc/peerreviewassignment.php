@@ -63,7 +63,7 @@ class PeerReviewAssignment extends Assignment
 
             $stats = $this->getAssignmentStatistics();
 
-            $html .= "<td width='33%'><strong>Submission</strong> ($stats->numSubmissions/$stats->numPossibleSubmissions)<br/>\n";
+            $html .= "<td width='33%'><strong>Submissions</strong> ($stats->numSubmissions/$stats->numPossibleSubmissions)<br/>\n";
             $html .= "<table align='left'><tr><td>Start:</td><td id='submissionStartDate$this->assignmentID'/></tr>\n";
             $html .= "<tr><td>Due:</td><td id='submissionStopDate$this->assignmentID'/></tr></table></td>\n";
 

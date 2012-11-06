@@ -194,13 +194,25 @@ $code = "<script type='text/javascript'>
 
 	});
     // Returns text statistics for the specified editor by id
-    function getStats(id) {
-        var body = tinymce.get(id).getBody(), text = tinymce.trim(body.innerText || body.textContent);
+    function getWordCount (edName) {
+        var ed = tinymce.get(edName);
+        var tc = 0;
+        var tx = ed.getContent({ format: 'raw' });
 
-        return {
-            chars: text.length,
-            words: text.split(/[\w\u2019\'-]+/).length
-        };
+        if (tx) {
+                tx = tx.replace(/\.\.\./g, ' '); // convert ellipses to spaces
+                tx = tx.replace(/<.[^<>]*?>/g, ' ').replace(/&nbsp;|&#160;/gi, ' '); // remove html tags and space chars
+
+                // deal with html entities
+                tx = tx.replace(/(\w+)(&.+?;)+(\w+)/, '$1$3').replace(/&.+?;/g, ' ');
+                tx = tx.replace(/[0-9.(),;:!?%#$?\'\\\"_+=\\\/-]*/g, ''); // remove numbers and punctuation
+
+                var wordArray = tx.match(/[\w\u2019\'-]+/g);
+                if (wordArray) {
+                        tc = wordArray.length;
+                }
+        }
+        return tc;
     }
 </script>";
 

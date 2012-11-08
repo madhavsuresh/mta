@@ -17,7 +17,8 @@ try
     {
         $authMgr->enforceLoggedIn();
 
-        $dataMgr->numStudents();
+        #$dataMgr->numStudents();
+        $content .= show_timezone();
 
         #Figure out what courses are availible, and display them to the user (showing what roles they have)
         $assignments = $dataMgr->getAssignments();

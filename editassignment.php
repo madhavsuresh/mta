@@ -79,6 +79,7 @@ try
         if($assignmentID)
             $idGet = "&assignmentid=$assignmentID";
 
+        $content .= show_timezone();
         $content .= "<h1>Edit Assignment</h1>\n";
         $content .= "<form id='assignment' action='?action=save&type=$assignment->assignmentType$idGet$args' method='post'>\n";
         $content .= $assignment->getFormHTML();

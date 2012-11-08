@@ -132,6 +132,13 @@ function get_page_scripts($echo=true)
     }
 }
 
+function show_timezone()
+{
+    $code = "<table width='100%'><tr><td align='center'>All times are UTC<span id='timezonespan'></span></td></tr></table>\n";
+    $code .= "<script type='text/javascript'>$('#timezonespan').ready(function(){ $('#timezonespan').html(moment(0).format('Z')); })</script>";
+    return $code;
+}
+
 function set_element_to_date($element, $date, $target="val", $format="MM/DD/YYYY HH:mm",$echo=false, $noScriptTags=false)
 {
     $code = '';

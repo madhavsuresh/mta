@@ -26,6 +26,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $html .= "<input type='text' name='spotCheckProb' value='0.25' size='10'/></td></tr>\n";
         $html .= "<tr><td>Seed</td><td>";
         $html .= "<input type='text' name='seed' value='$assignment->submissionStartDate' size='30'/></td></tr>\n";
+        $html .= "<tr><td>Assign Instructor Checks</td><td><input type='checkbox' name='assignInstructorChecks' checked /></td></tr>\n";
         $html .= "<tr><td>&nbsp</td></tr>\n";
 
         foreach($dataMgr->getInstructors() as $instructorID)
@@ -59,8 +60,8 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             $targetLoads[$instructorID] = floatval(require_from_post("load$instructorID"));
             $targetLoadSum += $targetLoads[$instructorID];
         }
-        if ($targetLoadSum == 0)
-            throw new Exception("No instructor has a load value, so nothing can be assigned");
+        #if ($targetLoadSum == 0)
+            #throw new Exception("No instructor has a load value, so nothing can be assigned");
         foreach($instructors as $instructorID)
             $targetLoads[$instructorID] /= $targetLoadSum;
 
@@ -89,12 +90,15 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 
         $reviewedScores = array();
 
+        $html = "";
         foreach($submissions as $authorID => $submissionID)
         {
+            //TODO: This should probably output something useful...
             $authorID = new UserID($authorID);
 
             //We don't want to overwrite anything
-            if($assignment->getSubmissionMark($submissionID)->isValid && !$assignment->getSubmissionMark($submissionID)->isAutomatic)
+            $subMark = $assignment->getSubmissionMark($submissionID);
+            if($subMark->isValid && !$subMark->isAutomatic)
                 continue;
 
             $reviews = array_filter($reviewMap[$submissionID->id], function($x) { return $x->exists; });
@@ -129,7 +133,9 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
                 //Update the reviewer's  marks
                 foreach($reviews as $review)
                 {
-                    $assignment->saveReviewMark(new Mark($assignment->maxReviewScore, null, true), $review->matchID);
+                    $revMark = $assignment->getReviewMark($review->matchID);
+                    if(!$revMark->isValid || $revMark->isAutomatic)
+                        $assignment->saveReviewMark(new Mark($assignment->maxReviewScore, null, true), $review->matchID);
                 }
             }
             else
@@ -144,6 +150,8 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             }
         }
         //asort($submissionScores, SORT_NUMERIC);
+        if ($targetLoadSum == 0)
+            return "Only marks updated, no assignments to instructors"; //$html;
 
         $instructorJobs = array();
         $instructorReviewCountMaps = array();
@@ -262,7 +270,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             $assignedJobs++;
         }
 
-        $html = "<table width='100%'>\n";
+        $html .= "<table width='100%'>\n";
         $html .= "<tr><td><h2>Instructor</h2></td><td><h2>Submissions to Mark</h2></td><td><h2>SpotChecks</h2></td></tr>\n";
         foreach($dataMgr->getInstructors() as $instructorID)
         {

@@ -26,7 +26,6 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $html .= "<input type='text' name='spotCheckProb' value='0.25' size='10'/></td></tr>\n";
         $html .= "<tr><td>Seed</td><td>";
         $html .= "<input type='text' name='seed' value='$assignment->submissionStartDate' size='30'/></td></tr>\n";
-        $html .= "<tr><td>Assign Instructor Checks</td><td><input type='checkbox' name='assignInstructorChecks' checked /></td></tr>\n";
         $html .= "<tr><td>&nbsp</td></tr>\n";
 
         foreach($dataMgr->getInstructors() as $instructorID)
@@ -68,7 +67,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $pendingSpotChecks = array();
         $pendingSubmissions = array();
 
-        $clearExistingAssignments = true;
+        $clearExistingAssignments = ($targetLoadSum != 0);
         if($clearExistingAssignments)
         {
             $reviewMap = $assignment->getReviewMap();

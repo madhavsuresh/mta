@@ -57,7 +57,7 @@ try
         }
 
         //If we're after the stop date, we better be sure that this appeal exists
-        if($assignment->appealStopDate < $NOW && !$assignment->appealExists($review->matchID))
+        if($assignment->appealStopDate < $NOW && !$assignment->appealExists($review->matchID, $appealType))
         {
             $content .= "Appeal submissions are closed";
             render_page();

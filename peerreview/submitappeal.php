@@ -35,6 +35,7 @@ try
         {
         case "review":
             $reviews = $assignment->getReviewsForSubmission($assignment->getSubmissionID($USERID));
+            $reviews = array_values(array_filter($reviews, function($v) { return sizeof($v->answers) > 0; }));
             if(isset($reviews[$reviewid])) {
                 $review = $reviews[$reviewid];
             } else {
@@ -44,6 +45,7 @@ try
         case "reviewmark":
             //Get the specified id
             $reviews= $assignment->getAssignedReviews($USERID);
+            $reviews = array_values(array_filter($reviews, function($v) { return sizeof($v->answers) > 0; }));
             if(isset($reviews[$reviewid])) {
                 $review = $assignment->getReview($reviews[$reviewid]);
             } else {

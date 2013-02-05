@@ -111,7 +111,7 @@ class PeerReviewAssignment extends Assignment
                     if($this->dataMgr->submissionExists($this, $user))
                         $html .= "<a href='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$this->assignmentID")."'>Edit submission</a><br>\n";
                     else
-                        $html .= "<a href='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$this->assignmentID")."''>Write submission</a><br>\n";
+                        $html .= "<a href='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$this->assignmentID")."''>Create submission</a><br>\n";
                     $html .= "Due: <span id='submissionStopDate$this->assignmentID'/>";
                 }
                 $html .= "</td>\n";

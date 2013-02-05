@@ -4,6 +4,7 @@ require_once("peerreview/inc/common.php");
 require_once("peerreview/inc/peerreviewassignment.php");
 require_once("peerreview/inc/mark.php");
 require_once("peerreview/inc/essay.php");
+require_once("peerreview/inc/image.php");
 require_once("peerreview/inc/articleresponse.php");
 require_once("peerreview/inc/review.php");
 require_once("peerreview/inc/spotcheck.php");
@@ -992,14 +993,15 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getAssignmentStatistics(PeerReviewAssignment $assignment)
     {
+        global $dataMgr;
         $stats = new stdClass;
 
         $sh = $this->prepareQuery("numSubmissionsQuery", "SELECT count(*) as c FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_denied denied ON subs.assignmentID = denied.assignmentID && subs.authorID = denied.userID WHERE denied.userID is null && subs.assignmentID=?;");
         $sh->execute(array($assignment->assignmentID));
         $stats->numSubmissions = $sh->fetch()->c;
 
-        $sh = $this->prepareQuery("numPossibleSubmissionsQuery", "SELECT count(*) as c from users WHERE userType = 'student' && userID not in (SELECT users.userID from users LEFT JOIN peer_review_assignment_denied denied ON users.userID = denied.userID WHERE assignmentID = ?);");
-        $sh->execute(array($assignment->assignmentID));
+        $sh = $this->prepareQuery("numPossibleSubmissionsQuery", "SELECT count(*) as c from users WHERE courseID = ? && userType = 'student' && userID not in (SELECT users.userID from users LEFT JOIN peer_review_assignment_denied denied ON users.userID = denied.userID WHERE assignmentID = ?);");
+        $sh->execute(array($dataMgr->courseID, $assignment->assignmentID));
         $stats->numPossibleSubmissions = $sh->fetch()->c;
         $sh = $this->prepareQuery("numStudentReviewsQuery","SELECT count(distinct matches.matchID) as c FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID JOIN peer_review_assignment_review_answers ans ON matches.matchID = ans.matchID WHERE assignmentID=? && instructorForced = 0;");
 

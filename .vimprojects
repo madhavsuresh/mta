@@ -73,6 +73,7 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
   inc=inc{
    appeal.php
    articleresponse.php
+   image.php
    common.php
    essay.php
    mark.php

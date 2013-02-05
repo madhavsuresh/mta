@@ -45,6 +45,10 @@ abstract class Submission
         return $this->_getValidationCode();
     }
 
+    function getFormAttribs() {
+        return "";
+    }
+
     abstract function _loadFromPost($POST);
     abstract function _getHTML($showHidden);
     abstract function _getFormHTML();

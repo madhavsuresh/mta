@@ -9,6 +9,7 @@ global $PEER_REVIEW_SUBMISSION_TYPES;
 $PEER_REVIEW_SUBMISSION_TYPES = array(
     "essay" => "Essay",
     "articleresponse" => "Article Response",
+    "image" => "Image"
 );
 
 //Get stuff from the main site

@@ -95,6 +95,15 @@ class ImageSubmission extends Submission
     function _getFormHTML()
     {
         $html = "";
+        if($this->imgData){
+            $data = base64_encode($this->imgData);
+            //$data = '';
+            $html .= "<div style='margin-left:auto;margin-right:auto;margin-bottom:20px;text-align:center'>";
+            $html .= "<img  width='$this->imgWidth' height='$this->imgHeight' src='data:image/png;base64,$data'/>";
+            $html .= "</div>";
+            $html .= "<span style='color:red'>WARNING: You must re-upload your image if you decide to change your submission</span><br>";
+
+        }
         $html .= "Image File: <input type='file' name='imgfile' id='imgFile' accept='image/gif,image/jpeg,image/png' /><br><br>";
         $html .= "<div class=errorMsg><div class='errorField' id='error_file'></div></div><br>\n";
         $html .= "<textarea name='text' cols='60' rows='40' class='mceEditor' id='textEdit' accept-charset='utf-8'>\n";

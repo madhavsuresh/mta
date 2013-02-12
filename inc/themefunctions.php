@@ -254,7 +254,8 @@ function render_page()
 function render_exception_page($exception)
 {
     global $SITEMASTER, $content, $_SESSION, $_GET, $_POST;
-    $content  = "<h1>Exception!</h1>";
+    $content  = "<h1>Ooops!</h1>";
+    $content .= "<h3>The code monkeys threw an error</h3>";
     $content .= cleanString($exception);
     //$content .= cleanString($exception->getMessage());
 

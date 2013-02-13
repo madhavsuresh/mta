@@ -28,7 +28,7 @@ class ImageSubmission extends Submission
         $imgFileName = $_FILES["imgfile"]["tmp_name"];
         list($width, $height, $type) = getimagesize($imgFileName);
 
-        ini_set('memory_limit', '32M');
+        ini_set('memory_limit', '64M');
         switch ($type)
         {
             case IMAGETYPE_GIF:

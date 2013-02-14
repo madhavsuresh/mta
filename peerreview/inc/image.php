@@ -66,8 +66,14 @@ class ImageSubmission extends Submission
         $html = "";
         $data = base64_encode($this->imgData);
         //$data = '';
+        $width = $this->imgWidth;
+        $height = $this->imgHeight;
+        if($width > 700){
+            $height = floor(700.0*$height/$width);
+            $width = 700;
+        }
         $html .= "<div style='margin-left:auto;margin-right:auto;margin-bottom:20px;text-align:center'>";
-        $html .= "<img  width='$this->imgWidth' height='$this->imgHeight' src='data:image/png;base64,$data'/>";
+        $html .= "<img  width='$width' height='$height' src='data:image/png;base64,$data'/>";
         $html .= "</div>";
 
         $html .= $this->text;

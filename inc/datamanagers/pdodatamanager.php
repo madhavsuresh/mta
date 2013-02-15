@@ -34,7 +34,7 @@ class PDODataManager extends DataManager
         $this->db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
         $this->db->exec("SET NAMES 'utf8';");
 
-        $this->isUserQuery = $this->db->prepare("SELECT userID FROM users WHERE userID=? && userType IN ('instructor', 'student');");
+        $this->isUserQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? && userID=? && userType IN ('instructor', 'student');");
         $this->isStudentQuery = $this->db->prepare("SELECT userID FROM users WHERE userID=? && userType = 'student';");
         $this->isUserByNameQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? && username=? && userType IN ('instructor', 'student');");
         $this->userIDQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? && username=? ;");
@@ -122,7 +122,7 @@ class PDODataManager extends DataManager
      */
     function isUser(UserID $userid)
     {
-        $this->isUserQuery->execute(array($userid));
+        $this->isUserQuery->execute(array($this->courseID, $userid));
         return $this->isUserQuery->fetch() != NULL;
     }
 

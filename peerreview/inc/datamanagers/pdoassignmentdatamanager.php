@@ -582,6 +582,12 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return new Mark();
     }
 
+    function removeReviewMark(PeerReviewAssignment $assignment, MatchID $matchID)
+    {
+        $sh = $this->prepareQuery("removeReviewMarkQuery", "DELETE FROM peer_review_assignment_review_marks WHERE matchID=?;");
+        $sh->execute(array($matchID));
+    }
+
     function saveSubmissionMark(PeerReviewAssignment $assignment, Mark $mark, SubmissionID $submissionID)
     {
         $sh = $this->prepareQuery("saveSubmissionMarkQuery", "INSERT INTO peer_review_assignment_submission_marks (submissionID, score, comments, automatic) VALUES (:submissionID, :score, :comments, :automatic) ON DUPLICATE KEY UPDATE score=:score, comments=:comments, automatic=:automatic;");

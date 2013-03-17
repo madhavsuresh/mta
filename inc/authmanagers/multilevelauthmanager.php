@@ -6,16 +6,17 @@ class MultiLevelAuthManager extends AuthManager
 
     private $authMethods;
 
-    function __construct($registrationType)
+    function __construct($registrationType, $dataMgr)
     {
-        parent::__construct($registrationType);
+        parent::__construct($registrationType, $dataMgr);
 
-        require_once("ldap.php");
-        require_once("pdo.php");
+        require_once("ldapauthmanager.php");
+        require_once("pdoauthmanager.php");
 
-        $this->authMethods = array(new LDAPAuthManager($registrationType), new PDOAuthManager($registrationType));
+        $this->authMethods = array(new LDAPAuthManager($registrationType, $dataMgr), new PDOAuthManager($registrationType, $dataMgr));
 
     }
+
     function checkAuthentication($username, $password) {
         foreach($this->authMethods as $auth)
         {
@@ -46,6 +47,7 @@ class MultiLevelAuthManager extends AuthManager
         {
             if($auth->userExists($username))
                 return true;
+
         }
         return false;
     }

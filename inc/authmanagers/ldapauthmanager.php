@@ -18,6 +18,7 @@ class LDAPAuthManager extends AuthManager
         #Get the connection, and try to bind
         #Recipe from http://code.activestate.com/recipes/101525-ldap-authentication/
         $ds=@ldap_connect($this->host,$this->port);
+        if(!$ds) { return false; }
         $r = @ldap_search( $ds, $this->basedn, 'uid=' . "$username");
         if ($r) {
             $result = @ldap_get_entries( $ds, $r);
@@ -51,6 +52,7 @@ class LDAPAuthManager extends AuthManager
     function userExists($username)
     {
         $ds=@ldap_connect($this->host,$this->port);
+        if(!$ds) { return false; }
         $r = @ldap_search( $ds, $this->basedn, 'uid=' . "$username");
         return $r != null;
     }
@@ -58,6 +60,7 @@ class LDAPAuthManager extends AuthManager
     function getUserFirstAndLastNames($username)
     {
         $ds=@ldap_connect($this->host,$this->port);
+        if(!$ds) { die("what the crap"); }
         $r = @ldap_search( $ds, $this->basedn, 'uid=' . "$username");
         if ($r) {
             $result = @ldap_get_entries( $ds, $r);

@@ -557,19 +557,19 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         {
         case "SubmissionID":
             //They want the submission with this id
-            $sh = $this->prepareQuery("getSubmissionQuery","SELECT submissionID, authorID, noHallOfFame FROM peer_review_assignment_submissions WHERE submissionID=?;");
+            $sh = $this->prepareQuery("getSubmissionQuery","SELECT submissionID, authorID, noPublicUse FROM peer_review_assignment_submissions WHERE submissionID=?;");
             $sh->execute(array($id));
             $res = $sh->fetch();
             break;
         case "UserID":
             //They want to get the submission by the author
-            $sh = $this->prepareQuery("getSubmissionByAuthorQuery", "SELECT submissionID, authorID, noHallOfFame FROM peer_review_assignment_submissions WHERE assignmentID=? && authorID=?;");
+            $sh = $this->prepareQuery("getSubmissionByAuthorQuery", "SELECT submissionID, authorID, noPublicUse FROM peer_review_assignment_submissions WHERE assignmentID=? && authorID=?;");
             $sh->execute(array($assignment->assignmentID, $id));
             $res = $sh->fetch();
             break;
         case "MatchID":
             //They want to get the submission for the given review
-            $sh = $this->prepareQuery("getSubmissionByMatchQuery", "SELECT peer_review_assignment_submissions.submissionID, authorID, noHallOfFame FROM peer_review_assignment_submissions JOIN peer_review_assignment_matches ON peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID WHERE matchID=?;");
+            $sh = $this->prepareQuery("getSubmissionByMatchQuery", "SELECT peer_review_assignment_submissions.submissionID, authorID, noPublicUse FROM peer_review_assignment_submissions JOIN peer_review_assignment_matches ON peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID WHERE matchID=?;");
             $sh->execute(array($id));
             $res = $sh->fetch();
             break;
@@ -581,7 +581,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
         $submission = $this->submissionHelpers[$assignment->submissionType]->getAssignmentSubmission($assignment, new SubmissionID($res->submissionID));
         $submission->authorID = new UserID($res->authorID);
-        $submission->noHallOfFame = $res->noHallOfFame;
+        $submission->noPublicUse = $res->noPublicUse;
         return $submission;
     }
 
@@ -590,13 +590,13 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $isNewSubmission = !isset($submission->submissionID) || is_null($submission->submissionID);
         if($isNewSubmission)
         {
-            $sh = $this->db->prepare("INSERT INTO peer_review_assignment_submissions (assignmentID, authorID, noHallOfFame) VALUES(?, ?, ?);");
-            $sh->execute(array($assignment->assignmentID, $submission->authorID, $submission->noHallOfFame));
+            $sh = $this->db->prepare("INSERT INTO peer_review_assignment_submissions (assignmentID, authorID, noPublicUse) VALUES(?, ?, ?);");
+            $sh->execute(array($assignment->assignmentID, $submission->authorID, $submission->noPublicUse));
             $submission->submissionID = new SubmissionID($this->db->lastInsertID());
         }
         else
         {
-            $sh = $this->db->prepare("UPDATE peer_review_assignment_submissions SET noHallOfFame=? WHERE submissionID=?;");
+            $sh = $this->db->prepare("UPDATE peer_review_assignment_submissions SET noPublicUse=? WHERE submissionID=?;");
             $sh->execute(array($submission->text, $submission->submissionID));
         }
         $this->submissionHelpers[$assignment->submissionType]->saveAssignmentSubmission($assignment, $submission, $isNewSubmission);

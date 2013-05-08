@@ -4,20 +4,20 @@ abstract class Submission
 {
     public $submissionID;
     public $authorID;
-    public $noHallOfFame;
+    public $noPublicUse;
     protected $submissionSettings;
 
-    function __construct(SubmissionSettings $settings, SubmissionID $submissionID = NULL, UserID $authorID = NULL, $noHallOfFame = false)
+    function __construct(SubmissionSettings $settings, SubmissionID $submissionID = NULL, UserID $authorID = NULL, $noPublicUse = false)
     {
         $this->submissionID = $submissionID;
         $this->submissionSettings = $settings;
         $this->authorID = $authorID;
-        $this->noHallOfFame = $noHallOfFame;
+        $this->noPublicUse = $noPublicUse;
     }
 
     function loadFromPost($POST)
     {
-        $this->noHallOfFame = array_key_exists("nohalloffame", $POST);
+        $this->noPublicUse = array_key_exists("nopublicuse", $POST);
         $this->_loadFromPost($POST);
     }
 
@@ -25,7 +25,7 @@ abstract class Submission
     {
         $html = $this->_getHTML($showHidden);
         if($showHidden)
-            $html .= "<h2>Exclude from hall of fame</h2>";
+            $html .= "<h2>Exclude from public use</h2>";
         return $html;
     }
 
@@ -34,9 +34,9 @@ abstract class Submission
         $html = $this->_getFormHTML();
 
         $tmp = '';
-        if($this->noHallOfFame)
+        if($this->noPublicUse)
             $tmp = 'checked';
-        $html .= "<input type='checkbox' name='nohalloffame' $tmp />&nbsp;Do not include my submission in the hall of fame<br><br>\n";
+        $html .= "<input type='checkbox' name='nopublicuse' $tmp />&nbsp;Do not use my submission anonymously in public<br><br>\n";
         return $html;
     }
 

@@ -166,37 +166,10 @@ class ImagePDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
 {
     function loadAssignmentSubmissionSettings(PeerReviewAssignment $assignment)
     {
-        $assignment->submissionSettings = new ImageSubmissionSettings();
-        /*
-        //We just need to grab the topics
-        $sh = $this->db->prepare("SELECT name, link FROM peer_review_assignment_article_response_settings WHERE assignmentID = ? ORDER BY articleIndex;");
-        $sh->execute(array($assignment->assignmentID));
-
-        while($res = $sh->fetch())
-        {
-            $obj = new stdClass;
-            $obj->name = $res->name;
-            $obj->link = $res->link;
-            $assignment->submissionSettings->articles[] = $obj;
-        }
-        */
     }
 
     function saveAssignmentSubmissionSettings(PeerReviewAssignment $assignment, $isNewAssignment)
     {
-        /*
-        //Delete any old topics, and just write in the new ones
-        $sh = $this->prepareQuery("deleteAssignmentArticleResponseSubmissionSettingsQuery", "DELETE FROM peer_review_assignment_article_response_settings WHERE assignmentID = ?;");
-        $sh->execute(array($assignment->assignmentID));
-
-        $sh = $this->prepareQuery("insertAssignmentArticleResponseSubmissionSettingsQuery", "INSERT INTO peer_review_assignment_article_response_settings (assignmentID, articleIndex, name, link) VALUES (?, ?, ?, ?);");
-        $i = 0;
-        foreach($assignment->submissionSettings->articles as $article)
-        {
-            $sh->execute(array($assignment->assignmentID, $i, $article->name, $article->link));
-            $i++;
-       }
-       */
     }
 
     function getAssignmentSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)

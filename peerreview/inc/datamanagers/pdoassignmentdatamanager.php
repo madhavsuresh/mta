@@ -5,6 +5,7 @@ require_once("peerreview/inc/peerreviewassignment.php");
 require_once("peerreview/inc/mark.php");
 require_once("peerreview/inc/essay.php");
 require_once("peerreview/inc/image.php");
+require_once("peerreview/inc/code.php");
 require_once("peerreview/inc/articleresponse.php");
 require_once("peerreview/inc/review.php");
 require_once("peerreview/inc/spotcheck.php");
@@ -28,64 +29,6 @@ abstract class PDOPeerReviewSubmissionHelper
             $this->$name = $this->db->prepare($query);
         }
         return $this->$name;
-    }
-}
-
-
-class EssayPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
-{
-    function saveAssignmentSubmissionSettings(PeerReviewAssignment $assignment, $isNewAssignment)
-    {
-        //Delete any old topics, and just write in the new ones
-        $sh = $this->prepareQuery("deleteAssignmentEssaySubmissionSettingsQuery", "DELETE FROM peer_review_assignment_essay_settings WHERE assignmentID = ?;");
-        $sh->execute(array($assignment->assignmentID));
-
-        $sh = $this->prepareQuery("insertAssignmentEssaySubmissionSettingsQuery", "INSERT INTO peer_review_assignment_essay_settings (assignmentID, topicIndex, topic) VALUES (?, ?, ?);");
-        $i = 0;
-        foreach($assignment->submissionSettings->topics as $topic)
-        {
-            $sh->execute(array($assignment->assignmentID, $i, $topic));
-            $i++;
-        }
-    }
-
-    function loadAssignmentSubmissionSettings(PeerReviewAssignment $assignment)
-    {
-        //We just need to grab the topics
-        $sh = $this->db->prepare("SELECT topic FROM peer_review_assignment_essay_settings WHERE assignmentID = ? ORDER BY topicIndex;");
-        $sh->execute(array($assignment->assignmentID));
-
-        $assignment->submissionSettings = new EssaySubmissionSettings();
-        while($res = $sh->fetch())
-        {
-            $assignment->submissionSettings->topics[] = $res->topic;
-        }
-    }
-
-    function getAssignmentSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
-    {
-        $essay = new EssaySubmission($assignment->submissionSettings);
-        $sh = $this->prepareQuery("getEssaySubmissionQuery", "SELECT `text`, topicIndex FROM peer_review_assignment_essays WHERE submissionID = ?;");
-        $sh->execute(array($submissionID));
-        if(!$res = $sh->fetch())
-            throw new Exception("Failed to get essay '$submissionID'");
-        $essay->text = $res->text;
-        $essay->topicIndex = $res->topicIndex;
-        return $essay;
-    }
-
-    function saveAssignmentSubmission(PeerReviewAssignment $assignment, Submission $essay, $isNewSubmission)
-    {
-        if($isNewSubmission)
-        {
-            $sh = $this->prepareQuery("saveEssaySubmissionInsertQuery", "INSERT INTO peer_review_assignment_essays (submissionID, text, topicIndex) VALUES(?, ?, ?);");
-            $sh->execute(array($essay->submissionID, $essay->text, $essay->topicIndex));
-        }
-        else
-        {
-            $sh = $this->prepareQuery("saveEssaySubmissionUpdateQuery", "UPDATE peer_review_assignment_essays SET text = ?, topicIndex = ? WHERE submissionID = ?;");
-            $sh->execute(array($essay->text, $essay->topicIndex, $essay->submissionID));
-        }
     }
 }
 

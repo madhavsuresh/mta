@@ -52,7 +52,7 @@ abstract class Submission
     abstract function _loadFromPost($POST);
     abstract function _getHTML($showHidden);
     abstract function _getFormHTML();
-    function _getValidationCode() {}
+    function _getValidationCode() { return ""; }
 };
 
 abstract class SubmissionSettings

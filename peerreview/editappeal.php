@@ -85,7 +85,7 @@ try
     }
     else if(array_key_exists("matchid", $_GET))
     {
-        $authMgr->enforceInstructor();
+        $authMgr->enforceMarker();
 
         //Get this review and submission
         $matchID = new MatchID($_GET["matchid"]);

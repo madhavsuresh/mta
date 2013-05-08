@@ -40,9 +40,10 @@ class PDOAuthManager extends AuthManager
 
     function addUserAuthentication($username, $password)
     {
+        //TODO: Make this tied to username/courseID instead of just username
         $hash = $this->getHash($password);
-        $sh = $this->db->prepare("INSERT INTO user_passwords (username, passwordHash) VALUES (?, ?);");
-        return $sh->execute(array($username, $hash));
+        $sh = $this->db->prepare("INSERT INTO user_passwords (username, passwordHash) VALUES (?, ?) ON DUPLICATE KEY UPDATE passwordHash = ?;");
+        return $sh->execute(array($username, $hash, $hash));
     }
 
     function removeUserAuthentication($username)

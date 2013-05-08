@@ -43,6 +43,14 @@ abstract class AuthManager
         }
     }
 
+    function enforceMarker(){
+        #Make sure that they are logged in, and an instructor
+        global $USERID;
+        if(!$this->isLoggedIn() || ! $this->dataMgr->isMarker($USERID)) {
+            redirect_to_page("login.php");
+        }
+    }
+
     function performLogin($username, $password)
     {
         global $_SESSION;
@@ -154,11 +162,15 @@ abstract class AuthManager
         return array_key_exists("createuser", $_GET);
     }
 
-    function getRegistrationFormHTML($username, $firstname, $lastname, $studentid)
+
+    function getRegistrationFormHTML($username = "", $firstname = "", $lastname = "", $studentid = "", $extraRows="", $skipPassword=false, $target=null, $skipIdCheck=false)
     {
+        if(is_null($target))
+            $target = get_redirect_url("?action=register");
+
         $html = $this->getRegistrationFormHeader();
 
-        $html .= "<form id='register' action='".get_redirect_url("?action=register")."' method='post'>\n";
+        $html .= "<form id='register' action='$target' method='post'>\n";
         if($this->creatingUserInRegistrationForm())
         {
             $html .= "<input type='hidden' name='__adduserauth' value='1'>\n";
@@ -166,8 +178,10 @@ abstract class AuthManager
         $html .= "<table>\n";
         $html .= "<tr><td>Username: </td><td><input type='text' name='username' id='username' value='$username'/></td></tr>\n";
         $html .= "<tr><td colspan='2'><div class=errorMsg><div class='errorField' id='error_username'></div></div></td></tr>\n";
-        $html .= "<tr><td>Password: </td><td><input type='password' name='password' id='password'/></td></tr>\n";
-        $html .= "<tr><td colspan='2'><div class=errorMsg><div class='errorField' id='error_password'></div></div></td></tr>\n";
+        if($skipPassword){
+            $html .= "<tr><td>Password: </td><td><input type='password' name='password' id='password'/></td></tr>\n";
+            $html .= "<tr><td colspan='2'><div class=errorMsg><div class='errorField' id='error_password'></div></div></td></tr>\n";
+        }
         if(!$this->supportsGettingFirstAndLastNames())
         {
             $html .= "<tr><td>First Name: </td><td><input type='text' name='firstname' id='firstname' value='$firstname'/></td></tr>\n";
@@ -181,7 +195,9 @@ abstract class AuthManager
             $html .= "<tr><td colspan='2'><div class=errorMsg><div class='errorField' id='error_studentid'></div></div></td></tr>\n";
         }
         $html .= $this->_getRegistrationFormHTML();
+        $html .= $extraRows;
         $html .= "</table>\n";
+
         $html .= "<input type='submit' value='Register'/>\n";
         $html .= "</form>\n";
 
@@ -203,13 +219,13 @@ abstract class AuthManager
         //We don't hide the parent of the username, since we did it before
         $html .= $this->getCodeForLengthCheck("username", 2, false);
 
-        $html .= $this->getCodeForLengthCheck("password", 2);
+        //$html .= $this->getCodeForLengthCheck("password", 2);
         if(!$this->supportsGettingFirstAndLastNames())
         {
             $html .= $this->getCodeForLengthCheck("firstname", 2);
             $html .= $this->getCodeForLengthCheck("lastname", 2);
         }
-        if(!$this->supportsGettingStudentID())
+        if(!$this->supportsGettingStudentID() && !$skipIdCheck)
         {
             $html .= $this->getCodeForLengthCheck("studentid", 2);
         }
@@ -233,6 +249,10 @@ abstract class AuthManager
         return "";
     }
 
+    function supportsSettingPassword()
+    {
+        return false;
+    }
 
     protected function getCodeForLengthCheck($fieldName, $length, $hideErrorBox=true)
     {

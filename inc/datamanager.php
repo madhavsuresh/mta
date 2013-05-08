@@ -99,6 +99,10 @@ abstract class DataManager
     protected abstract function addAssignmentToCourse($name, $type);
     protected abstract function updateAssignment(Assignment $assignment);
     abstract function assignmentExists(AssignmentID $id);
+    abstract function getCourses();
+    abstract function getCourseInfo(CourseID $id);
+    abstract function setCourseInfo(CourseID $id, $name, $displayName, $authType, $regType);
+    abstract function createCourse($name, $displayName, $authType, $regType);
 
     function getAssignments()
     {

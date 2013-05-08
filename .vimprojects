@@ -8,8 +8,15 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
  logout.php
  register.php
  runscript.php
+ usermanager.php
  scripts=scripts{
   downloadgrades.php
+ }
+ admin=admin{
+  coursemanager.php
+  usermanager.php
+  .htpasswd
+  .htaccess
  }
  inc=inc{
   assignment.php
@@ -27,7 +34,7 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
   }
   authmanagers=authmanagers{
    ldapauthmanager.php
-   multilevel.php
+   multilevelauthmanager.php
    pdoauthmanager.php
   }
  }
@@ -68,12 +75,14 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
    autogradeandassignmarkers.php
    computeindependents.php
    copymarks.php
+   clearautoreviewmarks.php
    downloadsubmissions.php
   }
   inc=inc{
    appeal.php
    articleresponse.php
    image.php
+   code.php
    common.php
    essay.php
    mark.php

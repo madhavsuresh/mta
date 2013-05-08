@@ -4,7 +4,7 @@ try
 {
     $title .= " | Mark Review";
     $dataMgr->requireCourse();
-    $authMgr->enforceInstructor();
+    $authMgr->enforceMarker();
 
     $assignment=get_peerreview_assignment();
     $matchID = new MatchID(require_from_get("matchid"));

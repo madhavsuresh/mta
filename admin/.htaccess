@@ -1,0 +1,4 @@
+AuthUserFile /home/chris/public_html/mta/admin/.htpasswd
+AuthType Basic
+AuthName "MTA Admin Pages"
+Require valid-user

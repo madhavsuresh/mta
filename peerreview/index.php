@@ -4,7 +4,7 @@ try
 {
     $title .= " | Mark Assignment";
     $dataMgr->requireCourse();
-    $authMgr->enforceInstructor();
+    $authMgr->enforceMarker();
 
     $hideBlank = 0;
     if(array_key_exists("hideblank", $_GET))

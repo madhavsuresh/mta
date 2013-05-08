@@ -17,6 +17,7 @@ class PDODataManager extends DataManager
     private $isUserQuery;
     private $userIDQuery;
     private $isInstructorQuery;
+    private $isMarkerQuery;
     private $getConfigPropertyQuery;
     function __construct()
     {
@@ -34,11 +35,12 @@ class PDODataManager extends DataManager
         $this->db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
         $this->db->exec("SET NAMES 'utf8';");
 
-        $this->isUserQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? && userID=? && userType IN ('instructor', 'student');");
+        $this->isUserQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? && userID=? && userType IN ('instructor', 'student', 'marker');");
         $this->isStudentQuery = $this->db->prepare("SELECT userID FROM users WHERE userID=? && userType = 'student';");
-        $this->isUserByNameQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? && username=? && userType IN ('instructor', 'student');");
+        $this->isUserByNameQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? && username=? && userType IN ('instructor', 'student', 'marker');");
         $this->userIDQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? && username=? ;");
         $this->isInstructorQuery = $this->db->prepare("SELECT userID FROM users WHERE userID=? && (userType IN ('instructor', 'shadowinstructor'));");
+        $this->isMarkerQuery = $this->db->prepare("SELECT userID FROM users WHERE userID=? && (userType IN ('marker', 'shadowmarker', 'instructor', 'shadowinstructor'));");
         $this->getAssignmentHeadersQuery = $this->db->prepare("SELECT assignmentID, name, assignmentType, displayPriority FROM assignments WHERE courseID = ? ORDER BY displayPriority DESC;");
         $this->getAssignmentHeaderQuery = $this->db->prepare("SELECT name, assignmentType, displayPriority FROM assignments WHERE assignmentID = ?;");
         $this->getUsernameQuery = $this->db->prepare("SELECT username FROM users WHERE userID=?;");
@@ -73,7 +75,7 @@ class PDODataManager extends DataManager
     function setCourseFromID(CourseID $id)
     {
         //Get the course information
-        $sh = $this->db->prepare("SELECT name, displayName, authType, registrationType FROM course WHERE courseId = ?;");
+        $sh = $this->db->prepare("SELECT name, displayName, authType, registrationType FROM course WHERE courseID = ?;");
         $sh->execute(array($id));
         if(!$res = $sh->fetch())
         {
@@ -107,6 +109,23 @@ class PDODataManager extends DataManager
         $sh = $this->db->prepare("INSERT INTO users (courseID, username, firstName, lastName, studentID, userType) VALUES (?, ?, ?, ?, ?, ?);");
         $sh->execute(array($this->courseID, $username, $firstName, $lastName, $studentID, $type));
         return new UserID($this->db->lastInsertID());
+    }
+
+    function getUserInfo(UserID $id)
+    {
+        $sh = $this->db->prepare("SELECT courseID, username, firstName, lastName, studentID, userType FROM users where userID = ?;");
+        $sh->execute(array($id));
+        $ret = $sh->fetch();
+        if(!is_null($ret)){
+            $ret->userID = $id;
+        }
+        return $ret;
+    }
+
+    function updateUser(UserID $id, $username, $firstName, $lastName, $studentID, $type)
+    {
+        $sh = $this->db->prepare("UPDATE users SET username = ?, firstName = ?, lastName = ?, studentID = ?, userType = ? WHERE userID = ?;");
+        $sh->execute(array($username, $firstName, $lastName, $studentID, $type, $id));
     }
 
     function getUserID($username)
@@ -149,6 +168,14 @@ class PDODataManager extends DataManager
     {
         $this->isUserByNameQuery->execute(array($this->courseID, $username));
         return $this->isUserByNameQuery->fetch() != NULL;
+    }
+
+    /** Checks to see if the given user is an instructor
+     */
+    function isMarker(UserID $userid)
+    {
+        $this->isMarkerQuery->execute(array($userid));
+        return $this->isMarkerQuery->fetch() != NULL;
     }
 
     /** Checks to see if the given user is an instructor
@@ -352,5 +379,24 @@ class PDODataManager extends DataManager
 
         $assignment->password = $res->password;
         $assignment->passwordMessage = $res->passwordMessage;
+    }
+
+    function getCourseInfo(CourseID $id)
+    {
+        $sh = $this->db->prepare("SELECT courseID, name, displayName, courseID, authType, registrationType FROM course where courseID = ?;");
+        $sh->execute(array($id));
+        return $sh->fetch();
+    }
+
+    function setCourseInfo(CourseID $id, $name, $displayName, $authType, $regType)
+    {
+        $sh = $this->db->prepare("UPDATE course SET name = ?, displayName = ?, authType = ?, registrationType = ? WHERE courseID = ?;");
+        $sh->execute(array($name, $displayName, $authType, $regType, $id));
+    }
+
+    function createCourse($name, $displayName, $authType, $regType)
+    {
+        $sh = $this->db->prepare("INSERT INTO course (name, displayName, authType, registrationType) VALUES (?, ?, ?, ?);");
+        $sh->execute(array($name, $displayName, $authType, $regType));
     }
 }

@@ -42,7 +42,7 @@ try
 
     if(array_key_exists("authorid", $_GET)){
         #We better be an instructor
-        $authMgr->enforceInstructor();
+        $authMgr->enforceMarker();
         $authorID = new UserID($_GET["authorid"]);
 
         if(!$dataMgr->isUser($authorID))

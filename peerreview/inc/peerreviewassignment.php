@@ -51,14 +51,16 @@ class PeerReviewAssignment extends Assignment
     {
         global $dataMgr, $NOW;
         $html = "";
-        if($dataMgr->isInstructor($user))
+        if($dataMgr->isMarker($user))
         {
-            //#Give us options for editing this assignment
-            $html .= "<table align='left'><tr>\n";
-            $html .= "<td><a title='Edit Peer Review Questions' href='".get_redirect_url("peerreview/editreviewquestions.php?assignmentid=$this->assignmentID")."'><div class='icon editQuestions'></div></a></td>\n";
-            $html .= "<td><a title='Edit Denied/Independent Users' href='".get_redirect_url("peerreview/editdeniedindependentusers.php?assignmentid=$this->assignmentID")."'><div class='icon editDenied'></div></a></td>\n";
-            $html .= "<td><a title='Edit Peer Review Assignments' href='".get_redirect_url("peerreview/editpeerreview.php?assignmentid=$this->assignmentID")."'><div class='icon editPeerAssignment'></div></a></td>\n";
-            $html .= "</tr></table>\n";
+            if($dataMgr->isInstructor($user)){
+                //#Give us options for editing this assignment
+                $html .= "<table align='left'><tr>\n";
+                $html .= "<td><a title='Edit Peer Review Questions' href='".get_redirect_url("peerreview/editreviewquestions.php?assignmentid=$this->assignmentID")."'><div class='icon editQuestions'></div></a></td>\n";
+                $html .= "<td><a title='Edit Denied/Independent Users' href='".get_redirect_url("peerreview/editdeniedindependentusers.php?assignmentid=$this->assignmentID")."'><div class='icon editDenied'></div></a></td>\n";
+                $html .= "<td><a title='Edit Peer Review Assignments' href='".get_redirect_url("peerreview/editpeerreview.php?assignmentid=$this->assignmentID")."'><div class='icon editPeerAssignment'></div></a></td>\n";
+                $html .= "</tr></table>\n";
+            }
             $html .= "<table width=100%><tr>\n";
 
             $stats = $this->getAssignmentStatistics();

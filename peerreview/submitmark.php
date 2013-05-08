@@ -4,7 +4,7 @@ try
 {
     $title = " | Submit Mark";
     $dataMgr->requireCourse();
-    $authMgr->enforceInstructor();
+    $authMgr->enforceMarker();
 
     $assignment = get_peerreview_assignment();
 

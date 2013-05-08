@@ -20,7 +20,7 @@ try
     #Have we been given an $author override?
     $authorInGet='';
     if(array_key_exists("authorid", $_GET)){
-        $authMgr->enforceInstructor($USERID);
+        $authMgr->enforceMarker($USERID);
         $authorID = new UserID($_GET["authorid"]);
         if(!$dataMgr->isUser($authorID))
             throw new Exception("Invalid author ID");

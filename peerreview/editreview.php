@@ -41,7 +41,7 @@ try
     else
     {
         //We better be an instructor
-        $authMgr->enforceInstructor();
+        $authMgr->enforceMarker();
 
         if(array_key_exists("matchid", $_GET))
         {

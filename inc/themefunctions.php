@@ -115,7 +115,7 @@ function get_page_headers($echo=true)
 
 function get_page_scripts($echo=true)
 {
-    global $scripts;
+    global $page_scripts;
     $uiURL = get_ui_url(false);
     $html  = "<script type='text/javascript' src='".$uiURL."js/jquery.js'></script>\n";
     $html .= "<script type='text/javascript' src='".$uiURL."js/jquery-ui.js'></script>\n";
@@ -124,7 +124,7 @@ function get_page_scripts($echo=true)
     $html .= "<script type='text/javascript' src='".$uiURL."js/moment.min.js'></script>\n";
     $html .= "<script type='text/javascript' src='".$uiURL."tiny_mce/tiny_mce.js'></script>\n";
 
-    foreach($scripts as $script){
+    foreach($page_scripts as $script){
         $html .= "<script type='text/javascript' src='$script'></script>\n";
     }
 

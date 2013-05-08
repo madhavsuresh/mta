@@ -49,6 +49,11 @@
     background-image:url(images/application-x-php.png);
 }
 
+.userManager
+{
+    background-image:url(images/list-add-user.png);
+}
+
 .new
 {
     background-image:url(images/document-new.png);

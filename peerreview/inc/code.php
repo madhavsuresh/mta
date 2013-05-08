@@ -17,12 +17,12 @@ class CodeSubmission extends Submission
 
     function _getHTML($showHidden)
     {
-        global $scripts;
+        global $page_scripts;
         $script = "https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js";
         if(strlen($this->submissionSettings->language)){
             $script .= "?lang=".$this->submissionSettings->language;
         }
-        $scripts[] = $script;
+        $page_scripts[] = $script;
         $html = "";
         $lang = "";
         if(strlen($this->submissionSettings->language)){
@@ -44,6 +44,16 @@ class CodeSubmission extends Submission
         $html .= $this->code;
         $html .= "</textarea><br>\n";
         return $html;
+    }
+
+    function getDownloadContents()
+    {
+        return $this->code;
+    }
+
+    function getDownloadSuffix()
+    {
+        return ".txt";
     }
 
 };

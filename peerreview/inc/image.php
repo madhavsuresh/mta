@@ -124,52 +124,37 @@ class ImageSubmission extends Submission
         return "enctype='multipart/form-data' action='api/upload'";
     }
 
+    function getDownloadContents()
+    {
+        return $this->imgData;
+    }
+
+    function getDownloadSuffix()
+    {
+        return ".png";
+    }
 };
 
 class ImageSubmissionSettings extends SubmissionSettings
 {
     function getFormHTML()
     {
-        /*
-        $html  = "<table width='100%' align='left'>\n";
-        $html .= "<tr><td>Topic Combo Box Options (One per line)<br>Leave blank if you don't wany to have a selection</td>\n";
-        $html .= "<td><textarea id='essayTopicTextArea' name='essayTopicTextArea' cols='40' rows='10' wrap='off'>";
-        foreach($this->topics as $topic)
-            $html .= "$topic\n";
-        $html .= "</textarea></td><tr>\n";
-        $html .= "</table>\n";
-        return $html;
-         */
         return "";
     }
 
     function loadFromPost($POST)
     {
-        /*
-        //We need to figure out the topics
-        if(!array_key_exists("essayTopicTextArea", $POST))
-            throw new Exception("Failed to get the topic text from POST");
-        $this->topics = array();
-        foreach(explode("\n", str_replace("\r", "", $POST['essayTopicTextArea'])) as $topic)
-        {
-            $topic = trim($topic);
-            if($topic)
-            {
-                $this->topics[] = $topic;
-            }
-        }
-        */
     }
 };
 
 class ImagePDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
 {
-    function loadAssignmentSubmissionSettings(PeerReviewAssignment $assignment)
-    {
-    }
-
     function saveAssignmentSubmissionSettings(PeerReviewAssignment $assignment, $isNewAssignment)
     {
+    }
+    function loadAssignmentSubmissionSettings(PeerReviewAssignment $assignment)
+    {
+        $assignment->submissionSettings = new ImageSubmissionSettings();
     }
 
     function getAssignmentSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)

@@ -24,7 +24,7 @@ abstract class Submission
     function getHTML($showHidden=false)
     {
         $html = $this->_getHTML($showHidden);
-        if($showHidden)
+        if($this->noPublicUse)
             $html .= "<h2>Exclude from public use</h2>";
         return $html;
     }
@@ -47,6 +47,16 @@ abstract class Submission
 
     function getFormAttribs() {
         return "";
+    }
+
+    function getDownloadContents()
+    {
+        return "<html><body>".$this->getHTML()."</body></html>";
+    }
+
+    function getDownloadSuffix()
+    {
+        return ".html";
     }
 
     abstract function _loadFromPost($POST);

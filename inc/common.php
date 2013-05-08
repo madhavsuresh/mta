@@ -76,7 +76,7 @@ try
 
     /** Stuff that's needed by the template */
     $content="";
-    $scripts = array();
+    $page_scripts = array();
     $title = "Mechanical TA";
     $menu=get_default_menu_items();
 

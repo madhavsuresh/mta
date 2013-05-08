@@ -4,7 +4,7 @@ try
 {
     $title .= " | Delete";
     $dataMgr->requireCourse();
-    $authMgr->enforceInstructor();
+    $authMgr->enforceMarker();
 
     $assignment = get_peerreview_assignment();
     $type = require_from_get("type");

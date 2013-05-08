@@ -30,14 +30,14 @@ class DownloadSubmissionsPeerReviewScript extends Script
         $zip = new zipfile();
         foreach($authors as $author => $submissionID)
         {
-
-            $zip->addFile("<html><body>".$assignment->getSubmission($submissionID)->getHTML()."</body></html>", $userNameMap[$author].".html");
+            $submission = $assignment->getSubmission($submissionID);
+            $zip->addFile($submission->getDownloadContents(), $userNameMap[$author].$submission->getDownloadSuffix());
         }
 
         $zippedfile = $zip->file();
         $id = $_GET["assignmentid"];
         #header("Content-Description: File Transfer");
-        header("Content-Disposition: attachment; filename=Assignment$id-submissions.zip");
+        header("Content-Disposition: attachment; filename=$assignment->name-id$id-submissions.zip");
         header("Content-Type: application/zip");
         #header("Content-length: " . strlen($zippedfile)+1 . "\n\n");
         #header("Content-Transfer-Encoding: binary");

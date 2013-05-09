@@ -22,7 +22,7 @@ Released   : 20120208
 <div id="wrapper">
     <div id="header">
         <div id="logo">
-            <h1>Mechanical TA</h1>
+            <h1>Mechanical TA <?php get_course_name_with_prefix();?></h1>
         </div>
         <div id="menu">
             <ul>
@@ -34,7 +34,7 @@ Released   : 20120208
     </div>
     <div id="page">
         <div id="content">
-        <table width='100%'><tr><td align='center'>Contact <a href='mailto:cwthornt@cs.ubc.ca'>Chris</a> if you are having any Mechanical TA issues, not the course instructor</td></tr></table>
+        <!--<table width='100%'><tr><td align='center'>Contact <a href='mailto:cwthornt@cs.ubc.ca'>Chris</a> if you are having any Mechanical TA issues, not the course instructor</td></tr></table>-->
             <div class="box">
                 <?php get_page_content(); ?>
             </div>
@@ -44,8 +44,8 @@ Released   : 20120208
     </div>
 </div>
 <div id="footer">
-    Copyright (c) 2012 Chris Thornton. Design by <a href="http://www.freecsstemplates.org">FCT</a>.<br>
-Contact <a href='mailto:cwthornt@cs.ubc.ca'>Chris</a> if you are having problems
+    Copyright (c) 2013 Chris Thornton. Design by <a href="http://www.freecsstemplates.org">FCT</a>.<br>
+    <?php get_contact_string(); ?>
 </div>
 </body>
 </html>

@@ -4,13 +4,16 @@ require_once("inc/authmanager.php");
 #The LDAP login class
 class LDAPAuthManager extends AuthManager
 {
-    private $host = 'ldap.cs.ubc.ca';
+    private $host = 'localhost';
     private $port= 389;
-    private $basedn = 'ou=People,dc=cs,dc=ubc,dc=ca';
+    private $basedn = 'ou=People';
     function __construct($registrationType, $dataMgr)
     {
         parent::__construct($registrationType, $dataMgr);
-
+        //TODO: Grab this from the dataMgr would be better
+        $this->host = $cfgLDAPAuthMgrHost;
+        $this->port = $cfgLDAPAuthMgrPort;
+        $this->basedn= $cfgLDAPAuthMgrBaseDN;
     }
     function checkAuthentication($username, $password) {
         global $auth_ldapconfig;
@@ -70,5 +73,4 @@ class LDAPAuthManager extends AuthManager
         }
         die("Failed to get first and last names - contact the TA");
     }
-
 }

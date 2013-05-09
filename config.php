@@ -8,6 +8,7 @@ date_default_timezone_set("America/Vancouver");
 $SITEURL="http://localhost/~chris/mta/";
 
 $SITEMASTER="cwthornt@cs.ubc.ca";
+$SITEMASTERNAME = "Chris";
 
 #What theme you're going to be using
 $MTA_THEME="oceania";
@@ -28,5 +29,8 @@ $MTA_ASSIGNMENTS = array(
     "grouppicker",
 );
 
-
+//TODO: Remove this and put then in the data manager
+$cfgLDAPAuthMgrHost = 'ldap.cs.ubc.ca';
+$cfgLDAPAuthMgrPort = 389;
+$cfgLDAPAuthMgrBaseDN  = 'ou=People,dc=cs,dc=ubc,dc=ca';
 ?>

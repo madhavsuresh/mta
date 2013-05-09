@@ -258,6 +258,16 @@ class PDODataManager extends DataManager
         return $instructors;
     }
 
+    function getMarkers()
+    {
+        $sh = $this->prepareQuery("getMarkersQuery", "SELECT userID FROM users WHERE (userType='instructor' || userType='marker') && courseID=?;");
+        $sh->execute(array($this->courseID));
+        $instructors = array();
+        while($res = $sh->fetch())
+            $instructors[] = $res->userID;
+        return $instructors;
+    }
+
     function getStudentIDMap()
     {
         $sh = $this->db->prepare("SELECT userID, studentID FROM users WHERE courseID=?;");

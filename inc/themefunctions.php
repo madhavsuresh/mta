@@ -24,6 +24,17 @@ function get_page_title() {
 	#exec_action('content-bottom');
 }
 
+function get_course_name_with_prefix() {
+    global $dataMgr;
+    if($dataMgr->courseDisplayName)
+        echo ": " . $dataMgr->courseDisplayName;
+}
+
+function get_contact_string(){
+    global $SITEMASTER, $SITEMASTERNAME;
+    echo "Contact <a href='mailto:$SITEMASTER'>$SITEMASTERNAME</a> if you are having problems";
+}
+
 /**
  * Get Page Menu
  */

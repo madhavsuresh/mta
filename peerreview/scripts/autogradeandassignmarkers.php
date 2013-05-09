@@ -28,10 +28,10 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $html .= "<input type='text' name='seed' value='$assignment->submissionStartDate' size='30'/></td></tr>\n";
         $html .= "<tr><td>&nbsp</td></tr>\n";
 
-        foreach($dataMgr->getInstructors() as $instructorID)
+        foreach($dataMgr->getMarkers() as $markerID)
         {
-            $html .= "<tr><td>".$dataMgr->getUserDisplayName(new UserID($instructorID))."'s Load</td><td>";
-            $html .= "<input type='text' name='load$instructorID' value='0' size='30'/></td></tr>\n";
+            $html .= "<tr><td>".$dataMgr->getUserDisplayName(new UserID($markerID))."'s Load</td><td>";
+            $html .= "<input type='text' name='load$markerID' value='0' size='30'/></td></tr>\n";
         }
         $html .= "</table>\n";
         return $html;
@@ -48,21 +48,21 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $userNameMap = $dataMgr->getUserDisplayMap();
         $independents = $assignment->getIndependentUsers();
 
-        $instructors = $dataMgr->getInstructors();
-        mt_shuffle($instructors);
+        $markers = $dataMgr->getMarkers();
+        mt_shuffle($markers);
 
         $targetLoads = array();
         $targetLoadSum = 0;
-        foreach($instructors as $instructorID)
+        foreach($markers as $markerID)
         {
             //TODO: Grab from post
-            $targetLoads[$instructorID] = floatval(require_from_post("load$instructorID"));
-            $targetLoadSum += $targetLoads[$instructorID];
+            $targetLoads[$markerID] = floatval(require_from_post("load$markerID"));
+            $targetLoadSum += $targetLoads[$markerID];
         }
         #if ($targetLoadSum == 0)
-            #throw new Exception("No instructor has a load value, so nothing can be assigned");
-        foreach($instructors as $instructorID)
-            $targetLoads[$instructorID] /= $targetLoadSum;
+            #throw new Exception("No marker has a load value, so nothing can be assigned");
+        foreach($markers as $markerID)
+            $targetLoads[$markerID] /= $targetLoadSum;
 
         $pendingSpotChecks = array();
         $pendingSubmissions = array();
@@ -75,7 +75,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             {
                 foreach($reviews as $reviewObj)
                 {
-                    if(!$reviewObj->exists && $reviewObj->instructorForced)
+                    if(!$reviewObj->exists && $reviewObj->markerForced)
                     {
                         $assignment->removeMatch($reviewObj->matchID);
                     }
@@ -140,7 +140,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             else
             {
                 //We need to put this into the list of stuff to be marked by a TA
-                if(array_reduce($reviewMap[$submissionID->id], function($res,$item)use(&$instructors){return $item->exists && in_array($item->reviewerID->id, $instructors); }))
+                if(array_reduce($reviewMap[$submissionID->id], function($res,$item)use(&$markers){return $item->exists && in_array($item->reviewerID->id, $markers); }))
                     continue;
                 $obj = new stdClass;
                 $obj->submissionID = $submissionID->id;
@@ -150,15 +150,15 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         }
         //asort($submissionScores, SORT_NUMERIC);
         if ($targetLoadSum == 0)
-            return "Only marks updated, no assignments to instructors"; //$html;
+            return "Only marks updated, no assignments to markers"; //$html;
 
-        $instructorJobs = array();
-        $instructorReviewCountMaps = array();
+        $markerJobs = array();
+        $markerReviewCountMaps = array();
         $assignedJobs = 0;
-        foreach($instructors as $instructorID)
+        foreach($markers as $markerID)
         {
-            $instructorJobs[$instructorID] = 0;
-            $instructorReviewCountMaps[$instructorID] = $assignment->getNumberOfTimesReviewedByUserMap(new UserID($instructorID));
+            $markerJobs[$markerID] = 0;
+            $markerReviewCountMaps[$markerID] = $assignment->getNumberOfTimesReviewedByUserMap(new UserID($markerID));
         }
 
         //We need to sort the pending submissions by their reviewer score
@@ -167,12 +167,12 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         {
             $loadDefecits = array();
             //Who gets it?
-            foreach($instructors as $instructorID)
+            foreach($markers as $markerID)
             {
-                $loadDefecits[$instructorID] = $targetLoads[$instructorID] - 1.0*$instructorJobs[$instructorID]/($assignedJobs+1);
+                $loadDefecits[$markerID] = $targetLoads[$markerID] - 1.0*$markerJobs[$markerID]/($assignedJobs+1);
             }
             $res = array_keys($loadDefecits, max($loadDefecits));
-            $instructorID = $res[0];
+            $markerID = $res[0];
 
             //Figure out what submission we should assign to this person
             $submissionID = null;
@@ -182,8 +182,8 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             {
                 //We scale it by 0.5 to make sure that we keep the lexicographical component
                 $s = $submissionScores[$obj->submissionID]*0.5;
-                if(isset($instructorReviewCountMaps[$instructorID][$obj->authorID]))
-                    $s += $instructorReviewCountMaps[$instructorID][$obj->authorID];
+                if(isset($markerReviewCountMaps[$markerID][$obj->authorID]))
+                    $s += $markerReviewCountMaps[$markerID][$obj->authorID];
                 if($s < $bestScore)
                 {
                     $bestScore = $s;
@@ -193,24 +193,24 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             }
             if(is_null($submissionID))
             {
-                throw new Exception("Failed to find a suitable candidate for an instructor - how the hell can this happen?");
+                throw new Exception("Failed to find a suitable candidate for an marker - how the hell can this happen?");
             }
             unset($pendingSubmissions[$bestIndex]);
 
-            //Is there an instructor already assigned to this paper?
-            if(array_reduce($reviewMap[$submissionID], function($res,$item)use(&$instructors){return in_array($item->reviewerID->id, $instructors); }))
+            //Is there an marker already assigned to this paper?
+            if(array_reduce($reviewMap[$submissionID], function($res,$item)use(&$markers){return in_array($item->reviewerID->id, $markers); }))
                 continue;
 
-            $assignment->createMatch(new SubmissionID($submissionID), new UserID($instructorID), true);
+            $assignment->createMatch(new SubmissionID($submissionID), new UserID($markerID), true);
 
-            $instructorJobs[$instructorID]++;
+            $markerJobs[$markerID]++;
             $assignedJobs++;
         }
 
         $assignedSpotChecks = array();
-        foreach($instructors as $instructorID)
+        foreach($markers as $markerID)
         {
-            $assignedSpotChecks[$instructorID] = 0;
+            $assignedSpotChecks[$markerID] = 0;
         }
 
         //Now do all the spot checks
@@ -218,12 +218,12 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         {
             $loadDefecits = array();
             //Who gets it?
-            foreach($instructors as $instructorID)
+            foreach($markers as $markerID)
             {
-                $loadDefecits[$instructorID] = $targetLoads[$instructorID] - 1.0*$instructorJobs[$instructorID]/($assignedJobs+1);
+                $loadDefecits[$markerID] = $targetLoads[$markerID] - 1.0*$markerJobs[$markerID]/($assignedJobs+1);
             }
             $res = array_keys($loadDefecits, max($loadDefecits));
-            $instructorID = $res[0];
+            $markerID = $res[0];
 
             //Figure out what submission we should assign to this person
             $submissionID = null;
@@ -233,8 +233,8 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             {
                 //We scale it by 0.5 to make sure that we keep the lexicographical component
                 $s = $submissionScores[$obj->submissionID]*0.5;
-                if(isset($instructorReviewCountMaps[$instructorID][$obj->authorID]))
-                    $s += $instructorReviewCountMaps[$instructorID][$obj->authorID];
+                if(isset($markerReviewCountMaps[$markerID][$obj->authorID]))
+                    $s += $markerReviewCountMaps[$markerID][$obj->authorID];
                 if($s < $bestScore)
                 {
                     $bestScore = $s;
@@ -244,12 +244,12 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             }
             if(is_null($submissionID))
             {
-                throw new Exception("Failed to find a suitable candidate for an instructor - how the hell can this happen?");
+                throw new Exception("Failed to find a suitable candidate for an marker - how the hell can this happen?");
             }
             unset($pendingSpotChecks[$bestIndex]);
 
-            //Is there an instructor already assigned to this paper?
-            if(array_reduce($reviewMap[$submissionID], function($res,$item)use(&$instructors){return in_array($item->reviewerID->id, $instructors); }))
+            //Is there an marker already assigned to this paper?
+            if(array_reduce($reviewMap[$submissionID], function($res,$item)use(&$markers){return in_array($item->reviewerID->id, $markers); }))
                 continue;
 
             //If there already is something that has been assigned, skip it
@@ -262,18 +262,18 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
                 //We failed to find a spot check
             }
 
-            $assignment->saveSpotCheck(new SpotCheck(new SubmissionID($submissionID), new UserID($instructorID)));
+            $assignment->saveSpotCheck(new SpotCheck(new SubmissionID($submissionID), new UserID($markerID)));
 
-            $instructorJobs[$instructorID]++;
-            $assignedSpotChecks[$instructorID]++;
+            $markerJobs[$markerID]++;
+            $assignedSpotChecks[$markerID]++;
             $assignedJobs++;
         }
 
         $html .= "<table width='100%'>\n";
-        $html .= "<tr><td><h2>Instructor</h2></td><td><h2>Submissions to Mark</h2></td><td><h2>SpotChecks</h2></td></tr>\n";
-        foreach($dataMgr->getInstructors() as $instructorID)
+        $html .= "<tr><td><h2>Marker</h2></td><td><h2>Submissions to Mark</h2></td><td><h2>SpotChecks</h2></td></tr>\n";
+        foreach($dataMgr->getMarkers() as $markerID)
         {
-            $html .= "<tr><td>".$userNameMap[$instructorID]."</td><td>".($instructorJobs[$instructorID]-$assignedSpotChecks[$instructorID])."</td><td>".$assignedSpotChecks[$instructorID]."</td></tr>\n";
+            $html .= "<tr><td>".$userNameMap[$markerID]."</td><td>".($markerJobs[$markerID]-$assignedSpotChecks[$markerID])."</td><td>".$assignedSpotChecks[$markerID]."</td></tr>\n";
         }
         $html .= "</table>";
 

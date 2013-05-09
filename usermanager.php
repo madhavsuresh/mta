@@ -48,7 +48,7 @@ try
     else
     {
         //Give the option to add a student
-        $content .= "<a href='?new=1'>New User</a><br><br>\n";
+        $content .= "<a href='?new=1$extraUrl'>New User</a><br><br>\n";
         $content .= "<h2>Registered Users</h2>\n";
         //We need to display a list of all the users...
         $userMap = $dataMgr->getUserDisplayMap();

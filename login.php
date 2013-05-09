@@ -46,7 +46,7 @@ try
         $title .= " Login";
         if($loginAttemptFailed)
         {
-            $content .= "<div> Login Failed - Check your password, or contact your TA to make sure your username is valid <br>If you have already been able to log in but are unable to now, this is probably because your account has been switched to your CS ID. Go <a href='https://www.cs.ubc.ca/ugrad/getacct/getacct.jsp'>here</a> to reset your password/find your ID </div>";
+            $content .= "<div> Login Failed - Check your password, or contact your TA to make sure your username is valid</div>";
         }
     }
     render_page();

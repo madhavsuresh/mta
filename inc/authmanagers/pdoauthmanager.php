@@ -55,5 +55,10 @@ class PDOAuthManager extends AuthManager
     {
         return "".sha1($this->salt.sha1($this->salt.sha1($password)));
     }
+
+    function supportsSettingPassword()
+    {
+        return true;
+    }
 }
 

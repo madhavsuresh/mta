@@ -178,7 +178,7 @@ abstract class AuthManager
         $html .= "<table>\n";
         $html .= "<tr><td>Username: </td><td><input type='text' name='username' id='username' value='$username'/></td></tr>\n";
         $html .= "<tr><td colspan='2'><div class=errorMsg><div class='errorField' id='error_username'></div></div></td></tr>\n";
-        if($skipPassword){
+        if(!$skipPassword){
             $html .= "<tr><td>Password: </td><td><input type='password' name='password' id='password'/></td></tr>\n";
             $html .= "<tr><td colspan='2'><div class=errorMsg><div class='errorField' id='error_password'></div></div></td></tr>\n";
         }

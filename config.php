@@ -15,7 +15,7 @@ $MTA_THEME="oceania";
 
 #Specify the data manager
 $MTA_DATAMANAGER="pdo";
-    #Data manager settings
+    #Data manager settings - at the moment there's only a PDO based one
     $MTA_DATAMANAGER_PDO_CONFIG["dsn"] = "mysql:host=localhost;dbname=mta";
     $MTA_DATAMANAGER_PDO_CONFIG["username"] = "mta";
     $MTA_DATAMANAGER_PDO_CONFIG["password"] = "mta";

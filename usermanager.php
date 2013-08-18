@@ -83,7 +83,7 @@ try
         $user = $dataMgr->getUserInfo(new UserID($_GET["edit"]));
         $content .= $authMgr->getRegistrationFormHTML($user->username, $user->firstName, $user->lastName, $user->studentID, getTypeRow($user->userType) . "<input type='hidden' name='userID' value='$user->userID' />", !$authMgr->supportsSettingPassword(), "?courseid=$dataMgr->courseID&save=1", true);
     }
-    if(array_key_exists("upload", $_GET))
+    else if(array_key_exists("upload", $_GET))
     {
         //Run up the message about how to upload a list
         $content .= '<h2>Upload Class List</h2>';

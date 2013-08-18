@@ -124,7 +124,8 @@ class CodeSubmissionSettings extends SubmissionSettings
         $html  = "<table width='100%' align='left'>\n";
         $html .= "<tr><td width='190px'>Language</td><td><input type='text' name='codeLanguage' value='$this->language'/></td></tr>\n";
         $html .= "<tr><td colspan='2'>Leave blank if you want automatic detection, otherwise look <a href='https://code.google.com/p/google-code-prettify/'>here</a> for supported languages</td></tr>\n";
-        $html .= "<tr><td width='190px'>File extension (lower case, leave blank to allow for any)</td><td><input type='text' name='codeExtension' value='$this->extension'/></td></tr>\n";
+        $html .= "<tr><td width='190px'>File extension </td><td><input type='text' name='codeExtension' value='$this->extension'/></td></tr>\n";
+        $html .= "<tr><td colspan='2'>Lower case. Leave blank if you want any type of file</td></tr>\n";
         $html .= "</table>\n";
         return $html;
     }
@@ -146,8 +147,8 @@ class CodePDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
     function saveAssignmentSubmissionSettings(PeerReviewAssignment $assignment, $isNewAssignment)
     {
         //Delete any old topics, and just write in the new ones
-        $sh = $this->prepareQuery("saveCodeAssignmentSubmissionSettingsQuery", "INSERT INTO peer_review_assignment_code_settings (assignmentID, codeLanguage) VALUES (?, ?) ON DUPLICATE KEY UPDATE codeLanguage = ?;");
-        $sh->execute(array($assignment->assignmentID, $assignment->submissionSettings->language, $assignment->submissionSettings->language));
+        $sh = $this->prepareQuery("saveCodeAssignmentSubmissionSettingsQuery", "INSERT INTO peer_review_assignment_code_settings (assignmentID, codeLanguage, codeExtension) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE codeLanguage = ?, codeExtension = ?;");
+        $sh->execute(array($assignment->assignmentID, $assignment->submissionSettings->language, $assignment->submissionSettings->extension, $assignment->submissionSettings->language, $assignment->submissionSettings->extension));
     }
 
     function loadAssignmentSubmissionSettings(PeerReviewAssignment $assignment)

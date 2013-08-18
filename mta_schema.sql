@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.0.0
+-- version 4.0.5
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: May 09, 2013 at 12:38 AM
--- Server version: 5.5.30
--- PHP Version: 5.4.14
+-- Generation Time: Aug 18, 2013 at 10:27 PM
+-- Server version: 5.5.32-MariaDB
+-- PHP Version: 5.5.2
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `assignments` (
   KEY `courseID` (`courseID`),
   KEY `assignment_name` (`name`),
   KEY `courseID_2` (`courseID`,`displayPriority`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=61 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
 
 -- --------------------------------------------------------
 
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS `course` (
   PRIMARY KEY (`courseID`),
   UNIQUE KEY `course_name_2` (`name`),
   KEY `course_name` (`name`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=4 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
 
 -- --------------------------------------------------------
 
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS `group_picker_assignment_selections` (
   UNIQUE KEY `assignmentID` (`assignmentID`,`userID`),
   KEY `userID` (`userID`),
   KEY `selectionID` (`selectionID`,`assignmentID`,`groupIndex`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=91 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
 
 -- --------------------------------------------------------
 
@@ -131,7 +131,8 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment` (
   `maxSubmissionScore` float NOT NULL,
   `maxReviewScore` float NOT NULL,
   `showMarksForReviewsReceived` tinyint(1) NOT NULL,
-  `showOtherReviews` tinyint(1) NOT NULL,
+  `showOtherReviewsByStudents` tinyint(1) NOT NULL,
+  `showOtherReviewsByInstructors` tinyint(1) NOT NULL,
   `showMarksForOtherReviews` tinyint(1) NOT NULL,
   `showMarksForReviewedSubmissions` tinyint(1) NOT NULL,
   `appealStopDate` datetime NOT NULL,
@@ -158,7 +159,7 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment_appeal_messages` (
   KEY `matchID_4` (`matchID`),
   KEY `authorID` (`authorID`),
   KEY `appealMessageID` (`appealMessageID`,`appealType`,`matchID`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=186 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
 
 -- --------------------------------------------------------
 
@@ -210,6 +211,7 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment_code` (
 CREATE TABLE IF NOT EXISTS `peer_review_assignment_code_settings` (
   `assignmentID` int(11) NOT NULL,
   `codeLanguage` varchar(255) NOT NULL,
+  `codeExtension` varchar(10) NOT NULL DEFAULT '',
   PRIMARY KEY (`assignmentID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -309,7 +311,7 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment_matches` (
   UNIQUE KEY `submissionID` (`submissionID`,`reviewerID`),
   KEY `submissioID_2` (`submissionID`),
   KEY `reviewerID` (`reviewerID`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=5851 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
 
 -- --------------------------------------------------------
 
@@ -328,7 +330,7 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment_questions` (
   PRIMARY KEY (`questionID`),
   KEY `assignmentID` (`assignmentID`),
   KEY `assignmentID_2` (`assignmentID`,`displayPriority`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=137 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
 
 -- --------------------------------------------------------
 
@@ -421,7 +423,7 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment_submissions` (
   KEY `assignmentID` (`assignmentID`,`authorID`),
   KEY `authorID` (`authorID`),
   KEY `assignmentID_3` (`assignmentID`,`authorID`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1221 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
 
 -- --------------------------------------------------------
 
@@ -471,7 +473,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   KEY `userType` (`userType`,`username`),
   KEY `userType_2` (`userType`),
   KEY `userID` (`userID`,`userType`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=387 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
 
 -- --------------------------------------------------------
 

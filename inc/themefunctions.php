@@ -151,8 +151,8 @@ function get_page_scripts($echo=true)
 
 function show_timezone()
 {
-    $code = "<table width='100%'><tr><td align='center'>All times are UTC<span id='timezonespan'></span></td></tr></table>\n";
-    $code .= "<script type='text/javascript'>$('#timezonespan').ready(function(){ $('#timezonespan').html(moment(0).format('Z')); })</script>";
+    $code = "<table width='100%'><tr><td align='center'>All times are <span id='timezonespan'></span></td></tr></table>\n";
+    $code .= "<script type='text/javascript'>$('#timezonespan').ready(function(){ var split = new Date().toString().split(\" \");$('#timezonespan').html(split[split.length - 2] + \" \" + split[split.length - 1]); })</script>";
     return $code;
 }
 

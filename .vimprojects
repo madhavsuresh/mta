@@ -73,11 +73,12 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
   viewsubmission.php
   rawviewsubmission.php
   scripts=scripts{
+   assigncommonreviews.php
    assignreviews.php
    autogradeandassignmarkers.php
+   clearautoreviewmarks.php
    computeindependents.php
    copymarks.php
-   clearautoreviewmarks.php
    downloadsubmissions.php
   }
   inc=inc{

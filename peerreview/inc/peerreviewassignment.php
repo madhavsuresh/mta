@@ -14,9 +14,10 @@ class PeerReviewAssignment extends Assignment
     public $markPostDate      = 0;
     public $appealStopDate    = 0;
 
-    public $showMarksForReviewsReceived = false;
-    public $showOtherReviews            = false;
-    public $showMarksForOtherReviews    = false;
+    public $showMarksForReviewsReceived   = false;
+    public $showOtherReviewsByStudents    = false;
+    public $showOtherReviewsByInstructors = false;
+    public $showMarksForOtherReviews      = false;
     public $showMarksForReviewedSubmissions  = false;
 
     public $maxSubmissionScore = 0;
@@ -243,7 +244,8 @@ class PeerReviewAssignment extends Assignment
         $this->maxReviewScore = floatval($POST["maxReviewScore"]);
 
         $this->showMarksForReviewsReceived = array_key_exists('showMarksForReviewsReceived', $POST);
-        $this->showOtherReviews = array_key_exists('showOtherReviews', $POST);
+        $this->showOtherReviewsByStudents = array_key_exists('showOtherReviewsByStudents', $POST);
+        $this->showOtherReviewsByInstructors = array_key_exists('showOtherReviewsByInstructors', $POST);
         $this->showMarksForOtherReviews = array_key_exists('showMarksForOtherReviews', $POST);
         $this->showMarksForReviewedSubmissions = array_key_exists('showMarksForReviewedSubmissions', $POST);
 
@@ -339,9 +341,14 @@ class PeerReviewAssignment extends Assignment
         $html .= "<tr><td style='text-align:right'><input type='checkbox' name='showMarksForReviewsReceived' $tmp /></td><td>Show the marks/comments that were given to the reviews that authors recieve</td></tr>\n";
 
         $tmp = '';
-        if($this->showOtherReviews)
+        if($this->showOtherReviewsByStudents)
             $tmp = 'checked';
-        $html .= "<tr><td style='text-align:right'><input type='checkbox' name='showOtherReviews' $tmp /></td><td>Show the other reviews that were given to the papers that students reviewed</td></tr>\n";
+        $html .= "<tr><td style='text-align:right'><input type='checkbox' name='showOtherReviewsByStudents' $tmp /></td><td>Show the other reviews written by students that were given to the papers that students reviewed</td></tr>\n";
+        
+        $tmp = '';
+        if($this->showOtherReviewsByInstructors)
+            $tmp = 'checked';
+        $html .= "<tr><td style='text-align:right'><input type='checkbox' name='showOtherReviewsByInstructors' $tmp /></td><td>Show the other reviews written by instructors that were given to the papers that students reviewed</td></tr>\n";
 
         $tmp = '';
         if($this->showMarksForOtherReviews)

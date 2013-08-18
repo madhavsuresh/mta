@@ -60,6 +60,7 @@ try
     }else{
         $content .= "<a href='".get_redirect_url("?assignmentid=$assignment->assignmentID&hideblank=$hideBlank&hideedit=1")."'>Hide All Edit Buttons</a>\n";
     }
+    $content .= "<a title='New' target='_blank' href='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID&authorid=".$assignment->getUserIDForAnonymousSubmission($USERID, $authMgr->getCurrentUsername())."&close=1")."'>Create Instructor Submission</a>\n";
 
     #Now start going through stuff by user names
     $content .= "<table width='100%'>\n";
@@ -68,7 +69,7 @@ try
     foreach($displayMap as $authorID => $authorName)
     {
         $authorID = new UserID($authorID);
-        if(!$dataMgr->isStudent($authorID) || $assignment->deniedUser($authorID) || ($hideBlank && !array_key_exists($authorID->id, $submissionAuthors)))
+        if((!$dataMgr->isStudent($authorID) && !array_key_exists($authorID->id, $submissionAuthors)) || $assignment->deniedUser($authorID) || ($hideBlank && !array_key_exists($authorID->id, $submissionAuthors)))
         {
             continue;
         }

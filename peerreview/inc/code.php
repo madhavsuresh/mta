@@ -44,7 +44,7 @@ class CodeSubmission extends Submission
         $html .= "<pre class='prettyprint $lang linenums'>\n";
         $html .= htmlentities($this->code, ENT_COMPAT|ENT_HTML401,'UTF-8');
         $html .= "</pre>";
-        $html .= "<a href=rawviewsubmission.php?submission=$this->submissionID&download=1'>Download</a><br>";
+        $html .= "<a href=".get_redirect_url("peerreview/rawviewsubmission.php?submission=$this->submissionID&download=1")."'>Download</a><br>";
 
         return $html;
     }

@@ -71,7 +71,7 @@ class ImageSubmission extends Submission
             $width = 700;
         }
         $html .= "<div style='margin-left:auto;margin-right:auto;margin-bottom:20px;text-align:center'>";
-        $html .= "<img  width='$width' height='$height' src='rawviewsubmission.php?submission=$this->submissionID'/>";
+        $html .= "<img  width='$width' height='$height' src='".get_redirect_url("peerreview/rawviewsubmission.php?submission=$this->submissionID")."'/>";
         $html .= "</div>";
 
         $html .= $this->text;
@@ -110,10 +110,14 @@ class ImageSubmission extends Submission
     {
         $html = "";
         if($this->imgData){
-            $data = base64_encode($this->imgData);
-            //$data = '';
+            $width = $this->imgWidth;
+            $height = $this->imgHeight;
+            if($width > 700){
+                $height = floor(700.0*$height/$width);
+                $width = 700;
+            }
             $html .= "<div style='margin-left:auto;margin-right:auto;margin-bottom:20px;text-align:center'>";
-            $html .= "<img  width='$this->imgWidth' height='$this->imgHeight' src='data:image/png;base64,$data'/>";
+            $html .= "<img  width='$width' height='$height' src='".get_redirect_url("peerreview/rawviewsubmission.php?submission=$this->submissionID")."'/>";
             $html .= "</div>";
             $html .= "<span style='color:red'>WARNING: You must re-upload your image if you decide to change your submission</span><br>";
 

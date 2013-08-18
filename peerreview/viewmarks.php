@@ -45,7 +45,7 @@ try
 
 
         //Define a function that will render a tab for us
-        function getTabHTML(SubmissionID $submissionID, $showSubmissionMark, $showReviews, $showReviewMarks, $showAppealLinks)
+        function getTabHTML(SubmissionID $submissionID, $showSubmissionMark, $showStudentReviews, $showInstructorReviews, $showReviewMarks, $showAppealLinks)
         {
             global $USERID, $assignment, $dataMgr, $NOW;
             $html  = "<h1>Submission</h1>\n";
@@ -112,7 +112,7 @@ try
             }
 
             //Show them the reviews that this submission
-            if($showReviews)
+            if($showStudentReviews || $showInstructorReviews)
             {
                 $reviewIndex=0;
                 //Next, do all of the other reviews
@@ -122,13 +122,18 @@ try
                     {
                         if(sizeof($review->answers) == 0)
                             continue;
-                        $reviewCount++;
 
                         if($dataMgr->isInstructor($review->reviewerID)) {
+                            if(!$showInstructorReviews)
+                                continue;
                             $html.= "<h1>Review $reviewCount (Instructor Review)</h1>\n";
                         } else {
+                            if(!$showStudentReviews)
+                                continue;
                             $html.= "<h1>Review $reviewCount</h1>\n";
                         }
+
+                        $reviewCount++;
                         if($showAppealLinks)
                         {
                             //Now we need to do the stuff for appeals
@@ -167,7 +172,7 @@ try
         if($assignment->submissionExists($USERID))
         {
             $content .= "<div id='tabs-$tabOffset'>\n";
-            $content .= getTabHTML($assignment->getSubmissionID($USERID), true, true, $assignment->showMarksForReviewsReceived, true);
+            $content .= getTabHTML($assignment->getSubmissionID($USERID), true, true, true, $assignment->showMarksForReviewsReceived, true);
             $content .= "</div>\n";
             $tabOffset++;
         }
@@ -177,7 +182,7 @@ try
         {
             $tabIndex= $i+$tabOffset;
             $content .= "<div id='tabs-$tabIndex'>\n";
-            $content .= getTabHTML($assignment->getSubmissionID($assignedReviews[$i]), $assignment->showMarksForReviewedSubmissions, $assignment->showOtherReviews, $assignment->showMarksForOtherReviews, false);
+            $content .= getTabHTML($assignment->getSubmissionID($assignedReviews[$i]), $assignment->showMarksForReviewedSubmissions, $assignment->showOtherReviewsByStudents, $assignment->showOtherReviewsByInstructors, $assignment->showMarksForOtherReviews, false);
             $content .= "</div>\n";
         }
 

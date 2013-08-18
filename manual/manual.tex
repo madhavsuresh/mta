@@ -39,7 +39,7 @@ This is the super brief manual for Mechanical TA. I assume that you're familiar 
 \section{Quick Install}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Mechanical TA requires PHP $>$ 5.3 (with PDO), and MySQL. To set up the database, you first need to load the schema provided in texttt{mta.sql}, and give a user access to the newly created database. On the website side of things, you need to modify a few files (all paths relative from the top level MTA directory):
+Mechanical TA requires PHP $>$ 5.3 (with PDO), and MySQL. To set up the database, you first need to load the schema provided in \texttt{mta.sql}, and give a user access to the newly created database. On the website side of things, you need to modify a few files (all paths relative from the top level MTA directory):
 
 \begin{itemize}
   \item \texttt{config.php} This file contains the fundamental config options for MTA, including the database connection settings (as well as the LDAP authentication config for the time being). Make sure to update \texttt{\$SITEURL} to contain the web accessible path to your install, as well as the location of the database (see the PDO documentation for setting the dsn)
@@ -57,7 +57,7 @@ Once your install is working (by navigating to your MTA install in a web browser
 \begin{description}
   \item [Short Name] The name of the course that will be used to make the URLs more friendly. No spaces or crazy characters would be a good plan.
   \item [Display Name] The full name of the course, no restrictions on what characters are allowed.
-  \item [Authentication Type] There are a few options,  \texttt{PDO},  \texttt{LDAP} and \texttt{LDAP with PDO fallback}. The PDO option will create usernames/passwords that are stored in the database, while using LDAP will use the specified LDAP server in the \texttt{config.php} for authenticatino. The LDA with PDO fallback will first try to authenticate users using the LDAP method, and it that fails, will resort to using a PDO user. The fallback method is not supported using the UI, you'll have to manually insert users into the database, so only use this one if you know what you're doing.
+  \item [Authentication Type] There are a few options,  \texttt{PDO},  \texttt{LDAP} and \texttt{LDAP with PDO fallback}. The PDO option will create usernames/passwords that are stored in the database, while using LDAP will use the specified LDAP server in the \texttt{config.php} for authenticatino. The LDAP with PDO fallback will first try to authenticate users using the LDAP method, and it that fails, will resort to using a PDO user. The fallback method is not supported using the UI, you'll have to manually insert users into the database, so only use this one if you know what you're doing.
   \item [Registration Type] An \texttt{open} registration allows students to enrol in the course by logging into MTA, while the \texttt{closed} only allows users to be added using the usermanager script (see Section~\ref{users}).
 \end{description}
 
@@ -75,7 +75,10 @@ On a newly created course,  you'll first have to add a user as an instructor bef
   \item [Type] The role given to this user. \texttt{Instructors} have the ability to create/edit assignments users,  while \texttt{markers} can only perform marking operations on assignments. Make sure that you set up at least one instructor before you remove the \texttt{admin} folder.
 \end{description}
 
-Note, once a user is created,  they are given an internal ID in the MTA database. This means that you shouldn't edit a user to change their username to another user's,  otherwise they'll be credited with all the work of the previous student. 
+Note, once a user is created,  they are given an internal ID in the MTA database. This means that you should be very careful when editing the username of a user, since you may have them being credited with all the work of another student. 
+
+You can also upload a CSV with the following columns to load in a number of users (there is no header row): Last Name, First Name, Student ID Number, Account Name, User Type (one of student ,instructor or marker).
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 \section{Assignment Management}

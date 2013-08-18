@@ -1,1 +1,7 @@
 *.swp
+*.aux
+*.log
+*.out
+*.toc
+*.backup
+inc/htmlpurifier/HTMLPurifier/DefinitionCache/Serializer/URI/

@@ -63,6 +63,7 @@ abstract class Submission
     abstract function _getHTML($showHidden);
     abstract function _getFormHTML();
     function _getValidationCode() { return ""; }
+    function _dumpRaw($forceDownload=false, $dumpHeaders=true) { $this->_getHTML(false); }
 };
 
 abstract class SubmissionSettings

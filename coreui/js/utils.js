@@ -7,3 +7,7 @@ function zeroFill( number, width )
   }
   return number;
 }
+
+function stringEndsWith(string, suffix) {
+    return string.indexOf(suffix, string.length - suffix.length) !== -1;
+};

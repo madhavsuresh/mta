@@ -15,6 +15,7 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
  admin=admin{
   coursemanager.php
   usermanager.php
+  index.php
   .htpasswd
   .htaccess
  }
@@ -70,6 +71,7 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php" 
   viewmarks.php
   viewquestion.php
   viewsubmission.php
+  rawviewsubmission.php
   scripts=scripts{
    assignreviews.php
    autogradeandassignmarkers.php

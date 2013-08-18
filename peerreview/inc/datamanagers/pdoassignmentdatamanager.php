@@ -103,6 +103,16 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $assignment;
     }
 
+    function getAssignmentIDForSubmissionID(SubmissionID $id)
+    {
+        $sh = $this->prepareQuery("getAssignmentIDForSubmissionIDQuery", "SELECT assignmentID FROM peer_review_assignment_submissions WHERE submissionID = ?;");
+        $sh->execute(array($id));
+        if(!$res = $sh->fetch())
+        {
+            throw new Exception("Could not get assignment for submission '$id'");
+        }
+        return new AssignmentID($res->assignmentID);
+    }
 
     function deleteAssignment(PeerReviewAssignment $assignment)
     {
@@ -597,7 +607,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         else
         {
             $sh = $this->db->prepare("UPDATE peer_review_assignment_submissions SET noPublicUse=? WHERE submissionID=?;");
-            $sh->execute(array($submission->text, $submission->submissionID));
+            $sh->execute(array($submission->noPublicUse, $submission->submissionID));
         }
         $this->submissionHelpers[$assignment->submissionType]->saveAssignmentSubmission($assignment, $submission, $isNewSubmission);
     }
@@ -705,6 +715,16 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             return $id;
         }
         throw new Exception("Unable to get a review using a ".get_class($id));
+    }
+
+    function getReviewerByMatch(PeerReviewAssignment $assignment, MatchID $id)
+    {
+        $sh = $this->db->prepare("SELECT reviewerID FROM peer_review_assignment_matches WHERE matchID = ?;");
+        $sh->execute(array($id));
+        $res = $sh->fetch();
+        if($res)
+            return new UserID($res->reviewerID);
+        return NULL;
     }
 
     function getReview(PeerReviewAssignment $assignment, MechanicalTA_ID $id, UserID $reviewer = null)

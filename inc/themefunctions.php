@@ -115,6 +115,7 @@ function get_page_headers($echo=true)
     $html  = "<link rel='stylesheet' type='text/css' href='".$uiURL."css/redmond/jquery-ui.css' />\n";
     $html .= "<link rel='stylesheet' type='text/css' href='".$uiURL."css/jquery-ui-timepicker-addon.css' />\n";
     $html .= "<link rel='stylesheet' type='text/css' href='".$uiURL."css/oxygen-icons/icons.css' />\n";
+    $html .= "<link rel='stylesheet' type='text/css' href='".$uiURL."prettify/prettify.css' />\n";
     $html .= "<link rel='stylesheet' type='text/css' href='".get_theme_url(false)."/style.css' />\n";
 
     if($echo) {

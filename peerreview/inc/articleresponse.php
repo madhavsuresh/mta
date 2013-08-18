@@ -174,7 +174,7 @@ class ArticleResponsePDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissi
 
     function getAssignmentSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
-        $response = new ArticleResponseSubmission($assignment->submissionSettings);
+        $response = new ArticleResponseSubmission($assignment->submissionSettings, $submissionID);
         $sh = $this->prepareQuery("getArticleResponseSubmissionQuery", "SELECT `outline`, `response`, articleIndex FROM peer_review_assignment_article_responses WHERE submissionID = ?;");
         $sh->execute(array($submissionID));
         if(!$res = $sh->fetch())

@@ -64,8 +64,6 @@ class ImageSubmission extends Submission
     function _getHTML($showHidden)
     {
         $html = "";
-        $data = base64_encode($this->imgData);
-        //$data = '';
         $width = $this->imgWidth;
         $height = $this->imgHeight;
         if($width > 700){
@@ -73,11 +71,21 @@ class ImageSubmission extends Submission
             $width = 700;
         }
         $html .= "<div style='margin-left:auto;margin-right:auto;margin-bottom:20px;text-align:center'>";
-        $html .= "<img  width='$width' height='$height' src='data:image/png;base64,$data'/>";
+        $html .= "<img  width='$width' height='$height' src='rawviewsubmission.php?submission=$this->submissionID'/>";
         $html .= "</div>";
 
         $html .= $this->text;
         return $html;
+    }
+
+    function _dumpRaw($forceDownload, $dumpHeaders)
+    {
+        if($dumpHeaders)
+            header('Content-Type: image/png');
+        if($forceDownload)
+            header("Content-Disposition: attachment; filename=$this->submissionID.png");
+
+        echo $this->imgData;
     }
 
     function _getValidationCode()
@@ -89,12 +97,12 @@ class ImageSubmission extends Submission
         $code .= "$('#error_file').parent().show();\n";
         $code .= "error = true;}\n";
 
-        $code .= "$('#error_text').html('').parent().hide();\n";
         //TODO: Make this a setting in an essay
-        $code .= "if(getWordCount('textEdit') > 150) {";
-        $code .= "$('#error_text').html('Your text can not be longer than 100 words. (Note: Some editors add phantom characters to your document, try cleaning the text by copying it into a program like notepad then pasting it in if you feel you receive this message in error)');\n";
-        $code .= "$('#error_text').parent().show();\n";
-        $code .= "error = true;}";
+        //$code .= "$('#error_text').html('').parent().hide();\n";
+        // $code .= "if(getWordCount('textEdit') > 150) {";
+        // $code .= "$('#error_text').html('Your text can not be longer than 100 words. (Note: Some editors add phantom characters to your document, try cleaning the text by copying it into a program like notepad then pasting it in if you feel you receive this message in error)');\n";
+        // $code .= "$('#error_text').parent().show();\n";
+        // $code .= "error = true;}";
         return $code;
     }
 
@@ -159,7 +167,7 @@ class ImagePDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
 
     function getAssignmentSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
-        $submisison = new ImageSubmission($assignment->submissionSettings);
+        $submisison = new ImageSubmission($assignment->submissionSettings, $submissionID);
         $sh = $this->prepareQuery("getImageSubmissionQuery", "SELECT imgWidth, imgHeight, imgData, text FROM peer_review_assignment_images WHERE submissionID = ?;");
         $sh->execute(array($submissionID));
         if(!$res = $sh->fetch())

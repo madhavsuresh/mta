@@ -7,18 +7,31 @@ class CodeSubmission extends Submission
 
     function _loadFromPost($POST)
     {
-        if(!array_key_exists("code", $POST))
-            throw new Exception("Missing code in POST");
+        if(!array_key_exists("codeMode", $POST))
+            throw new Exception("Missing codeMode in POST");
 
-        //TODO: Check this for possible exploits?
-        $this->code = $POST["code"];
+        print_r($POST);
+        if($POST["codeMode"] == "paste"){
+            if(!array_key_exists("code", $POST))
+                throw new Exception("Missing code in POST");
 
+            //The code is stored raw, we have to escape it every time we display it
+            $this->code = $POST["code"];
+        }else{
+            //There better be a file
+            global $_FILES;
+            if ($_FILES["codefile"]["error"] > 0)
+                throw new Exception("File upload error: " . $_FILES["codefile"]["error"]);;
+            
+            //Try and get the image data
+            $this->code = file_get_contents($_FILES["codefile"]["tmp_name"]);
+        }
     }
 
     function _getHTML($showHidden)
     {
         global $page_scripts;
-        $script = "https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js";
+        $script = get_ui_url(false)."prettify/run_prettify.js";
         if(strlen($this->submissionSettings->language)){
             $script .= "?lang=".$this->submissionSettings->language;
         }
@@ -29,21 +42,64 @@ class CodeSubmission extends Submission
             $lang = "lang-".$this->submissionSettings->language;
         }
         $html .= "<pre class='prettyprint $lang linenums'>\n";
-        $html .= $this->code;
+        $html .= htmlentities($this->code, ENT_COMPAT|ENT_HTML401,'UTF-8');
         $html .= "</pre>";
+        $html .= "<a href=rawviewsubmission.php?submission=$this->submissionID&download=1'>Download</a><br>";
 
         return $html;
+    }
+    
+    function _dumpRaw($forceDownload, $dumpHeaders)
+    {
+        if($dumpHeaders){
+            header('Content-Type: text/plain');
+        }
+        if($forceDownload)
+            header("Content-Disposition: attachment; filename=$this->submissionID.".$this->submissionSettings->extension);
+
+        echo $this->code;
     }
 
     function _getFormHTML()
     {
         $html = "";
-
+        $html .= "Submission Mode: <select name='_codeMode' id='codeMode' onChange=\"if(document.getElementById('codeMode').selectedIndex == 0) { $(codeFileDiv).hide(); $(codeEdit).show(); } else { $(codeFileDiv).show(); $(codeEdit).hide();}\"><option value='paste' selected>Paste into browser</option><option value='upload'>Upload File</option></select><br>\n";
+        $html .= "<input type='hidden' name='codeMode' id='hiddenCodeMode'>";
         $html .= "<textarea name='code' cols='60' rows='40' id='codeEdit' accept-charset='utf-8'>\n";
-        //TODO: Do we need to un-purify it? htmlentities($this->text, ENT_COMPAT|ENT_HTML401,'UTF-8');
-        $html .= $this->code;
+        $html .= htmlentities($this->code, ENT_COMPAT|ENT_HTML401,'UTF-8');
         $html .= "</textarea><br>\n";
+        $html .= "<div id='codeFileDiv' style='display:none;'>";
+        $html .= "Code File: <input type='file' name='codefile' id='codeFile'/><br><br>";
+        $html .= "<div class=errorMsg><div class='errorField' id='error_file'></div></div><br>\n";
+        $html .= "</div>\n";
+
         return $html;
+    }
+    
+    function _getValidationCode()
+    {
+        //only if we have topics do we need to ensure that one has been picked
+        $code  = "if($(codeMode).val() == 'upload'){\n";
+        $code .= "$('#error_file').html('').parent().hide();\n";
+        $code .= "if(!$('#codeFile').val()) {";
+        $code .= "$('#error_file').html('You must select a code file');\n";
+        $code .= "$('#error_file').parent().show();\n";
+        $code .= "error = true;}\n";
+        $code .= "else {";
+        if($this->submissionSettings->extension){
+            $code .= "if(!stringEndsWith($('#codeFile').val().toLowerCase(), '.".$this->submissionSettings->extension."')) {";
+            $code .= "$('#error_file').html('Your file must have a .".$this->submissionSettings->extension." extension');\n";
+            $code .= "$('#error_file').parent().show();\n";
+            $code .= "error = true;}\n";
+        }
+        $code .= "}";
+        $code .= "}";
+        $code .= "if(!error) { $(hiddenCodeMode).val($(codeMode).val()); $(codeMode).val('0'); }";
+        return $code;
+    }
+
+    function getFormAttribs() {
+        return "enctype='multipart/form-data' action='api/upload'";
     }
 
     function getDownloadContents()
@@ -53,7 +109,7 @@ class CodeSubmission extends Submission
 
     function getDownloadSuffix()
     {
-        return ".txt";
+        return $this->submissionSettings->extension;
     }
 
 };
@@ -61,12 +117,14 @@ class CodeSubmission extends Submission
 class CodeSubmissionSettings extends SubmissionSettings
 {
     public $language = "";
+    public $extension = "";
 
     function getFormHTML()
     {
         $html  = "<table width='100%' align='left'>\n";
         $html .= "<tr><td width='190px'>Language</td><td><input type='text' name='codeLanguage' value='$this->language'/></td></tr>\n";
         $html .= "<tr><td colspan='2'>Leave blank if you want automatic detection, otherwise look <a href='https://code.google.com/p/google-code-prettify/'>here</a> for supported languages</td></tr>\n";
+        $html .= "<tr><td width='190px'>File extension (lower case, leave blank to allow for any)</td><td><input type='text' name='codeExtension' value='$this->extension'/></td></tr>\n";
         $html .= "</table>\n";
         return $html;
     }
@@ -76,7 +134,10 @@ class CodeSubmissionSettings extends SubmissionSettings
         //We need to figure out the topics
         if(!array_key_exists("codeLanguage", $POST))
             throw new Exception("Failed to get the language from POST");
+        if(!array_key_exists("codeExtension", $POST))
+            throw new Exception("Failed to get the extension from POST");
         $this->language = $POST["codeLanguage"];
+        $this->extension= $POST["codeExtension"];
     }
 };
 
@@ -91,18 +152,21 @@ class CodePDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
 
     function loadAssignmentSubmissionSettings(PeerReviewAssignment $assignment)
     {
-        $sh = $this->prepareQuery("loadCodeAssignmentSubmissionSettingsQuery", "SELECT codeLanguage FROM peer_review_assignment_code_settings WHERE assignmentID = ?;");
+        $sh = $this->prepareQuery("loadCodeAssignmentSubmissionSettingsQuery", "SELECT codeLanguage, codeExtension FROM peer_review_assignment_code_settings WHERE assignmentID = ?;");
         $sh->execute(array($assignment->assignmentID));
         $res = $sh->fetch();
         $assignment->submissionSettings = new CodeSubmissionSettings();
         if($res->codeLanguage){
             $assignment->submissionSettings->language = $res->codeLanguage;
         }
+        if($res->codeExtension){
+            $assignment->submissionSettings->extension = $res->codeExtension;
+        }
     }
 
     function getAssignmentSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
-        $code = new CodeSubmission($assignment->submissionSettings);
+        $code = new CodeSubmission($assignment->submissionSettings, $submissionID);
         $sh = $this->prepareQuery("getCodeSubmissionQuery", "SELECT `code` FROM peer_review_assignment_code WHERE submissionID = ?;");
         $sh->execute(array($submissionID));
         if(!$res = $sh->fetch())

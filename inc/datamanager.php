@@ -78,6 +78,11 @@ abstract class DataManager
         return $assignment;
     }
 
+    function getAssignmentDataManager($type)
+    {
+        return $this->assignmentDataManagers[$type];
+    }
+
     function createAssignmentInstance($name, $type)
     {
         if(!array_key_exists($type, $this->assignmentDataManagers))

@@ -143,7 +143,7 @@ class EssayPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
 
     function getAssignmentSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
-        $essay = new EssaySubmission($assignment->submissionSettings);
+        $essay = new EssaySubmission($assignment->submissionSettings, $submissionID);
         $sh = $this->prepareQuery("getEssaySubmissionQuery", "SELECT `text`, topicIndex FROM peer_review_assignment_essays WHERE submissionID = ?;");
         $sh->execute(array($submissionID));
         if(!$res = $sh->fetch())

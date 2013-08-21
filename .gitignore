@@ -10,3 +10,4 @@ inc/htmlpurifier/HTMLPurifier/DefinitionCache/Serializer/URI/
 admin/.htaccess
 admin/.htpasswd
 config.php
+sessions

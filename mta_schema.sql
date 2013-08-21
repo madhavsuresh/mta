@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Aug 18, 2013 at 10:27 PM
+-- Generation Time: Aug 21, 2013 at 07:22 PM
 -- Server version: 5.5.32-MariaDB
 -- PHP Version: 5.5.2
 
@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `assignments` (
   KEY `courseID` (`courseID`),
   KEY `assignment_name` (`name`),
   KEY `courseID_2` (`courseID`,`displayPriority`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS `course` (
   PRIMARY KEY (`courseID`),
   UNIQUE KEY `course_name_2` (`name`),
   KEY `course_name` (`name`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS `group_picker_assignment_selections` (
   UNIQUE KEY `assignmentID` (`assignmentID`,`userID`),
   KEY `userID` (`userID`),
   KEY `selectionID` (`selectionID`,`assignmentID`,`groupIndex`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment` (
   `markPostDate` datetime NOT NULL,
   `maxSubmissionScore` float NOT NULL,
   `maxReviewScore` float NOT NULL,
+  `defaultNumberOfReviews` int(11) NOT NULL,
   `showMarksForReviewsReceived` tinyint(1) NOT NULL,
   `showOtherReviewsByStudents` tinyint(1) NOT NULL,
   `showOtherReviewsByInstructors` tinyint(1) NOT NULL,
@@ -159,7 +160,7 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment_appeal_messages` (
   KEY `matchID_4` (`matchID`),
   KEY `authorID` (`authorID`),
   KEY `appealMessageID` (`appealMessageID`,`appealType`,`matchID`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -311,7 +312,7 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment_matches` (
   UNIQUE KEY `submissionID` (`submissionID`,`reviewerID`),
   KEY `submissioID_2` (`submissionID`),
   KEY `reviewerID` (`reviewerID`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -330,7 +331,7 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment_questions` (
   PRIMARY KEY (`questionID`),
   KEY `assignmentID` (`assignmentID`),
   KEY `assignmentID_2` (`assignmentID`,`displayPriority`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -423,7 +424,7 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment_submissions` (
   KEY `assignmentID` (`assignmentID`,`authorID`),
   KEY `authorID` (`authorID`),
   KEY `assignmentID_3` (`assignmentID`,`authorID`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -473,7 +474,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   KEY `userType` (`userType`,`username`),
   KEY `userType_2` (`userType`),
   KEY `userID` (`userID`,`userType`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=0 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 

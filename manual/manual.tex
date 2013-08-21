@@ -43,9 +43,12 @@ Mechanical TA requires PHP $>$ 5.3 (with PDO), and MySQL. To set up the database
 
 \begin{itemize}
   \item \texttt{config.php} This file contains the fundamental config options for MTA, including the database connection settings (as well as the LDAP authentication config for the time being). Make sure to update \texttt{\$SITEURL} to contain the web accessible path to your install, as well as the location of the database (see the PDO documentation for setting the dsn)
+  \item \texttt{.user.ini} Overrides php's default session path to put it in a place that you can actually write to. (You'll have to symlink to this file in all of the subdirectories where people run php scripts, ie peerreview/.user.ini and grouppicker/.user.ini)
   \item \texttt{.htaccess} This file contains the rewrite rules that will give your courses pretty names as opposed to just their IDs in the GET string. The only line that needs to be changed here is the \texttt{RewriteBase} to point to the install of MTA on the filesystem.
-  \item \texttt{admin/.htaccess and admin/.htpasswd} Some functions can be done with a special admin account, these files are located under the admin folder. Rather than relying on some other authentication method, MTA just exploits the webserver to provide access to these files. To use the provided \texttt{.htpasswd} file (with username \texttt{root} password \texttt{mta},  you'll have to update \texttt{.htaccess} to point to the full path of the \texttt{.htaccess} file. This folder should probably be removed from the MTA install once you've created all your courses, as once you have created your instructor logins there is no use to it any more.
+  \item \texttt{admin/.htaccess and admin/.htpasswd} Some functions can be done with a special admin account, these files are located under the admin folder. Rather than relying on some other authentication method, MTA just exploits the webserver to provide access to these files. To use the provided \texttt{.htpasswd} file (with username \texttt{root} password \texttt{mta},  you'll have to update \texttt{.htaccess} to point to the full path of the \texttt{.htpasswd} file. This folder should probably be removed from the MTA install once you've created all your courses, as once you have created your instructor logins there is no use to it any more. You can use the script \texttt{admin/createhtpasswd.sh} to generate a new password.
 \end{itemize}
+
+Permissions can be a bit finicky - if the web server is using suexec then all the php files need to be readable/executable by your user, otherwise they may need world execute permissions. A script \texttt{fixpermissions.sh} can be run that should hopefully set everything up properly.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 

@@ -9,6 +9,7 @@ class LDAPAuthManager extends AuthManager
     private $basedn = 'ou=People';
     function __construct($registrationType, $dataMgr)
     {
+        global $cfgLDAPAuthMgrHost, $cfgLDAPAuthMgrPort, $cfgLDAPAuthMgrBaseDN;
         parent::__construct($registrationType, $dataMgr);
         //TODO: Grab this from the dataMgr would be better
         $this->host = $cfgLDAPAuthMgrHost;

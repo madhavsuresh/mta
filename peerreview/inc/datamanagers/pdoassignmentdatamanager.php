@@ -64,7 +64,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         global $PEER_REVIEW_SUBMISSION_TYPES;
         #Go and include the assignment page
-        $sh = $this->prepareQuery("loadAssignmentQuery", "SELECT name, submissionQuestion, submissionType, UNIX_TIMESTAMP(submissionStartDate) as submissionStartDate, UNIX_TIMESTAMP(submissionStopDate) as submissionStopDate, UNIX_TIMESTAMP(reviewStartDate) as reviewStartDate, UNIX_TIMESTAMP(reviewStopDate) as reviewStopDate, UNIX_TIMESTAMP(markPostDate) as markPostDate, UNIX_TIMESTAMP(appealStopDate) as appealStopDate, maxSubmissionScore, maxReviewScore, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions FROM peer_review_assignment JOIN assignments ON assignments.assignmentID = peer_review_assignment.assignmentID WHERE peer_review_assignment.assignmentID=?;");
+        $sh = $this->prepareQuery("loadAssignmentQuery", "SELECT name, submissionQuestion, submissionType, UNIX_TIMESTAMP(submissionStartDate) as submissionStartDate, UNIX_TIMESTAMP(submissionStopDate) as submissionStopDate, UNIX_TIMESTAMP(reviewStartDate) as reviewStartDate, UNIX_TIMESTAMP(reviewStopDate) as reviewStopDate, UNIX_TIMESTAMP(markPostDate) as markPostDate, UNIX_TIMESTAMP(appealStopDate) as appealStopDate, maxSubmissionScore, maxReviewScore, defaultNumberOfReviews, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions FROM peer_review_assignment JOIN assignments ON assignments.assignmentID = peer_review_assignment.assignmentID WHERE peer_review_assignment.assignmentID=?;");
         $sh->execute(array($assignmentID));
         if(!$res = $sh->fetch())
         {
@@ -88,6 +88,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
         $assignment->maxSubmissionScore = $res->maxSubmissionScore;
         $assignment->maxReviewScore = $res->maxReviewScore;
+        $assignment->defaultNumberOfReviews = $res->defaultNumberOfReviews;
 
         $assignment->showMarksForReviewsReceived = $res->showMarksForReviewsReceived;
         $assignment->showOtherReviewsByStudents        = $res->showOtherReviewsByStudents;
@@ -124,11 +125,11 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         if($newAssignment)
         {
-            $sh = $this->db->prepare("INSERT INTO peer_review_assignment (submissionQuestion, submissionType, submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate, markPostDate, appealStopDate, maxSubmissionScore, maxReviewScore, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions, assignmentID) VALUES (?, ?, FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?, ?);");
+            $sh = $this->db->prepare("INSERT INTO peer_review_assignment (submissionQuestion, submissionType, submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate, markPostDate, appealStopDate, maxSubmissionScore, maxReviewScore, defaultNumberOfReviews, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions, assignmentID) VALUES (?, ?, FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?, ?, ?);");
         }
         else
         {
-            $sh = $this->db->prepare("UPDATE peer_review_assignment SET submissionQuestion=?, submissionType=?, submissionStartDate=FROM_UNIXTIME(?), submissionStopDate=FROM_UNIXTIME(?), reviewStartDate=FROM_UNIXTIME(?), reviewStopDate=FROM_UNIXTIME(?), markPostDate=FROM_UNIXTIME(?), appealStopDate=FROM_UNIXTIME(?), maxSubmissionScore=?, maxReviewScore=?, showMarksForReviewsReceived=?, showOtherReviewsByStudents=?, showOtherReviewsByInstructors=?, showMarksForOtherReviews=?, showMarksForReviewedSubmissions=? WHERE assignmentID=?;");
+            $sh = $this->db->prepare("UPDATE peer_review_assignment SET submissionQuestion=?, submissionType=?, submissionStartDate=FROM_UNIXTIME(?), submissionStopDate=FROM_UNIXTIME(?), reviewStartDate=FROM_UNIXTIME(?), reviewStopDate=FROM_UNIXTIME(?), markPostDate=FROM_UNIXTIME(?), appealStopDate=FROM_UNIXTIME(?), maxSubmissionScore=?, maxReviewScore=?, defaultNumberOfReviews=? showMarksForReviewsReceived=?, showOtherReviewsByStudents=?, showOtherReviewsByInstructors=?, showMarksForOtherReviews=?, showMarksForReviewedSubmissions=? WHERE assignmentID=?;");
         }
         $sh->execute(array(
             $assignment->submissionQuestion,
@@ -141,6 +142,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             $assignment->appealStopDate,
             $assignment->maxSubmissionScore,
             $assignment->maxReviewScore,
+            $assignment->defaultNumberOfReviews,
             $assignment->showMarksForReviewsReceived,
             $assignment->showOtherReviewsByStudents,
             $assignment->showOtherReviewsByInstructors,
@@ -617,6 +619,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getUserIDForInstructorReview(PeerReviewAssignment $assignment, UserID $baseID, $username, SubmissionID $submissionID)
     {
+        global $dataMgr;
         //Try and find an unused shadow id
         $sh = $this->db->prepare("SELECT userID from users WHERE NOT EXISTS (SELECT * from peer_review_assignment_matches WHERE userID = reviewerID && submissionID = ?) && ((userType = 'shadowinstructor' && substr(username, 1, ?) = ?) || userID = ?) ORDER BY userID LIMIT 1;");
         $basename = $username."__shadow";
@@ -635,8 +638,8 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         else
         {
             //We have to go and create a new shadow user
-            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'shadowinstructor' && substr(username, 1, ?) = ?;");
-            $sh->execute(array(strlen($basename), $basename));
+            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'shadowinstructor' && substr(username, 1, ?) = ? && courseId = ?;");
+            $sh->execute(array(strlen($basename), $basename, $dataMgr->courseID));
             $nameInfo = $this->dataMgr->getUserFirstAndLastNames($baseID);
             $count = $sh->fetch()->count;
             return $this->dataMgr->addUser($basename.$count, $nameInfo->firstName, $nameInfo->lastName." (".($count+1).")", 0, 'shadowinstructor');
@@ -645,6 +648,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getUserIDForAnonymousReview(PeerReviewAssignment $assignment, UserID $baseID, $username, SubmissionID $submissionID)
     {
+        global $dataMgr;
         //Try and find an unused anonymous id
         $sh = $this->db->prepare("SELECT userID from users WHERE NOT EXISTS (SELECT * from peer_review_assignment_matches WHERE userID = reviewerID && submissionID = ?) && (userType = 'anonymous' && substr(username, 1, ?) = ?) ORDER BY userID LIMIT 1;");
         $basename = $username."__anonymous";
@@ -662,8 +666,8 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         else
         {
             //We have to go and create a new shadow user
-            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' && substr(username, 1, ?) = ?;");
-            $sh->execute(array(strlen($basename), $basename));
+            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' && substr(username, 1, ?) = ? && courseId = ?;");
+            $sh->execute(array(strlen($basename), $basename, $dataMgr->courseID));
             $nameInfo = $this->dataMgr->getUserFirstAndLastNames($baseID);
             $count = $sh->fetch()->count;
             $lastName = $nameInfo->lastName;
@@ -675,13 +679,15 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getUserIDForAnonymousSubmission(PeerReviewAssignment $assignment, UserID $baseID, $username)
     {
+        global $dataMgr;
         //Try and find an unused anonymous id
-        $sh = $this->db->prepare("SELECT userID from users WHERE NOT EXISTS (SELECT * from peer_review_assignment_submissions WHERE userID = authorID && assignmentID= ?) && (userType = 'anonymous' && substr(username, 1, ?) = ?) ORDER BY userID LIMIT 1;");
+        $sh = $this->db->prepare("SELECT userID from users WHERE NOT EXISTS (SELECT * from peer_review_assignment_submissions WHERE userID = authorID && assignmentID= ?) && (userType = 'anonymous' && substr(username, 1, ?) = ? && courseID = ?) ORDER BY userID LIMIT 1;");
         $basename = $username."__anonymous";
         $sh->execute(array(
             $assignment->assignmentID,
             strlen($basename),
-            $basename
+            $basename,
+            $dataMgr->courseID
         ));
 
         if($res = $sh->fetch())
@@ -692,8 +698,8 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         else
         {
             //We have to go and create a new shadow user
-            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' && substr(username, 1, ?) = ?;");
-            $sh->execute(array(strlen($basename), $basename));
+            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' && substr(username, 1, ?) = ? && courseId = ?;");
+            $sh->execute(array(strlen($basename), $basename, $dataMgr->courseID));
             $nameInfo = $this->dataMgr->getUserFirstAndLastNames($baseID);
             $count = $sh->fetch()->count;
             $lastName = $nameInfo->lastName;

@@ -25,7 +25,7 @@ class AssignReviewsPeerReviewScript extends Script
         $html .= "<tr><td width='300'>Window size to judge reviewer quality</td><td>";
         $html .= "<input type='text' name='windowsize' id='windowsize' value='4' size='10'/></td></tr>\n";
         $html .= "<tr><td>Num. Reviews to assign</td><td>";
-        $html .= "<input type='text' name='numreviews' id='numreviews' value='3' size='10'/></td></tr>";
+        $html .= "<input type='text' name='numreviews' id='numreviews' value='$assignment->defaultNumberOfReviews' size='10'/></td></tr>";
         $html .= "<tr><td>Max Assignment Attempts</td><td>";
         $html .= "<input type='text' name='maxattempts' id='maxattempts' value='20' size='10'/></td></tr>";
         $html .= "<tr><td>Score Noise</td><td>";

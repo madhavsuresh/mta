@@ -22,6 +22,7 @@ class PeerReviewAssignment extends Assignment
 
     public $maxSubmissionScore = 0;
     public $maxReviewScore = 0;
+    public $defaultNumberOfReviews = 3;
 
     public $submissionType;
     public $submissionSettings;
@@ -242,6 +243,7 @@ class PeerReviewAssignment extends Assignment
 
         $this->maxSubmissionScore = floatval($POST["maxSubmissionScore"]);
         $this->maxReviewScore = floatval($POST["maxReviewScore"]);
+        $this->defaultNumberOfReviews= intval($POST["defaultNumberOfReviews"]);
 
         $this->showMarksForReviewsReceived = array_key_exists('showMarksForReviewsReceived', $POST);
         $this->showOtherReviewsByStudents = array_key_exists('showOtherReviewsByStudents', $POST);
@@ -330,10 +332,10 @@ class PeerReviewAssignment extends Assignment
         $html .= "<tr><td>&nbsp;</td></tr>\n";
         $html .= "<tr><td>Max&nbsp;Submission&nbsp;Score</td><td><input type='text' name='maxSubmissionScore' id='maxSubmissionScore' value='$this->maxSubmissionScore'/></td></tr>\n";
         $html .= "<tr><td>Max&nbsp;Review&nbsp;Score</td><td><input type='text' name='maxReviewScore' id='maxReviewScore' value='$this->maxReviewScore'/></td></tr>\n";
+        $html .= "<tr><td>Default&nbsp;Number&nbsp;of&nbsp;Reviews</td><td><input type='text' name='defaultNumberOfReviews' id='defaultNumberOfReviews' value='$this->defaultNumberOfReviews'/></td></tr>\n";
         $html .= "<tr><td>&nbsp;</td></tr>\n";
         $html .= "<tr><td>Appeal&nbsp;Stop&nbsp;Date</td><td><input type='text' name='appealStopDate' id='appealStopDate' /></td></tr>\n";
         $html .= "<tr><td>&nbsp;</td></tr>\n";
-
 
         $tmp = '';
         if($this->showMarksForReviewsReceived)

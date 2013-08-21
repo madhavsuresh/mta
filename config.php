@@ -29,6 +29,8 @@ $MTA_ASSIGNMENTS = array(
     "grouppicker",
 );
 
+$SHOW_EXCEPTION_STACK_TRACE = false;
+
 //TODO: Remove this and put then in the data manager
 $cfgLDAPAuthMgrHost = 'ldap.cs.ubc.ca';
 $cfgLDAPAuthMgrPort = 389;

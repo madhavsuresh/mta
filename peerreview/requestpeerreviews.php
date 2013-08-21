@@ -39,7 +39,7 @@ try
     asort($possibleSubmissions);
 
     //Take the top three
-    if(sizeof($possibleSubmissions) < 3)
+    if(sizeof($possibleSubmissions) < $assignments->defaultNumberOfReviews)
         throw new Exception("Not enough submissions to assign!");
 
     $i = 0;
@@ -47,7 +47,7 @@ try
     {
         $assignment->createMatch(new SubmissionID($submissionID), $USERID);
         $i++;
-        if($i >= 3)
+        if($i >= $assignment->defaultNumberOfReviews)
             break;
     }
 

@@ -39,7 +39,7 @@ This is the super brief manual for Mechanical TA. I assume that you're familiar 
 \section{Quick Install}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Mechanical TA requires PHP $>$ 5.3 (with PDO), and MySQL. To set up the database, you first need to load the schema provided in \texttt{mta.sql}, and give a user access to the newly created database. On the website side of things, you need to modify a few files (all paths relative from the top level MTA directory):
+Mechanical TA requires PHP $>$ 5.3 (with PDO), and MySQL. To set up the database, you first need to load the schema provided in \texttt{mta.sql}, and give a user access to the newly created database. On the website side of things, you need to modify a few files (all paths relative from the top level MTA directory) Each of these files come with a *.tempalte version that you can copy that should contain some useful defaults that will help you out:
 
 \begin{itemize}
   \item \texttt{config.php} This file contains the fundamental config options for MTA, including the database connection settings (as well as the LDAP authentication config for the time being). Make sure to update \texttt{\$SITEURL} to contain the web accessible path to your install, as well as the location of the database (see the PDO documentation for setting the dsn)

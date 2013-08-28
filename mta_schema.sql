@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS `assignments` (
   `assignmentType` varchar(64) NOT NULL,
   `passwordMessage` text,
   `password` varchar(255) DEFAULT NULL,
+  `visibleToStudents` BOOLEAN NOT NULL DEFAULT TRUE,
   PRIMARY KEY (`assignmentID`),
   KEY `courseID` (`courseID`),
   KEY `assignment_name` (`name`),
@@ -65,6 +66,7 @@ CREATE TABLE IF NOT EXISTS `course` (
   `displayName` varchar(128) NOT NULL,
   `authType` varchar(128) NOT NULL,
   `registrationType` varchar(128) NOT NULL,
+  `browsable` BOOLEAN NOT NULL DEFAULT TRUE,
   PRIMARY KEY (`courseID`),
   UNIQUE KEY `course_name_2` (`name`),
   KEY `course_name` (`name`)

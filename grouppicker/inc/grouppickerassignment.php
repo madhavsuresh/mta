@@ -64,7 +64,7 @@ class GroupPickerAssignment extends Assignment
         return $code;
     }
 
-    function showForUser(UserID $userID)
+    function _showForUser(UserID $userID)
     {
         global $NOW, $dataMgr;
         //Only show this if it is an instructor or if it is after the start date

@@ -50,7 +50,7 @@ class PDODataManager extends DataManager
         $this->getUserDisplayNameQuery = $this->db->prepare("SELECT firstName, lastName FROM users WHERE userID=?;");
         $this->numUserTypeQuery = $this->db->prepare("SELECT COUNT(userID) FROM users WHERE courseID=? && userType=?;");
         $this->assignmentExistsQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE assignmentID=?;");
-        $this->assignmentFieldsQuery = $this->db->prepare("SELECT password, passwordMessage FROM assignments WHERE assignmentID=?;");
+        $this->assignmentFieldsQuery = $this->db->prepare("SELECT password, passwordMessage, visibleToStudents FROM assignments WHERE assignmentID=?;");
         $this->getEnteredPasswordQuery = $this->db->prepare("SELECT userID from assignment_password_entered WHERE assignmentID = ? && userID = ?;");
         $this->userEnteredPasswordQuery = $this->db->prepare("INSERT INTO assignment_password_entered (assignmentID, userID) VALUES (?, ?);");
 
@@ -58,7 +58,7 @@ class PDODataManager extends DataManager
         $this->addAssignmentToCourseQuery = $this->db->prepare( "INSERT INTO assignments (courseID, name, displayPriority, assignmentType) SELECT :courseID, :name, COUNT(courseID), :type FROM assignments WHERE courseID=:courseID;",
                                                                 array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
         $this->removeAssignmentFromCourseQuery = $this->db->prepare("DELETE FROM assignments WHERE assignmentID = ?;");
-        $this->updateAssignmentQuery = $this->db->prepare("UPDATE assignments SET name=?, password=?, passwordMessage=? WHERE assignmentID = ?;");
+        $this->updateAssignmentQuery = $this->db->prepare("UPDATE assignments SET name=?, password=?, passwordMessage=?, visibleToStudents=? WHERE assignmentID = ?;");
         //$this->getConfigPropertyQuery = $this->db->prepare("SELECT *;");
         //$this->assignmentSwapDisplayOrderQuery = $this->db->prepare("UPDATE assignments SET
 
@@ -379,7 +379,7 @@ class PDODataManager extends DataManager
     }
     protected function updateAssignment(Assignment $assignment)
     {
-        $this->updateAssignmentQuery->execute(array($assignment->name, $assignment->password, $assignment->passwordMessage, $assignment->assignmentID));
+        $this->updateAssignmentQuery->execute(array($assignment->name, $assignment->password, $assignment->passwordMessage, $assignment->visibleToStudents, $assignment->assignmentID));
     }
 
     protected function populateGeneralAssignmentFields(Assignment $assignment)
@@ -389,6 +389,7 @@ class PDODataManager extends DataManager
 
         $assignment->password = $res->password;
         $assignment->passwordMessage = $res->passwordMessage;
+        $assignment->visibleToStudents = $res->visibleToStudents;
     }
 
     function getCourseInfo(CourseID $id)

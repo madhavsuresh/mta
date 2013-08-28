@@ -9,6 +9,7 @@ abstract class Assignment
     public $assignmenType;
     public $password = NULL;
     public $passwordMessage = NULL;
+    public $visibleToStudents = true;
     protected $dataMgr;
 
     function __construct(AssignmentID $assignmentID = NULL, $name, AssignmentDataManager $dataMgr)
@@ -36,6 +37,7 @@ abstract class Assignment
             $this->password = null;
             $this->passwordMessage = null;
         }
+        $this->visibleToStudents = isset($POST["visibleToStudents"]);
 
         //Pass it off to the subclass
         $this->_loadFromPost($POST);
@@ -46,6 +48,10 @@ abstract class Assignment
         $html  = "<h2>General Settings</h2>";
         $html .= "<table align='left' width='100%'>\n";
         $html .= "<tr><td>Assignment&nbsp;Name</td><td><input type='text' name='assignmentName' id='assignmentName' value='".htmlentities($this->name, ENT_COMPAT|ENT_QUOTES)."' size='60'/></td></tr>\n";
+        $tmp = "";
+        if($this->visibleToStudents)
+            $tmp = "checked";
+        $html .= "<tr><td>Visible&nbsp;to&nbsp;students</td><td><input type='checkbox' name='visibleToStudents' id='visibleToStudents' $tmp /></td></tr>\n";
         $tmp = "";
         if($this->password)
             $tmp = "checked";
@@ -104,6 +110,7 @@ abstract class Assignment
         $duplicate = $this->_duplicate();
         $duplicate->name = NULL;
         $duplicate->assignmentID;
+        $duplicate->visibleToStudents = $this->visibleToStudents;
         return $duplicate;
     }
 
@@ -118,6 +125,14 @@ abstract class Assignment
             return $html;
         }
         return $this->_getHeaderHTML($userID);
+    }
+    
+    function showForUser(UserID $userid)
+    {
+        global $dataMgr;
+        if($dataMgr->isStudent($userid) && !$this->visibleToStudents)
+            return false;
+        return $this->_showForUser($userid);
     }
 
     function getPasswordLockedHTML() { }
@@ -136,7 +151,7 @@ abstract class Assignment
     abstract function getAssignmentTypeDisplayName();
 
     /** Determines if we should show this assignment to the specified user */
-    abstract public function showForUser(UserID $userid);
+    abstract public function _showForUser(UserID $userid);
 };
 
 class AssignmentHeader

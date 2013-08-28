@@ -129,7 +129,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
         else
         {
-            $sh = $this->db->prepare("UPDATE peer_review_assignment SET submissionQuestion=?, submissionType=?, submissionStartDate=FROM_UNIXTIME(?), submissionStopDate=FROM_UNIXTIME(?), reviewStartDate=FROM_UNIXTIME(?), reviewStopDate=FROM_UNIXTIME(?), markPostDate=FROM_UNIXTIME(?), appealStopDate=FROM_UNIXTIME(?), maxSubmissionScore=?, maxReviewScore=?, defaultNumberOfReviews=? showMarksForReviewsReceived=?, showOtherReviewsByStudents=?, showOtherReviewsByInstructors=?, showMarksForOtherReviews=?, showMarksForReviewedSubmissions=? WHERE assignmentID=?;");
+            $sh = $this->db->prepare("UPDATE peer_review_assignment SET submissionQuestion=?, submissionType=?, submissionStartDate=FROM_UNIXTIME(?), submissionStopDate=FROM_UNIXTIME(?), reviewStartDate=FROM_UNIXTIME(?), reviewStopDate=FROM_UNIXTIME(?), markPostDate=FROM_UNIXTIME(?), appealStopDate=FROM_UNIXTIME(?), maxSubmissionScore=?, maxReviewScore=?, defaultNumberOfReviews=?, showMarksForReviewsReceived=?, showOtherReviewsByStudents=?, showOtherReviewsByInstructors=?, showMarksForOtherReviews=?, showMarksForReviewedSubmissions=? WHERE assignmentID=?;");
         }
         $sh->execute(array(
             $assignment->submissionQuestion,

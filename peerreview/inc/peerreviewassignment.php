@@ -266,7 +266,7 @@ class PeerReviewAssignment extends Assignment
         }
     }
 
-    function showForUser(UserID $user)
+    function _showForUser(UserID $user)
     {
         //Is this user an instructor?
         global $dataMgr, $NOW;

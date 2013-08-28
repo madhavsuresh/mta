@@ -8,6 +8,7 @@ try
     $courseObj->displayName = "";
     $courseObj->authType = "";
     $courseObj->registrationType = "";
+    $courseObj->browsable = true;
 
     if(array_key_exists("save", $_GET))
     {
@@ -19,13 +20,14 @@ try
         $courseObj->displayName = $_POST["displayName"];
         $courseObj->authType = $_POST["authType"];
         $courseObj->registrationType = $_POST["registrationType"];
+        $courseObj->browsable = isset($_POST["browsable"]);
 
         if(!is_null($courseObj->courseID)){
             //We're updating
-            $dataMgr->setCourseInfo($courseObj->courseID, $courseObj->name, $courseObj->displayName, $courseObj->authType, $courseObj->registrationType);
+            $dataMgr->setCourseInfo($courseObj->courseID, $courseObj->name, $courseObj->displayName, $courseObj->authType, $courseObj->registrationType, $courseObj->browsable);
         }else{
             //We're making a new course
-            $dataMgr->createCourse($courseObj->name, $courseObj->displayName, $courseObj->authType, $courseObj->registrationType);
+            $dataMgr->createCourse($courseObj->name, $courseObj->displayName, $courseObj->authType, $courseObj->registrationType, $courseObj->browsable);
         }
         //Now that save is done, we can just fall back to the regular editor
     }
@@ -65,6 +67,11 @@ try
                 $content .= " selected=selected";
             $content .= " value='$method'>$name</option>\n";
         }
+        $extra = "";
+        if($courseObj->browsable)
+            $extra = "checked";
+
+        $content .= "<tr><td>Browsable: </td><td><input type='checkbox' name='browsable' id='browsable' $extra /></td></tr>\n";
         $content .= "</td></tr>\n";
         $content .= "</table>\n";
         $content .= "<input type='submit' value='Save'/>\n";

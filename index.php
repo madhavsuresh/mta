@@ -9,7 +9,8 @@ try
         $content .= "<h1>Course Select</h1>";
         foreach($dataMgr->getCourses() as $courseObj)
         {
-            $content .= "<a href='$SITEURL$courseObj->name/'>$courseObj->displayName</a><br>";
+            if($courseObj->browsable)
+                $content .= "<a href='$SITEURL$courseObj->name/'>$courseObj->displayName</a><br>";
         }
         render_page();
     }

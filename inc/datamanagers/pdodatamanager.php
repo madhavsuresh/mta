@@ -360,7 +360,7 @@ class PDODataManager extends DataManager
 
     function getCourses()
     {
-        $sh = $this->db->prepare("SELECT name, displayName, courseID FROM course;");
+        $sh = $this->db->prepare("SELECT name, displayName, courseID, browsable FROM course;");
         $sh->execute(array());
         return $sh->fetchall();
     }
@@ -393,20 +393,20 @@ class PDODataManager extends DataManager
 
     function getCourseInfo(CourseID $id)
     {
-        $sh = $this->db->prepare("SELECT courseID, name, displayName, courseID, authType, registrationType FROM course where courseID = ?;");
+        $sh = $this->db->prepare("SELECT courseID, name, displayName, courseID, authType, registrationType, browsable FROM course where courseID = ?;");
         $sh->execute(array($id));
         return $sh->fetch();
     }
 
-    function setCourseInfo(CourseID $id, $name, $displayName, $authType, $regType)
+    function setCourseInfo(CourseID $id, $name, $displayName, $authType, $regType, $browsable)
     {
-        $sh = $this->db->prepare("UPDATE course SET name = ?, displayName = ?, authType = ?, registrationType = ? WHERE courseID = ?;");
-        $sh->execute(array($name, $displayName, $authType, $regType, $id));
+        $sh = $this->db->prepare("UPDATE course SET name = ?, displayName = ?, authType = ?, registrationType = ?, browsable = ? WHERE courseID = ?;");
+        $sh->execute(array($name, $displayName, $authType, $regType, $browsable, $id));
     }
 
-    function createCourse($name, $displayName, $authType, $regType)
+    function createCourse($name, $displayName, $authType, $regType, $browsable)
     {
-        $sh = $this->db->prepare("INSERT INTO course (name, displayName, authType, registrationType) VALUES (?, ?, ?, ?);");
-        $sh->execute(array($name, $displayName, $authType, $regType));
+        $sh = $this->db->prepare("INSERT INTO course (name, displayName, authType, registrationType, browsable) VALUES (?, ?, ?, ?, ?);");
+        $sh->execute(array($name, $displayName, $authType, $regType, $browsable));
     }
 }

@@ -2,6 +2,7 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php *
  becomestudent.php
  config.php
  editassignment.php
+ edituser.php
  enterpassword.php
  index.php
  login.php

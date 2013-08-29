@@ -496,12 +496,13 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment_text_options` (
 
 CREATE TABLE IF NOT EXISTS `users` (
   `userID` int(11) NOT NULL AUTO_INCREMENT,
-  `userType` enum('student','anonymous','instructor','shadowinstructor') NOT NULL,
+  `userType` enum('student','anonymous','instructor','shadowinstructor','marker','shadowmarker') NOT NULL,
   `courseID` int(11) NOT NULL,
   `firstName` varchar(128) NOT NULL,
   `lastName` varchar(128) NOT NULL,
   `username` varchar(64) NOT NULL,
   `studentID` int(11) NOT NULL,
+  `alias` varchar(64) NULL DEFAULT NULL,
   PRIMARY KEY (`userID`),
   UNIQUE KEY `courseID` (`courseID`,`username`),
   KEY `lastName` (`lastName`),

@@ -49,6 +49,9 @@ class PDODataManager extends DataManager
         $this->getStudentsQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? && userType = 'student' ORDER BY lastName, firstName;");
         $this->getUserDisplayMapQuery = $this->db->prepare("SELECT userID, firstName, lastName FROM users WHERE courseID=? ORDER BY lastName, firstName;");
         $this->getUserDisplayNameQuery = $this->db->prepare("SELECT firstName, lastName FROM users WHERE userID=?;");
+        $this->getUserAliasMapQuery = $this->db->prepare("SELECT userID, alias FROM users WHERE courseID=?;");
+        $this->getUserAliasQuery = $this->db->prepare("SELECT alias FROM users WHERE userID=?;");
+        $this->setUserAliasQuery = $this->db->prepare("UPDATE users SET alias = ? WHERE userID=?;");
         $this->numUserTypeQuery = $this->db->prepare("SELECT COUNT(userID) FROM users WHERE courseID=? && userType=?;");
         $this->assignmentExistsQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE assignmentID=?;");
         $this->assignmentFieldsQuery = $this->db->prepare("SELECT password, passwordMessage, visibleToStudents FROM assignments WHERE assignmentID=?;");
@@ -187,6 +190,28 @@ class PDODataManager extends DataManager
         return $this->isInstructorQuery->fetch() != NULL;
     }
 
+    function getUserAlias(UserID $userID)
+    {
+        $this->getUserAliasQuery->execute(array($userID));
+        if(!$res = $this->getUserAliasQuery->fetch())
+        {
+            throw new Exception("No user with id '$userID'");
+        }
+        else
+        {
+            if(is_null($res->alias)){
+                return "Anonymous";
+            }
+            return $res->alias;
+        }
+    }
+
+    function setUserAlias(UserID $userID, $alias)
+    {
+        $this->setUserAliasQuery->execute(array($alias, $userID));
+    }
+
+
     /** Gets a user's name
      */
     function getUserDisplayName(UserID $userID)
@@ -233,6 +258,18 @@ class PDODataManager extends DataManager
         while($res = $this->getUserDisplayMapQuery->fetch())
         {
             $users[$res->userID] = $res->firstName." ".$res->lastName;
+        }
+        return $users;
+    }
+    
+    function getUserAliasMap()
+    {
+        $this->getUserAliasMapQuery->execute(array($this->courseID));
+
+        $users = array();
+        while($res = $this->getUserDisplayMapQuery->fetch())
+        {
+            $users[$res->userID] = $res->alias;
         }
         return $users;
     }

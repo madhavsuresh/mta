@@ -299,6 +299,7 @@ function get_default_menu_items()
     if($authMgr->isLoggedIn())
     {
         $menu[] = array("name" => "Home", "link" => get_url_to_main());
+        $menu[] = array("name" => "User Settings", "link" => get_redirect_url("edituser.php"));
         //Add the option to become a student
         if($dataMgr->isInstructor($USERID))
         {

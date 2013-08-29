@@ -110,57 +110,9 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php *
   }
  }
  peerreviewleaderboard=peerreviewleaderboard{
-  delete.php
-  editappeal.php
-  editdeniedindependentusers.php
-  editpeerreview.php
-  editreview.php
-  editreviewquestions.php
-  editsubmission.php
-  index.php
-  markreview.php
-  marksubmission.php
-  requestpeerreviews.php
-  requestcalibrationreviews.php
-  submitappeal.php
-  submitmark.php
-  submitreview.php
-  submitspotcheck.php
-  submitsubmission.php
-  viewer.php
-  viewcalibration.php
-  viewmarks.php
-  viewquestion.php
-  viewsubmission.php
-  rawviewsubmission.php
-  scripts=scripts{
-   assigncommonreviews.php
-   assigncalibrations.php
-   assignreviews.php
-   autogradeandassignmarkers.php
-   clearautoreviewmarks.php
-   computeindependentsfromscores.php
-   computeindependentsfrompoints.php
-   copymarks.php
-   downloadsubmissions.php
-   remarkcalibration.php
-  }
   inc=inc{
-   appeal.php
-   articleresponse.php
-   image.php
-   code.php
    common.php
-   essay.php
-   mark.php
-   reviewmark.php
-   calibrationutils.php
-   peerreviewassignment.php
-   review.php
-   reviewquestions.php
-   spotcheck.php
-   submission.php
-   zip.lib.php
+   peerreviewleaderboardassignment.php
    datamanagers=datamanagers{
     pdoassignmentdatamanager.php
    }

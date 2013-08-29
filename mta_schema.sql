@@ -502,7 +502,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `lastName` varchar(128) NOT NULL,
   `username` varchar(64) NOT NULL,
   `studentID` int(11) NOT NULL,
-  `alias` varchar(64) NULL DEFAULT NULL,
+  `alias` varchar(64) DEFAULT NULL,
   PRIMARY KEY (`userID`),
   UNIQUE KEY `courseID` (`courseID`,`username`),
   KEY `lastName` (`lastName`),

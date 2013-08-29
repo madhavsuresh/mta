@@ -1,15 +1,16 @@
 <?php
 require_once("peerreview/inc/common.php");
+require_once("peerreview/inc/calibrationutils.php");
 
-class ComputeIndependentsPeerReviewScript extends Script
+class ComputeIndependentsFromPointsPeerReviewScript extends Script
 {
     function getName()
     {
-        return "Compute Independents";
+        return "Compute Independents From Points";
     }
     function getDescription()
     {
-        return "Determines which users should be in the independent pool for this assignment";
+        return "Determines which users should be in the independent pool for this assignment as determined by the sum of their points";
     }
 
     function getFormHTML()
@@ -17,9 +18,9 @@ class ComputeIndependentsPeerReviewScript extends Script
         //TODO: Load the defaults from the config
         $html  = "<table width='100%'>\n";
         $html .= "<tr><td width='200'>Assignment Window Size</td><td>";
-        $html .= "<input type='text' name='windowsize' id='windowsize' value='4' size='10'/></td></tr>\n";
-        $html .= "<tr><td>Review Grade Threshold</td><td>";
-        $html .= "<input type='text' name='threshold' id='threshold' value='70' size='10'/>%</td></tr>";
+        $html .= "<input type='text' name='windowsize' id='windowsize' value='-1' size='10'/></td></tr>\n";
+        $html .= "<tr><td>Review Score Threshold</td><td>";
+        $html .= "<input type='text' name='threshold' id='threshold' value='3' size='10'/></td></tr>";
         $html .= "</table>\n";
         return $html;
     }
@@ -35,17 +36,18 @@ class ComputeIndependentsPeerReviewScript extends Script
         $independentThreshold = require_from_post("threshold");
 
         $assignments = $currentAssignment->getAssignmentsBefore($windowSize);
+        $assignments[] = $currentAssignment;
         $userNameMap = $dataMgr->getUserDisplayMap();
         $students = $dataMgr->getStudents();
         $independents = array();
 
         $html = "<table width='100%'>\n";
-        $html .= "<tr><td><h2>Student</h2></td><td><h2>Review Avg</h2></td><td><h2>Status</h2></td></tr>\n";
+        $html .= "<tr><td><h2>Student</h2></td><td><h2>Point Sum</h2></td><td><h2>Status</h2></td></tr>\n";
         $currentRowType = 0;
         foreach($students as $student)
         {
             $html .= "<tr class='rowType$currentRowType'><td>".$userNameMap[$student->id]."</td><td>";
-            $score = compute_peer_review_score_for_assignments($student, $assignments) * 100;
+            $score = computeReviewPointsForAssignments($student, $assignments);
             $html .= precisionFloat($score);
             $html .= "</td><td>\n";
             if($score >= $independentThreshold)
@@ -62,3 +64,4 @@ class ComputeIndependentsPeerReviewScript extends Script
         return $html;
     }
 }
+

@@ -31,6 +31,7 @@ class PDODataManager extends DataManager
                             $MTA_DATAMANAGER_PDO_CONFIG["password"],
                             array(PDO::ATTR_PERSISTENT => true));
 
+        $this->db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
         $this->db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
         $this->db->exec("SET NAMES 'utf8';");

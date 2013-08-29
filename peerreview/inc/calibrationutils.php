@@ -20,3 +20,18 @@ function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorRe
 
     return new ReviewMark(0, null, true, $points);
 }
+
+function computeReviewPointsForAssignments(UserID $student, $assignments)
+{
+    $points = 0;
+    foreach($assignments as $assignment)
+    {
+        foreach($assignment->getAssignedCalibrationReviews($student) as $matchID)
+        {
+            $mark = $assignment->getReviewMark($matchID);
+            if($mark->isValid)
+                $points += $mark->getReviewPoints();
+        }
+    }
+    return $points;
+}

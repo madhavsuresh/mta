@@ -134,8 +134,9 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         $sh = $this->db->prepare("SELECT assignmentID from peer_review_assignment_submissions subs JOIN peer_review_assignment_matches matches ON subs.submissionID = matches.submissionID WHERE matchID = ?;");
         $sh->execute(array($matchID));
-        if($res = $sh->fetch())
+        if($res = $sh->fetch()){
             return new AssignmentID($res->assignmentID);
+        }
         throw new Exception("Failed to find assignment for match $matchID");
     }
 
@@ -597,6 +598,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $sh->execute(array($matchID));
         if($res = $sh->fetch())
         {
+            print_r($sh->fetch());
             return new ReviewMark($res->score, $res->comments, $res->automatic, $res->reviewPoints);
         }
         return new ReviewMark();
@@ -611,14 +613,13 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     function saveSubmissionMark(PeerReviewAssignment $assignment, Mark $mark, SubmissionID $submissionID)
     {
         $sh = $this->prepareQuery("saveSubmissionMarkQuery", "INSERT INTO peer_review_assignment_submission_marks (submissionID, score, comments, automatic) VALUES (:submissionID, :score, :comments, :automatic) ON DUPLICATE KEY UPDATE score=:score, comments=:comments, automatic=:automatic;");
-        $sh->execute(array(":submissionID" => $submissionID, "score"=>$mark->score, "comments"=>$mark->comments, "automatic"=>$mark->isAutomatic));
+        $sh->execute(array(":submissionID" => $submissionID, ":score"=>$mark->score, ":comments"=>$mark->comments, ":automatic"=>$mark->isAutomatic));
     }
 
     function saveReviewMark(PeerReviewAssignment $assignment, ReviewMark $mark, MatchID $matchID)
     {
-        $sh = $this->prepareQuery("saveReviewMarkQuery", "INSERT INTO peer_review_assignment_review_marks (matchID, score, comments, automatic, reviewPoints) VALUES (:matchID, :score, :comments, :automatic, :reviewPoints) ON DUPLICATE KEY UPDATE score=:score, comments=:comments, automatic=:automatic; reviewPoints=:reviewPoints");
-        print_r($mark);
-        $sh->execute(array(":matchID" => $matchID, "score"=>$mark->score, "comments"=>$mark->comments, "automatic"=>$mark->isAutomatic, "reviewPoints"=>$mark->reviewPoints));
+        $sh = $this->prepareQuery("saveReviewMarkQuery", "INSERT INTO peer_review_assignment_review_marks (matchID, score, comments, automatic, reviewPoints) VALUES (:matchID, :score, :comments, :automatic, :reviewPoints) ON DUPLICATE KEY UPDATE score=:score, comments=:comments, automatic=:automatic, reviewPoints=:reviewPoints;");
+        $sh->execute(array(":matchID" => $matchID, ":score"=>$mark->score, ":comments"=>$mark->comments, ":automatic"=>$mark->isAutomatic, ":reviewPoints"=>$mark->reviewPoints));
     }
 
     function deleteSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)

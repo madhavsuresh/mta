@@ -75,7 +75,7 @@ class ReviewMark extends Mark
 
     function getReviewPoints()
     {
-        return $this->reviewPoints;
+        return precisionFloat($this->reviewPoints);
     }
 };
 

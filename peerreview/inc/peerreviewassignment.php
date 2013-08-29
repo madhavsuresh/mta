@@ -598,6 +598,9 @@ class PeerReviewAssignment extends Assignment
         //Sort the assignments based on their date
         usort($assignments, function($a, $b) { return $a->reviewStopDate < $b->reviewStopDate; } );
 
+        if($maxAssignments < 0)
+            return $assignments;
+
         return array_splice($assignments, 0, $maxAssignments);
     }
 

@@ -75,7 +75,7 @@ class Mark
 
     function getScore()
     {
-        return $this->score;
+        return precisionFloat($this->score);
     }
 };
 

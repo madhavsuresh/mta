@@ -25,6 +25,7 @@ class GroupPickerAssignment extends Assignment
         $obj = clone $this;
         $obj->startDate = $NOW;
         $obj->stopDate = $NOW;
+        return $obj;
     }
 
     protected function _loadFromPost($POST)

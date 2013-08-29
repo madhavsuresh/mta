@@ -7,7 +7,7 @@ if(!$dataMgr->courseID)
     page_not_found();
 }
 
-if(isset($_GET["redir"]) && empty($_SERVER["HTTPS"]))
+if(!isset($_GET["redir"]) && empty($_SERVER["HTTPS"]))
     redirect_to_page("login.php?redir=1");
 
 try

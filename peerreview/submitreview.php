@@ -1,5 +1,6 @@
 <?php
 require_once("inc/common.php");
+require_once(dirname(__FILE__)."/inc/calibrationutils.php");
 try
 {
     function displayReviewWithError($msg = "")
@@ -37,16 +38,23 @@ try
 
     #Get this assignment's data
     $assignment = get_peerreview_assignment();
+    $assignmentWithSubmission = $assignment;
 
+    $isCalibration = false;
     $beforeReviewStart = $NOW < $assignment->reviewStartDate;
     $afterReviewStop   = $assignment->reviewStopDate < $NOW;
 
-    if(array_key_exists("reviewid", $_GET)){
+    if(array_key_exists("review", $_GET) || array_key_exists("calibration", $_GET)){
         #We're in student mode
-        $id = $_GET["reviewid"];
         $reviewerID = $USERID;
-
-        $reviewAssignments = $assignment->getAssignedReviews($reviewerID);
+        if(array_key_exists("review", $_GET)){
+            $id = $_GET["review"];
+            $reviewAssignments = $assignment->getAssignedReviews($reviewerID);
+        }else{
+            $id = $_GET["calibration"];
+            $reviewAssignments = $assignment->getAssignedCalibrationReviews($reviewerID);
+            $isCalibration = true;
+        }
 
         #Try and extract who the author is - if we have an invalid index, return to main
         if(!isset($reviewAssignments[$id]))
@@ -54,6 +62,14 @@ try
 
         #Set the match id
         $matchID = $reviewAssignments[$id];
+
+        //Check to make sure that they haven't already submitted this
+        if($isCalibration){
+            //Get the right assignment that has the data in it
+            $assignmentWithSubmission = $dataMgr->getAssignment($dataMgr->getAssignmentDataManager("peerreview")->getAssignmentIDForMatchID($matchID));
+            if($assignmentWithSubmission->getReviewMark($matchID)->isValid)
+                redirect_to_page("peerreview/viewcalibration.php?assignmentid=$assignment->assignmentID&calibration=".$_GET["calibration"]);
+        }
     }
     else
     {
@@ -108,30 +124,43 @@ try
     else
     {
         #Recover everything from the post
-        $review = new Review($assignment);
+        $review = new Review($assignmentWithSubmission);
         $review->matchID = $matchID;
         $review->reviewerID = $reviewerID;
+        $review->submissionID = $assignment->getSubmissionID($matchID);
 
         $review->loadFromPost($_POST, $action=="draft");
 
         if($action == "save")
         {
-            $content .= "Review saved - check to make sure that it looks right below. You may edit your review by returning to the home page\n";
-            $assignment->saveReview($review);
-            $assignment->deleteReviewDraft($review->matchID);
+            $assignmentWithSubmission->saveReview($review);
+            $assignmentWithSubmission->deleteReviewDraft($review->matchID);
+
+            if(!$isCalibration)
+                $content .= "Review saved - check to make sure that it looks right below. You may edit your review by returning to the home page\n";
         }
         else
         {
             $content .= "Review draft saved. You may edit your review by returning to the home page\n";
             $content .= "<br>Note that review drafts are not marked, you must submit it.\n";
-            $assignment->saveReviewDraft($review);
-            $assignment->deleteReview($review->matchID, false);
+            $assignmentWithSubmission->saveReviewDraft($review);
+            $assignmentWithSubmission->deleteReview($review->matchID, false);
         }
         $content .= "<h1>Review</h1>\n";
         if($action == "save"){
-            $content .= $assignment->getReview($matchID)->getShortHTML();
+            if(!$isCalibration){
+                $content .= $assignmentWithSubmission->getReview($matchID)->getShortHTML();
+            }else{
+                //Do the auto grade
+                $instructorReview = $assignmentWithSubmission->getSingleInstructorReviewForSubmission($review->submissionID);
+
+                $mark = generateAutoMark($assignmentWithSubmission, $instructorReview, $review);
+                $assignment->saveReviewMark($mark, $matchID);
+                //When we're done, redirect them
+                redirect_to_page("peerreview/viewcalibration.php?assignmentid=$assignment->assignmentID&calibration=".$_GET["calibration"]);
+            }
         }else{
-            $content .= $assignment->getReviewDraft($matchID)->getShortHTML();
+            $content .= $assignmentWithSubmission->getReviewDraft($matchID)->getShortHTML();
         }
     }
 

@@ -12,31 +12,47 @@ try
         $closeOnDone = "";
 
     $assignment = get_peerreview_assignment();
+    $assignmentWithSubmission = $assignment;
 
     $beforeReviewStart = $NOW < $assignment->reviewStartDate;
     $afterReviewStop   = $assignment->reviewStopDate < $NOW;
-    if(array_key_exists("review", $_GET)){
-        #We're in student mode
-        $id = $_GET["review"];
-        $reviewerID = $USERID;
+    $isCalibration = false;
 
-        $reviewAssignments = $assignment->getAssignedReviews($reviewerID);
+    if(array_key_exists("review", $_GET) || array_key_exists("calibration", $_GET)){
+        #We're in student mode
+        $reviewerID = $USERID;
+        if(array_key_exists("review", $_GET)){
+            $id = $_GET["review"];
+            $reviewAssignments = $assignment->getAssignedReviews($reviewerID);
+            $getParams = "&review=$id";
+        }else{
+            $id = $_GET["calibration"];
+            $reviewAssignments = $assignment->getAssignedCalibrationReviews($reviewerID);
+            $getParams = "&calibration=$id";
+            $isCalibration = true;
+        }
 
         #Try and extract who the author is - if we have an invalid index, return to main
         if(!isset($reviewAssignments[$id]))
-            throw new Exception("No review assignment with id $id");
+            throw new Exception("No review with id $id");
 
         #Get the match id, then everything else
         $matchID = $reviewAssignments[$id];
-
-        $submission = $assignment->getSubmission($matchID);
-        if($assignment->reviewExists($matchID)){
-            $review = $assignment->getReview($matchID);
+        
+        //Check to make sure that they haven't already submitted this
+        if($isCalibration)
+            $assignmentWithSubmission = $dataMgr->getAssignment($dataMgr->getAssignmentDataManager("peerreview")->getAssignmentIDForMatchID($matchID));
+            if($assignmentWithSubmission->getReviewMark($matchID)->isValid){
+                redirect_to_page("peerreview/viewcalibration.php?assignmentid=$assignment->assignmentID&calibration=".$_GET["calibration"]);
+        }
+        
+        $submission = $assignmentWithSubmission->getSubmission($matchID);
+        if($assignmentWithSubmission->reviewExists($matchID)){
+            $review = $assignmentWithSubmission->getReview($matchID);
         }else{
-            $review = $assignment->getReviewDraft($matchID);
+            $review = $assignmentWithSubmission->getReviewDraft($matchID);
         }
         $reviewerName = $dataMgr->getUserDisplayName($reviewerID);
-        $getParams = "&reviewid=$id";
     }
     else
     {
@@ -148,7 +164,7 @@ try
     {
         #Show the submission question
         $content .= "<h1>Submission Question</h1>\n";
-        $content .= $assignment->submissionQuestion;
+        $content .= $assignmentWithSubmission->submissionQuestion;
 
         #Get the review that we are currently working on
         $content .= "<h1>Submission</h1>\n";

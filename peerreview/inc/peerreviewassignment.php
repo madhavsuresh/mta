@@ -23,9 +23,18 @@ class PeerReviewAssignment extends Assignment
     public $maxSubmissionScore = 0;
     public $maxReviewScore = 0;
     public $defaultNumberOfReviews = 3;
+    public $allowRequestOfReviews = false;
+
+    public $reviewScoreMaxDeviationForGood = 0;
+    public $reviewScoreMaxCountsForGood = 0;
+    
+    public $reviewScoreMaxDeviationForPass = 0;
+    public $reviewScoreMaxCountsForPass = 0;
 
     public $submissionType;
     public $submissionSettings;
+
+    public $calibrationPoolAssignmentIds = array();
 
 
     public $dateFormat = "MMMM Do YYYY, HH:mm";
@@ -133,6 +142,40 @@ class PeerReviewAssignment extends Assignment
                 }
                 else
                 {
+                    #Do they have calibration reviews to do?
+                    $calibrationAssignments = $this->dataMgr->getAssignedCalibrationReviews($this, $user);
+                    if($calibrationAssignments)
+                    {
+                        $html .= "<table align=left width=100%>";
+
+                        $id = 0;
+                        foreach($calibrationAssignments as $matchID)
+                        {
+                            $html .= "<tr><td>";
+                            $temp=$id+1;
+                            $html .= "<a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$this->assignmentID&calibration=$id")."''>Calibration Review $temp</a>";
+                            $html .= "</td><td>";
+                            if($this->dataMgr->reviewExists($this, $matchID)) {
+                                $html .= "Complete";
+                            } else if($this->dataMgr->reviewDraftExists($this, $matchID)) {
+                                $html .= "In Progress";
+                            } else {
+                                $html .= "Not Complete";
+                            }
+                            
+                            $mark = $this->dataMgr->getReviewMark($this, $matchID);
+                            if($mark->isValid){
+                                $html .= "</td><td>($mark->reviewPoints)";
+                            }else{
+                                $html .= "</td><td>";
+                            }
+
+                            $html .= "</td><tr>";
+                            $id = $id+1;
+                        }
+                        $html .= "</table>";
+                    }
+                    $html .= "<br><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$this->assignmentID")."'>Request Calibration Review</a><br>";
                     #Do they have reviews to do?
                     $reviewAssignments = $this->dataMgr->getAssignedReviews($this, $user);
                     if($reviewAssignments)
@@ -163,9 +206,9 @@ class PeerReviewAssignment extends Assignment
                     }
                     else
                     {
-                        $html .= "No assigned reviews";
-                        //TODO: Make this an option
-                        $html .= "<br><a href='".get_redirect_url("peerreview/requestpeerreviews.php?assignmentid=$this->assignmentID")."'>Request Reviews</a>";
+                        $html .= "No assigned peer reviews";
+                        if($this->allowRequestOfReviews)
+                            $html .= "<br><a href='".get_redirect_url("peerreview/requestpeerreviews.php?assignmentid=$this->assignmentID")."'>Request Reviews</a>";
                     }
                 }
                 $html .= "</td>\n";
@@ -244,12 +287,25 @@ class PeerReviewAssignment extends Assignment
         $this->maxSubmissionScore = floatval($POST["maxSubmissionScore"]);
         $this->maxReviewScore = floatval($POST["maxReviewScore"]);
         $this->defaultNumberOfReviews= intval($POST["defaultNumberOfReviews"]);
+        $this->allowRequestOfReviews = array_key_exists("allowRequestOfReviews", $POST);
 
         $this->showMarksForReviewsReceived = array_key_exists('showMarksForReviewsReceived', $POST);
         $this->showOtherReviewsByStudents = array_key_exists('showOtherReviewsByStudents', $POST);
         $this->showOtherReviewsByInstructors = array_key_exists('showOtherReviewsByInstructors', $POST);
         $this->showMarksForOtherReviews = array_key_exists('showMarksForOtherReviews', $POST);
         $this->showMarksForReviewedSubmissions = array_key_exists('showMarksForReviewedSubmissions', $POST);
+
+        $this->reviewScoreMaxDeviationForGood = floatval($POST["reviewScoreMaxDeviationForGood"]);
+        $this->reviewScoreMaxCountsForGood = intval($POST["reviewScoreMaxCountsForGood"]);
+
+        $this->reviewScoreMaxDeviationForPass = floatval($POST["reviewScoreMaxDeviationForPass"]);
+        $this->reviewScoreMaxCountsForPass = intval($POST["reviewScoreMaxCountsForPass"]);
+
+
+        if(!array_key_exists("calibrationPoolAssignmentIds", $POST))
+            $this->calibrationPoolAssignmentIds = array();
+        else
+            $this->calibrationPoolAssignmentIds = $POST["calibrationPoolAssignmentIds"];
 
         //Figure out what type of submission they have chosen
         $this->submissionType = $POST["submissionType"];
@@ -333,6 +389,11 @@ class PeerReviewAssignment extends Assignment
         $html .= "<tr><td>Max&nbsp;Submission&nbsp;Score</td><td><input type='text' name='maxSubmissionScore' id='maxSubmissionScore' value='$this->maxSubmissionScore'/></td></tr>\n";
         $html .= "<tr><td>Max&nbsp;Review&nbsp;Score</td><td><input type='text' name='maxReviewScore' id='maxReviewScore' value='$this->maxReviewScore'/></td></tr>\n";
         $html .= "<tr><td>Default&nbsp;Number&nbsp;of&nbsp;Reviews</td><td><input type='text' name='defaultNumberOfReviews' id='defaultNumberOfReviews' value='$this->defaultNumberOfReviews'/></td></tr>\n";
+        $tmp = "";
+        if($this->allowRequestOfReviews)
+            $tmp = "checked";
+
+        $html .= "<tr><td>Allow&nbsp;Request&nbsp;of&nbsp;Reviews</td><td><input type='checkbox' name='allowRequestOfReviews' id='allowRequestOfReviews' $tmp /></td></tr>\n";
         $html .= "<tr><td>&nbsp;</td></tr>\n";
         $html .= "<tr><td>Appeal&nbsp;Stop&nbsp;Date</td><td><input type='text' name='appealStopDate' id='appealStopDate' /></td></tr>\n";
         $html .= "<tr><td>&nbsp;</td></tr>\n";
@@ -371,6 +432,33 @@ class PeerReviewAssignment extends Assignment
         $html .= "<input type='hidden' name='reviewStopDateSeconds' id='reviewStopDateSeconds' />\n";
         $html .= "<input type='hidden' name='markPostDateSeconds' id='markPostDateSeconds' />\n";
         $html .= "<input type='hidden' name='appealStopDateSeconds' id='appealStopDateSeconds' />\n";
+
+
+        $html .= "<h3>Calibration Auto Scoring</h3>";
+        $html .= "<table align='left' width='100%'>\n";
+        $html .= "<tr><td width='320px'>Max review score deviation for good</td><td><input type='text' name='reviewScoreMaxDeviationForGood' value='$this->reviewScoreMaxDeviationForGood'/></td></tr>\n";
+        $html .= "<tr><td>Max counts of max deviation for good</td><td><input type='text' name='reviewScoreMaxCountsForGood' value='$this->reviewScoreMaxCountsForGood'/></td></tr>\n";
+        $html .= "<tr><td>&nbsp;</td></tr>";
+        $html .= "<tr><td>Max review score deviation for pass</td><td><input type='text' name='reviewScoreMaxDeviationForPass' value='$this->reviewScoreMaxDeviationForPass'/></td></tr>\n";
+        $html .= "<tr><td>Max counts of max deviation for pass</td><td><input type='text' name='reviewScoreMaxCountsForPass' value='$this->reviewScoreMaxCountsForPass'/></td></tr>\n";
+        $html .= "</table><br>\n";
+
+
+        global $dataMgr;
+        $html .= "<h3>Calibration Pool Selection</h3>";
+
+        foreach($dataMgr->getAssignmentHeaders() as $assgn)
+        {
+            if($assgn->assignmentType != "peerreview")
+                continue;
+
+            $tmp = "";
+            if(in_array($assgn->assignmentID->id, $this->calibrationPoolAssignmentIds))
+                $tmp = "checked";
+
+            $html .= "<input type='checkbox' name='calibrationPoolAssignmentIds[]' value='$assgn->assignmentID' $tmp /> $assgn->name <br>\n";
+        }
+
         return $html;
     }
 

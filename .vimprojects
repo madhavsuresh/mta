@@ -9,6 +9,7 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php *
  register.php
  runscript.php
  usermanager.php
+ mta_schema.sql
  scripts=scripts{
   downloadgrades.php
  }
@@ -62,12 +63,14 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php *
   markreview.php
   marksubmission.php
   requestpeerreviews.php
+  requestcalibrationreviews.php
   submitappeal.php
   submitmark.php
   submitreview.php
   submitspotcheck.php
   submitsubmission.php
   viewer.php
+  viewcalibration.php
   viewmarks.php
   viewquestion.php
   viewsubmission.php
@@ -89,6 +92,8 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php *
    common.php
    essay.php
    mark.php
+   reviewmark.php
+   calibrationutils.php
    peerreviewassignment.php
    review.php
    reviewquestions.php

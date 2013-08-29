@@ -171,16 +171,16 @@ class ImagePDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
 
     function getAssignmentSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
-        $submisison = new ImageSubmission($assignment->submissionSettings, $submissionID);
+        $submission = new ImageSubmission($assignment->submissionSettings, $submissionID);
         $sh = $this->prepareQuery("getImageSubmissionQuery", "SELECT imgWidth, imgHeight, imgData, text FROM peer_review_assignment_images WHERE submissionID = ?;");
         $sh->execute(array($submissionID));
         if(!$res = $sh->fetch())
             throw new Exception("Failed to get image '$submissionID'");
-        $submisison->text = $res->text;
-        $submisison->imgWidth = $res->imgWidth;
-        $submisison->imgHeight = $res->imgHeight;
-        $submisison->imgData = $res->imgData;
-        return $submisison;
+        $submission->text = $res->text;
+        $submission->imgWidth = $res->imgWidth;
+        $submission->imgHeight = $res->imgHeight;
+        $submission->imgData = $res->imgData;
+        return $submission;
     }
 
     function saveAssignmentSubmission(PeerReviewAssignment $assignment, Submission $submission, $isNewSubmission)

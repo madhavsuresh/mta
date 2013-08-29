@@ -3,6 +3,7 @@ require_once("inc/assignmentdatamanager.php");
 require_once("peerreview/inc/common.php");
 require_once("peerreview/inc/peerreviewassignment.php");
 require_once("peerreview/inc/mark.php");
+require_once("peerreview/inc/reviewmark.php");
 require_once("peerreview/inc/essay.php");
 require_once("peerreview/inc/image.php");
 require_once("peerreview/inc/code.php");
@@ -64,7 +65,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         global $PEER_REVIEW_SUBMISSION_TYPES;
         #Go and include the assignment page
-        $sh = $this->prepareQuery("loadAssignmentQuery", "SELECT name, submissionQuestion, submissionType, UNIX_TIMESTAMP(submissionStartDate) as submissionStartDate, UNIX_TIMESTAMP(submissionStopDate) as submissionStopDate, UNIX_TIMESTAMP(reviewStartDate) as reviewStartDate, UNIX_TIMESTAMP(reviewStopDate) as reviewStopDate, UNIX_TIMESTAMP(markPostDate) as markPostDate, UNIX_TIMESTAMP(appealStopDate) as appealStopDate, maxSubmissionScore, maxReviewScore, defaultNumberOfReviews, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions FROM peer_review_assignment JOIN assignments ON assignments.assignmentID = peer_review_assignment.assignmentID WHERE peer_review_assignment.assignmentID=?;");
+        $sh = $this->prepareQuery("loadAssignmentQuery", "SELECT name, submissionQuestion, submissionType, UNIX_TIMESTAMP(submissionStartDate) as submissionStartDate, UNIX_TIMESTAMP(submissionStopDate) as submissionStopDate, UNIX_TIMESTAMP(reviewStartDate) as reviewStartDate, UNIX_TIMESTAMP(reviewStopDate) as reviewStopDate, UNIX_TIMESTAMP(markPostDate) as markPostDate, UNIX_TIMESTAMP(appealStopDate) as appealStopDate, maxSubmissionScore, maxReviewScore, defaultNumberOfReviews, allowRequestOfReviews, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions, reviewScoreMaxDeviationForGood, reviewScoreMaxCountsForGood, reviewScoreMaxDeviationForPass, reviewScoreMaxCountsForPass FROM peer_review_assignment JOIN assignments ON assignments.assignmentID = peer_review_assignment.assignmentID WHERE peer_review_assignment.assignmentID=?;");
         $sh->execute(array($assignmentID));
         if(!$res = $sh->fetch())
         {
@@ -89,18 +90,31 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $assignment->maxSubmissionScore = $res->maxSubmissionScore;
         $assignment->maxReviewScore = $res->maxReviewScore;
         $assignment->defaultNumberOfReviews = $res->defaultNumberOfReviews;
+        $assignment->allowRequestOfReviews = $res->allowRequestOfReviews;
 
         $assignment->showMarksForReviewsReceived = $res->showMarksForReviewsReceived;
         $assignment->showOtherReviewsByStudents        = $res->showOtherReviewsByStudents;
         $assignment->showOtherReviewsByInstructors     = $res->showOtherReviewsByInstructors;
         $assignment->showMarksForOtherReviews    = $res->showMarksForOtherReviews;
         $assignment->showMarksForReviewedSubmissions = $res->showMarksForReviewedSubmissions;
+        
+        $assignment->reviewScoreMaxDeviationForGood = $res->reviewScoreMaxDeviationForGood;
+        $assignment->reviewScoreMaxCountsForGood = $res->reviewScoreMaxCountsForGood;
+        $assignment->reviewScoreMaxDeviationForPass = $res->reviewScoreMaxDeviationForPass;
+        $assignment->reviewScoreMaxCountsForPass = $res->reviewScoreMaxCountsForPass;
 
         //Now we need to get the settings for our type
         if(!array_key_exists($assignment->submissionType, $PEER_REVIEW_SUBMISSION_TYPES))
             throw new Exception("Unknown submission type '$assignment->submissionType'");
 
         $this->submissionHelpers[$assignment->submissionType]->loadAssignmentSubmissionSettings($assignment);
+
+        $sh = $this->prepareQuery("loadAssignmentCalibPoolsQuery", "SELECT poolAssignmentID FROM peer_review_assignment_calibration_pools WHERE assignmentID = ?");
+        $sh->execute(array($assignmentID));
+        $assignment->calibrationPoolAssignmentIds = array();
+        while($res = $sh->fetch()){
+            $assignment->calibrationPoolAssignmentIds[] = $res->poolAssignmentID;
+        }
 
         return $assignment;
     }
@@ -115,6 +129,16 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
         return new AssignmentID($res->assignmentID);
     }
+    
+    function getAssignmentIDForMatchID(MatchID $matchID)
+    {
+        $sh = $this->db->prepare("SELECT assignmentID from peer_review_assignment_submissions subs JOIN peer_review_assignment_matches matches ON subs.submissionID = matches.submissionID WHERE matchID = ?;");
+        $sh->execute(array($matchID));
+        if($res = $sh->fetch())
+            return new AssignmentID($res->assignmentID);
+        throw new Exception("Failed to find assignment for match $matchID");
+    }
+
 
     function deleteAssignment(PeerReviewAssignment $assignment)
     {
@@ -125,11 +149,11 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         if($newAssignment)
         {
-            $sh = $this->db->prepare("INSERT INTO peer_review_assignment (submissionQuestion, submissionType, submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate, markPostDate, appealStopDate, maxSubmissionScore, maxReviewScore, defaultNumberOfReviews, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions, assignmentID) VALUES (?, ?, FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+            $sh = $this->db->prepare("INSERT INTO peer_review_assignment (submissionQuestion, submissionType, submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate, markPostDate, appealStopDate, maxSubmissionScore, maxReviewScore, defaultNumberOfReviews, allowRequestOfReviews, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions, reviewScoreMaxDeviationForGood, reviewScoreMaxCountsForGood, reviewScoreMaxDeviationForPass, reviewScoreMaxCountsForPass, assignmentID) VALUES (?, ?, FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
         }
         else
         {
-            $sh = $this->db->prepare("UPDATE peer_review_assignment SET submissionQuestion=?, submissionType=?, submissionStartDate=FROM_UNIXTIME(?), submissionStopDate=FROM_UNIXTIME(?), reviewStartDate=FROM_UNIXTIME(?), reviewStopDate=FROM_UNIXTIME(?), markPostDate=FROM_UNIXTIME(?), appealStopDate=FROM_UNIXTIME(?), maxSubmissionScore=?, maxReviewScore=?, defaultNumberOfReviews=?, showMarksForReviewsReceived=?, showOtherReviewsByStudents=?, showOtherReviewsByInstructors=?, showMarksForOtherReviews=?, showMarksForReviewedSubmissions=? WHERE assignmentID=?;");
+            $sh = $this->db->prepare("UPDATE peer_review_assignment SET submissionQuestion=?, submissionType=?, submissionStartDate=FROM_UNIXTIME(?), submissionStopDate=FROM_UNIXTIME(?), reviewStartDate=FROM_UNIXTIME(?), reviewStopDate=FROM_UNIXTIME(?), markPostDate=FROM_UNIXTIME(?), appealStopDate=FROM_UNIXTIME(?), maxSubmissionScore=?, maxReviewScore=?, defaultNumberOfReviews=?, allowRequestOfReviews=?, showMarksForReviewsReceived=?, showOtherReviewsByStudents=?, showOtherReviewsByInstructors=?, showMarksForOtherReviews=?, showMarksForReviewedSubmissions=?, reviewScoreMaxDeviationForGood=?, reviewScoreMaxCountsForGood=?, reviewScoreMaxDeviationForPass=?, reviewScoreMaxCountsForPass=? WHERE assignmentID=?;");
         }
         $sh->execute(array(
             $assignment->submissionQuestion,
@@ -143,13 +167,28 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             $assignment->maxSubmissionScore,
             $assignment->maxReviewScore,
             $assignment->defaultNumberOfReviews,
+            $assignment->allowRequestOfReviews,
             $assignment->showMarksForReviewsReceived,
             $assignment->showOtherReviewsByStudents,
             $assignment->showOtherReviewsByInstructors,
             $assignment->showMarksForOtherReviews,
             $assignment->showMarksForReviewedSubmissions,
+            $assignment->reviewScoreMaxDeviationForGood,
+            $assignment->reviewScoreMaxCountsForGood,
+            $assignment->reviewScoreMaxDeviationForPass,
+            $assignment->reviewScoreMaxCountsForPass,
             $assignment->assignmentID
         ));
+
+        //Nuke the calibration pool ids, and add them back in
+        $sh = $this->db->prepare("DELETE FROM peer_review_assignment_calibration_pools WHERE assignmentID = ?;");
+        $sh->execute(array($assignment->assignmentID));
+
+        $sh = $this->db->prepare("INSERT INTO peer_review_assignment_calibration_pools (assignmentID, poolAssignmentID) VALUES (?, ?);");
+        foreach($assignment->calibrationPoolAssignmentIds as $id)
+        {
+            $sh->execute(array($assignment->assignmentID, $id));
+        }
 
         //Now we need to save the data for our type
         $this->submissionHelpers[$assignment->submissionType]->saveAssignmentSubmissionSettings($assignment, $newAssignment);
@@ -439,7 +478,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getAssignedReviews(PeerReviewAssignment $assignment, UserID $reviewerID)
     {
-        $sh = $this->db->prepare("SELECT matchID, peer_review_assignment_matches.submissionID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE assignmentID = ? && reviewerID = ? && instructorForced = 0 ORDER BY matchID;");
+        $sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_calibration_matches calib ON matches.matchID = calib.matchID  WHERE subs.assignmentID = ? && reviewerID = ? && instructorForced = 0 && calib.matchID IS NULL ORDER BY matches.matchID;");
         $sh->execute(array($assignment->assignmentID, $reviewerID));
         $assigned = array();
         while($res = $sh->fetch())
@@ -447,6 +486,30 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             $assigned[] = new MatchID($res->matchID);
         }
         return $assigned;
+    }
+    
+    function getAssignedCalibrationReviews(PeerReviewAssignment $assignment, UserID $reviewerID)
+    {
+        $sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_calibration_matches calib ON matches.matchID = calib.matchID  WHERE calib.assignmentID = ? && reviewerID = ? && instructorForced = 0 && calib.matchID IS NOT NULL ORDER BY matches.matchID;");
+        $sh->execute(array($assignment->assignmentID, $reviewerID));
+        $assigned = array();
+        while($res = $sh->fetch())
+        {
+            $assigned[] = new MatchID($res->matchID);
+        }
+        return $assigned;
+    }
+    
+    function getNewCalibrationSubmissionForUser(PeerReviewAssignment $assignment, UserID $userid)
+    {
+        $sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT submissionID FROM `peer_review_assignment_submissions` subs LEFT JOIN peer_review_assignment_calibration_pools pools ON subs.assignmentID = pools.poolAssignmentID WHERE pools.assignmentID = ? && submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY RAND() LIMIT 1;");
+
+        $sh->execute(array($assignment->assignmentID, $userid));
+
+        if($res = $sh->fetch()) {
+            return new SubmissionID($res->submissionID);
+        }
+        return NULL;
     }
 
     function deniedUser(PeerReviewAssignment $assignment, $userID)
@@ -530,13 +593,13 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getReviewMark(PeerReviewAssignment $assignment, MatchID $matchID)
     {
-        $sh = $this->prepareQuery("getReviewMarkQuery", "SELECT score, comments, automatic FROM peer_review_assignment_review_marks WHERE matchID=?;");
+        $sh = $this->prepareQuery("getReviewMarkQuery", "SELECT score, comments, automatic, reviewPoints FROM peer_review_assignment_review_marks WHERE matchID=?;");
         $sh->execute(array($matchID));
         if($res = $sh->fetch())
         {
-            return new Mark($res->score, $res->comments, $res->automatic);
+            return new ReviewMark($res->score, $res->comments, $res->automatic, $res->reviewPoints);
         }
-        return new Mark();
+        return new ReviewMark();
     }
 
     function removeReviewMark(PeerReviewAssignment $assignment, MatchID $matchID)
@@ -551,10 +614,11 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $sh->execute(array(":submissionID" => $submissionID, "score"=>$mark->score, "comments"=>$mark->comments, "automatic"=>$mark->isAutomatic));
     }
 
-    function saveReviewMark(PeerReviewAssignment $assignment, Mark $mark, MatchID $matchID)
+    function saveReviewMark(PeerReviewAssignment $assignment, ReviewMark $mark, MatchID $matchID)
     {
-        $sh = $this->prepareQuery("saveReviewMarkQuery", "INSERT INTO peer_review_assignment_review_marks (matchID, score, comments, automatic) VALUES (:matchID, :score, :comments, :automatic) ON DUPLICATE KEY UPDATE score=:score, comments=:comments, automatic=:automatic;");
-        $sh->execute(array(":matchID" => $matchID, "score"=>$mark->score, "comments"=>$mark->comments, "automatic"=>$mark->isAutomatic));
+        $sh = $this->prepareQuery("saveReviewMarkQuery", "INSERT INTO peer_review_assignment_review_marks (matchID, score, comments, automatic, reviewPoints) VALUES (:matchID, :score, :comments, :automatic, :reviewPoints) ON DUPLICATE KEY UPDATE score=:score, comments=:comments, automatic=:automatic; reviewPoints=:reviewPoints");
+        print_r($mark);
+        $sh->execute(array(":matchID" => $matchID, "score"=>$mark->score, "comments"=>$mark->comments, "automatic"=>$mark->isAutomatic, "reviewPoints"=>$mark->reviewPoints));
     }
 
     function deleteSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
@@ -714,6 +778,36 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $sh = $this->db->prepare("INSERT INTO peer_review_assignment_matches (submissionID, reviewerID, instructorForced) VALUES (?, ?, ?);");
         $sh->execute(array($submissionID, $reviewerID, $instructorForced));
         return new MatchID($this->db->lastInsertID());
+    }
+    
+    function assignCalibrationReview(PeerReviewAssignment $assignment, SubmissionID $submissionID, UserID $reviewerID, $required=false)
+    {
+        //Insert the match here
+        $matchID = $this->createMatch($assignment, $submissionID, $reviewerID, false);
+
+        $sh = $this->db->prepare("INSERT INTO peer_review_assignment_calibration_matches (matchID, assignmentID, required) VALUES (?, ?, ?);");
+        $sh->execute(array($matchID, $assignment->assignmentID, $required));
+        return $matchID;
+    }
+
+    function getInstructorMatchesForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
+    {
+        $sh = $this->db->prepare("SELECT matches.matchID as matchID FROM peer_review_assignment_matches matches JOIN users ON users.userID = matches.reviewerID WHERE userType in ('instructor', 'marker', 'shadowinstructor', 'shadowmarker') && submissionID = ?;");
+        $sh->execute(array($submissionID));
+        $ids = array();
+        while($res = $sh->fetch()){
+            $ids[] = new MatchID($res->matchID);
+        }
+        return $ids;
+    }
+    
+    function getSingleInstructorReviewForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
+    {
+        $ids = $this->getInstructorMatchesForSubmission($assignment, $submissionID);
+        if(sizeof($ids) != 1){
+            throw new Exception("Submission $submissionID does not have exactly 1 instructor review");
+        }
+        return $this->getReview($assignment, $ids[0]);
     }
 
     function removeMatch(PeerReviewAssignment $assignment, MatchID $matchID)

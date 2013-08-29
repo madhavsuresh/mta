@@ -3,9 +3,9 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Aug 21, 2013 at 07:22 PM
+-- Generation Time: Aug 29, 2013 at 01:31 AM
 -- Server version: 5.5.32-MariaDB
--- PHP Version: 5.5.2
+-- PHP Version: 5.5.3
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS `assignments` (
   `assignmentType` varchar(64) NOT NULL,
   `passwordMessage` text,
   `password` varchar(255) DEFAULT NULL,
-  `visibleToStudents` BOOLEAN NOT NULL DEFAULT TRUE,
+  `visibleToStudents` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`assignmentID`),
   KEY `courseID` (`courseID`),
   KEY `assignment_name` (`name`),
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `course` (
   `displayName` varchar(128) NOT NULL,
   `authType` varchar(128) NOT NULL,
   `registrationType` varchar(128) NOT NULL,
-  `browsable` BOOLEAN NOT NULL DEFAULT TRUE,
+  `browsable` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`courseID`),
   UNIQUE KEY `course_name_2` (`name`),
   KEY `course_name` (`name`)
@@ -133,12 +133,17 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment` (
   `maxSubmissionScore` float NOT NULL,
   `maxReviewScore` float NOT NULL,
   `defaultNumberOfReviews` int(11) NOT NULL,
+  `allowRequestOfReviews` tinyint(1) NOT NULL,
   `showMarksForReviewsReceived` tinyint(1) NOT NULL,
   `showOtherReviewsByStudents` tinyint(1) NOT NULL,
   `showOtherReviewsByInstructors` tinyint(1) NOT NULL,
   `showMarksForOtherReviews` tinyint(1) NOT NULL,
   `showMarksForReviewedSubmissions` tinyint(1) NOT NULL,
   `appealStopDate` datetime NOT NULL,
+  `reviewScoreMaxDeviationForGood` float NOT NULL,
+  `reviewScoreMaxCountsForGood` int(11) NOT NULL,
+  `reviewScoreMaxDeviationForPass` float NOT NULL,
+  `reviewScoreMaxCountsForPass` int(11) NOT NULL,
   PRIMARY KEY (`assignmentID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -190,6 +195,34 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment_article_response_settings` (
   `name` varchar(255) NOT NULL,
   `link` text NOT NULL,
   PRIMARY KEY (`assignmentID`,`articleIndex`),
+  KEY `assignmentID` (`assignmentID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `peer_review_assignment_calibration_matches`
+--
+
+CREATE TABLE IF NOT EXISTS `peer_review_assignment_calibration_matches` (
+  `matchID` int(11) NOT NULL,
+  `assignmentID` int(11) NOT NULL,
+  `required` tinyint(1) NOT NULL,
+  PRIMARY KEY (`matchID`),
+  KEY `assignmentID` (`assignmentID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `peer_review_assignment_calibration_pools`
+--
+
+CREATE TABLE IF NOT EXISTS `peer_review_assignment_calibration_pools` (
+  `assignmentID` int(11) NOT NULL,
+  `poolAssignmentID` int(11) NOT NULL,
+  PRIMARY KEY (`assignmentID`,`poolAssignmentID`),
+  KEY `poolAssignmentID` (`poolAssignmentID`),
   KEY `assignmentID` (`assignmentID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -391,6 +424,7 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment_review_marks` (
   `score` double NOT NULL,
   `comments` text,
   `automatic` tinyint(1) NOT NULL DEFAULT '0',
+  `reviewPoints` float NOT NULL,
   PRIMARY KEY (`matchID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -462,12 +496,12 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment_text_options` (
 
 CREATE TABLE IF NOT EXISTS `users` (
   `userID` int(11) NOT NULL AUTO_INCREMENT,
-  `userType` enum('student','anonymous','marker','instructor','shadowmarker','shadowinstructor') NOT NULL,
+  `userType` enum('student','anonymous','instructor','shadowinstructor') NOT NULL,
   `courseID` int(11) NOT NULL,
   `firstName` varchar(128) NOT NULL,
   `lastName` varchar(128) NOT NULL,
   `username` varchar(64) NOT NULL,
-  `studentID` char(11) NOT NULL,
+  `studentID` int(11) NOT NULL,
   PRIMARY KEY (`userID`),
   UNIQUE KEY `courseID` (`courseID`,`username`),
   KEY `lastName` (`lastName`),
@@ -553,6 +587,20 @@ ALTER TABLE `peer_review_assignment_article_response_settings`
   ADD CONSTRAINT `peer_review_assignment_article_response_settings_ibfk_1` FOREIGN KEY (`assignmentID`) REFERENCES `assignments` (`assignmentID`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `peer_review_assignment_calibration_matches`
+--
+ALTER TABLE `peer_review_assignment_calibration_matches`
+  ADD CONSTRAINT `peer_review_assignment_calibration_matches_ibfk_2` FOREIGN KEY (`assignmentID`) REFERENCES `peer_review_assignment` (`assignmentID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `peer_review_assignment_calibration_matches_ibfk_1` FOREIGN KEY (`matchID`) REFERENCES `peer_review_assignment_matches` (`matchID`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `peer_review_assignment_calibration_pools`
+--
+ALTER TABLE `peer_review_assignment_calibration_pools`
+  ADD CONSTRAINT `peer_review_assignment_calibration_pools_ibfk_2` FOREIGN KEY (`poolAssignmentID`) REFERENCES `peer_review_assignment` (`assignmentID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `peer_review_assignment_calibration_pools_ibfk_1` FOREIGN KEY (`assignmentID`) REFERENCES `peer_review_assignment` (`assignmentID`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `peer_review_assignment_code`
 --
 ALTER TABLE `peer_review_assignment_code`
@@ -562,7 +610,7 @@ ALTER TABLE `peer_review_assignment_code`
 -- Constraints for table `peer_review_assignment_code_settings`
 --
 ALTER TABLE `peer_review_assignment_code_settings`
-  ADD CONSTRAINT `peer_review_assignment_code_settings_ibfk_1` FOREIGN KEY (`assignmentID`) REFERENCES `assignments` (`assignmentID`) ON DELETE CASCADE;
+  ADD CONSTRAINT `peer_review_assignment_code_settings_ibfk_1` FOREIGN KEY (`assignmentID`) REFERENCES `peer_review_assignment` (`assignmentID`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `peer_review_assignment_denied`

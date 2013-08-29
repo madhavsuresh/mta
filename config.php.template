@@ -26,6 +26,7 @@ $MTA_DATAMANAGER="pdo";
 //What type of assignments have been installed?
 $MTA_ASSIGNMENTS = array(
     "peerreview",
+    "peerreviewleaderboard",
     "grouppicker",
 );
 

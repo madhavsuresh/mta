@@ -56,3 +56,18 @@ function compute_peer_review_score_for_assignments(UserID $student, $assignments
         return 0;
 }
 
+function count_valid_peer_review_marks_for_assignments(UserID $student, $assignments)
+{
+    $scores = 0
+    foreach($assignments as $assignment)
+    {
+        foreach($assignment->getAssignedReviews($student) as $matchID)
+        {
+            $mark = $assignment->getReviewMark($matchID);
+            if($mark->isValid)
+              $scores = $scores + 1;
+        }
+    }
+    return $scores;
+}
+

@@ -37,7 +37,7 @@ class PDOPeerReviewLeaderBoardAssignmentDataManager extends AssignmentDataManage
         $sh->execute(array($dataMgr->courseID));
         $results = $sh->fetchAll();
         foreach($results as $row) {
-          $res->points = max(0, $res->points);
+          $row->points = max(0, $row->points);
         }
         return $results;
     }

@@ -35,7 +35,11 @@ class PDOPeerReviewLeaderBoardAssignmentDataManager extends AssignmentDataManage
 
         $sh = $this->db->prepare("SELECT userID, alias, SUM(reviewPoints) as points FROM peer_review_assignment_review_marks marks JOIN peer_review_assignment_matches matches ON marks.matchID = matches.matchID JOIN users ON userID = reviewerID WHERE courseId = ? GROUP BY userID ORDER BY points DESC, userID;");
         $sh->execute(array($dataMgr->courseID));
-        return $sh->fetchAll();
+        $results = $sh->fetchAll();
+        foreach($results as $row) {
+          $res->points = max(0, $res->points);
+        }
+        return $results;
     }
 
 }

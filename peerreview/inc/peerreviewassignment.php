@@ -144,7 +144,8 @@ class PeerReviewAssignment extends Assignment
                 {
                     #Do they have calibration reviews to do?
                     $calibrationAssignments = $this->dataMgr->getAssignedCalibrationReviews($this, $user);
-                    $doneCalibrationHTML = "";
+
+                    $doneCalibrations = array();
                     if($calibrationAssignments)
                     {
                         $html .= "<table align=left width=100%>";
@@ -154,12 +155,18 @@ class PeerReviewAssignment extends Assignment
                         foreach($calibrationAssignments as $matchID)
                         {
                             $temp=$id+1;
-                            $link = "<a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$this->assignmentID&calibration=$id")."''>Calibration Review $temp</a>";
 
                             if($this->dataMgr->reviewExists($this, $matchID)) {
-                                $doneCalibrationHTML .= "<br>$link";
+                            $mark = $this->dataMgr->getReviewMark($this, $matchID);
+                                if($mark->isValid){
+                                    $doneCalibrations[$id] = "($mark->reviewPoints)"; 
+                                }else{
+                                    $doneCalibrations[$id] = ""; 
+                                }
                             } else {
-                                $html .= "<tr><td>$link</td><td>";
+                                $html .= "<tr><td>";
+                                $html .= "<a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$this->assignmentID&calibration=$id")."''>Calibration Review $temp</a>";
+                                $html .= "</td><td>";
                                 if($this->dataMgr->reviewDraftExists($this, $matchID)) {
                                     $html .= "In Progress";
                                     $pending = true;
@@ -169,13 +176,6 @@ class PeerReviewAssignment extends Assignment
                                 }
                             }
 
-                            /*
-                            $mark = $this->dataMgr->getReviewMark($this, $matchID);
-                            if($mark->isValid){
-                                $html .= "</td><td>($mark->reviewPoints)";
-                            }else{
-                                $html .= "</td><td>";
-                            } */
 
                             $html .= "</td><tr>";
                             $id = $id+1;
@@ -219,8 +219,17 @@ class PeerReviewAssignment extends Assignment
                         if($this->allowRequestOfReviews)
                             $html .= "<br><a href='".get_redirect_url("peerreview/requestpeerreviews.php?assignmentid=$this->assignmentID")."'>Request Reviews</a>";
                     }
-                    if($doneCalibrationHTML){
-                        $html .= "<br>Completed Calibration Reviews:".$doneCalibrationHTML;
+                    if(sizeof($doneCalibrations) > 0){
+                        $html .= "<br>Completed Calibration Reviews:<br>";
+                        $html .= "<table align=left width=100%>";
+                        foreach($doneCalibrations as $id => $markText)
+                        {
+                            $html .= "<tr><td>";
+                            $temp=$id+1;
+                            $html .= "<a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$this->assignmentID&calibration=$id")."''>Calibration Review $temp</a>";
+                            $html .= "</td><td>$markText</td><tr>";
+                        }
+                        $html .= "</table>";
                     }
                 }
                 $html .= "</td>\n";

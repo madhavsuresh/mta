@@ -69,7 +69,7 @@ class PeerReviewLeaderBoardAssignment extends Assignment
                         $name = "Anonymous";
                     }
                     $name .= " (".precisionFloat($res->points) . ")";
-                    if($res->userID == $userID)
+                    if($res->userID == $userID->id)
                     {
                         $name = "<b>$name</b>";
                         $userRank = $i+1;
@@ -83,7 +83,7 @@ class PeerReviewLeaderBoardAssignment extends Assignment
         $html .= "</table>";
         for($i = $maxNumber; $i < sizeof($results); $i++){
             $res = $results[$i];
-            if($res->userID == $userID)
+            if($res->userID == $userID->id)
             {
                 $userRank = $i+1;
                 break;

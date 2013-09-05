@@ -11,7 +11,7 @@ function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorRe
         $differences[] = abs($question->getScore($instructorReview->answers[$id]) - $question->getScore($review->answers[$id]) );
     }
 
-    if(sizeof(array_filter($differences, function($x) use($assignment) { return $x >= $assignment->reviewScoreMaxDeviationForGood; })) <= $assignment->reviewScoreMaxCountsForGood && max($differences) <= $assignment->reviewScoreMaxDeviationForGood)
+    if(sizeof(array_filter($differences, function($x) use($assignment) { return $x > $assignment->reviewScoreMaxDeviationForGood; })) <= $assignment->reviewScoreMaxCountsForGood && max($differences) <= $assignment->reviewScoreMaxDeviationForGood)
         $points = 1;
     else if(sizeof(array_filter($differences, function($x) use($assignment) { return $x >= $assignment->reviewScoreMaxDeviationForPass; })) <= $assignment->reviewScoreMaxCountsForPass &&
                  max($differences) <= $assignment->reviewScoreMaxDeviationForPass)
@@ -24,15 +24,16 @@ function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorRe
 
 function computeReviewPointsForAssignments(UserID $student, $assignments)
 {
-    $points = 0;
+    $points = array();
     foreach($assignments as $assignment)
     {
         foreach($assignment->getAssignedCalibrationReviews($student) as $matchID)
         {
             $mark = $assignment->getReviewMark($matchID);
             if($mark->isValid)
-                $points += $mark->getReviewPoints();
+                $points[$matchID->id] = $mark->getReviewPoints();
         }
     }
-    return max($points, 0);
+    ksort($points);
+    return array_reduce($points, function($v, $w) { return max($v+$w, 0); });
 }

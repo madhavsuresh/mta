@@ -267,7 +267,7 @@ class PDODataManager extends DataManager
         $this->getUserAliasMapQuery->execute(array($this->courseID));
 
         $users = array();
-        while($res = $this->getUserDisplayMapQuery->fetch())
+        while($res = $this->getUserAliasMapQuery->fetch())
         {
             $users[$res->userID] = $res->alias;
         }

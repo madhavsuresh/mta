@@ -71,6 +71,9 @@ try
         //Tell them how many points they recieved
         $content .= "<h1>Review Points</h1>\n";
         $content .= $assignmentWithSubmission->getReviewMark($matchID)->getReviewPoints();
+
+        if(array_key_exists("saved", $_GET))
+        $content .= "<br><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=".$assignment->assignmentID)."'>Get another calibration essay</a>";
     }
 
     render_page();

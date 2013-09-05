@@ -19,6 +19,9 @@ try
             $alias = NULL;
         $dataMgr->setUserAlias($USERID, $alias);
         $content .= "Saved!";
+
+        //What Kevin wants, Kevin gets.....
+        redirect_to_main();
     }
 
     //We need to show the registration page

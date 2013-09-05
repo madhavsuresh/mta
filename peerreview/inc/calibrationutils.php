@@ -11,9 +11,10 @@ function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorRe
         $differences[] = abs($question->getScore($instructorReview->answers[$id]) - $question->getScore($review->answers[$id]) );
     }
 
-    if(sizeof(array_filter($differences, function($x) use($assignment) { return $x > $assignment->reviewScoreMaxDeviationForGood; })) <= $assignment->reviewScoreMaxCountsForGood && max($differences) <= $assignment->reviewScoreMaxDeviationForGood)
+    if(sizeof(array_filter($differences, function($x) use($assignment) { return $x >= $assignment->reviewScoreMaxDeviationForGood; })) <= $assignment->reviewScoreMaxCountsForGood && max($differences) <= $assignment->reviewScoreMaxDeviationForGood)
         $points = 1;
-    else if(sizeof(array_filter($differences, function($x) use($assignment) { return $x > $assignment->reviewScoreMaxDeviationForPass; })) <= $assignment->reviewScoreMaxCountsForPass && max($differences) <= $assignment->reviewScoreMaxDeviationForPass)
+    else if(sizeof(array_filter($differences, function($x) use($assignment) { return $x >= $assignment->reviewScoreMaxDeviationForPass; })) <= $assignment->reviewScoreMaxCountsForPass &&
+                 max($differences) <= $assignment->reviewScoreMaxDeviationForPass)
         $points = -0.25;
     else
         $points = -1;

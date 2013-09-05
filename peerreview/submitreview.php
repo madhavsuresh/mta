@@ -157,7 +157,7 @@ try
                 $mark = generateAutoMark($assignmentWithSubmission, $instructorReview, $review);
                 $assignment->saveReviewMark($mark, $matchID);
                 //When we're done, redirect them
-                redirect_to_page("peerreview/viewcalibration.php?assignmentid=$assignment->assignmentID&calibration=".$_GET["calibration"]);
+                redirect_to_page("peerreview/viewcalibration.php?saved=1&assignmentid=$assignment->assignmentID&calibration=".$_GET["calibration"]);
             }
         }else{
             $content .= $assignmentWithSubmission->getReviewDraft($matchID)->getShortHTML();

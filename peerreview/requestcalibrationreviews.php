@@ -13,7 +13,9 @@ try
     if(!is_null($submissionID))
     {
         $assignment->assignCalibrationReview($submissionID, $USERID); 
-        redirect_to_main();
+        //redirect_to_main();
+        $newID = sizeof($assignment->getAssignedCalibrationReviews($USERID)) - 1;
+        redirect_to_page("peerreview/editreview.php?assignmentid=$assignment->assignmentID&calibration=$newID");
     }
 
     //If we don't escape, say that they've done everything

@@ -183,7 +183,17 @@
         function _getFormHTML(ReviewAnswer $answer = null)
         {
             $html  = "<div class=errorMsg><div class='errorField' id='error_qid$this->questionID'></div></div>\n";
+            for($i = 0; $i < sizeof($this->options); $i++)
+            {
+                $html .= "<input type='radio' name='qid$this->questionID' id='qid$this->questionID"."_$i' value='$i'";
+                if($answer && $answer->int == $i)
+                {
+                    $html .= " checked";
+                }
+                $html .= "><label for='qid$this->questionID"."_$i'>&nbsp;".cleanString($this->options[$i]->label)."</label></br>\n";
+            }
 
+            /*
             $html .= "<table width='100%'><tr>\n";
             for($i = 0; $i < sizeof($this->options); $i++)
             {
@@ -195,6 +205,7 @@
                 $html .= "><label for='qid$this->questionID"."_$i'>&nbsp;".cleanString($this->options[$i]->label)."</label></td>\n";
             }
             $html .= "</tr></table>\n";
+             */
             return $html;
         }
 

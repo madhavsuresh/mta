@@ -149,6 +149,7 @@ class PeerReviewAssignment extends Assignment
                         $html .= "<table align=left width=100%>";
 
                         $id = 0;
+                        $pending = false;
                         foreach($calibrationAssignments as $matchID)
                         {
                             $html .= "<tr><td>";
@@ -159,8 +160,10 @@ class PeerReviewAssignment extends Assignment
                                 $html .= "Complete";
                             } else if($this->dataMgr->reviewDraftExists($this, $matchID)) {
                                 $html .= "In Progress";
+                                $pending = true;
                             } else {
                                 $html .= "Not Complete";
+                                $pending = true;
                             }
                             
                             $mark = $this->dataMgr->getReviewMark($this, $matchID);
@@ -175,7 +178,9 @@ class PeerReviewAssignment extends Assignment
                         }
                         $html .= "</table>";
                     }
-                    $html .= "<br><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$this->assignmentID")."'>Request Calibration Review</a><br>";
+                    $html .= "<br>";
+                    if(!$pending)
+                        $html .= "<a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$this->assignmentID")."'>Request Calibration Review</a><br>";
                     #Do they have reviews to do?
                     $reviewAssignments = $this->dataMgr->getAssignedReviews($this, $user);
                     if($reviewAssignments)

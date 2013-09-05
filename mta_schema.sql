@@ -643,8 +643,8 @@ ALTER TABLE `peer_review_assignment_independent`
 -- Constraints for table `peer_review_assignment_instructor_review_touch_times`
 --
 ALTER TABLE `peer_review_assignment_instructor_review_touch_times`
-  ADD CONSTRAINT `peer_review_assignment_instructor_review_touch_times_ibfk_1` FOREIGN KEY (`submissionID`) REFERENCES `peer_review_assignment_submissions` (`submissionID`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `peer_review_assignment_instructor_review_touch_times_ibfk_2` FOREIGN KEY (`instructorID`) REFERENCES `users` (`userID`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `peer_review_assignment_instructor_review_touch_times_ibfk_1` FOREIGN KEY (`submissionID`) REFERENCES `peer_review_assignment_submissions` (`submissionID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `peer_review_assignment_instructor_review_touch_times_ibfk_2` FOREIGN KEY (`instructorID`) REFERENCES `users` (`userID`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `peer_review_assignment_matches`
@@ -676,8 +676,8 @@ ALTER TABLE `peer_review_assignment_review_answers`
 -- Constraints for table `peer_review_assignment_review_answers_drafts`
 --
 ALTER TABLE `peer_review_assignment_review_answers_drafts`
-  ADD CONSTRAINT `peer_review_assignment_review_answers_drafts_ibfk_1` FOREIGN KEY (`matchID`) REFERENCES `peer_review_assignment_matches` (`matchID`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `peer_review_assignment_review_answers_drafts_ibfk_3` FOREIGN KEY (`questionID`) REFERENCES `peer_review_assignment_questions` (`questionID`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `peer_review_assignment_review_answers_drafts_ibfk_1` FOREIGN KEY (`matchID`) REFERENCES `peer_review_assignment_matches` (`matchID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `peer_review_assignment_review_answers_drafts_ibfk_3` FOREIGN KEY (`questionID`) REFERENCES `peer_review_assignment_questions` (`questionID`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `peer_review_assignment_review_marks`

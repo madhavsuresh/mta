@@ -111,7 +111,7 @@ class PeerReviewAssignment extends Assignment
             else
             {
                 #We need to put the cell for the submission submission
-                $html  = "<table width='100%'>\n";
+                $html  = "<table width='100%' cellpadding='4'>\n";
                 $html .= "<tr><td width=30%>\n";
                 if($this->submissionStopDate < $NOW)
                 {

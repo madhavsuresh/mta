@@ -76,7 +76,7 @@
 
         function getFormHTML(ReviewAnswer $answer = NULL)
         {
-            $html  = "<h2>$this->question:</h2>\n";
+            $html  = "<h2>$this->question</h2>\n";
             $html .= $this->_getFormHTML($answer);
             return $html;
         }
@@ -190,7 +190,7 @@
                 {
                     $html .= " checked";
                 }
-                $html .= "><label for='qid$this->questionID"."_$i'>&nbsp;".cleanString($this->options[$i]->label)."</label></br>\n";
+                $html .= "><label for='qid$this->questionID"."_$i'>&nbsp;<span style='display:block;margin-left:30px;margin-top:-20px'>".cleanString($this->options[$i]->label)."</span></label><br>\n";
             }
 
             /*

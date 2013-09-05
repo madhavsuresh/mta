@@ -30,7 +30,7 @@ try
 
         $content =
     '<div class="box">
-    <form action="?" method="post"><input type="hidden" name="action" value="login">
+    <form action="?redir=1" method="post"><input type="hidden" name="action" value="login">
     <table>
         <tr><td>Username: </td><td><input type="text" name="username" value="'.$username.'"/></td></tr>
         <tr><td>Password: </td><td><input type="password" name="password" /></td></tr>

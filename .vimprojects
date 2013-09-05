@@ -77,15 +77,17 @@ mta=/home/chris/public_html/mta CD="/home/chris/public_html/mta" filter="*.php *
   viewsubmission.php
   rawviewsubmission.php
   scripts=scripts{
-   assigncommonreviews.php
    assigncalibrations.php
+   assigncommonreviews.php
    assignreviews.php
    autogradeandassignmarkers.php
    clearautoreviewmarks.php
-   computeindependentsfromscores.php
    computeindependentsfrompoints.php
+   computeindependentsfromscores.php
    copymarks.php
+   disqualifyindependentsfromscores.php
    downloadsubmissions.php
+   exportcalibrations.php
    remarkcalibration.php
   }
   inc=inc{

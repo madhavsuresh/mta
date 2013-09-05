@@ -6,7 +6,7 @@ abstract class Assignment
 {
     public $assignmentID;
     public $name;
-    public $assignmenType;
+    public $assignmentType;
     public $password = NULL;
     public $passwordMessage = NULL;
     public $visibleToStudents = true;

@@ -5,6 +5,7 @@
 *.toc
 *.backup
 inc/htmlpurifier/HTMLPurifier/DefinitionCache/Serializer/URI/
+inc/htmlpurifier/HTMLPurifier/DefinitionCache/Serializer/CSS/
 .htaccess
 .user.ini
 admin/.htaccess

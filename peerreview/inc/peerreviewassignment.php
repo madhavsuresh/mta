@@ -176,7 +176,6 @@ class PeerReviewAssignment extends Assignment
                                 }
                             }
 
-
                             $html .= "</td><tr>";
                             $id = $id+1;
                         }
@@ -206,11 +205,11 @@ class PeerReviewAssignment extends Assignment
                                 $html .= "Not Complete";
                             }
 
-                            $html .= "</td><tr>";
+                            $html .= "</td></tr>";
                             $id = $id+1;
                         }
                         $html .= "</table>";
-                        $html .= "Due: <span id='reviewStopDate$this->assignmentID'/>";
+                        $html .= "Due: <span id='reviewStopDate$this->assignmentID'> </span>";
                         $html .= set_element_to_date("reviewStopDate$this->assignmentID", $this->reviewStopDate, "html", $this->dateFormat);
                     }
                     else

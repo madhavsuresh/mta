@@ -157,15 +157,18 @@ class PeerReviewAssignment extends Assignment
                             $temp=$id+1;
 
                             if($this->dataMgr->reviewExists($this, $matchID)) {
-                            $mark = $this->dataMgr->getReviewMark($this, $matchID);
-                                if($mark->isValid){
-                                    $doneCalibrations[$id] = "($mark->reviewPoints)"; 
-                                }else{
-                                    $doneCalibrations[$id] = ""; 
-                                }
+                              $mark = $this->dataMgr->getReviewMark($this, $matchID);
+                              $doneCalibrations[$id] = new stdClass;
+                              if($mark->isValid){
+                                $doneCalibrations[$id]->text = "($mark->reviewPoints)"; 
+                                $doneCalibrations[$id]->points = $mark->reviewPoints; 
+                              }else{
+                                $doneCalibrations[$id]->text = "";
+                                $doneCalibrations[$id]->points = 0;
+                              }
                             } else {
-                                $html .= "<tr><td>";
-                                $html .= "<a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$this->assignmentID&calibration=$id")."''>Calibration Review $temp</a>";
+                              $html .= "<tr><td>";
+                              $html .= "<a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$this->assignmentID&calibration=$id")."''>Calibration Review $temp</a>";
                                 $html .= "</td><td>";
                                 if($this->dataMgr->reviewDraftExists($this, $matchID)) {
                                     $html .= "In Progress";
@@ -221,13 +224,16 @@ class PeerReviewAssignment extends Assignment
                     if(sizeof($doneCalibrations) > 0){
                         $html .= "<br>Completed Calibration Reviews:<br>";
                         $html .= "<table align=left width=100%>";
-                        foreach($doneCalibrations as $id => $markText)
+                        $pointsRunningTotal = 0;
+                        foreach($doneCalibrations as $id => $obj)
                         {
                             $html .= "<tr><td>";
                             $temp=$id+1;
                             $html .= "<a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$this->assignmentID&calibration=$id")."''>Calibration Review $temp</a>";
-                            $html .= "</td><td>$markText</td><tr>";
+                            $html .= "</td><td>".$obj->text."</td><tr>";
+                            $pointsRunningTotal = max(0, $pointsRunningTotal + $obj->points);
                         }
+                        $html .= "<tr><td></td><td>$pointsRunningTotal points total</td></tr>";
                         $html .= "</table>";
                     }
                 }

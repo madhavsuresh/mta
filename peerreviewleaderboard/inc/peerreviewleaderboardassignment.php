@@ -52,7 +52,8 @@ class PeerReviewLeaderBoardAssignment extends Assignment
         $maxNumber = 10;
         $numPerRow = 2;
         $userRank = 0;
-
+        $userPoints = 0;
+        
         $cellWidth = 100 / $numPerRow;
 
         for($i = 0; $i < $maxNumber; )
@@ -73,6 +74,7 @@ class PeerReviewLeaderBoardAssignment extends Assignment
                     {
                         $name = "<b>$name</b>";
                         $userRank = $i+1;
+                        $userPoints = $res->points;
                     }
                     $html .= $name;
                 }
@@ -86,11 +88,12 @@ class PeerReviewLeaderBoardAssignment extends Assignment
             if($res->userID == $userID->id)
             {
                 $userRank = $i+1;
+                $userPoints = $res->points;
                 break;
             }
         }
         if($userRank > 0)
-            $html .= "You are currently ranked at $userRank";
+            $html .= "<p><br>You are currently ranked at <b>$userRank</b> with <b>$userPoints</b> points.</p>";
         return $html;
     }
 

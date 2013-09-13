@@ -10,7 +10,6 @@ class CodeSubmission extends Submission
         if(!array_key_exists("codeMode", $POST))
             throw new Exception("Missing codeMode in POST");
 
-        print_r($POST);
         if($POST["codeMode"] == "paste"){
             if(!array_key_exists("code", $POST))
                 throw new Exception("Missing code in POST");

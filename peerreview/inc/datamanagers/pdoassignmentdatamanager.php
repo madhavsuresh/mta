@@ -598,7 +598,6 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $sh->execute(array($matchID));
         if($res = $sh->fetch())
         {
-            print_r($sh->fetch());
             return new ReviewMark($res->score, $res->comments, $res->automatic, $res->reviewPoints);
         }
         return new ReviewMark();

@@ -1,13 +1,13 @@
 -- phpMyAdmin SQL Dump
--- version 4.0.5
+-- version 3.4.10.1deb1
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Aug 29, 2013 at 01:31 AM
--- Server version: 5.5.32-MariaDB
--- PHP Version: 5.5.3
+-- Generation Time: Sep 13, 2013 at 11:13 AM
+-- Server version: 5.5.24
+-- PHP Version: 5.3.10-1ubuntu3.8
 
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
 
@@ -248,6 +248,7 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment_code_settings` (
   `assignmentID` int(11) NOT NULL,
   `codeLanguage` varchar(255) NOT NULL,
   `codeExtension` varchar(10) NOT NULL DEFAULT '',
+  `uploadOnly` tinyint(1) NOT NULL,
   PRIMARY KEY (`assignmentID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -377,7 +378,7 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment_questions` (
 CREATE TABLE IF NOT EXISTS `peer_review_assignment_radio_options` (
   `questionID` int(11) NOT NULL,
   `index` int(11) NOT NULL,
-  `label` varchar(255) NOT NULL,
+  `label` varchar(1024) NOT NULL,
   `score` double NOT NULL,
   PRIMARY KEY (`questionID`,`index`),
   KEY `questionID` (`questionID`)
@@ -591,15 +592,15 @@ ALTER TABLE `peer_review_assignment_article_response_settings`
 -- Constraints for table `peer_review_assignment_calibration_matches`
 --
 ALTER TABLE `peer_review_assignment_calibration_matches`
-  ADD CONSTRAINT `peer_review_assignment_calibration_matches_ibfk_2` FOREIGN KEY (`assignmentID`) REFERENCES `peer_review_assignment` (`assignmentID`) ON DELETE CASCADE,
-  ADD CONSTRAINT `peer_review_assignment_calibration_matches_ibfk_1` FOREIGN KEY (`matchID`) REFERENCES `peer_review_assignment_matches` (`matchID`) ON DELETE CASCADE;
+  ADD CONSTRAINT `peer_review_assignment_calibration_matches_ibfk_1` FOREIGN KEY (`matchID`) REFERENCES `peer_review_assignment_matches` (`matchID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `peer_review_assignment_calibration_matches_ibfk_2` FOREIGN KEY (`assignmentID`) REFERENCES `peer_review_assignment` (`assignmentID`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `peer_review_assignment_calibration_pools`
 --
 ALTER TABLE `peer_review_assignment_calibration_pools`
-  ADD CONSTRAINT `peer_review_assignment_calibration_pools_ibfk_2` FOREIGN KEY (`poolAssignmentID`) REFERENCES `peer_review_assignment` (`assignmentID`) ON DELETE CASCADE,
-  ADD CONSTRAINT `peer_review_assignment_calibration_pools_ibfk_1` FOREIGN KEY (`assignmentID`) REFERENCES `peer_review_assignment` (`assignmentID`) ON DELETE CASCADE;
+  ADD CONSTRAINT `peer_review_assignment_calibration_pools_ibfk_1` FOREIGN KEY (`assignmentID`) REFERENCES `peer_review_assignment` (`assignmentID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `peer_review_assignment_calibration_pools_ibfk_2` FOREIGN KEY (`poolAssignmentID`) REFERENCES `peer_review_assignment` (`assignmentID`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `peer_review_assignment_code`
@@ -643,8 +644,8 @@ ALTER TABLE `peer_review_assignment_independent`
 -- Constraints for table `peer_review_assignment_instructor_review_touch_times`
 --
 ALTER TABLE `peer_review_assignment_instructor_review_touch_times`
-  ADD CONSTRAINT `peer_review_assignment_instructor_review_touch_times_ibfk_1` FOREIGN KEY (`submissionID`) REFERENCES `peer_review_assignment_submissions` (`submissionID`) ON DELETE CASCADE,
-  ADD CONSTRAINT `peer_review_assignment_instructor_review_touch_times_ibfk_2` FOREIGN KEY (`instructorID`) REFERENCES `users` (`userID`) ON DELETE CASCADE;
+  ADD CONSTRAINT `peer_review_assignment_instructor_review_touch_times_ibfk_1` FOREIGN KEY (`submissionID`) REFERENCES `peer_review_assignment_submissions` (`submissionID`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `peer_review_assignment_instructor_review_touch_times_ibfk_2` FOREIGN KEY (`instructorID`) REFERENCES `users` (`userID`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `peer_review_assignment_matches`
@@ -716,3 +717,7 @@ ALTER TABLE `peer_review_assignment_text_options`
 --
 ALTER TABLE `users`
   ADD CONSTRAINT `user_ibfk_1` FOREIGN KEY (`courseID`) REFERENCES `course` (`courseID`) ON DELETE CASCADE;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

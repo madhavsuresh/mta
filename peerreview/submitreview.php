@@ -137,11 +137,11 @@ try
             $assignmentWithSubmission->deleteReviewDraft($review->matchID);
 
             if(!$isCalibration)
-                $content .= "Review saved - check to make sure that it looks right below. You may edit your review by returning to the home page\n";
+                $content .= "Review saved - check to make sure that it looks right below. You may edit your review by returning to the home page.\n";
         }
         else
         {
-            $content .= "Review draft saved. You may edit your review by returning to the home page\n";
+            $content .= "Review draft saved. You may edit your review by returning to the home page.\n";
             $content .= "<br>Note that review drafts are not marked, you must submit it.\n";
             $assignmentWithSubmission->saveReviewDraft($review);
             $assignmentWithSubmission->deleteReview($review->matchID, false);

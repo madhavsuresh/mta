@@ -82,7 +82,7 @@ try
 
         $assignment->saveSubmission($submission);
 
-        $content .= "Submission saved - check to make sure that it looks right below. You may edit your submission by returning to the home page\n";
+        $content .= "Submission saved - check to make sure that it looks right below. You may edit your submission by returning to the home page.\n";
         $content .= "<h1>Submission</h1>\n";
         $content .= $assignment->getSubmission($submission->submissionID)->getHTML();
     }

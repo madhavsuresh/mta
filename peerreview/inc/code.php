@@ -38,12 +38,22 @@ class CodeSubmission extends Submission
         $page_scripts[] = $script;
         $html = "";
         $lang = "";
-        if(strlen($this->submissionSettings->language)){
-            $lang = "lang-".$this->submissionSettings->language;
+        if($this->submissionSettings->uploadOnly) {
+          if(strlen($this->code)) {
+            $html .= "<p>Code has been uploaded.</p>";
+          }
+          else {
+            $html .= "<p>No code has been uploaded yet.</p>";
+          }
         }
-        $html .= "<pre class='prettyprint $lang linenums'>\n";
-        $html .= htmlentities($this->code, ENT_COMPAT|ENT_HTML401,'UTF-8');
-        $html .= "</pre>";
+        else {
+          if(strlen($this->submissionSettings->language)){
+            $lang = "lang-".$this->submissionSettings->language;
+          }
+          $html .= "<pre class='prettyprint $lang linenums'>\n";
+          $html .= htmlentities($this->code, ENT_COMPAT|ENT_HTML401,'UTF-8');
+          $html .= "</pre>";
+        }
         $html .= "<a href=".get_redirect_url("peerreview/rawviewsubmission.php?submission=$this->submissionID&download=1")."'>Download</a><br>";
 
         return $html;
@@ -63,12 +73,20 @@ class CodeSubmission extends Submission
     function _getFormHTML()
     {
         $html = "";
-        $html .= "Submission Mode: <select name='_codeMode' id='codeMode' onChange=\"if(document.getElementById('codeMode').selectedIndex == 0) { $(codeFileDiv).hide(); $(codeEdit).show(); } else { $(codeFileDiv).show(); $(codeEdit).hide();}\"><option value='paste' selected>Paste into browser</option><option value='upload'>Upload File</option></select><br>\n";
+        $displayUpload="";
+        if($this->submissionSettings->uploadOnly) {
+          $html .= "<input type='hidden' name='_codeMode' id='codeMode' value='upload'>";
+          $displayUpload = "show";
+        }
+        else {
+          $html .= "Submission Mode: <select name='_codeMode' id='codeMode' onChange=\"if(document.getElementById('codeMode').selectedIndex == 0) { $(codeFileDiv).hide(); $(codeEdit).show(); } else { $(codeFileDiv).show(); $(codeEdit).hide();}\"><option value='paste' selected>Paste into browser</option><option value='upload'>Upload File</option></select><br>\n";
+          $html .= "<textarea name='code' cols='60' rows='40' id='codeEdit' accept-charset='utf-8'>\n";
+          $html .= htmlentities($this->code, ENT_COMPAT|ENT_HTML401,'UTF-8');
+          $html .= "</textarea><br>\n";
+          $displayUpload = "none";
+        }
         $html .= "<input type='hidden' name='codeMode' id='hiddenCodeMode'>";
-        $html .= "<textarea name='code' cols='60' rows='40' id='codeEdit' accept-charset='utf-8'>\n";
-        $html .= htmlentities($this->code, ENT_COMPAT|ENT_HTML401,'UTF-8');
-        $html .= "</textarea><br>\n";
-        $html .= "<div id='codeFileDiv' style='display:none;'>";
+        $html .= "<div id='codeFileDiv' style='display:".$displayUpload.";'>";
         $html .= "Code File: <input type='file' name='codefile' id='codeFile'/><br><br>";
         $html .= "<div class=errorMsg><div class='errorField' id='error_file'></div></div><br>\n";
         $html .= "</div>\n";
@@ -118,7 +136,8 @@ class CodeSubmissionSettings extends SubmissionSettings
 {
     public $language = "";
     public $extension = "";
-
+    public $uploadOnly = False;
+    
     function getFormHTML()
     {
         $html  = "<table width='100%' align='left'>\n";
@@ -126,6 +145,10 @@ class CodeSubmissionSettings extends SubmissionSettings
         $html .= "<tr><td colspan='2'>Leave blank if you want automatic detection, otherwise look <a href='https://code.google.com/p/google-code-prettify/'>here</a> for supported languages</td></tr>\n";
         $html .= "<tr><td width='190px'>File extension </td><td><input type='text' name='codeExtension' value='$this->extension'/></td></tr>\n";
         $html .= "<tr><td colspan='2'>Lower case. Leave blank if you want any type of file</td></tr>\n";
+        $tmp = "";
+        if($this->uploadOnly) { $tmp = "checked"; }
+        $html .= "<tr><td width='190px''>Upload only</td><td><input type='checkbox' name='uploadOnly' $tmp/></td></tr>";
+        $html .= "<tr><td colspan='2'>Check to disable preview and cut-and-paste.</td></tr>\n";
         $html .= "</table>\n";
         return $html;
     }
@@ -139,6 +162,7 @@ class CodeSubmissionSettings extends SubmissionSettings
             throw new Exception("Failed to get the extension from POST");
         $this->language = $POST["codeLanguage"];
         $this->extension= $POST["codeExtension"];
+        $this->uploadOnly = array_key_exists('uploadOnly', $POST);
     }
 };
 
@@ -146,14 +170,14 @@ class CodePDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
 {
     function saveAssignmentSubmissionSettings(PeerReviewAssignment $assignment, $isNewAssignment)
     {
-        //Delete any old topics, and just write in the new ones
-        $sh = $this->prepareQuery("saveCodeAssignmentSubmissionSettingsQuery", "INSERT INTO peer_review_assignment_code_settings (assignmentID, codeLanguage, codeExtension) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE codeLanguage = ?, codeExtension = ?;");
-        $sh->execute(array($assignment->assignmentID, $assignment->submissionSettings->language, $assignment->submissionSettings->extension, $assignment->submissionSettings->language, $assignment->submissionSettings->extension));
+        //Delete any old settings, and just write in the new ones
+        $sh = $this->prepareQuery("saveCodeAssignmentSubmissionSettingsQuery", "INSERT INTO peer_review_assignment_code_settings (assignmentID, codeLanguage, codeExtension, uploadOnly) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE codeLanguage = ?, codeExtension = ?, uploadOnly = ?;");
+        $sh->execute(array($assignment->assignmentID, $assignment->submissionSettings->language, $assignment->submissionSettings->extension, $assignment->submissionSettings->uploadOnly, $assignment->submissionSettings->language, $assignment->submissionSettings->extension, $assignment->submissionSettings->uploadOnly));
     }
 
     function loadAssignmentSubmissionSettings(PeerReviewAssignment $assignment)
     {
-        $sh = $this->prepareQuery("loadCodeAssignmentSubmissionSettingsQuery", "SELECT codeLanguage, codeExtension FROM peer_review_assignment_code_settings WHERE assignmentID = ?;");
+        $sh = $this->prepareQuery("loadCodeAssignmentSubmissionSettingsQuery", "SELECT codeLanguage, codeExtension, uploadOnly FROM peer_review_assignment_code_settings WHERE assignmentID = ?;");
         $sh->execute(array($assignment->assignmentID));
         $res = $sh->fetch();
         $assignment->submissionSettings = new CodeSubmissionSettings();
@@ -162,6 +186,9 @@ class CodePDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
         }
         if($res->codeExtension){
             $assignment->submissionSettings->extension = $res->codeExtension;
+        }
+        if($res->uploadOnly){
+            $assignment->submissionSettings->uploadOnly = $res->uploadOnly;
         }
     }
 

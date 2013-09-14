@@ -10,15 +10,17 @@ try
 
     #Figure out what type we're saving
     $type = require_from_get("type");
-    $mark = new Mark();
-    $mark->loadFromPost($_POST);
 
     if($type == "submission")
     {
+        $mark = new Mark();
+        $mark->loadFromPost($_POST);
         $assignment->saveSubmissionMark($mark, new SubmissionID(require_from_get("submissionid")));
     }
     else if ($type == "review")
     {
+        $mark = new ReviewMark();
+        $mark->loadFromPost($_POST);
         $assignment->saveReviewMark($mark, new MatchID(require_from_get("matchid")));
     }
     else

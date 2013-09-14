@@ -49,7 +49,7 @@ class ReviewMark extends Mark
             if($this->isAutomatic) {
                 $html .= "<br/><br/>This mark was assigned automatically\n";
             } else if($this->comments){
-                $html .= "<br/><br/>$this->comments\n";
+                $html .= "<br/><br/>".nl2br($this->comments)."\n";
             }
         }else{
             $html = "(No Mark)\n";

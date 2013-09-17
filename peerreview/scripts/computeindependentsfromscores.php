@@ -20,6 +20,8 @@ class ComputeIndependentsFromScoresPeerReviewScript extends Script
         $html .= "<input type='text' name='windowsize' id='windowsize' value='4' size='10'/></td></tr>\n";
         $html .= "<tr><td>Review Score Threshold</td><td>";
         $html .= "<input type='text' name='threshold' id='threshold' value='70' size='10'/>%</td></tr>";
+        $html .= "<tr><td>Keep Already Independent</td><td>";
+        $html .= "<input type='checkbox' name='keep' value='keep' checked/></td></tr>";
         $html .= "</table>\n";
         return $html;
     }
@@ -37,7 +39,11 @@ class ComputeIndependentsFromScoresPeerReviewScript extends Script
         $assignments = $currentAssignment->getAssignmentsBefore($windowSize);
         $userNameMap = $dataMgr->getUserDisplayMap();
         $students = $dataMgr->getStudents();
-        $independents = array();
+        if(array_key_exists("keep", $_POST)){
+            $independents = $currentAssignment->getIndependentUsers();
+        }else{
+            $independents = array();
+        }
 
         $html = "<h2>Used Assignments</h2>";
         foreach($assignments as $asn){

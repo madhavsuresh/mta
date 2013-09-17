@@ -21,6 +21,8 @@ class ComputeIndependentsFromPointsPeerReviewScript extends Script
         $html .= "<input type='text' name='windowsize' id='windowsize' value='-1' size='10'/></td></tr>\n";
         $html .= "<tr><td>Review Score Threshold</td><td>";
         $html .= "<input type='text' name='threshold' id='threshold' value='3' size='10'/></td></tr>";
+        $html .= "<tr><td>Keep Already Independent</td><td>";
+        $html .= "<input type='checkbox' name='keep' value='keep' checked/></td></tr>";
         $html .= "</table>\n";
         return $html;
     }
@@ -34,12 +36,17 @@ class ComputeIndependentsFromPointsPeerReviewScript extends Script
 
         $windowSize = require_from_post("windowsize");
         $independentThreshold = require_from_post("threshold");
+        //$independentThreshold = require_from_post("threshold");
 
         $assignments = $currentAssignment->getAssignmentsBefore($windowSize);
         array_unshift($assignments, $currentAssignment);
         $userNameMap = $dataMgr->getUserDisplayMap();
         $students = $dataMgr->getStudents();
-        $independents = array();
+        if(array_key_exists("keep", $_POST)){
+            $independents = $currentAssignment->getIndependentUsers();
+        }else{
+            $independents = array();
+        }
         
         $html = "<h2>Used Assignments</h2>";
         foreach($assignments as $asn){

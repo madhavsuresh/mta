@@ -36,12 +36,17 @@ class ComputeIndependentsFromPointsPeerReviewScript extends Script
         $independentThreshold = require_from_post("threshold");
 
         $assignments = $currentAssignment->getAssignmentsBefore($windowSize);
-        $assignments[] = $currentAssignment;
+        array_unshift($assignments, $currentAssignment);
         $userNameMap = $dataMgr->getUserDisplayMap();
         $students = $dataMgr->getStudents();
         $independents = array();
+        
+        $html = "<h2>Used Assignments</h2>";
+        foreach($assignments as $asn){
+            $html .= $asn->name . "<br>";
+        }
 
-        $html = "<table width='100%'>\n";
+        $html .= "<table width='100%'>\n";
         $html .= "<tr><td><h2>Student</h2></td><td><h2>Point Sum</h2></td><td><h2>Status</h2></td></tr>\n";
         $currentRowType = 0;
         foreach($students as $student)

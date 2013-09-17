@@ -612,17 +612,17 @@ class PeerReviewAssignment extends Assignment
         //Get all the assignments
         $assignmentHeaders = $dataMgr->getAssignmentHeaders();
         $assignments = array();
+        $foundCurrent = false;
         foreach($assignmentHeaders as $header)
         {
-            if($header->assignmentType == "peerreview")
-            {
-                $assignment = $dataMgr->getAssignment($header->assignmentID, "peerreview");
-                if($assignment->reviewStopDate < $this->reviewStartDate)
-                    $assignments[] = $assignment;
+            if($foundCurrent && $header->assignmentType == "peerreview") {
+                $assignments[] = $dataMgr->getAssignment($header->assignmentID, "peerreview");
+            } else if ($header->assignmentID->id == $this->assignmentID->id) {
+                $foundCurrent = true;
             }
         }
         //Sort the assignments based on their date
-        usort($assignments, function($a, $b) { return $a->reviewStopDate < $b->reviewStopDate; } );
+        //usort($assignments, function($a, $b) { return $a->reviewStopDate < $b->reviewStopDate; } );
 
         if($maxAssignments < 0)
             return $assignments;

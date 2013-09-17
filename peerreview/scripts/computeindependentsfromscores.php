@@ -59,7 +59,7 @@ class ComputeIndependentsFromScoresPeerReviewScript extends Script
             $score = compute_peer_review_score_for_assignments($student, $assignments) * 100;
             $html .= precisionFloat($score);
             $html .= "</td><td>\n";
-            if($score >= $independentThreshold)
+            if($score >= $independentThreshold && !array_key_exists($student->id, $independents))
             {
                 $independents[] = $student;
                 $html .= "Independent";

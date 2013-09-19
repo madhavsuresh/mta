@@ -37,7 +37,7 @@ class CopyMarksPeerReviewScript extends Script
 
             foreach($reviewObjs as $reviewObj)
             {
-                if($dataMgr->isInstructor($reviewObj->reviewerID) && array_key_exists($reviewObj->matchID->id, $scoreMap))
+                if(($dataMgr->isInstructor($reviewObj->reviewerID) || $dataMgr->isMarker($reviewObj->reviewerID)) && array_key_exists($reviewObj->matchID->id, $scoreMap))
                 {
                     $assignment->saveSubmissionMark(new Mark($scoreMap[$reviewObj->matchID->id], ""), $submissionID);
                     $html .= $dataMgr->getUserDisplayName($assignment->getSubmission($submissionID)->authorID).", ".$scoreMap[$reviewObj->matchID->id]."<br>";

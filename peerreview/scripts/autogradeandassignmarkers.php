@@ -134,7 +134,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
                 {
                     $revMark = $assignment->getReviewMark($review->matchID);
                     if(!$revMark->isValid || $revMark->isAutomatic)
-                        $assignment->saveReviewMark(new Mark($assignment->maxReviewScore, null, true), $review->matchID);
+                        $assignment->saveReviewMark(new ReviewMark($assignment->maxReviewScore, null, true), $review->matchID);
                 }
             }
             else

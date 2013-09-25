@@ -12,3 +12,5 @@ admin/.htaccess
 admin/.htpasswd
 config.php
 sessions
+mtadump-*.sql
+*.pyc

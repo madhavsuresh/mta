@@ -130,7 +130,12 @@ try
                         } else {
                             if(!$showStudentReviews)
                                 continue;
-                            $html.= "<h1>Review $reviewCount</h1>\n";
+                            if($dataMgr->isMarker($review->reviewerID)) {
+                              $html.= "<h1>Review $reviewCount (TA Review)</h1>\n";
+                            }
+                            else {
+                              $html.= "<h1>Review $reviewCount</h1>\n";
+                            }
                         }
 
                         $reviewCount++;

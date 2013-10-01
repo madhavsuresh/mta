@@ -87,6 +87,9 @@ class CodeSubmission extends Submission
         $html .= "<input type='hidden' name='codeMode' id='hiddenCodeMode'>";
         $html .= "<div id='codeFileDiv' style='display:".$displayUpload.";'>";
         $html .= "Code File: <input type='file' name='codefile' id='codeFile'/><br><br>";
+        if(strlen($this->code)) {
+          $html .= "<a href=".get_redirect_url("peerreview/rawviewsubmission.php?submission=$this->submissionID&download=1")."'>Download</a><br>";
+        }
         $html .= "<div class=errorMsg><div class='errorField' id='error_file'></div></div><br>\n";
         $html .= "</div>\n";
 

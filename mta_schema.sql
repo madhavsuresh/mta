@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Sep 13, 2013 at 11:13 AM
+-- Generation Time: Oct 12, 2013 at 02:50 PM
 -- Server version: 5.5.24
 -- PHP Version: 5.3.10-1ubuntu3.8
 
@@ -144,6 +144,7 @@ CREATE TABLE IF NOT EXISTS `peer_review_assignment` (
   `reviewScoreMaxCountsForGood` int(11) NOT NULL,
   `reviewScoreMaxDeviationForPass` float NOT NULL,
   `reviewScoreMaxCountsForPass` int(11) NOT NULL,
+  `showPoolStatus` tinyint(1) NOT NULL,
   PRIMARY KEY (`assignmentID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

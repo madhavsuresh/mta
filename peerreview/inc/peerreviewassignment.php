@@ -19,7 +19,8 @@ class PeerReviewAssignment extends Assignment
     public $showOtherReviewsByInstructors = false;
     public $showMarksForOtherReviews      = false;
     public $showMarksForReviewedSubmissions  = false;
-
+    public $showPoolStatus = false;
+    
     public $maxSubmissionScore = 0;
     public $maxReviewScore = 0;
     public $defaultNumberOfReviews = 3;
@@ -139,10 +140,12 @@ class PeerReviewAssignment extends Assignment
                 #We need to put the cell for the submission submission
                 $html  = "<table width='100%' cellpadding='4'>\n";
 
-                $html .= "<tr><td>&nbsp;</td><td>\n";
-                $html .= $this->getPoolStatusHTML($user);
-                $html .= "</td></tr>\n";
-            
+                if($this->showPoolStatus) {
+                    $html .= "<tr><td>&nbsp;</td><td>\n";
+                    $html .= $this->getPoolStatusHTML($user);
+                    $html .= "</td></tr>\n";
+                }
+                
                 $html .= "<tr><td width=30%>\n";
                 if($this->submissionStopDate < $NOW)
                 {
@@ -357,13 +360,13 @@ class PeerReviewAssignment extends Assignment
         $this->showOtherReviewsByInstructors = array_key_exists('showOtherReviewsByInstructors', $POST);
         $this->showMarksForOtherReviews = array_key_exists('showMarksForOtherReviews', $POST);
         $this->showMarksForReviewedSubmissions = array_key_exists('showMarksForReviewedSubmissions', $POST);
-
+        $this->showPoolStatus = array_key_exists('showPoolStatus', $POST);
+        
         $this->reviewScoreMaxDeviationForGood = floatval($POST["reviewScoreMaxDeviationForGood"]);
         $this->reviewScoreMaxCountsForGood = intval($POST["reviewScoreMaxCountsForGood"]);
 
         $this->reviewScoreMaxDeviationForPass = floatval($POST["reviewScoreMaxDeviationForPass"]);
         $this->reviewScoreMaxCountsForPass = intval($POST["reviewScoreMaxCountsForPass"]);
-
 
         if(!array_key_exists("calibrationPoolAssignmentIds", $POST))
             $this->calibrationPoolAssignmentIds = array();
@@ -486,6 +489,11 @@ class PeerReviewAssignment extends Assignment
             $tmp = 'checked';
         $html .= "<tr><td style='text-align:right'><input type='checkbox' name='showMarksForReviewedSubmissions' $tmp /></td><td>Show the marks/comments for submissions that students reviewed</td></tr>\n";
 
+        $tmp = '';
+        if($this->showPoolStatus)
+            $tmp = 'checked';
+        $html .= "<tr><td style='text-align:right'><input type='checkbox' name='showPoolStatus' $tmp /></td><td>Show independent/supervised status</td></tr>\n";
+        
         $html .= "<tr><td>&nbsp;</td></tr>\n";
         $html .= "</table>";
 

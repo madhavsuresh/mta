@@ -67,12 +67,12 @@ class PeerReviewAssignment extends Assignment
         $assignments = $this->getAssignmentsBefore(1);
         if(sizeof($assignments) != 1){
           # Couldn't find exactly one previous assignment, give up silently
-          return "case 1";
+          return "<!-- Couldn't find exactly one previous assignment -->";
         }
         $independentUsers = $assignments[0]->getIndependentUsers();
         if(sizeof($independentUsers) == 0) {
           # Okay, nevermind
-          return "case 2";
+          return "<!-- Neither this assignment nor the previous one have independent assignments -->";
         }
       }
       $isIndependent = array_key_exists($user->id, $independentUsers);

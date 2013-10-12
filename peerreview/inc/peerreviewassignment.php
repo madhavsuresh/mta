@@ -58,6 +58,32 @@ class PeerReviewAssignment extends Assignment
         return "Peer Review";
     }
 
+    function getPoolStatusHTML(UserID $user)
+    {
+      $independentUsers = $this->getIndependentUsers();
+      if(sizeof($independentUsers) == 0) {
+        # No independent users set for this assignment; check the previous one
+        $assignments = $this->getAssignmentsBefore(1);
+        if(sizeof($assignments) != 1){
+          # Couldn't find exactly one previous assignment, give up silently
+          return "case 1";
+        }
+        $independentUsers = $assignments[0]->getIndependentUsers();
+        if(sizeof($independentUsers) == 0) {
+          # Okay, nevermind
+          return "case 2";
+        }
+      }
+      $isIndependent = array_key_exists($user->id, $independentUsers);
+      
+      if($isIndependent) {
+        return "<b style='color:green;'>Independent</b> reviewer";
+      }
+      else {
+        return "<b style='color:red;'>Supervised</b> reviewer<br>";
+      }
+    }
+    
     function _getHeaderHTML(UserID $user)
     {
         global $dataMgr, $NOW;
@@ -112,6 +138,11 @@ class PeerReviewAssignment extends Assignment
             {
                 #We need to put the cell for the submission submission
                 $html  = "<table width='100%' cellpadding='4'>\n";
+
+                $html .= "<tr><td>&nbsp;</td><td>\n";
+                $html .= $this->getPoolStatusHTML($user);
+                $html .= "</td></tr>\n";
+            
                 $html .= "<tr><td width=30%>\n";
                 if($this->submissionStopDate < $NOW)
                 {
@@ -193,6 +224,12 @@ class PeerReviewAssignment extends Assignment
                     {
                         $html .= "<table align=left width=100%>";
 
+                        # Flag independents
+                        # $html .= "<tr><td>";
+                        # $html .= $this->getPoolStatusHTML($user);
+                        # $html .= "</td></tr>";
+                          
+                        
                         $id = 0;
                         foreach($reviewAssignments as $matchID)
                         {

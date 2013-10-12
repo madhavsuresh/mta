@@ -19,4 +19,4 @@ def dump_mysql(force = False):
     if force:
         run('mysqldump --socket ~/mysql/tmp/mysql.sock.cs430 -u root -p mta > %s' % mysql_dumpfile)
     else:
-        run('if [ ! -e %s ]; then mysqldump --socket ~/mysql/tmp/mysql.sock.cs430 -u root -p mta > %s; fi' % (mysql_dumpfile, mysql_dumpfile))
+        run('if [ ! -e %s ]; then mysqldump --socket ~/mysql/tmp/mysql.sock.cs430 -u root -p mta > %s; else echo "%s exists, run fab dump_mysql:force to force a new dump"; fi' % (mysql_dumpfile, mysql_dumpfile, mysql_dumpfile))

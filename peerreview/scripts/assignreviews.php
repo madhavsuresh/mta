@@ -66,13 +66,36 @@ class AssignReviewsPeerReviewScript extends Script
             $this->scoreMap[$author] = $score;
         }
 
+        $html = "";
         $reviewerAssignment = array();
+        
+        # If the independent pool is too small, we move all of its users into the supervised pool.
+        # If the supervised pool is too small, then we move just enough independent users into the supervised pool.
+        if((count($independents) <= $this->numReviews && count($independents) > 0) ||
+           (count($supervised) <= $this->numReviews && count($supervised) > 0))
+        {
+          $numIndep = count($independents);
+          $keys = array_keys($independents);
+          mt_shuffle($keys);
 
+          foreach($keys as $idx => $author)
+          {
+            $supervised[$author] = $independents[$author];
+            unset($independents[$author]);
+
+            if((count($independents) == 0 || count($independents) > $this->numReviews) &&
+               (count($supervised) == 0 || count($supervised) > $this->numReviews)) {
+              break;
+            }
+          }
+          $html .= "<p><b style='color:red'>Warning: Topped up supervised pool with ".($numIndep-count($independents))." independent students.</b>";
+        }
+            
         $independentAssignment = $this->getReviewAssignment($independents);
         $supervisedAssignment = $this->getReviewAssignment($supervised);
 
         //Build the HTML for this
-        $html  = "<h2>Independent</h2>\n";
+        $html .= "<h2>Independent</h2>\n";
         $html .= $this->getTableForAssignment($independentAssignment, $independents);
         $html .= "<h2>Supervised</h2>\n";
         $html .= $this->getTableForAssignment($supervisedAssignment, $supervised);
@@ -81,6 +104,7 @@ class AssignReviewsPeerReviewScript extends Script
             $reviewerAssignment[$authors[$author]->id] = $reviewers;
         foreach($supervisedAssignment as $author => $reviewers)
             $reviewerAssignment[$authors[$author]->id] = $reviewers;
+
         $currentAssignment->saveReviewerAssignment($reviewerAssignment);
 
         return $html;

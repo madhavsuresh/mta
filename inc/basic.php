@@ -210,3 +210,10 @@ function median()
     return $median;
 }
 
+function isset_bool($x)
+{
+  if(isset($x))
+    return 1;
+  else
+    return 0;
+}

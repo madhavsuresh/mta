@@ -20,7 +20,7 @@ try
         $courseObj->displayName = $_POST["displayName"];
         $courseObj->authType = $_POST["authType"];
         $courseObj->registrationType = $_POST["registrationType"];
-        $courseObj->browsable = isset($_POST["browsable"]);
+        $courseObj->browsable = isset_bool($_POST["browsable"]);
 
         if(!is_null($courseObj->courseID)){
             //We're updating

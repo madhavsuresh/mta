@@ -42,7 +42,7 @@
         {
             $this->name = $POST['name'];
             $this->question = get_html_purifier()->purify($POST['question']);
-            $this->hidden = array_key_exists('hidden', $POST);
+            $this->hidden = isset_bool('hidden', $POST);
             $this->_loadFromPost($POST);
         }
 

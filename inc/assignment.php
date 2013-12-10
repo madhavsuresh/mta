@@ -37,7 +37,7 @@ abstract class Assignment
             $this->password = null;
             $this->passwordMessage = null;
         }
-        $this->visibleToStudents = isset($POST["visibleToStudents"]);
+        $this->visibleToStudents = isset_bool($POST["visibleToStudents"]);
 
         //Pass it off to the subclass
         $this->_loadFromPost($POST);

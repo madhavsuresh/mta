@@ -17,7 +17,7 @@ abstract class Submission
 
     function loadFromPost($POST)
     {
-        $this->noPublicUse = array_key_exists("nopublicuse", $POST);
+        $this->noPublicUse = isset_bool("nopublicuse", $POST);
         $this->_loadFromPost($POST);
     }
 

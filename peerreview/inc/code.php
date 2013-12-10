@@ -164,7 +164,7 @@ class CodeSubmissionSettings extends SubmissionSettings
             throw new Exception("Failed to get the extension from POST");
         $this->language = $POST["codeLanguage"];
         $this->extension= $POST["codeExtension"];
-        $this->uploadOnly = array_key_exists('uploadOnly', $POST);
+        $this->uploadOnly = isset_bool('uploadOnly', $POST);
     }
 };
 

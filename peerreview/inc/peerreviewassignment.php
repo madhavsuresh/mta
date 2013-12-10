@@ -353,14 +353,14 @@ class PeerReviewAssignment extends Assignment
         $this->maxSubmissionScore = floatval($POST["maxSubmissionScore"]);
         $this->maxReviewScore = floatval($POST["maxReviewScore"]);
         $this->defaultNumberOfReviews= intval($POST["defaultNumberOfReviews"]);
-        $this->allowRequestOfReviews = array_key_exists("allowRequestOfReviews", $POST);
+        $this->allowRequestOfReviews = isset_bool($POST["allowRequestOfReviews"]);
 
-        $this->showMarksForReviewsReceived = array_key_exists('showMarksForReviewsReceived', $POST);
-        $this->showOtherReviewsByStudents = array_key_exists('showOtherReviewsByStudents', $POST);
-        $this->showOtherReviewsByInstructors = array_key_exists('showOtherReviewsByInstructors', $POST);
-        $this->showMarksForOtherReviews = array_key_exists('showMarksForOtherReviews', $POST);
-        $this->showMarksForReviewedSubmissions = array_key_exists('showMarksForReviewedSubmissions', $POST);
-        $this->showPoolStatus = array_key_exists('showPoolStatus', $POST);
+        $this->showMarksForReviewsReceived = isset_bool('showMarksForReviewsReceived', $POST);
+        $this->showOtherReviewsByStudents = isset_bool('showOtherReviewsByStudents', $POST);
+        $this->showOtherReviewsByInstructors = isset_bool('showOtherReviewsByInstructors', $POST);
+        $this->showMarksForOtherReviews = isset_bool('showMarksForOtherReviews', $POST);
+        $this->showMarksForReviewedSubmissions = isset_bool('showMarksForReviewedSubmissions', $POST);
+        $this->showPoolStatus = isset_bool('showPoolStatus', $POST);
         
         $this->reviewScoreMaxDeviationForGood = floatval($POST["reviewScoreMaxDeviationForGood"]);
         $this->reviewScoreMaxCountsForGood = intval($POST["reviewScoreMaxCountsForGood"]);

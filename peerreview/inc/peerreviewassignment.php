@@ -355,12 +355,12 @@ class PeerReviewAssignment extends Assignment
         $this->defaultNumberOfReviews= intval($POST["defaultNumberOfReviews"]);
         $this->allowRequestOfReviews = isset_bool($POST["allowRequestOfReviews"]);
 
-        $this->showMarksForReviewsReceived = isset_bool('showMarksForReviewsReceived', $POST);
-        $this->showOtherReviewsByStudents = isset_bool('showOtherReviewsByStudents', $POST);
-        $this->showOtherReviewsByInstructors = isset_bool('showOtherReviewsByInstructors', $POST);
-        $this->showMarksForOtherReviews = isset_bool('showMarksForOtherReviews', $POST);
-        $this->showMarksForReviewedSubmissions = isset_bool('showMarksForReviewedSubmissions', $POST);
-        $this->showPoolStatus = isset_bool('showPoolStatus', $POST);
+        $this->showMarksForReviewsReceived = isset_bool($POST['showMarksForReviewsReceived']);
+        $this->showOtherReviewsByStudents = isset_bool($POST['showOtherReviewsByStudents']);
+        $this->showOtherReviewsByInstructors = isset_bool($POST['showOtherReviewsByInstructors']);
+        $this->showMarksForOtherReviews = isset_bool($POST['showMarksForOtherReviews']);
+        $this->showMarksForReviewedSubmissions = isset_bool($POST['showMarksForReviewedSubmissions']);
+        $this->showPoolStatus = isset_bool($POST['showPoolStatus']);
         
         $this->reviewScoreMaxDeviationForGood = floatval($POST["reviewScoreMaxDeviationForGood"]);
         $this->reviewScoreMaxCountsForGood = intval($POST["reviewScoreMaxCountsForGood"]);

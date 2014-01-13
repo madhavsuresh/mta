@@ -775,21 +775,32 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
     }
 
-    function createMatch(PeerReviewAssignment $assignment, SubmissionID $submissionID, UserID $reviewerID, $instructorForced=false)
+    function createMatch(PeerReviewAssignment $assignment, SubmissionID $submissionID, UserID $reviewerID, $instructorForced=False)
     {
-        $sh = $this->db->prepare("INSERT INTO peer_review_assignment_matches (submissionID, reviewerID, instructorForced) VALUES (?, ?, ?);");
-        $sh->execute(array($submissionID, $reviewerID, $instructorForced));
-        return new MatchID($this->db->lastInsertID());
+      # Hacky bool translation
+      if($instructorForced)
+        $instructorForced = 1;
+      else
+        $instructorForced = 0;
+
+      $sh = $this->db->prepare("INSERT INTO peer_review_assignment_matches (submissionID, reviewerID, instructorForced) VALUES (?, ?, ?);");
+      $sh->execute(array($submissionID, $reviewerID, $instructorForced));
+      return new MatchID($this->db->lastInsertID());
     }
     
     function assignCalibrationReview(PeerReviewAssignment $assignment, SubmissionID $submissionID, UserID $reviewerID, $required=false)
     {
-        //Insert the match here
-        $matchID = $this->createMatch($assignment, $submissionID, $reviewerID, false);
+      //Insert the match here
+      $matchID = $this->createMatch($assignment, $submissionID, $reviewerID, false);
 
-        $sh = $this->db->prepare("INSERT INTO peer_review_assignment_calibration_matches (matchID, assignmentID, required) VALUES (?, ?, ?);");
-        $sh->execute(array($matchID, $assignment->assignmentID, $required));
-        return $matchID;
+      # Hacky bool translation
+      if($required)
+        $required = 1;
+      else
+        $required = 0;
+      $sh = $this->db->prepare("INSERT INTO peer_review_assignment_calibration_matches (matchID, assignmentID, required) VALUES (?, ?, ?);");
+      $sh->execute(array($matchID, $assignment->assignmentID, $required));
+      return $matchID;
     }
 
     function getInstructorMatchesForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)

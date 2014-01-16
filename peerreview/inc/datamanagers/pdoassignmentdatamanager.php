@@ -426,7 +426,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $this->db->beginTransaction();
         //We need to create matches for everything in the list here
         $checkForMatch = $this->db->prepare("SELECT matchID FROM peer_review_assignment_matches WHERE submissionID=? && reviewerID = ?;");
-        $insertMatch = $this->db->prepare("INSERT INTO peer_review_assignment_matches (submissionID, reviewerID) VALUES (?, ?);");
+        $insertMatch = $this->db->prepare("INSERT INTO peer_review_assignment_matches (submissionID, reviewerID, instructorForced) VALUES (?, ?, 0);");
 
         //Make a dictionary for the clean query
         $cleanQueries = array();

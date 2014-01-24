@@ -219,7 +219,7 @@ class PeerReviewAssignment extends Assignment
                         $html .= "</table>";
                     }
                     $html .= "<br>";
-                    if(!$pending)
+                    if(!$pending && count($this->calibrationPoolAssignmentIds) > 0)
                         $html .= "<a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$this->assignmentID")."'>Request Calibration Review</a><br>";
                     #Do they have reviews to do?
                     $reviewAssignments = $this->dataMgr->getAssignedReviews($this, $user);

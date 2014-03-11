@@ -75,7 +75,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             {
                 foreach($reviews as $reviewObj)
                 {
-                    if(!$reviewObj->exists && $reviewObj->markerForced)
+                    if(!$reviewObj->exists && $reviewObj->instructorForced)
                     {
                         $assignment->removeMatch($reviewObj->matchID);
                     }

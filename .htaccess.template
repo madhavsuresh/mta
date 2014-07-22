@@ -1,16 +1,18 @@
-#Redirect all non SSL connections to the main page
-#Supposedly modrewrite makes this not suck, but I don't
-#have any idea on how to actually do that properly
-#SSLRequireSSL
-#ErrorDocument 403 https://www.cs.ubc.ca/mta/
+#### To use straightforward file-based auth
+AuthUserFile /home/c/cs430/public_html/mta/admin/.htpasswd
+AuthType Basic
+AuthName "MTA Admin Pages"
+Require valid-user
 
-RewriteEngine on
-RewriteBase /~chris/mta/
-#RewriteBase /~cs430/mtanew/
-#RewriteBase /~cs430/mta/
-# Make sure it's not a real directory
-RewriteCond %{REQUEST_FILENAME} !-d
-# Make sure it's not a real file
-RewriteCond %{REQUEST_FILENAME} !-f
-#If they have a folder in front, let's assume that they mean it's the course name
-RewriteRule ^([a-zA-Z0-9\-]+)/?(.*)$ $2?course=$1&prettyurls=1&%{QUERY_STRING} [L]
+#### To use LDAP authentication
+Order deny,allow
+Deny from All
+AuthName "MTA Admin Pages"
+AuthType Basic
+AuthBasicProvider ldap
+AuthzLDAPAuthoritative on
+AuthLDAPUrl ldap://ldap.cs.ubc.ca/ou=People,dc=cs,dc=ubc,dc=ca?uid
+AuthLDAPGroupAttribute memberUid
+AuthLDAPGroupAttributeIsDN off
+Require ldap-user jrwright
+Satisfy any

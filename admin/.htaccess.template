@@ -1,4 +1,18 @@
-AuthUserFile /home/chris/public_html/mta/admin/.htpasswd
+#### To use straightforward file-based auth
+AuthUserFile /home/c/cs430/public_html/mta/admin/.htpasswd
 AuthType Basic
 AuthName "MTA Admin Pages"
 Require valid-user
+
+#### To use LDAP authentication
+Order deny,allow
+Deny from All
+AuthName "MTA Admin Pages"
+AuthType Basic
+AuthBasicProvider ldap
+AuthzLDAPAuthoritative on
+AuthLDAPUrl ldap://ldap.cs.ubc.ca/ou=People,dc=cs,dc=ubc,dc=ca?uid
+AuthLDAPGroupAttribute memberUid
+AuthLDAPGroupAttributeIsDN off
+Require ldap-user jrwright
+Satisfy any

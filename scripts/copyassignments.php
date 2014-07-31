@@ -15,26 +15,39 @@ class CopyAssignmentsScript extends Script
     	global $dataMgr;
 		
     	$html = "";
-		$html .= "<select name='courseSelect' id='courseSelect'>";
-		foreach($dataMgr->getCourses() as $courseObj){
-			$html .= "<option value='$courseObj->name'>$courseObj->displayName</option>";
-		}
-		$html .= "</select><br>	";
 		
+		$html .= "<div style='margin-bottom: 20px'>";
+		
+		$html .= "Copy assignments from: ";
+		
+		$html .= "<select name='courseSelect' id='courseSelect'>";
+		
+		foreach($dataMgr->getCourses() as $courseObj){
+			$html .= "<option value='$courseObj->courseID'>$courseObj->name - $courseObj->displayName</option>";
+		}
+		$html .= "</select>";
+		
+		$html .= "</div>";
+		
+		$html .= "<div id='assignmentSelect'>";
+		
+		foreach($dataMgr->getAllAssignmentHeaders() as $assignmentObj){
+			$html .= "<div class='$assignmentObj->courseID'>";
+			$html .= "<input style='margin: 4px' type='checkbox' name='assignment-$assignmentObj->assignmentID'>$assignmentObj->name<br>";
+			$html .= "</div>";
+		}
+		
+		$html .= "</div>";
+		
+		//TODO: make javascript more accurate
 		$html .= "<script type='text/javascript'>
         $('#courseSelect').change(function(){
-            $('#' + this.value).show().siblings().hide();
+        	$('.' + this.value).siblings().hide();
+            $('.' + this.value).show();
         });
         $('#courseSelect').change();
         </script>\n";
 		
-		$html .= "<select name='sometext' size='5'>
-		  <option>text1</option>
-		  <option>text2</option>
-		  <option>text3</option>
-		  <option>text4</option>
-		  <option>text5</option>
-		</select>";
 		
         return $html;
     }
@@ -45,10 +58,19 @@ class CopyAssignmentsScript extends Script
 
 	function executeAndGetResult()
 	{
+		global $dataMgr;
 		
-			
-			
-		return;
+		$assignments = array();
+		
+		foreach($_POST as $key => $value){
+			if($value=='YES'){
+				$assignments[] = $key;
+			}
+		}
+		
+		$html = "";
+		
+		return ;
 	}
 
 } 

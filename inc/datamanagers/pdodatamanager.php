@@ -66,6 +66,7 @@ class PDODataManager extends DataManager
         //$this->getConfigPropertyQuery = $this->db->prepare("SELECT *;");
         //$this->assignmentSwapDisplayOrderQuery = $this->db->prepare("UPDATE assignments SET
 
+ 		$this->getAllAssignmentHeadersQuery = $this->db->prepare("SELECT assignmentID, name, courseID, assignmentType, displayPriority FROM assignments ORDER BY displayPriority DESC;");
 
         //Now we can set up all the assignment data managers
         parent::__construct();
@@ -448,4 +449,16 @@ class PDODataManager extends DataManager
         $sh = $this->db->prepare("INSERT INTO course (name, displayName, authType, registrationType, browsable) VALUES (?, ?, ?, ?, ?);");
         $sh->execute(array($name, $displayName, $authType, $regType, $browsable));
     }
+	
+	function getAllAssignmentHeaders()
+    {
+        $this->getAllAssignmentHeadersQuery->execute();
+        $headers = array();
+        while($res = $this->getAllAssignmentHeadersQuery->fetch())
+        {
+            $headers[] = new GlobalAssignmentHeader(new AssignmentID($res->assignmentID), $res->name, new CourseID($res->courseID) , $res->assignmentType, $res->displayPriority);
+        }
+        return $headers;
+    }
+	
 }

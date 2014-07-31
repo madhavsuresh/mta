@@ -169,3 +169,17 @@ class AssignmentHeader
     public $displayPriority;
 }
 
+class GlobalAssignmentHeader extends AssignmentHeader
+{
+    function __construct(AssignmentID $assignmentID, $name, $courseID, $type, $displayPriority)
+    {
+        $this->assignmentID = $assignmentID;
+        $this->name = $name;
+		$this->courseID = $courseID;
+        $this->assignmentType = $type;
+        $this->displayPriority = $displayPriority;
+    }
+
+	public $courseID;
+}
+

@@ -2,6 +2,8 @@
 
 class CopyAssignmentsScript extends Script
 {
+	private $dateFormat = "MMMM Do YYYY, HH:mm";
+	
 	function getName()
     {
         return "Copy Assignments";
@@ -23,26 +25,33 @@ class CopyAssignmentsScript extends Script
 		$html .= "<select name='courseSelect' id='courseSelect'>";
 		
 		foreach($dataMgr->getCourses() as $courseObj){
-			$html .= "<option value='$courseObj->courseID'>$courseObj->name - $courseObj->displayName</option>";
+			$html .= "<option value='$courseObj->courseID'>$courseObj->name - $courseObj->displayName</option>\n";
 		}
-		$html .= "</select>";
+		$html .= "</select>\n";
 		
-		$html .= "</div>";
+		$html .= "</div>\n";
 		
-		$html .= "<div id='assignmentSelect'>";
+		$html .= "<div id='assignmentSelect' style='margin-bottom: 20px'>";
 		
 		foreach($dataMgr->getAllAssignmentHeaders() as $assignmentObj){
 			$html .= "<div class='$assignmentObj->courseID'>";
 			$html .= "<input style='margin: 4px' type='checkbox' name='assignment-$assignmentObj->assignmentID'>$assignmentObj->name<br>";
-			$html .= "</div>";
+			$html .= "</div>\n";
 		}
 		
-		$html .= "</div>";
+		$html .= "</div>\n";
 		
-		//TODO: make javascript more accurate
+		$html .= "<table align='left' width='50%'>\n";
+		$html .= "<tr><td>Appeal&nbsp;Stop&nbsp;Date</td><td><input type='text' name='appealStopDate' id='appealStopDate' /></td></tr>\n";		
+        $html .= "<input type='hidden' name='appealStopDateSeconds' id='appealStopDateSeconds' />\n";
+        $html .= "</table><br>\n";
+   
+		$html .= "<script type='text/javascript'> $('#appealStopDate').datetimepicker({ defaultDate : new Date(".date($this->dateFormat).")}); </script>\n";
+		
 		$html .= "<script type='text/javascript'>
         $('#courseSelect').change(function(){
-        	$('.' + this.value).siblings().hide();
+        	$('#assignmentSelect').children().attr('checked', false);
+        	$('#assignmentSelect').children().hide();
             $('.' + this.value).show();
         });
         $('#courseSelect').change();
@@ -60,17 +69,40 @@ class CopyAssignmentsScript extends Script
 	{
 		global $dataMgr;
 		
-		$assignments = array();
+		$html = "";
+	
+		$assignmentIDs = array();
 		
+		//Get all selected assignment ID's from POST
 		foreach($_POST as $key => $value){
-			if($value=='YES'){
-				$assignments[] = $key;
+			if(substr($key,0,11)=="assignment-"){
+				$assignmentID = substr($key, 11, strlen($key));
+				$assignmentIDs[] = $assignmentID;
+				$html .= "<p>".$assignmentID."</p>";
 			}
 		}
 		
-		$html = "";
 		
-		return ;
+		if(!empty($assignmentIDs))
+		{
+			$copiedAssignments = array();
+			
+			$assignment;
+			
+			$seed_Date = require_from_post('appealStopDate');
+			
+			$html .= "The seed date is ".$seed_Date;
+			
+			//Create copied assignments 
+			foreach($assignmentIDs as $assignmentID){
+				 $copiedAssignment = $dataMgr->getAssignment(new AssignmentID($assignmentID));
+				 $copiedAssignment->assignmentID = NULL;
+				 $dataMgr->saveAssignment($copiedAssignment, $copiedAssignment->assignmentType);
+				 $html .= "<p>".gettype($copiedAssignment).$copiedAssignment->assignmentID."</p>";
+			}
+			
+		}
+		return $html;
 	}
 
 } 

@@ -50,14 +50,14 @@ class CopyAssignmentsScript extends Script
         $html .= "<input type='hidden' name='anchorDateSeconds' id='anchorDateSeconds' />";
         $html .= "</table><br>";
 		   
-		$html .= "<script type='text/javascript'> $('#anchorDate').datetimepicker({defaultDate : new Date()}); </script>";
+		$html .= "<script type='text/javascript'> $('#anchorDate').datetimepicker({minDateTime: new Date(), defaultDate: new Date()}); </script>";
 		
         $html .= set_element_to_date("anchorDate", round(microtime(time())));
 		
 		//TODO: Revise the trigger to convert anchorDate to anchorDateSeconds
 		$html .= "<script type='text/javascript'> $('form').submit(function() {
 			$('#anchorDateSeconds').val(moment($('#anchorDate').val(), 'MM/DD/YYYY HH:mm').unix());
-			})</script>\n";
+			})</script>\n";	
 		
 		$html .= "<script type='text/javascript'>
         $('#courseSelect').change(function(){
@@ -155,6 +155,8 @@ class CopyAssignmentsScript extends Script
 				 $html .= "</div>";
 			}
 			
+		} else {
+			$html .= "<p>No assignments were copied because none were selected</p>\n";
 		}
 		return $html;
 	}

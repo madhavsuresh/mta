@@ -1,15 +1,14 @@
 <?php
 
-class CopyAssignmentsScript extends Script
+class CopyCalibrationPoolsScript extends Script
 {
-	
 	function getName()
     {
-        return "Copy Assignments";
+        return "Copy Calibration Pools";
     }
     function getDescription()
     {
-        return "Copy assignments from a previous offering.";
+        return "Copy calibration pools from a previous offering.";
     }
     function getFormHTML()
     {
@@ -19,7 +18,7 @@ class CopyAssignmentsScript extends Script
 		
 		$html .= "<div style='margin-bottom: 20px'>";
 		
-		$html .= "Copy assignments from: ";
+		$html .= "Copy calibration pools  from: ";
 		
 		$html .= "<select name='courseSelect' id='courseSelect'>";
 		
@@ -30,11 +29,11 @@ class CopyAssignmentsScript extends Script
 		
 		$html .= "</div>\n";
 		
-		$html .= "<div id='assignmentSelect' style='margin-bottom: 20px; border-width: 1px; border-style: solid; border-color: black; padding:10px'>";
+		$html .= "<div id='calibPoolSelect' style='margin-bottom: 20px; border-width: 1px; border-style: solid; border-color: black; padding:10px'>";
 		
-		foreach($dataMgr->getAllAssignmentHeaders() as $assignmentObj){
-			$html .= "<div class='$assignmentObj->courseID'>";
-			$html .= "<input style='margin: 4px' type='checkbox' name='assignment-$assignmentObj->assignmentID'>$assignmentObj->name<br>";
+		foreach($dataMgr->getAllCalibrationPoolHeaders() as $calibPoolObj){
+			$html .= "<div class='$calibPoolObj->courseID'>";
+			$html .= "<input style='margin: 4px' type='checkbox' name='assignment-$calibPoolObj->assignmentID'>$calibPoolObj->name<br>";
 			$html .= "</div>\n";
 		}
 		
@@ -57,7 +56,7 @@ class CopyAssignmentsScript extends Script
 		$html .= "<script type='text/javascript'>
         $('#courseSelect').change(function(){
 			$(':checkbox').prop('checked', false);
-        	$('#assignmentSelect').children().hide();
+        	$('#calibPoolSelect').children().hide();
             $('.' + this.value).show();
         });
         $('#courseSelect').change();
@@ -110,7 +109,6 @@ class CopyAssignmentsScript extends Script
 				$deltas[$i] = $assignment->submissionStartDate - $reference_date;
 				
 				$assignments[] = $assignment;
-				
 				$i++;
 			}
 			
@@ -118,6 +116,7 @@ class CopyAssignmentsScript extends Script
 			
 			//Create copied assignments 
 			foreach($assignments as $assignment){
+				 $assID = $assignment->assignmentID;
 				 $copiedAssignment = $assignment;
 				 $copiedAssignment->assignmentID = NULL;
 				 $startDate = $copiedAssignment->submissionStartDate;
@@ -131,7 +130,19 @@ class CopyAssignmentsScript extends Script
  				 $copiedAssignment->appealStopDate = $copiedAssignment->appealStopDate - $startDate + $base;
 				 $copiedAssignments[] = $copiedAssignment;
 				 
-				 $dataMgr->saveAssignment($copiedAssignment, $copiedAssignment->assignmentType);
+				 //$dataMgr->saveAssignment($copiedAssignment, $copiedAssignment->assignmentType);
+				 $authorIDsubmissionIDMap = $dataMgr->getAssignment($assID)->getAuthorSubmissionMap();
+				 foreach($authorIDsubmissionIDMap as $submissionID){
+					 $html .= "The submission id of copiedAssignment $copiedAssignment->name is $submissionID";
+					 $submission = $dataMgr->getAssignment($assID)->getSubmission($submissionID);
+					 $copiedsubmission = $submission;
+					 
+					 $submissionType = $dataMgr->getAssignment($assID)->submissionType."Submission";
+        			 $submission = new $submissionType($dataMgr->getAssignment($assID)->submissionSettings);
+					 
+					 $copiedAssignment->saveSubmission($submission);
+				 }
+
 				 $i++;
 			}
 			
@@ -153,7 +164,7 @@ class CopyAssignmentsScript extends Script
 			}
 			
 		} else {
-			$html .= "<p>No assignments were copied because none were selected</p>\n";
+			$html .= "<p>No calibration pools were copied because none were selected</p>\n";
 		}
 		return $html;
 	}

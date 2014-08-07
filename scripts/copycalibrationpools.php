@@ -130,15 +130,16 @@ class CopyCalibrationPoolsScript extends Script
  				 $copiedAssignment->appealStopDate = $copiedAssignment->appealStopDate - $startDate + $base;
 				 $copiedAssignments[] = $copiedAssignment;
 				 
-				 //$dataMgr->saveAssignment($copiedAssignment, $copiedAssignment->assignmentType);
+				 $dataMgr->saveAssignment($copiedAssignment, $copiedAssignment->assignmentType);
+				 
 				 $authorIDsubmissionIDMap = $dataMgr->getAssignment($assID)->getAuthorSubmissionMap();
+				 
 				 foreach($authorIDsubmissionIDMap as $submissionID){
 					 $html .= "The submission id of copiedAssignment $copiedAssignment->name is $submissionID";
-					 $submission = $dataMgr->getAssignment($assID)->getSubmission($submissionID);
-					 $copiedsubmission = $submission;
 					 
-					 $submissionType = $dataMgr->getAssignment($assID)->submissionType."Submission";
-        			 $submission = new $submissionType($dataMgr->getAssignment($assID)->submissionSettings);
+					 $submission = $dataMgr->getAssignment($assID)->getSubmission($submissionID);
+					 
+					 $html .= "<p>The author of the original submission is $submission->authorID and it says \"$submission->\"</p>";
 					 
 					 $copiedAssignment->saveSubmission($submission);
 				 }

@@ -26,12 +26,14 @@ class PeerReviewAssignment extends Assignment
     public $defaultNumberOfReviews = 3;
     public $allowRequestOfReviews = false;
 
+    /*$%$
     public $reviewScoreMaxDeviationForGood = 0;
     public $reviewScoreMaxCountsForGood = 0;
     
     public $reviewScoreMaxDeviationForPass = 0;
     public $reviewScoreMaxCountsForPass = 0;
-
+	*/
+	
     public $submissionType;
     public $submissionSettings;
 
@@ -362,12 +364,14 @@ class PeerReviewAssignment extends Assignment
         $this->showMarksForReviewedSubmissions = isset_bool($POST['showMarksForReviewedSubmissions']);
         $this->showPoolStatus = isset_bool($POST['showPoolStatus']);
         
+		/*$%$
         $this->reviewScoreMaxDeviationForGood = floatval($POST["reviewScoreMaxDeviationForGood"]);
         $this->reviewScoreMaxCountsForGood = intval($POST["reviewScoreMaxCountsForGood"]);
 
         $this->reviewScoreMaxDeviationForPass = floatval($POST["reviewScoreMaxDeviationForPass"]);
         $this->reviewScoreMaxCountsForPass = intval($POST["reviewScoreMaxCountsForPass"]);
-
+		*/
+		 
         if(!array_key_exists("calibrationPoolAssignmentIds", $POST))
             $this->calibrationPoolAssignmentIds = array();
         else
@@ -504,7 +508,7 @@ class PeerReviewAssignment extends Assignment
         $html .= "<input type='hidden' name='markPostDateSeconds' id='markPostDateSeconds' />\n";
         $html .= "<input type='hidden' name='appealStopDateSeconds' id='appealStopDateSeconds' />\n";
 
-
+		/*$%$
         $html .= "<h3>Calibration Auto Scoring</h3>";
         $html .= "<table align='left' width='100%'>\n";
         $html .= "<tr><td width='320px'>Max review score deviation for good</td><td><input type='text' name='reviewScoreMaxDeviationForGood' value='$this->reviewScoreMaxDeviationForGood'/></td></tr>\n";
@@ -513,7 +517,7 @@ class PeerReviewAssignment extends Assignment
         $html .= "<tr><td>Max review score deviation for pass</td><td><input type='text' name='reviewScoreMaxDeviationForPass' value='$this->reviewScoreMaxDeviationForPass'/></td></tr>\n";
         $html .= "<tr><td>Max counts of max deviation for pass</td><td><input type='text' name='reviewScoreMaxCountsForPass' value='$this->reviewScoreMaxCountsForPass'/></td></tr>\n";
         $html .= "</table><br>\n";
-
+		*/
 
         global $dataMgr;
         $html .= "<h3>Calibration Pool Selection</h3>";

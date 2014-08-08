@@ -18,7 +18,7 @@ class CopyCalibrationPoolsScript extends Script
 		
 		$html .= "<div style='margin-bottom: 20px'>";
 		
-		$html .= "Copy calibration pools  from: ";
+		$html .= "Copy calibration pools from: ";
 		
 		$html .= "<select name='courseSelect' id='courseSelect'>";
 		
@@ -134,16 +134,35 @@ class CopyCalibrationPoolsScript extends Script
 				 
 				 $authorIDsubmissionIDMap = $dataMgr->getAssignment($assID)->getAuthorSubmissionMap();
 				 
-				 foreach($authorIDsubmissionIDMap as $submissionID){
-					 $html .= "The submission id of copiedAssignment $copiedAssignment->name is $submissionID";
+				 foreach($authorIDsubmissionIDMap as $submissionID)
+				 {
+				 	 $html .= "<p>THE COPIED ASSIGNMENT ID IS $copiedAssignment->assignmentID and its name is $copiedAssignment->name</p>";
+					
+					 $html .= "The submission is $submissionID";
 					 
 					 $submission = $dataMgr->getAssignment($assID)->getSubmission($submissionID);
-					 
-					 $html .= "<p>The author of the original submission is $submission->authorID and it says \"$submission->\"</p>";
-					 
-					 $copiedAssignment->saveSubmission($submission);
-				 }
 
+
+		             $sh = $dataMgr->getDatabase()->prepare("INSERT INTO peer_review_assignment_submissions (assignmentID, authorID, noPublicUse) VALUES(?, ?, ?);");
+		             $sh->execute(array($copiedAssignment->assignmentID, $submission->authorID, $submission->noPublicUse));
+					 
+					 /*
+					 if($result){
+					 	$html .= "<h1>Query ran successfully</h1>"; 
+					 } else {
+					 	$html .= "<h1>Query ran unsuccessfully".mysql_error()."</h1>"; 
+					 }
+					 */
+					 //saveSubmission($dataMgr->getAssignment($assID), $submission);
+				 }
+				 
+				 $html .= "<ol>\n";
+				 foreach($dataMgr->getAssignment($assID)->getReviewQuestions() as $question)
+			     {
+			         $html .= "<li>".cleanString($question->question)."</li>\n";
+			     }
+				 $html .= "</ol>";
+				 
 				 $i++;
 			}
 			
@@ -169,6 +188,8 @@ class CopyCalibrationPoolsScript extends Script
 		}
 		return $html;
 	}
+
+
 } 
 
 ?>

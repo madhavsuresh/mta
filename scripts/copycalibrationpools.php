@@ -122,6 +122,8 @@ class CopyCalibrationPoolsScript extends Script
 				 $startDate = $copiedAssignment->submissionStartDate;
 				 $base = $anchor_date + $deltas[$i];
 				 
+				 $copiedAssignment->name .= " (Copy)";
+				 
 				 $copiedAssignment->submissionStartDate = $base;
 				 $copiedAssignment->submissionStopDate = $copiedAssignment->submissionStopDate - $startDate + $base;
 				 $copiedAssignment->reviewStartDate = $copiedAssignment->reviewStartDate - $startDate + $base;
@@ -132,36 +134,34 @@ class CopyCalibrationPoolsScript extends Script
 				 
 				 $dataMgr->saveAssignment($copiedAssignment, $copiedAssignment->assignmentType);
 				 
-				 $authorIDsubmissionIDMap = $dataMgr->getAssignment($assID)->getAuthorSubmissionMap();
-				 
-				 foreach($authorIDsubmissionIDMap as $submissionID)
-				 {
-				 	 $html .= "<p>THE COPIED ASSIGNMENT ID IS $copiedAssignment->assignmentID and its name is $copiedAssignment->name</p>";
-					
-					 $html .= "The submission is $submissionID";
-					 
-					 $submission = $dataMgr->getAssignment($assID)->getSubmission($submissionID);
-
-
-		             $sh = $dataMgr->getDatabase()->prepare("INSERT INTO peer_review_assignment_submissions (assignmentID, authorID, noPublicUse) VALUES(?, ?, ?);");
-		             $sh->execute(array($copiedAssignment->assignmentID, $submission->authorID, $submission->noPublicUse));
-					 
-					 /*
-					 if($result){
-					 	$html .= "<h1>Query ran successfully</h1>"; 
-					 } else {
-					 	$html .= "<h1>Query ran unsuccessfully".mysql_error()."</h1>"; 
-					 }
-					 */
-					 //saveSubmission($dataMgr->getAssignment($assID), $submission);
-				 }
-				 
-				 $html .= "<ol>\n";
-				 foreach($dataMgr->getAssignment($assID)->getReviewQuestions() as $question)
+				 //Get all review questions from original assignment and add it to copied assignment
+				 foreach($dataMgr->getAssignment($assID)->getReviewQuestions() as $reviewQuestion)
 			     {
-			         $html .= "<li>".cleanString($question->question)."</li>\n";
+					 $reviewQuestion->questionID = NULL;
+					 $copiedAssignment->saveReviewQuestion($reviewQuestion);
 			     }
-				 $html .= "</ol>";
+				 
+				 //Get all submission ID's from original assignment
+				 $authorIDtosubmissionIDMap = $dataMgr->getAssignment($assID)->getAuthorSubmissionMap();
+				 
+				 //Get all reviews for each submission ID
+				 $submissionIDtoreviewsMap = $dataMgr->getAssignment($assID)->getReviewMap();
+				 
+				 foreach($authorIDtosubmissionIDMap as $submissionID)
+				 {
+					 //Get submission
+					 $submission = $dataMgr->getAssignment($assID)->getSubmission($submissionID);					 
+					 //Set submission ID to null so that it can be added to the copied Assignment
+					 $submission->submissionID = NULL;
+					 $copiedAssignment->saveSubmission($submission);
+					 
+					 foreach($submissionIDtoreviewsMap[$submissionID->id] as $reviewObj)
+				 	 {
+				 	 //ISSUE HERE
+					 $review = $dataMgr->getAssignment($assID)->getReview($reviewObj->matchID);		 	
+				 	 $copiedAssignment->saveReview($review);
+				 	 }
+				 }
 				 
 				 $i++;
 			}

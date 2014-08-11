@@ -116,7 +116,7 @@ class CopyCalibrationPoolsScript extends Script
 			
 			//Create copied assignments 
 			foreach($assignments as $assignment){
-				 $assID = $assignment->assignmentID;
+				 $originalAssignmentID = $assignment->assignmentID;
 				 $copiedAssignment = $assignment;
 				 $copiedAssignment->assignmentID = NULL;
 				 $startDate = $copiedAssignment->submissionStartDate;
@@ -135,31 +135,45 @@ class CopyCalibrationPoolsScript extends Script
 				 $dataMgr->saveAssignment($copiedAssignment, $copiedAssignment->assignmentType);
 				 
 				 //Get all review questions from original assignment and add it to copied assignment
-				 foreach($dataMgr->getAssignment($assID)->getReviewQuestions() as $reviewQuestion)
+				 foreach($dataMgr->getAssignment($originalAssignmentID)->getReviewQuestions() as $reviewQuestion)
 			     {
 					 $reviewQuestion->questionID = NULL;
 					 $copiedAssignment->saveReviewQuestion($reviewQuestion);
 			     }
 				 
 				 //Get all submission ID's from original assignment
-				 $authorIDtosubmissionIDMap = $dataMgr->getAssignment($assID)->getAuthorSubmissionMap();
+				 $authorIDtosubmissionIDMap = $dataMgr->getAssignment($originalAssignmentID)->getAuthorSubmissionMap();
 				 
 				 //Get all reviews for each submission ID
-				 $submissionIDtoreviewsMap = $dataMgr->getAssignment($assID)->getReviewMap();
+				 $submissionIDtoreviewsMap = $dataMgr->getAssignment($originalAssignmentID)->getReviewMap();
 				 
 				 foreach($authorIDtosubmissionIDMap as $submissionID)
 				 {
 					 //Get submission
-					 $submission = $dataMgr->getAssignment($assID)->getSubmission($submissionID);					 
+					 $submission = $dataMgr->getAssignment($originalAssignmentID)->getSubmission($submissionID);					 
 					 //Set submission ID to null so that it can be added to the copied Assignment
 					 $submission->submissionID = NULL;
 					 $copiedAssignment->saveSubmission($submission);
 					 
 					 foreach($submissionIDtoreviewsMap[$submissionID->id] as $reviewObj)
 				 	 {
-				 	 //ISSUE HERE
-					 $review = $dataMgr->getAssignment($assID)->getReview($reviewObj->matchID);		 	
-				 	 $copiedAssignment->saveReview($review);
+						 $review = $dataMgr->getAssignment($originalAssignmentID)->getReview($reviewObj->matchID);
+						 
+						 $authorIDtosubmissionIDMap2 = $copiedAssignment->getAuthorSubmissionMap();
+						 $subID = NULL;
+						 foreach($authorIDtosubmissionIDMap2 as $submissionID){
+						 	$subID = $submissionID;
+						 }
+						 
+						 $matchID = $copiedAssignment->createMatch($subID, $review->reviewerID, true);
+						 
+						 $copiedReview = new Review($copiedAssignment);
+						 $copiedReview->submissionID = $subID;
+						 $copiedReview->answers = $review->answers;
+						 $copiedReview->reviewerID = $review->reviewerID;
+						 $copiedReview->matchID = $matchID;
+
+					 	 $copiedAssignment->saveReview($copiedReview);
 				 	 }
 				 }
 				 

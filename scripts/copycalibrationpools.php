@@ -115,8 +115,11 @@ class CopyCalibrationPoolsScript extends Script
 			$i = 0;
 			
 			//Create copied assignments 
-			foreach($assignments as $assignment){
+			foreach($assignments as $assignment)
+			{
 				 $originalAssignmentID = $assignment->assignmentID;
+				 $originalAssignment = $dataMgr->getAssignment($originalAssignmentID);
+				 
 				 $copiedAssignment = $assignment;
 				 $copiedAssignment->assignmentID = NULL;
 				 $startDate = $copiedAssignment->submissionStartDate;
@@ -134,66 +137,86 @@ class CopyCalibrationPoolsScript extends Script
 				 
 				 $dataMgr->saveAssignment($copiedAssignment, $copiedAssignment->assignmentType);
 				 
+				 $questionsToCopy = array();
+				 $originalKeys = array();
+				 $numReviewQuestions = 0;
 				 //Get all review questions from original assignment and add it to copied assignment
-				 foreach($dataMgr->getAssignment($originalAssignmentID)->getReviewQuestions() as $reviewQuestion)
+				 foreach($originalAssignment->getReviewQuestions() as $reviewQuestion)
 			     {
+			     	 $originalKeys[] = $reviewQuestion->questionID->id;
+					 $numReviewQuestions++;
 					 $reviewQuestion->questionID = NULL;
-					 $copiedAssignment->saveReviewQuestion($reviewQuestion);
+					 $questionsToCopy[] = $reviewQuestion;
 			     }
+				 for($i = $numReviewQuestions - 1; $i >= 0; $i--){
+				 	 $copiedAssignment->saveReviewQuestion($questionsToCopy[$i]);
+				 }
 				 
-				 //Get all submission ID's from original assignment
-				 $authorIDtosubmissionIDMap = $dataMgr->getAssignment($originalAssignmentID)->getAuthorSubmissionMap();
+				 $copiedKeys = array();
+				 foreach($copiedAssignment->getReviewQuestions() as $question)
+				 {
+				 	$copiedKeys[] = $question->questionID->id;
+				 }
 				 
-				 //Get all reviews for each submission ID
-				 $submissionIDtoreviewsMap = $dataMgr->getAssignment($originalAssignmentID)->getReviewMap();
+				 //Map of author ID's to submission ID's
+				 $authorIDtosubmissionIDMap = $originalAssignment->getAuthorSubmissionMap();
 				 
+				 //Map of submission ID's to reviews
+				 $submissionIDtoreviewsMap = $originalAssignment->getReviewMap();
+				 
+				 //Copy original submissions to copied assingment
 				 foreach($authorIDtosubmissionIDMap as $submissionID)
 				 {
-					 //Get submission
-					 $submission = $dataMgr->getAssignment($originalAssignmentID)->getSubmission($submissionID);					 
-					 //Set submission ID to null so that it can be added to the copied Assignment
+					 //Get original submission
+					 $submission = $originalAssignment->getSubmission($submissionID);					 
+					 
+					 //Copy old submission by setting its submission ID to null and saving it 
 					 $submission->submissionID = NULL;
 					 $copiedAssignment->saveSubmission($submission);
-					 
+				 }
+				 
+				 //Now that submissions have been copied get the map of author ID's to submission ID's for copied assignment
+				 $authorIDtosubmissionIDMap2 = $copiedAssignment->getAuthorSubmissionMap();
+				 
+				 foreach($authorIDtosubmissionIDMap as $authorID => $submissionID)
+				 {
+				 	 //For each original submission create copied reviews from old reviews 				 
 					 foreach($submissionIDtoreviewsMap[$submissionID->id] as $reviewObj)
 				 	 {
-						 $review = $dataMgr->getAssignment($originalAssignmentID)->getReview($reviewObj->matchID);
+						 $review = $originalAssignment->getReview($reviewObj->matchID);
 						 
-						 $authorIDtosubmissionIDMap2 = $copiedAssignment->getAuthorSubmissionMap();
-						 $subID = NULL;
-						 foreach($authorIDtosubmissionIDMap2 as $submissionID){
-						 	$subID = $submissionID;
-						 }
+						 $copiedSubmissionID = $authorIDtosubmissionIDMap2[$authorID];
 						 
-						 $matchID = $copiedAssignment->createMatch($subID, $review->reviewerID, true);
+						 $matchID = $copiedAssignment->createMatch($copiedSubmissionID, $review->reviewerID, true);
 						 
 						 $copiedReview = new Review($copiedAssignment);
-						 $copiedReview->submissionID = $subID;
-						 $copiedReview->answers = $review->answers;
+						 $copiedReview->submissionID = $copiedSubmissionID;
 						 $copiedReview->reviewerID = $review->reviewerID;
 						 $copiedReview->matchID = $matchID;
+						 $copiedReview->answers = array();
+						 
+						 for($i = 0; $i < $numReviewQuestions; $i++)
+						 {
+						 	$answer = $review->answers[$originalKeys[$i]];
+						 	$copiedReview->answers[$copiedKeys[$i]] = $answer;
+						 }
 
 					 	 $copiedAssignment->saveReview($copiedReview);
 				 	 }
 				 }
-				 
 				 $i++;
 			}
 			
+			//The printed output
 			$html .= "<p>The following assignments have been created:</p>";
-			
 			$bg = '#eeeeee';
-			
-			foreach($copiedAssignments as $copiedAssignment){
-				
+			foreach($copiedAssignments as $copiedAssignment)
+			{	
 				 $bg = ($bg == '#eeeeee' ? '#ffffff' : '#eeeeee');
-				
-				 $html .= "<div style='background-color:$bg'>";
-				
+		
+				 $html .= "<div style='background-color:$bg'>";			
 	             $html .= "<h3>".$copiedAssignment->name."</h3>";
-				 
 				 $html .= $copiedAssignment->getHeaderHTML($USERID);
-				 
 				 $html .= "</div>";
 			}
 			

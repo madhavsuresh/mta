@@ -135,27 +135,29 @@ class CopyCalibrationPoolsScript extends Script
  				 $copiedAssignment->appealStopDate = $copiedAssignment->appealStopDate - $startDate + $base;
 				 $copiedAssignments[] = $copiedAssignment;
 				 
+				 //Create copied assignment
 				 $dataMgr->saveAssignment($copiedAssignment, $copiedAssignment->assignmentType);
 				 
 				 $questionsToCopy = array();
-				 $originalKeys = array();
+				 $originalOrderOfQuestionIDs = array();
 				 $numReviewQuestions = 0;
 				 //Get all review questions from original assignment and add it to copied assignment
 				 foreach($originalAssignment->getReviewQuestions() as $reviewQuestion)
 			     {
-			     	 $originalKeys[] = $reviewQuestion->questionID->id;
+			     	 $originalOrderOfQuestionIDs[] = $reviewQuestion->questionID->id;
 					 $numReviewQuestions++;
 					 $reviewQuestion->questionID = NULL;
 					 $questionsToCopy[] = $reviewQuestion;
 			     }
+				 //Must add questions in reverse to copy original order
 				 for($i = $numReviewQuestions - 1; $i >= 0; $i--){
 				 	 $copiedAssignment->saveReviewQuestion($questionsToCopy[$i]);
 				 }
 				 
-				 $copiedKeys = array();
+				 $copiedOrderOfQuestionIDs = array();
 				 foreach($copiedAssignment->getReviewQuestions() as $question)
 				 {
-				 	$copiedKeys[] = $question->questionID->id;
+				 	$copiedOrderOfQuestionIDs[] = $question->questionID->id;
 				 }
 				 
 				 //Map of author ID's to submission ID's
@@ -197,8 +199,8 @@ class CopyCalibrationPoolsScript extends Script
 						 
 						 for($i = 0; $i < $numReviewQuestions; $i++)
 						 {
-						 	$answer = $review->answers[$originalKeys[$i]];
-						 	$copiedReview->answers[$copiedKeys[$i]] = $answer;
+						 	$answer = $review->answers[$originalOrderOfQuestionIDs[$i]];
+						 	$copiedReview->answers[$copiedOrderOfQuestionIDs[$i]] = $answer;
 						 }
 
 					 	 $copiedAssignment->saveReview($copiedReview);

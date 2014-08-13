@@ -6,10 +6,14 @@ class Review
     public $submissionID;
     public $reviewerID;
     public $answers = array();
+	public $reviewTimeStamp = 0;
 
     function __construct(PeerReviewAssignment $assignment)
     {
+    	global $NOW;
+		
         $this->assignment = $assignment;
+		$this->$reviewTimeStamp = $NOW;
     }
 
     function getHTML($showHiddenQuestions=false)

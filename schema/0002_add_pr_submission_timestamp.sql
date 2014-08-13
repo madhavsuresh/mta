@@ -1,1 +1,0 @@
-ALTER TABLE `peer_review_assignment_submissions` ADD `submissionTimestamp` DATETIME NOT NULL AFTER `noPublicUse`;

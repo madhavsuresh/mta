@@ -5,14 +5,18 @@ abstract class Submission
     public $submissionID;
     public $authorID;
     public $noPublicUse;
+	public $submissionTimestamp = 0;
     protected $submissionSettings;
 
     function __construct(SubmissionSettings $settings, SubmissionID $submissionID = NULL, UserID $authorID = NULL, $noPublicUse = false)
     {
+    	global $NOW;
+		
         $this->submissionID = $submissionID;
         $this->submissionSettings = $settings;
         $this->authorID = $authorID;
         $this->noPublicUse = $noPublicUse;
+		$this->submissionTimestamp = $NOW;
     }
 
     function loadFromPost($POST)

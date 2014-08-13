@@ -6,13 +6,17 @@ class Mark
     public $comments = "";
     public $isValid = false;
     public $isAutomatic;
+	public $submissionMarkTimestamp = 0;
 
     function __construct($score=null, $comments=null, $automatic=false)
     {
+    	global $NOW;
+		
         $this->isValid = !is_null($score);
         $this->score = $score;
         $this->comments = $comments;
         $this->isAutomatic = $automatic;
+		$this->submissionMarkTimestamp = $NOW;
     }
 
     function getFormHTML()

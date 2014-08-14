@@ -6,17 +6,14 @@ class Mark
     public $comments = "";
     public $isValid = false;
     public $isAutomatic;
-	public $submissionMarkTimestamp = 0;
+	public $markTimestamp;
 
     function __construct($score=null, $comments=null, $automatic=false)
     {
-    	global $NOW;
-		
         $this->isValid = !is_null($score);
         $this->score = $score;
         $this->comments = $comments;
         $this->isAutomatic = $automatic;
-		$this->submissionMarkTimestamp = $NOW;
     }
 
     function getFormHTML()
@@ -28,6 +25,7 @@ class Mark
         $html .= "<textarea name='comments' cols='60' rows='10'>\n";
         $html .= "$this->comments";
         $html .= "</textarea>\n";
+		if($this->markTimestamp) $html .= "<h4>Last Updated: ".date("Y-m-d H:i:s",$this->markTimestamp)."</h4>";
 
         return $html;
     }

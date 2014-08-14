@@ -6,14 +6,11 @@ class Review
     public $submissionID;
     public $reviewerID;
     public $answers = array();
-	public $reviewTimeStamp = 0;
+	public $reviewTimeStamp;
 
     function __construct(PeerReviewAssignment $assignment)
     {
-    	global $NOW;
-		
         $this->assignment = $assignment;
-		$this->$reviewTimeStamp = $NOW;
     }
 
     function getHTML($showHiddenQuestions=false)
@@ -77,7 +74,9 @@ class Review
             }
             $html .= "\n";
         }
-
+		
+		if($this->reviewTimestamp) $html .= "<h4>Last Updated: ".date("Y-m-d H:i:s",$this->reviewTimestamp)."</h4>";
+		
         return $html;
     }
 

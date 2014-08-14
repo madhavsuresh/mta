@@ -589,22 +589,26 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getSubmissionMark(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
-        $sh = $this->prepareQuery("getSubmissionMarkQuery", "SELECT score, comments, automatic, submissionMarkTimestamp FROM peer_review_assignment_submission_marks WHERE submissionID=?;");
+        $sh = $this->prepareQuery("getSubmissionMarkQuery", "SELECT score, comments, automatic, UNIX_TIMESTAMP(submissionMarkTimestamp) as submissionMarkTimestamp FROM peer_review_assignment_submission_marks WHERE submissionID=?;");
         $sh->execute(array($submissionID));
         if($res = $sh->fetch())
         {
-            return new Mark($res->score, $res->comments, $res->automatic);
+        	$mark = new Mark($res->score, $res->comments, $res->automatic);
+			$mark->markTimestamp = $res->submissionMarkTimestamp;
+            return $mark;
         }
         return new Mark();
     }
 
     function getReviewMark(PeerReviewAssignment $assignment, MatchID $matchID)
     {
-        $sh = $this->prepareQuery("getReviewMarkQuery", "SELECT score, comments, automatic, reviewPoints FROM peer_review_assignment_review_marks WHERE matchID=?;");
+        $sh = $this->prepareQuery("getReviewMarkQuery", "SELECT score, comments, automatic, reviewPoints, UNIX_TIMESTAMP(reviewMarkTimestamp) as reviewMarkTimestamp FROM peer_review_assignment_review_marks WHERE matchID=?;");
         $sh->execute(array($matchID));
         if($res = $sh->fetch())
         {
-            return new ReviewMark($res->score, $res->comments, $res->automatic, $res->reviewPoints);
+        	$reviewMark = new ReviewMark($res->score, $res->comments, $res->automatic, $res->reviewPoints);
+        	$reviewMark->markTimestamp = $res->reviewMarkTimestamp;
+            return $reviewMark;
         }
         return new ReviewMark();
     }
@@ -625,8 +629,10 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function saveReviewMark(PeerReviewAssignment $assignment, ReviewMark $mark, MatchID $matchID)
     {
-        $sh = $this->prepareQuery("saveReviewMarkQuery", "INSERT INTO peer_review_assignment_review_marks (matchID, score, comments, automatic, reviewPoints) VALUES (:matchID, :score, :comments, :automatic, :reviewPoints) ON DUPLICATE KEY UPDATE score=:score, comments=:comments, automatic=:automatic, reviewPoints=:reviewPoints;");
-        $sh->execute(array(":matchID" => $matchID, ":score"=>$mark->score, ":comments"=>$mark->comments, ":automatic"=>(int)$mark->isAutomatic, ":reviewPoints"=>$mark->reviewPoints));
+    	global $NOW;	
+    	
+        $sh = $this->prepareQuery("saveReviewMarkQuery", "INSERT INTO peer_review_assignment_review_marks (matchID, score, comments, automatic, reviewPoints, reviewMarkTimestamp) VALUES (:matchID, :score, :comments, :automatic, :reviewPoints, FROM_UNIXTIME(:reviewMarkTimestamp)) ON DUPLICATE KEY UPDATE score=:score, comments=:comments, automatic=:automatic, reviewPoints=:reviewPoints, reviewMarkTimestamp=FROM_UNIXTIME(:reviewMarkTimestamp);");
+        $sh->execute(array(":matchID" => $matchID, ":score"=>$mark->score, ":comments"=>$mark->comments, ":automatic"=>(int)$mark->isAutomatic, ":reviewPoints"=>$mark->reviewPoints, ":reviewMarkTimestamp"=>$NOW));
     }
 
     function deleteSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
@@ -643,19 +649,19 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         {
         case "SubmissionID":
             //They want the submission with this id
-            $sh = $this->prepareQuery("getSubmissionQuery","SELECT submissionID, authorID, noPublicUse, submissionTimestamp FROM peer_review_assignment_submissions WHERE submissionID=?;");
+            $sh = $this->prepareQuery("getSubmissionQuery","SELECT submissionID, authorID, noPublicUse, UNIX_TIMESTAMP(submissionTimestamp) as submissionTimestamp FROM peer_review_assignment_submissions WHERE submissionID=?;");
             $sh->execute(array($id));
             $res = $sh->fetch();
             break;
         case "UserID":
             //They want to get the submission by the author
-            $sh = $this->prepareQuery("getSubmissionByAuthorQuery", "SELECT submissionID, authorID, noPublicUse, submissionTimestamp FROM peer_review_assignment_submissions WHERE assignmentID=? && authorID=?;");
+            $sh = $this->prepareQuery("getSubmissionByAuthorQuery", "SELECT submissionID, authorID, noPublicUse, UNIX_TIMESTAMP(submissionTimestamp) as submissionTimestamp FROM peer_review_assignment_submissions WHERE assignmentID=? && authorID=?;");
             $sh->execute(array($assignment->assignmentID, $id));
             $res = $sh->fetch();
             break;
         case "MatchID":
             //They want to get the submission for the given review
-            $sh = $this->prepareQuery("getSubmissionByMatchQuery", "SELECT peer_review_assignment_submissions.submissionID, authorID, noPublicUse, submissionTimestamp FROM peer_review_assignment_submissions JOIN peer_review_assignment_matches ON peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID WHERE matchID=?;");
+            $sh = $this->prepareQuery("getSubmissionByMatchQuery", "SELECT peer_review_assignment_submissions.submissionID, authorID, noPublicUse, UNIX_TIMESTAMP(submissionTimestamp) as submissionTimestamp FROM peer_review_assignment_submissions JOIN peer_review_assignment_matches ON peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID WHERE matchID=?;");
             $sh->execute(array($id));
             $res = $sh->fetch();
             break;
@@ -668,6 +674,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $submission = $this->submissionHelpers[$assignment->submissionType]->getAssignmentSubmission($assignment, new SubmissionID($res->submissionID));
         $submission->authorID = new UserID($res->authorID);
         $submission->noPublicUse = $res->noPublicUse;
+		$submission->submissionTimestamp = $res->submissionTimestamp;
         return $submission;
     }
 
@@ -918,7 +925,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         if(!$headerRes)
             throw new Exception("Could not find review");
 
-        $questionSH = $this->prepareQuery("getReviewByMatchQuery", "SELECT questionID, answerInt, answerText FROM peer_review_assignment_review_answers WHERE matchID=?;");
+        $questionSH = $this->prepareQuery("getReviewByMatchQuery", "SELECT questionID, answerInt, answerText, UNIX_TIMESTAMP(reviewTimestamp) as reviewTimestamp FROM peer_review_assignment_review_answers WHERE matchID=?;");
         $questionSH->execute(array($headerRes->matchID));
 
         //Make a new review
@@ -935,6 +942,8 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
                 $answer->int = $res->answerInt;
 
             $review->answers[$res->questionID] = $answer;
+			//Timestamp for all answers are kept in the one reviewobject
+			$review->reviewTimestamp = $res->reviewTimestamp;
         }
         return $review;
     }
@@ -988,9 +997,11 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function saveReview(PeerReviewAssignment $assignment, Review $review)
     {
+    	global $NOW;
+		
         $this->db->beginTransaction();
         $this->deleteReview($assignment, $review->matchID, false);
-        $sh = $this->prepareQuery("insertReviewAnswerQuery", "INSERT INTO peer_review_assignment_review_answers (matchID, questionID, answerInt, answerText) VALUES (?, ?, ?, ?);");
+        $sh = $this->prepareQuery("insertReviewAnswerQuery", "INSERT INTO peer_review_assignment_review_answers (matchID, questionID, answerInt, answerText, reviewTimestamp) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?));");
         foreach($review->answers as $questionID => $answer)
         {
             $answerText = NULL;
@@ -999,7 +1010,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
                 $answerText = $answer->text;
             if(isset($answer->int) && !is_null($answer->int))
                 $answerInt = $answer->int;
-            $sh->execute(array($review->matchID, $questionID, $answerInt, $answerText));
+            $sh->execute(array($review->matchID, $questionID, $answerInt, $answerText, $NOW));
         }
         $this->db->commit();
     }

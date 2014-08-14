@@ -5,18 +5,15 @@ abstract class Submission
     public $submissionID;
     public $authorID;
     public $noPublicUse;
-	public $submissionTimestamp = 0;
+	public $submissionTimestamp;
     protected $submissionSettings;
 
     function __construct(SubmissionSettings $settings, SubmissionID $submissionID = NULL, UserID $authorID = NULL, $noPublicUse = false)
     {
-    	global $NOW;
-		
         $this->submissionID = $submissionID;
         $this->submissionSettings = $settings;
         $this->authorID = $authorID;
         $this->noPublicUse = $noPublicUse;
-		$this->submissionTimestamp = $NOW;
     }
 
     function loadFromPost($POST)
@@ -36,7 +33,7 @@ abstract class Submission
     function getFormHTML()
     {
         $html = $this->_getFormHTML();
-
+		if($this->submissionTimestamp) $html .= "<h4>Last Updated: ".date("Y-m-d H:i:s",$this->submissionTimestamp)."</h4>";
         $tmp = '';
         if($this->noPublicUse)
             $tmp = 'checked';

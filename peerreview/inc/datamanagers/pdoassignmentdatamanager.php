@@ -65,7 +65,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         global $PEER_REVIEW_SUBMISSION_TYPES;
         #Go and include the assignment page
-        /*$%$*/$sh = $this->prepareQuery("loadAssignmentQuery", "SELECT name, submissionQuestion, submissionType, UNIX_TIMESTAMP(submissionStartDate) as submissionStartDate, UNIX_TIMESTAMP(submissionStopDate) as submissionStopDate, UNIX_TIMESTAMP(reviewStartDate) as reviewStartDate, UNIX_TIMESTAMP(reviewStopDate) as reviewStopDate, UNIX_TIMESTAMP(markPostDate) as markPostDate, UNIX_TIMESTAMP(appealStopDate) as appealStopDate, maxSubmissionScore, maxReviewScore, defaultNumberOfReviews, allowRequestOfReviews, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions, showPoolStatus FROM peer_review_assignment JOIN assignments ON assignments.assignmentID = peer_review_assignment.assignmentID WHERE peer_review_assignment.assignmentID=?;");
+        /*$%$*/$sh = $this->prepareQuery("loadAssignmentQuery", "SELECT name, submissionQuestion, submissionType, UNIX_TIMESTAMP(submissionStartDate) as submissionStartDate, UNIX_TIMESTAMP(submissionStopDate) as submissionStopDate, UNIX_TIMESTAMP(reviewStartDate) as reviewStartDate, UNIX_TIMESTAMP(reviewStopDate) as reviewStopDate, UNIX_TIMESTAMP(markPostDate) as markPostDate, UNIX_TIMESTAMP(appealStopDate) as appealStopDate, maxSubmissionScore, maxReviewScore, defaultNumberOfReviews, allowRequestOfReviews, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions, showPoolStatus, calibrationMinCount, calibrationMaxScore, calibrationThresholdMSE, calibrationThresholdScore FROM peer_review_assignment JOIN assignments ON assignments.assignmentID = peer_review_assignment.assignmentID WHERE peer_review_assignment.assignmentID=?;");
         $sh->execute(array($assignmentID));
         if(!$res = $sh->fetch())
         {
@@ -97,14 +97,17 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $assignment->showOtherReviewsByInstructors     = $res->showOtherReviewsByInstructors;
         $assignment->showMarksForOtherReviews    = $res->showMarksForOtherReviews;
         $assignment->showMarksForReviewedSubmissions = $res->showMarksForReviewedSubmissions;
-        $assignment->showPoolStatus = $res->showPoolStatus;
-        
+        $assignment->showPoolStatus = $res->showPoolStatus;    
 		/*$%$
         $assignment->reviewScoreMaxDeviationForGood = $res->reviewScoreMaxDeviationForGood;
         $assignment->reviewScoreMaxCountsForGood = $res->reviewScoreMaxCountsForGood;
         $assignment->reviewScoreMaxDeviationForPass = $res->reviewScoreMaxDeviationForPass;
         $assignment->reviewScoreMaxCountsForPass = $res->reviewScoreMaxCountsForPass;
 		*/
+		$assignment->calibrationMinCount = $res->calibrationMinCount;
+		$assignment->calibrationMaxScore = $res->calibrationMaxScore;
+		$assignment->calibrationThresholdMSE = $res->calibrationThresholdMSE;
+		$assignment->calibrationThresholdScore = $res->calibrationThresholdScore;
 		
         //Now we need to get the settings for our type
         if(!array_key_exists($assignment->submissionType, $PEER_REVIEW_SUBMISSION_TYPES))
@@ -153,11 +156,11 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         if($newAssignment)
         {
-            /*$%$*/$sh = $this->db->prepare("INSERT INTO peer_review_assignment (submissionQuestion, submissionType, submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate, markPostDate, appealStopDate, maxSubmissionScore, maxReviewScore, defaultNumberOfReviews, allowRequestOfReviews, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions, showPoolStatus, assignmentID) VALUES (?, ?, FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
+            /*$%$*/$sh = $this->db->prepare("INSERT INTO peer_review_assignment (submissionQuestion, submissionType, submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate, markPostDate, appealStopDate, maxSubmissionScore, maxReviewScore, defaultNumberOfReviews, allowRequestOfReviews, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions, showPoolStatus, calibrationMinCount, calibrationMaxScore, calibrationThresholdMSE, calibrationThresholdScore, assignmentID) VALUES (?, ?, FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);");
         }
         else
         {
-            /*$%$*/$sh = $this->db->prepare("UPDATE peer_review_assignment SET submissionQuestion=?, submissionType=?, submissionStartDate=FROM_UNIXTIME(?), submissionStopDate=FROM_UNIXTIME(?), reviewStartDate=FROM_UNIXTIME(?), reviewStopDate=FROM_UNIXTIME(?), markPostDate=FROM_UNIXTIME(?), appealStopDate=FROM_UNIXTIME(?), maxSubmissionScore=?, maxReviewScore=?, defaultNumberOfReviews=?, allowRequestOfReviews=?, showMarksForReviewsReceived=?, showOtherReviewsByStudents=?, showOtherReviewsByInstructors=?, showMarksForOtherReviews=?, showMarksForReviewedSubmissions=?, showPoolStatus=? WHERE assignmentID=?;");
+            /*$%$*/$sh = $this->db->prepare("UPDATE peer_review_assignment SET submissionQuestion=?, submissionType=?, submissionStartDate=FROM_UNIXTIME(?), submissionStopDate=FROM_UNIXTIME(?), reviewStartDate=FROM_UNIXTIME(?), reviewStopDate=FROM_UNIXTIME(?), markPostDate=FROM_UNIXTIME(?), appealStopDate=FROM_UNIXTIME(?), maxSubmissionScore=?, maxReviewScore=?, defaultNumberOfReviews=?, allowRequestOfReviews=?, showMarksForReviewsReceived=?, showOtherReviewsByStudents=?, showOtherReviewsByInstructors=?, showMarksForOtherReviews=?, showMarksForReviewedSubmissions=?, showPoolStatus=?, calibrationMinCount=?, calibrationMaxScore=?, calibrationThresholdMSE=?, calibrationThresholdScore=? WHERE assignmentID=?;");
         }
         $sh->execute(array(
             $assignment->submissionQuestion,
@@ -184,6 +187,11 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             $assignment->reviewScoreMaxDeviationForPass,
             $assignment->reviewScoreMaxCountsForPass,
 			 */
+			$assignment->calibrationMinCount,
+			$assignment->calibrationMaxScore,
+			$assignment->calibrationThresholdMSE,
+			$assignment->calibrationThresholdScore,
+			
             $assignment->assignmentID
         ));
 

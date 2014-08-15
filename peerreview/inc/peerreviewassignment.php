@@ -33,6 +33,10 @@ class PeerReviewAssignment extends Assignment
     public $reviewScoreMaxDeviationForPass = 0;
     public $reviewScoreMaxCountsForPass = 0;
 	*/
+	public $calibrationMinCount = 0;
+	public $calibrationMaxScore = 0;
+	public $calibrationThresholdMSE = 0;
+	public $calibrationcalibrationThresholdScore = 0;
 	
     public $submissionType;
     public $submissionSettings;
@@ -371,7 +375,11 @@ class PeerReviewAssignment extends Assignment
         $this->reviewScoreMaxDeviationForPass = floatval($POST["reviewScoreMaxDeviationForPass"]);
         $this->reviewScoreMaxCountsForPass = intval($POST["reviewScoreMaxCountsForPass"]);
 		*/
-		 
+		$this->calibrationMinCount = intval($POST["calibrationMinCount"]);
+		$this->maxCalibrationScore = intval($POST["maxCalibrationScore"]);
+		$this->calibrationThresholdMSE = floatval($POST["calibrationThresholdMSE"]);
+		$this->calibrationThresholdScore = floatval($POST["calibrationThresholdScore"]);
+		
         if(!array_key_exists("calibrationPoolAssignmentIds", $POST))
             $this->calibrationPoolAssignmentIds = array();
         else
@@ -518,7 +526,16 @@ class PeerReviewAssignment extends Assignment
         $html .= "<tr><td>Max counts of max deviation for pass</td><td><input type='text' name='reviewScoreMaxCountsForPass' value='$this->reviewScoreMaxCountsForPass'/></td></tr>\n";
         $html .= "</table><br>\n";
 		*/
-
+		
+		$html .= "<h3>Calibration Auto Scoring</h3>";
+        $html .= "<table align='left' width='100%'>\n";
+		$html .= "<tr><td width='320px'>Minimum number of calibration reviews for advancement</td><td><input type='text' name='calibrationMinCount' value='$this->calibrationMinCount'/></td></tr>\n";
+        $html .= "<tr><td>Maximum score for a review</td><td><input type='text' name='maxCalibrationScore' value='$this->maxCalibrationScore'/></td></tr>\n";
+        $html .= "<tr><td>&nbsp;</td></tr>";
+        $html .= "<tr><td>Threshold mean-square-deviation for advancement</td><td><input type='text' name='calibrationThresholdMSE' value='$this->calibrationThresholdMSE'/></td></tr>\n";
+        $html .= "<tr><td>Threshold score for advancement</td><td><input type='text' name='calibrationThresholdScore' value='$this->calibrationThresholdScore'/></td></tr>\n";
+        $html .= "</table><br>\n";
+		
         global $dataMgr;
         $html .= "<h3>Calibration Pool Selection</h3>";
 

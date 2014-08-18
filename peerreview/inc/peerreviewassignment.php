@@ -36,7 +36,7 @@ class PeerReviewAssignment extends Assignment
 	public $calibrationMinCount = 0;
 	public $calibrationMaxScore = 0;
 	public $calibrationThresholdMSE = 0;
-	public $calibrationcalibrationThresholdScore = 0;
+	public $calibrationThresholdScore = 0;
 	
     public $submissionType;
     public $submissionSettings;

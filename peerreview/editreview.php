@@ -184,6 +184,12 @@ try
         $content .= $review->getFormHTML();
         $content .= "<br><br><input type='submit' name='saveAction' id='saveButton' value='Submit' /><input type='submit' name='saveAction' value='Save Draft' />\n";
         $content .= "</form>\n";
+		
+		//Miguel: new calibration score briefing
+		if($isCalibration)
+		{
+			$content .= '<h4>'.$dataMgr->getWeightedAverageScore($reviewerID).'</h4>';
+		}
     }
 
     render_page();

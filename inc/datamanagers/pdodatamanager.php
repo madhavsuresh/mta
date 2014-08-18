@@ -71,6 +71,7 @@ class PDODataManager extends DataManager
 		$this->getAllCalibrationPoolsQuery = $this->db->prepare("SELECT a.assignmentID, a.name, a.courseID, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_calibration_pools pcp WHERE a.assignmentID = pcp.poolAssignmentID ORDER BY displayPriority ASC;");
         
 		$this->getCalibrationAssignmentHeadersQuery = $this->db->prepare("SELECT a.assignmentID, a.name, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_calibration_matches pr WHERE a.assignmentID = pr.assignmentID AND courseID = ? ORDER BY displayPriority DESC;");
+		$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT pram.submissionID, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_marks prarm, peer_review_assignment_calibration_matches pracm WHERE pram.reviewerID = ? AND pram.matchID = prarm.matchID AND prarm.matchID = pracm.matchID ORDER BY pram.submissionID DESC");
 		
         //Now we can set up all the assignment data managers
         parent::__construct();
@@ -486,4 +487,22 @@ class PDODataManager extends DataManager
         }
         return $headers;
     }
+	
+	function getWeightedAverageScore(UserID $reviewerID)
+	{
+		$this->getCalibrationReviewsQuery->execute(array($reviewerID));
+		
+		$total = 0;
+		$totalweights = 0;
+		$count = 0;
+		
+		while($res = $this->getCalibrationReviewsQuery->fetch())
+		{
+	    	$weight = pow(0.5, $count);
+	    	$total += $res->reviewPoints * $weight;
+			$totalweights += $weight;
+	    	$count++;
+		}
+		return $total / $totalweights;
+	}
 }

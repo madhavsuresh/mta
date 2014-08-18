@@ -514,7 +514,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
         return $assigned;
     }
-    
+	
     function getNewCalibrationSubmissionForUser(PeerReviewAssignment $assignment, UserID $userid)
     {
         $sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT submissionID FROM `peer_review_assignment_submissions` subs LEFT JOIN peer_review_assignment_calibration_pools pools ON subs.assignmentID = pools.poolAssignmentID WHERE pools.assignmentID = ? && submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY RAND() LIMIT 1;");
@@ -1358,6 +1358,18 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
                 $map[$res->authorID] = $res->c;
         }
         return $map;
+    }
+
+	function getAssignedCalibrationReviewsInSubmissionOrder(PeerReviewAssignment $assignment, UserID $reviewerID)
+    {
+        $sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_calibration_matches calib ON matches.matchID = calib.matchID  WHERE calib.assignmentID = ? && reviewerID = ? && instructorForced = 0 && calib.matchID IS NOT NULL ORDER BY matches.submissionID;");
+        $sh->execute(array($assignment->assignmentID, $reviewerID));
+        $assigned = array();
+        while($res = $sh->fetch())
+        {
+            $assigned[$res->submissionID] = new MatchID($res->matchID);
+        }
+        return $assigned;
     }
 
     //Because PHP doesn't do multiple inheritance, we have to define this method all over the place

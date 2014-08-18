@@ -50,27 +50,27 @@ function computeReviewPointsForAssignments(UserID $student, $assignments)
     $points = array();
     foreach($assignments as $assignment)
     {
-        foreach($assignment->getAssignedCalibrationReviews($student) as $matchID)
+        foreach($assignment->getAssignedCalibrationReviewsInSubmissionOrder($student) as $submissionID => $matchID)
         {
             $mark = $assignment->getReviewMark($matchID);
             if($mark->isValid)
-                $points[$matchID->id] = $mark->getReviewPoints();
+                $points[$submissionID] = $mark->getReviewPoints();
         }
     }
+    
     ksort($points);
     //return array_reduce($points, function($v, $w) { return max($v+$w, 0); });
     
-    $count = count($points);
-	$WMSEA = 0;
+	$total = 0;
 	$totalweights = 0;
 	$i = 1;
     foreach($points as $point)
     {
     	$weight = pow(0.5, $i);
-    	$WMSEA += $point * $weight;
+    	$total += $point * $weight;
 		$totalweights += $weight;
     	$i++;
     }
 	
-	return $WMSEA / $totalweights; 
+	return $total/ $totalweights; 
 }

@@ -164,7 +164,7 @@ class CopyCalibrationPoolsScript extends Script
 				 $authorIDtosubmissionIDMap = $originalAssignment->getAuthorSubmissionMap();
 				 
 				 //Map of submission ID's to reviews
-				 $submissionIDtoreviewsMap = $originalAssignment->getReviewMap();
+				 //$submissionIDtoreviewsMap = $originalAssignment->getReviewMap();
 				 
 				 //Copy original submissions to copied assingment
 				 foreach($authorIDtosubmissionIDMap as $submissionID)
@@ -182,7 +182,32 @@ class CopyCalibrationPoolsScript extends Script
 				 
 				 foreach($authorIDtosubmissionIDMap as $authorID => $submissionID)
 				 {
-				 	 //For each original submission create copied reviews from old reviews 				 
+				 	 $matchIDs = $originalAssignment->getInstructorMatchesForSubmission($submissionID);
+				 	 
+					 foreach($matchIDs as $matchID)
+				 	 {
+						 $review = $originalAssignment->getReview($matchID);
+						 
+						 $copiedSubmissionID = $authorIDtosubmissionIDMap2[$authorID];
+						 
+						 $newmatchID = $copiedAssignment->createMatch($copiedSubmissionID, $review->reviewerID, true);
+						 
+						 $copiedReview = new Review($copiedAssignment);
+						 $copiedReview->submissionID = $copiedSubmissionID;
+						 $copiedReview->reviewerID = $review->reviewerID;
+						 $copiedReview->matchID = $newmatchID;
+						 $copiedReview->answers = array();
+						 
+						 for($i = 0; $i < $numReviewQuestions; $i++)
+						 {
+						 	$answer = $review->answers[$originalOrderOfQuestionIDs[$i]];
+						 	$copiedReview->answers[$copiedOrderOfQuestionIDs[$i]] = $answer;
+						 }
+
+					 	 $copiedAssignment->saveReview($copiedReview);
+				 	 }
+					 
+					 /*
 					 foreach($submissionIDtoreviewsMap[$submissionID->id] as $reviewObj)
 				 	 {
 						 $review = $originalAssignment->getReview($reviewObj->matchID);
@@ -205,6 +230,7 @@ class CopyCalibrationPoolsScript extends Script
 
 					 	 $copiedAssignment->saveReview($copiedReview);
 				 	 }
+					 */ 
 				 }
 				 $i++;
 			}

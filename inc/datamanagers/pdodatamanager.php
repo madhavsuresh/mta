@@ -68,8 +68,10 @@ class PDODataManager extends DataManager
 
  		$this->getAllAssignmentHeadersQuery = $this->db->prepare("SELECT assignmentID, name, courseID, assignmentType, displayPriority FROM assignments WHERE assignmentType = 'peerreview' ORDER BY displayPriority ASC;");
 		//$this->getAllCalibrationPoolsQuery = $this->db->prepare("SELECT assignmentID, a.name, a.courseID, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_submissions ps, users u WHERE ps.assignmentID = a.assignmentID AND ps.authorID = u.a AND u.userType = 'anonymous' ORDER BY displayPriority ASC;");
-		$this->getAllCalibrationPoolsQuery = $this->db->prepare("SELECT a.assignmentID, a.name, a.courseID, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_calibration_pools pcp WHERE a.assignmentID = pcp.poolAssignmentID ORDER BY displayPriority ASC");
+		$this->getAllCalibrationPoolsQuery = $this->db->prepare("SELECT a.assignmentID, a.name, a.courseID, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_calibration_pools pcp WHERE a.assignmentID = pcp.poolAssignmentID ORDER BY displayPriority ASC;");
         
+		$this->getCalibrationAssignmentHeadersQuery = $this->db->prepare("SELECT a.assignmentID, a.name, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_calibration_matches pr WHERE a.assignmentID = pr.assignmentID AND courseID = ? ORDER BY displayPriority DESC;");
+		
         //Now we can set up all the assignment data managers
         parent::__construct();
     }
@@ -474,4 +476,14 @@ class PDODataManager extends DataManager
         return $headers;
     }
 	
+	function getCalibrationAssignmentHeaders()
+    {
+        $this->getCalibrationAssignmentHeadersQuery->execute(array($this->courseID));
+        $headers = array();
+        while($res = $this->getCalibrationAssignmentHeadersQuery->fetch())
+        {
+            $headers[] = new AssignmentHeader(new AssignmentID($res->assignmentID), $res->name, $res->assignmentType, $res->displayPriority);
+        }
+        return $headers;
+    }
 }

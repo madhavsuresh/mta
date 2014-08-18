@@ -4,15 +4,18 @@ require_once(dirname(__FILE__)."/common.php");
 function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorReview, Review $review)
 {
     //get an array of all the differences
-    $differences = array(); 
+    $squarederrors = array(); 
     foreach($assignment->getReviewQuestions() as $question)
     {
         $id = $question->questionID->id;
-        $differences[] = abs($question->getScore($instructorReview->answers[$id]) - $question->getScore($review->answers[$id]) );
+        $squarederrors[] = pow(abs($question->getScore($instructorReview->answers[$id]) - $question->getScore($review->answers[$id]) ), 2);
     }
 
-    $sumDiff = array_reduce($differences, function($u, $v) { return $u + $v; } );
+    $sum = array_reduce($squarederrors , function($u, $v) { return $u + $v; } );
+	
+	$MSE = $sum / count($squarederrors);
 
+	/*
     //yay for hard coded crap
     if(max($differences) <= 1 && $sumDiff <= 1){
         $points = 1;
@@ -23,7 +26,7 @@ function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorRe
     }else{
         $points = -1;
     }
-
+	*/
     /*
     print_r($differences);
     echo "$points\n\n";
@@ -39,7 +42,7 @@ function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorRe
         $points = -1;
     */
 
-    return new ReviewMark(0, null, true, $points);
+    return new ReviewMark(0, null, true, $MSE);
 }
 
 function computeReviewPointsForAssignments(UserID $student, $assignments)
@@ -55,5 +58,19 @@ function computeReviewPointsForAssignments(UserID $student, $assignments)
         }
     }
     ksort($points);
-    return array_reduce($points, function($v, $w) { return max($v+$w, 0); });
+    //return array_reduce($points, function($v, $w) { return max($v+$w, 0); });
+    
+    $count = count($points);
+	$WMSEA = 0;
+	$totalweights = 0;
+	$i = 1;
+    foreach($points as $point)
+    {
+    	$weight = pow(0.5, $i);
+    	$WMSEA += $point * $weight;
+		$totalweights += $weight;
+    	$i++;
+    }
+	
+	return $WMSEA / $totalweights; 
 }

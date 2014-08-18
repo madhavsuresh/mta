@@ -150,6 +150,16 @@ abstract class DataManager
             throw $e;
         }
     }
+	
+	function getCalibrationAssignments()
+    {
+        $calibrationAssignments = array();
+        foreach($this->getCalibrationAssignmentHeaders() as $header)
+        {
+            $calibrationAssignments[] = $this->getAssignment($header->assignmentID, $header->assignmentType);
+        }
+        return $calibrationAssignments;
+    }
 
 };
 

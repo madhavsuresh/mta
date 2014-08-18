@@ -530,7 +530,7 @@ class PeerReviewAssignment extends Assignment
 		$html .= "<h3>Calibration Auto Scoring</h3>";
         $html .= "<table align='left' width='100%'>\n";
 		$html .= "<tr><td width='320px'>Minimum number of calibration reviews for advancement</td><td><input type='text' name='calibrationMinCount' value='$this->calibrationMinCount'/></td></tr>\n";
-        $html .= "<tr><td>Maximum score for a review</td><td><input type='text' name='maxCalibrationScore' value='$this->maxCalibrationScore'/></td></tr>\n";
+        $html .= "<tr><td>Maximum score for a review</td><td><input type='text' name='calibrationMaxScore' value='$this->calibrationMaxScore'/></td></tr>\n";
         $html .= "<tr><td>&nbsp;</td></tr>";
         $html .= "<tr><td>Threshold mean-square-deviation for advancement</td><td><input type='text' name='calibrationThresholdMSE' value='$this->calibrationThresholdMSE'/></td></tr>\n";
         $html .= "<tr><td>Threshold score for advancement</td><td><input type='text' name='calibrationThresholdScore' value='$this->calibrationThresholdScore'/></td></tr>\n";

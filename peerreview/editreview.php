@@ -1,5 +1,6 @@
 <?php
 require_once("inc/common.php");
+require_once("inc/calibrationutils.php");
 try
 {
     $title .= " | Edit Review";
@@ -188,7 +189,9 @@ try
 		//Miguel: new calibration score briefing
 		if($isCalibration)
 		{
-			$content .= '<h4>'.$dataMgr->getWeightedAverageScore($reviewerID).'</h4>';
+			$weightedaveragescore = $dataMgr->getWeightedAverageScore($reviewerID);
+			$score = convertTo10pointScale($weightedaveragescore);
+			$content .= '<h4>$score/10</h4>';
 		}
     }
 

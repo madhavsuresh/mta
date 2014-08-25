@@ -17,8 +17,10 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
     {
         //TODO: Load the defaults from the config
         $html  = "<table width='100%'>\n";
+		$html .= "<tr><td width='300'>Minimum number of calibration reviews for qualification</td><td>";
+        $html .= "<input type='text' name='minimumReviews' id='minimumReviews' value='3' size='10'/></td></tr>\n";
 		$html .= "<tr><td>Review Score Threshold</td><td>";
-        $html .= "<input type='text' name='threshold' id='threshold' value='3' size='10'/></td></tr>";
+        $html .= "<input type='text' name='threshold' id='threshold' value='1.80' size='10'/></td></tr>";
         $html .= "<tr><td>Keep Already Independent</td><td>";
         $html .= "<input type='checkbox' name='keep' value='keep' checked/></td></tr>";
         $html .= "</table>\n";
@@ -28,11 +30,10 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
     {
         global $dataMgr;
         //Get all the assignments
-        $assignmentHeaders = $dataMgr->getAssignmentHeaders();
 
         $currentAssignment = get_peerreview_assignment();
 
-        //$windowSize = require_from_post("windowsize");
+        $minimumCalibrationReviews = require_from_post("minimumReviews");
         $independentThreshold = require_from_post("threshold");
         //$independentThreshold = require_from_post("threshold");
 
@@ -51,15 +52,17 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
         }
 
         $html .= "<table width='100%'>\n";
-        $html .= "<tr><td><h2>Student</h2></td><td><h2>Point Sum</h2></td><td><h2>Status</h2></td></tr>\n";
+        $html .= "<tr><td><h2>Student</h2></td><td><h2>Weighted Average Score</h2></td><td><h2>Calibration Reviews Done</h2></td><td><h2>Status</h2></td></tr>\n";
         $currentRowType = 0;
         foreach($students as $student)
         {
             $html .= "<tr class='rowType$currentRowType'><td>".$userNameMap[$student->id]."</td><td>";
             $score = computeReviewPointsForAssignments($student, $assignments);
             $html .= precisionFloat($score);
+			$numReviews = $dataMgr->numCalibrationReviews(new UserID($student->id));
+			$html .= "<td>".$numReviews."</td>";
             $html .= "</td><td>\n";
-            if($score <= $independentThreshold && !array_key_exists($student->id, $independents))
+            if($score <= $independentThreshold && $numReviews >= $minimumCalibrationReviews && !array_key_exists($student->id, $independents))
             {
                 $independents[] = $student;
                 $html .= "Independent";

@@ -2,6 +2,7 @@
 require_once(dirname(__FILE__)."/common.php");
 require_once("inc/assignment.php");
 require_once("reviewquestions.php");
+require_once(dirname(__FILE__)."/calibrationutils.php");
 
 class PeerReviewAssignment extends Assignment
 {
@@ -200,7 +201,7 @@ class PeerReviewAssignment extends Assignment
                               $mark = $this->dataMgr->getReviewMark($this, $matchID);
                               $doneCalibrations[$id] = new stdClass;
                               if($mark->isValid){
-                                $doneCalibrations[$id]->text = "($mark->reviewPoints)"; 
+                                $doneCalibrations[$id]->text = "(".convertTo10pointScale($mark->reviewPoints).")"; 
                                 $doneCalibrations[$id]->points = $mark->reviewPoints; 
                               }else{
                                 $doneCalibrations[$id]->text = "";

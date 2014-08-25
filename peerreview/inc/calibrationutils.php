@@ -13,7 +13,7 @@ function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorRe
 
     $sum = array_reduce($squarederrors , function($u, $v) { return $u + $v; } );
 	
-	$MSE = $sum / count($squarederrors);
+	$meansquarederror = $sum / count($squarederrors);
 
 	/*
     //yay for hard coded crap
@@ -42,7 +42,7 @@ function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorRe
         $points = -1;
     */
 
-    return new ReviewMark(0, null, true, $MSE);
+    return new ReviewMark(0, null, true, $meansquarederror);
 }
 
 function computeReviewPointsForAssignments(UserID $student, $assignments)
@@ -50,20 +50,20 @@ function computeReviewPointsForAssignments(UserID $student, $assignments)
     $points = array();
     foreach($assignments as $assignment)
     {
-        foreach($assignment->getAssignedCalibrationReviewsInSubmissionOrder($student) as $submissionID => $matchID)
+        foreach($assignment->getAssignedCalibrationReviews($student) as $matchID)
         {
             $mark = $assignment->getReviewMark($matchID);
             if($mark->isValid)
-                $points[$submissionID] = $mark->getReviewPoints();
+                $points[$matchID->id] = $mark->getReviewPoints();
         }
     }
     
-    ksort($points);
+    krsort($points);
     //return array_reduce($points, function($v, $w) { return max($v+$w, 0); });
     
 	$total = 0;
 	$totalweights = 0;
-	$i = 1;
+	$i = 0;
     foreach($points as $point)
     {
     	$weight = pow(0.5, $i);
@@ -73,4 +73,9 @@ function computeReviewPointsForAssignments(UserID $student, $assignments)
     }
 	
 	return $total/ $totalweights; 
+}
+
+function convertTo10pointScale($weightedaveragescore)
+{
+	return precisionFloat( -(3/1.80) * $weightedaveragescore + 10 );
 }

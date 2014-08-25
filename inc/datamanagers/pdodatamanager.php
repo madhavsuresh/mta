@@ -71,8 +71,13 @@ class PDODataManager extends DataManager
 		$this->getAllCalibrationPoolsQuery = $this->db->prepare("SELECT a.assignmentID, a.name, a.courseID, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_calibration_pools pcp WHERE a.assignmentID = pcp.poolAssignmentID ORDER BY displayPriority ASC;");
         
 		$this->getCalibrationAssignmentHeadersQuery = $this->db->prepare("SELECT a.assignmentID, a.name, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_calibration_matches pr WHERE a.assignmentID = pr.assignmentID AND courseID = ? ORDER BY displayPriority DESC;");
-		$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT pram.submissionID, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_marks prarm, peer_review_assignment_calibration_matches pracm WHERE pram.reviewerID = ? AND pram.matchID = prarm.matchID AND prarm.matchID = pracm.matchID ORDER BY pram.submissionID DESC");
 		
+		//$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT pram.submissionID, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_marks prarm, peer_review_assignment_calibration_matches pracm WHERE pram.reviewerID = ? AND pram.matchID = prarm.matchID AND prarm.matchID = pracm.matchID ORDER BY pram.submissionID DESC");
+		$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT pram.submissionID, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_marks prarm, peer_review_assignment_calibration_matches pracm WHERE pram.reviewerID = ? AND pram.matchID = prarm.matchID AND prarm.matchID = pracm.matchID ORDER BY pram.matchID DESC");
+		//$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT pram.submissionID, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_marks prarm WHERE pram.reviewerID = ? AND pram.matchID = prarm.matchID AND prarm.matchID IN (SELECT DISTINCT matchID FROM peer_review_assignment_calibration_matches) ORDER BY pram.matchID DESC");
+		
+		$this->numCalibrationReviewsQuery = $this->db->prepare("SELECT COUNT(pram.matchID) FROM peer_review_assignment_matches pram, peer_review_assignment_review_marks prarm, peer_review_assignment_calibration_matches pracm WHERE pram.reviewerID = ? AND pram.matchID = prarm.matchID AND prarm.matchID = pracm.matchID ORDER BY pram.matchID DESC");
+        
         //Now we can set up all the assignment data managers
         parent::__construct();
     }
@@ -504,5 +509,12 @@ class PDODataManager extends DataManager
 	    	$count++;
 		}
 		return $total / $totalweights;
+	}
+	
+	function numCalibrationReviews(UserID $reviewerID)
+	{
+		$this->numCalibrationReviewsQuery->execute(array($reviewerID));
+        $res = $this->numCalibrationReviewsQuery->fetch(PDO::FETCH_NUM);
+        return $res[0];
 	}
 }

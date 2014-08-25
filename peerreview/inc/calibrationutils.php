@@ -45,6 +45,7 @@ function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorRe
     return new ReviewMark(0, null, true, $meansquarederror);
 }
 
+/*
 function computeReviewPointsForAssignments(UserID $student, $assignments)
 {
     $points = array();
@@ -54,7 +55,7 @@ function computeReviewPointsForAssignments(UserID $student, $assignments)
         {
             $mark = $assignment->getReviewMark($matchID);
             if($mark->isValid)
-                $points[$matchID->id] = $mark->getReviewPoints();
+                $points[$matchID->id] = $mark->getReviewPoints(); //Use timestamp as key
         }
     }
     
@@ -74,8 +75,35 @@ function computeReviewPointsForAssignments(UserID $student, $assignments)
 	
 	return $total/ $totalweights; 
 }
+*/
 
-function convertTo10pointScale($weightedaveragescore)
+function computeWeightedAverage($reviews)
 {
-	return precisionFloat( -(3/1.80) * $weightedaveragescore + 10 );
+	krsort($reviews);
+	
+	$total = 0;
+	$totalweights = 0;
+	$i = 0;
+	
+    foreach($reviews as $review)
+    {
+    	$weight = pow(0.5, $i);
+    	$total += $review * $weight;
+		$totalweights += $weight;
+    	$i++;
+    }
+	
+	return $total/ $totalweights; 
+}
+
+function convertTo10pointScale($weightedaveragescore, AssignmentID $assignmentID)
+{
+	global $dataMgr;
+	
+	$assignment = $dataMgr->getAssignment($assignmentID);
+	$maxScore = $assignment->calibrationMaxScore;
+	$thresholdMSE = $assignment->calibrationThresholdMSE;
+	$thresholdScore = $assignment->calibrationThresholdScore;
+	
+	return max(0, precisionFloat( -( ($maxScore - $thresholdScore) / $thresholdMSE) * $weightedaveragescore + $maxScore));
 }

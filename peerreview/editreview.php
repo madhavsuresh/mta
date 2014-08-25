@@ -190,8 +190,8 @@ try
 		if($isCalibration)
 		{
 			$weightedaveragescore = $dataMgr->getWeightedAverageScore($reviewerID);
-			$score = convertTo10pointScale($weightedaveragescore);
-			$content .= '<h4>$score/10</h4>';
+			$score = convertTo10pointScale($weightedaveragescore, $assignment->assignmentID);
+			$content .= "<h4>Current Weighted Average Score: $score / $assignment->calibrationMaxScore</h4>";
 		}
     }
 

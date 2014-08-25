@@ -75,7 +75,7 @@ class Review
             $html .= "\n";
         }
 		
-		if($this->reviewTimestamp) $html .= "<h4>Last Updated: ".date("Y-m-d H:i:s",$this->reviewTimestamp)."</h4>";
+		if(ISSET($this->reviewTimestamp)) $html .= "<h4>Last Updated: ".date("Y-m-d H:i:s",$this->reviewTimestamp)."</h4>";
 		
         return $html;
     }

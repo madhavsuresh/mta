@@ -17,10 +17,10 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
     {
         //TODO: Load the defaults from the config
         $html  = "<table width='100%'>\n";
-		$html .= "<tr><td width='300'>Minimum number of calibration reviews for qualification</td><td>";
+		/*$html .= "<tr><td width='300'>Minimum number of calibration reviews for qualification</td><td>";
         $html .= "<input type='text' name='minimumReviews' id='minimumReviews' value='3' size='10'/></td></tr>\n";
 		$html .= "<tr><td>Review Score Threshold</td><td>";
-        $html .= "<input type='text' name='threshold' id='threshold' value='1.80' size='10'/></td></tr>";
+        $html .= "<input type='text' name='threshold' id='threshold' value='1.80' size='10'/></td></tr>";*/
         $html .= "<tr><td>Keep Already Independent</td><td>";
         $html .= "<input type='checkbox' name='keep' value='keep' checked/></td></tr>";
         $html .= "</table>\n";
@@ -33,8 +33,7 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
 
         $currentAssignment = get_peerreview_assignment();
 
-        $minimumCalibrationReviews = require_from_post("minimumReviews");
-        $independentThreshold = require_from_post("threshold");
+        //$minimumCalibrationReviews = require_from_post("minimumReviews");
         //$independentThreshold = require_from_post("threshold");
 
         $assignments = $dataMgr->getCalibrationAssignments();
@@ -57,12 +56,12 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
         foreach($students as $student)
         {
             $html .= "<tr class='rowType$currentRowType'><td>".$userNameMap[$student->id]."</td><td>";
-            $score = computeReviewPointsForAssignments($student, $assignments);
+            $score = $dataMgr->getWeightedAverageScore($student);
             $html .= precisionFloat($score);
-			$numReviews = $dataMgr->numCalibrationReviews(new UserID($student->id));
+			$numReviews = $dataMgr->numCalibrationReviews($student);
 			$html .= "<td>".$numReviews."</td>";
             $html .= "</td><td>\n";
-            if($score <= $independentThreshold && $numReviews >= $minimumCalibrationReviews && !array_key_exists($student->id, $independents))
+            if($score <= $currentAssignment->calibrationThresholdMSE && $numReviews >= $currentAssignment->calibrationMinCount && !array_key_exists($student->id, $independents))
             {
                 $independents[] = $student;
                 $html .= "Independent";

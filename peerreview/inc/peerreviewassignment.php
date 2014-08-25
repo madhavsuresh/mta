@@ -201,7 +201,7 @@ class PeerReviewAssignment extends Assignment
                               $mark = $this->dataMgr->getReviewMark($this, $matchID);
                               $doneCalibrations[$id] = new stdClass;
                               if($mark->isValid){
-                                $doneCalibrations[$id]->text = "(".convertTo10pointScale($mark->reviewPoints).")"; 
+                                $doneCalibrations[$id]->text = "(".convertTo10pointScale($mark->reviewPoints, $this->assignmentID).")"; 
                                 $doneCalibrations[$id]->points = $mark->reviewPoints; 
                               }else{
                                 $doneCalibrations[$id]->text = "";
@@ -271,16 +271,17 @@ class PeerReviewAssignment extends Assignment
                     if(sizeof($doneCalibrations) > 0){
                         $html .= "<br>Completed Calibration Reviews:<br>";
                         $html .= "<table align=left width=100%>";
-                        $pointsRunningTotal = 0;
+                        //$pointsRunningTotal = 0;
                         foreach($doneCalibrations as $id => $obj)
                         {
                             $html .= "<tr><td>";
                             $temp=$id+1;
                             $html .= "<a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$this->assignmentID&calibration=$id")."''>Calibration Review $temp</a>";
                             $html .= "</td><td>".$obj->text."</td><tr>";
-                            $pointsRunningTotal = max(0, $pointsRunningTotal + $obj->points);
+                            //$pointsRunningTotal = max(0, $pointsRunningTotal + $obj->points);
                         }
-                        $html .= "<tr><td></td><td>$pointsRunningTotal points total</td></tr>";
+                        //$html .= "<tr><td></td><td>$pointsRunningTotal points total</td></tr>";
+                        $html .= "<tr><td>Weighted Average</td><td>".convertTo10pointScale($dataMgr->getWeightedAverageScore($user), $this->assignmentID)."</td></tr>";
                         $html .= "</table>";
                     }
                 }
@@ -377,7 +378,7 @@ class PeerReviewAssignment extends Assignment
         $this->reviewScoreMaxCountsForPass = intval($POST["reviewScoreMaxCountsForPass"]);
 		*/
 		$this->calibrationMinCount = intval($POST["calibrationMinCount"]);
-		$this->maxCalibrationScore = intval($POST["maxCalibrationScore"]);
+		$this->calibrationMaxScore = intval($POST["calibrationMaxScore"]);
 		$this->calibrationThresholdMSE = floatval($POST["calibrationThresholdMSE"]);
 		$this->calibrationThresholdScore = floatval($POST["calibrationThresholdScore"]);
 		
@@ -528,7 +529,7 @@ class PeerReviewAssignment extends Assignment
         $html .= "</table><br>\n";
 		*/
 		
-		$html .= "<h3>Calibration Auto Scoring</h3>";
+		$html .= "<h3>Calibration Configurations</h3>";
         $html .= "<table align='left' width='100%'>\n";
 		$html .= "<tr><td width='320px'>Minimum number of calibration reviews for advancement</td><td><input type='text' name='calibrationMinCount' value='$this->calibrationMinCount'/></td></tr>\n";
         $html .= "<tr><td>Maximum score for a review</td><td><input type='text' name='calibrationMaxScore' value='$this->calibrationMaxScore'/></td></tr>\n";

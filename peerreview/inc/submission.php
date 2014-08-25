@@ -25,6 +25,7 @@ abstract class Submission
     function getHTML($showHidden=false)
     {
         $html = $this->_getHTML($showHidden);
+		if(ISSET($this->submissionTimestamp)) $html .= "<h4>Last Updated: ".date("Y-m-d H:i:s",$this->submissionTimestamp)."</h4>";
         if($this->noPublicUse)
             $html .= "<h2>Exclude from public use</h2>";
         return $html;
@@ -33,7 +34,7 @@ abstract class Submission
     function getFormHTML()
     {
         $html = $this->_getFormHTML();
-		if($this->submissionTimestamp) $html .= "<h4>Last Updated: ".date("Y-m-d H:i:s",$this->submissionTimestamp)."</h4>";
+		if(ISSET($this->submissionTimestamp)) $html .= "<h4>Last Updated: ".date("Y-m-d H:i:s",$this->submissionTimestamp)."</h4>";
         $tmp = '';
         if($this->noPublicUse)
             $tmp = 'checked';

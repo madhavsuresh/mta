@@ -82,8 +82,8 @@ class EssaySubmission extends Submission
 				$i = sha1($USERstudentID) % $k;
 				
 				$this->topicIndex = $i;
-				$html = "<p>Topic: ".$this->submissionSettings->topics[$i]."</p>";
-				$html = "<input type='hidden' name='topic' value='$i'>";
+				$html .= "<h1>Topic: ".$this->submissionSettings->topics[$i]."</h2>";
+				$html .= "<input type='hidden' name='topic' value='$i'>";
 			}
 		}
 		

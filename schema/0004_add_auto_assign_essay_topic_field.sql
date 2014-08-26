@@ -1,0 +1,1 @@
+ALTER TABLE `peer_review_assignment` ADD `autoAssignEssayTopic` BOOLEAN NOT NULL DEFAULT FALSE ;

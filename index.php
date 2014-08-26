@@ -23,6 +23,23 @@ try
 
         #Figure out what courses are availible, and display them to the user (showing what roles they have)
         $assignments = $dataMgr->getAssignments();
+		
+		if($dataMgr->isStudent($USERID))
+		{
+			$content .= "<h1>TODO</h1>\n";
+            $content .= "<table align='left'>\n";
+			foreach($assignments as $assignment)
+			{
+				//if(!$assignment->showForUser($USERID))
+                //continue;
+				
+				if($assignment->submissionStartDate <= $NOW AND $assignment->submissionStopDate > $NOW)
+				{
+					$content .= "<tr><td>$assignment->name</td><td>Enter password:</td><td><form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='password' name='password'/><input type='submit' value='Enter' /></form></td><td>".date('F jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
+				}
+			}
+			$content .= "</table><br>";
+		}
 
         if($dataMgr->isInstructor($USERID))
         {

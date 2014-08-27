@@ -30,12 +30,16 @@ try
             $content .= "<table align='left'>\n";
 			foreach($assignments as $assignment)
 			{
-				//if(!$assignment->showForUser($USERID))
-                //continue;
+				if(!$assignment->showForUser($USERID))
+                continue;
+				if(!$assignment->password)
+				continue;
+       			if($dataMgr->hasEnteredPassword($assignment->assignmentID, $USERID))
+                continue;
 				
 				if($assignment->submissionStartDate <= $NOW AND $assignment->submissionStopDate > $NOW)
 				{
-					$content .= "<tr><td>$assignment->name</td><td>Enter password:</td><td><form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='password' name='password'/><input type='submit' value='Enter' /></form></td><td>".date('F jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
+					$content .= "<tr><td><h4>$assignment->name</h4></td><td>Enter password:</td><td><form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='password' name='password'/><input type='submit' value='Enter' /></form></td><td>".date('F jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
 				}
 			}
 			$content .= "</table><br>";

@@ -73,15 +73,18 @@ class EssaySubmission extends Submission
 		}
 		else 
 		{
-			global $USERID, $dataMgr;
-			
-			$k = sizeof($this->submissionSettings->topics);
-			$USERstudentID = $dataMgr->getUserInfo($USERID)->studentID;
-			$i = sha1($USERstudentID) % $k;
-			
-			$this->topicIndex = $i;
-			$html = "<p>Topic: ".$this->submissionSettings->topics[$i]."</p>";
-			$html = "<input type='hidden' name='topic' value='$i'>";
+			if(sizeof($this->submissionSettings->topics))
+	        {
+				global $USERID, $dataMgr;
+				
+				$k = sizeof($this->submissionSettings->topics);
+				$USERstudentID = $dataMgr->getUserInfo($USERID)->studentID;
+				$i = sha1($USERstudentID) % $k;
+				
+				$this->topicIndex = $i;
+				$html .= "<h1>Topic: ".$this->submissionSettings->topics[$i]."</h2>";
+				$html .= "<input type='hidden' name='topic' value='$i'>";
+			}
 		}
 		
         $html .= "<textarea name='text' cols='60' rows='40' class='mceEditor' id='essayEdit' accept-charset='utf-8'>\n";

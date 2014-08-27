@@ -30,13 +30,35 @@ try
             $content .= "<table align='left'>\n";
 			foreach($assignments as $assignment)
 			{
-				//if(!$assignment->showForUser($USERID))
-                //continue;
-				
+				if(!$assignment->showForUser($USERID))
+                continue;
+       			
 				if($assignment->submissionStartDate <= $NOW AND $assignment->submissionStopDate > $NOW)
 				{
-					$content .= "<tr><td>$assignment->name</td><td>Enter password:</td><td><form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='password' name='password'/><input type='submit' value='Enter' /></form></td><td>".date('F jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
+					if(!($assignment->password == NULL) AND !($dataMgr->hasEnteredPassword($assignment->assignmentID, $USERID)))
+					{
+						$content .= "<tr><td><h4><i>$assignment->name</i></h4></td><td>Password</td></td><td>Enter password:<form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='text' name='password' size='10'/><input type='submit' value='Enter'/></form></td><td>".date('F jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
+					}
+					else 
+					{
+						if(!$assignment->submissionExists($USERID))
+						{
+							$content .= "<tr><td><h4><i>$assignment->name</i></h4></td><td>".ucfirst($assignment->submissionType)."</td><td><form action='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Create Submission'/></form></td><td>".date('F jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
+						}
+					}
+				
 				}
+
+				$reviewAssignments = $assignment->getAssignedReviews($USERID);
+				$id=0;
+				foreach($reviewAssignments as $matchID)
+				{
+					if(!$assignment->reviewExists($matchID) AND ($assignment->reviewStartDate <= $NOW AND $assignment->reviewStopDate > $NOW))
+					{
+						$content .= "<tr><td><h4><i>$assignment->name</i></h4></td><td>Peer Review</td><td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."' method='post'><input type='submit' value='Go'></form></td><td>".date('F jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";	
+					}
+					$id++;			
+				} 
 			}
 			$content .= "</table><br>";
 		}

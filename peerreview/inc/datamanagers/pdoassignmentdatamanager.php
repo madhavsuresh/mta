@@ -798,15 +798,20 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
     }
 
-    function createMatch(PeerReviewAssignment $assignment, SubmissionID $submissionID, UserID $reviewerID, $instructorForced=False)
+    function createMatch(PeerReviewAssignment $assignment, SubmissionID $submissionID, UserID $reviewerID, $instructorForced=False, $hasCalibrationMatch=False)
     {
       # Hacky bool translation
       if($instructorForced)
         $instructorForced = 1;
       else
         $instructorForced = 0;
-
-      $sh = $this->db->prepare("INSERT INTO peer_review_assignment_matches (submissionID, reviewerID, instructorForced) VALUES (?, ?, ?);");
+	  
+	  if($hasCalibrationMatch)
+	  	$hasCalibrationMatch = 1;
+	  else 
+		$hasCalibrationMatch = 0;  
+	  
+      $sh = $this->db->prepare("INSERT INTO peer_review_assignment_matches (submissionID, reviewerID, instructorForced, hasCalibrationMatch) VALUES (?, ?, ?, ?);");
       $sh->execute(array($submissionID, $reviewerID, $instructorForced));
       return new MatchID($this->db->lastInsertID());
     }
@@ -814,15 +819,15 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     function assignCalibrationReview(PeerReviewAssignment $assignment, SubmissionID $submissionID, UserID $reviewerID, $required=false)
     {
       //Insert the match here
-      $matchID = $this->createMatch($assignment, $submissionID, $reviewerID, false);
+      $matchID = $this->createMatch($assignment, $submissionID, $reviewerID, false, true);
 
       # Hacky bool translation
       if($required)
         $required = 1;
       else
         $required = 0;
-      $sh = $this->db->prepare("INSERT INTO peer_review_assignment_calibration_matches (matchID, assignmentID, required) VALUES (?, ?, ?);");
-      $sh->execute(array($matchID, $assignment->assignmentID, $required));
+      //$sh = $this->db->prepare("INSERT INTO peer_review_assignment_calibration_matches (matchID, assignmentID, required) VALUES (?, ?, ?);");
+      //$sh->execute(array($matchID, $assignment->assignmentID, $required));
       return $matchID;
     }
 

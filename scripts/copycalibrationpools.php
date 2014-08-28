@@ -150,8 +150,9 @@ class CopyCalibrationPoolsScript extends Script
 					 $questionsToCopy[] = $reviewQuestion;
 			     }
 				 //Must add questions in reverse to copy original order
-				 for($i = $numReviewQuestions - 1; $i >= 0; $i--){
-				 	 $copiedAssignment->saveReviewQuestion($questionsToCopy[$i]);
+				 for($j = $numReviewQuestions - 1; $j >= 0; $j--)
+				 {
+				 	 $copiedAssignment->saveReviewQuestion($questionsToCopy[$j]);
 				 }
 				 
 				 $copiedOrderOfQuestionIDs = array();
@@ -206,31 +207,6 @@ class CopyCalibrationPoolsScript extends Script
 
 					 	 $copiedAssignment->saveReview($copiedReview);
 				 	 }
-					 
-					 /*
-					 foreach($submissionIDtoreviewsMap[$submissionID->id] as $reviewObj)
-				 	 {
-						 $review = $originalAssignment->getReview($reviewObj->matchID);
-						 
-						 $copiedSubmissionID = $authorIDtosubmissionIDMap2[$authorID];
-						 
-						 $matchID = $copiedAssignment->createMatch($copiedSubmissionID, $review->reviewerID, true);
-						 
-						 $copiedReview = new Review($copiedAssignment);
-						 $copiedReview->submissionID = $copiedSubmissionID;
-						 $copiedReview->reviewerID = $review->reviewerID;
-						 $copiedReview->matchID = $matchID;
-						 $copiedReview->answers = array();
-						 
-						 for($i = 0; $i < $numReviewQuestions; $i++)
-						 {
-						 	$answer = $review->answers[$originalOrderOfQuestionIDs[$i]];
-						 	$copiedReview->answers[$copiedOrderOfQuestionIDs[$i]] = $answer;
-						 }
-
-					 	 $copiedAssignment->saveReview($copiedReview);
-				 	 }
-					 */ 
 				 }
 				 $i++;
 			}

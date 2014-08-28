@@ -1,1 +1,0 @@
-ALTER TABLE `peer_review_assignment_matches` ADD `hasCalibrationMatch` BOOLEAN NOT NULL DEFAULT FALSE ;

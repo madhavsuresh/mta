@@ -27,10 +27,6 @@ function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorRe
         $points = -1;
     }
 	*/
-    /*
-    print_r($differences);
-    echo "$points\n\n";
-*/
 
     /* At some point, we should actually honour this stuff
     if(sizeof(array_filter($differences, function($x) use($assignment) { return $x > $assignment->reviewScoreMaxDeviationForGood; })) <= $assignment->reviewScoreMaxCountsForGood && max($differences) <= $assignment->reviewScoreMaxDeviationForGood)

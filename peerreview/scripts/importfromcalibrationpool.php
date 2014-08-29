@@ -114,9 +114,7 @@ class ImportFromCalibrationPoolPeerReviewScript extends Script
 			//TODO: Check if that the radio questions have the same values and range
 			
 			$authorIDtosubmissionIDMapForPool = $selectedPool->getAuthorSubmissionMap();
-			
-			$authorIDtosubmissionIDMapForAssignment = $assignment->getAuthorSubmissionMap();
-			
+					
 			foreach($authorIDtosubmissionIDMapForPool as $submissionID)
 			{
 				$submission = $selectedPool->getSubmission($submissionID);					 
@@ -129,6 +127,8 @@ class ImportFromCalibrationPoolPeerReviewScript extends Script
 				
 				$assignment->saveSubmission($submission);
 			}
+			
+			$authorIDtosubmissionIDMapForAssignment = $assignment->getAuthorSubmissionMap();
 			
 			foreach($authorIDtosubmissionIDMapForPool as $authorID => $submissionID)
 			{

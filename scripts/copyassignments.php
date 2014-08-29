@@ -40,7 +40,7 @@ class CopyAssignmentsScript extends Script
 		
 		$html .= "</div>\n";
 		
-		$html .= "<p><input type='checkbox' name='includeCalibration' value='includeCalibration' checked/> Include calibration submissions and calibration reviews</p>";
+		$html .= "<p><input type='checkbox' name='includeCalibration' value='includeCalibration'> Include calibration submissions and calibration reviews</p>";
 		
 		$html .= "<table align='left' width='50%'>";
 		$html .= "<tr><td>Anchor&nbsp;on&nbsp;Start&nbsp;Date:</td><td><input type='text' name='anchorDate' id='anchorDate' /></td></tr>";		

@@ -1390,6 +1390,21 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $map;
     }
 
+	function getCalibrationSubmissionIDs(PeerReviewAssignment $assignment)
+	{
+		$sh = $this->prepareQuery("getCalibrationSubmissions", "SELECT subs.submissionID FROM peer_review_assignment_matches matches, peer_review_assignment_submissions subs WHERE subs.assignmentID = ? AND matches.submissionID = subs.submissionID AND matches.calibrationState = 1");
+		
+		$sh->execute(array($assignment->assignmentID));
+		
+		$calibrationSubmissionIDs = array();
+		
+		while($res = $sh->fetch())
+        {
+			$calibrationSubmissionIDs[] = $res->submissionID;
+        }
+        return $calibrationSubmissionIDs;
+	}
+
 	/*
 	function getAssignedCalibrationReviewsInSubmissionOrder(PeerReviewAssignment $assignment, UserID $reviewerID)
     {

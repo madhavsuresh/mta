@@ -16,8 +16,8 @@ class ReviewMark extends Mark
         $html  = "<h1>Mark</h1>\n";
         $html .= "<h2>Score</h2>\n";
         $html .= "<input type='text' value='$this->score' name='score'>\n";
-        $html .= "<h2>Review Points</h2>\n";
-        $html .= "<input type='text' value='$this->reviewPoints' name='reviewPoints'>\n";
+        /*$html .= "<h2>Review Points</h2>\n";
+        $html .= "<input type='text' value='$this->reviewPoints' name='reviewPoints'>\n";*/
         $html .= "<h2>Comments</h2>\n";
         $html .= "<textarea name='comments' cols='60' rows='10'>\n";
         $html .= "$this->comments";

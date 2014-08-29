@@ -493,7 +493,9 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getAssignedReviews(PeerReviewAssignment $assignment, UserID $reviewerID)
     {
-        $sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_calibration_matches calib ON matches.matchID = calib.matchID  WHERE subs.assignmentID = ? && reviewerID = ? && instructorForced = 0 && calib.matchID IS NULL ORDER BY matches.matchID;");
+        //$sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_calibration_matches calib ON matches.matchID = calib.matchID  WHERE subs.assignmentID = ? && reviewerID = ? && instructorForced = 0 && calib.matchID IS NULL ORDER BY matches.matchID;");
+        //$sh->execute(array($assignment->assignmentID, $reviewerID));
+        $sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? && reviewerID = ? && instructorForced = 0 && matches.calibrationState = '0' ORDER BY matches.matchID;");
         $sh->execute(array($assignment->assignmentID, $reviewerID));
         $assigned = array();
         while($res = $sh->fetch())
@@ -505,7 +507,9 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     
     function getAssignedCalibrationReviews(PeerReviewAssignment $assignment, UserID $reviewerID)
     {
-        $sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_calibration_matches calib ON matches.matchID = calib.matchID  WHERE calib.assignmentID = ? && reviewerID = ? && instructorForced = 0 && calib.matchID IS NOT NULL ORDER BY matches.matchID;");
+        //$sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_calibration_matches calib ON matches.matchID = calib.matchID  WHERE calib.assignmentID = ? && reviewerID = ? && instructorForced = 0 && calib.matchID IS NOT NULL ORDER BY matches.matchID;");
+        //$sh->execute(array($assignment->assignmentID, $reviewerID));
+        $sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? && reviewerID = ? && instructorForced = 0 && matches.calibrationState = '2' ORDER BY matches.matchID;");
         $sh->execute(array($assignment->assignmentID, $reviewerID));
         $assigned = array();
         while($res = $sh->fetch())
@@ -517,8 +521,9 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	
     function getNewCalibrationSubmissionForUser(PeerReviewAssignment $assignment, UserID $userid)
     {
-        $sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT submissionID FROM `peer_review_assignment_submissions` subs LEFT JOIN peer_review_assignment_calibration_pools pools ON subs.assignmentID = pools.poolAssignmentID WHERE pools.assignmentID = ? && submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY RAND() LIMIT 1;");
-
+        //$sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT submissionID FROM `peer_review_assignment_submissions` subs LEFT JOIN peer_review_assignment_calibration_pools pools ON subs.assignmentID = pools.poolAssignmentID WHERE pools.assignmentID = ? && submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY RAND() LIMIT 1;");
+		$sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT subs.submissionID FROM `peer_review_assignment_submissions` subs LEFT JOIN peer_review_assignment_matches matches ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? && matches.calibrationState = 1 && subs.submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY RAND() LIMIT 1;");
+        
         $sh->execute(array($assignment->assignmentID, $userid));
 
         if($res = $sh->fetch()) {
@@ -798,31 +803,33 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
     }
 
-    function createMatch(PeerReviewAssignment $assignment, SubmissionID $submissionID, UserID $reviewerID, $instructorForced=False)
+    function createMatch(PeerReviewAssignment $assignment, SubmissionID $submissionID, UserID $reviewerID, $instructorForced=False, $calibrationState=0)
     {
       # Hacky bool translation
       if($instructorForced)
         $instructorForced = 1;
       else
         $instructorForced = 0;
-
-      $sh = $this->db->prepare("INSERT INTO peer_review_assignment_matches (submissionID, reviewerID, instructorForced) VALUES (?, ?, ?);");
-      $sh->execute(array($submissionID, $reviewerID, $instructorForced));
+	   
+	  //$sh = $this->db->prepare("INSERT INTO peer_review_assignment_matches (submissionID, reviewerID, instructorForced) VALUES (?, ?, ?);");
+      //$sh->execute(array($submissionID, $reviewerID, $instructorForced));
+      $sh = $this->db->prepare("INSERT INTO peer_review_assignment_matches (submissionID, reviewerID, instructorForced, calibrationState) VALUES (?, ?, ?, ?);");
+	  $sh->execute(array($submissionID, $reviewerID, $instructorForced, $calibrationState));
       return new MatchID($this->db->lastInsertID());
     }
     
     function assignCalibrationReview(PeerReviewAssignment $assignment, SubmissionID $submissionID, UserID $reviewerID, $required=false)
     {
       //Insert the match here
-      $matchID = $this->createMatch($assignment, $submissionID, $reviewerID, false);
+      $matchID = $this->createMatch($assignment, $submissionID, $reviewerID, false, 2); #'2' indicates calibrationAttempt
 
       # Hacky bool translation
       if($required)
         $required = 1;
       else
         $required = 0;
-      $sh = $this->db->prepare("INSERT INTO peer_review_assignment_calibration_matches (matchID, assignmentID, required) VALUES (?, ?, ?);");
-      $sh->execute(array($matchID, $assignment->assignmentID, $required));
+      //$sh = $this->db->prepare("INSERT INTO peer_review_assignment_calibration_matches (matchID, assignmentID, required) VALUES (?, ?, ?);");
+      //$sh->execute(array($matchID, $assignment->assignmentID, $required));
       return $matchID;
     }
 
@@ -1216,6 +1223,29 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $reviewMap;
     }
 
+    function getCorrectReviewMap(PeerReviewAssignment $assignment)
+    {
+        //First, figure out what should be there
+        $reviewMap = array();
+
+        $sh = $this->prepareQuery("getCorrectReviewerMapQuery", "SELECT matches.submissionID, matches.reviewerID, answers.questionID, matches.matchID, matches.instructorForced FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID LEFT JOIN peer_review_assignment_review_answers answers ON matches.matchID = answers.matchID JOIN users ON matches.reviewerID = users.userID WHERE matches.calibrationState = 1 && subs.assignmentID = ? GROUP BY matches.matchID ORDER BY users.userType, matches.matchID;"); # 1 indicates 'correct' review 
+        $sh->execute(array($assignment->assignmentID));
+        while($res = $sh->fetch())
+        {
+            if(!array_key_exists($res->submissionID, $reviewMap))
+            {
+                $reviewMap[$res->submissionID] = array();
+            }
+            $obj = new stdClass();
+            $obj->reviewerID = new UserID($res->reviewerID);
+            $obj->exists = !is_null($res->questionID);
+            $obj->matchID = new MatchID($res->matchID);
+            $obj->instructorForced = $res->instructorForced;
+            $reviewMap[$res->submissionID][] = $obj;
+        }
+        return $reviewMap;
+    }
+
     function getReviewDraftMap(PeerReviewAssignment $assignment)
     {
         //First, figure out what should be there
@@ -1360,6 +1390,22 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $map;
     }
 
+	function getCalibrationSubmissionIDs(PeerReviewAssignment $assignment)
+	{
+		$sh = $this->prepareQuery("getCalibrationSubmissions", "SELECT subs.submissionID FROM peer_review_assignment_matches matches, peer_review_assignment_submissions subs WHERE subs.assignmentID = ? AND matches.submissionID = subs.submissionID AND matches.calibrationState = 1");
+		
+		$sh->execute(array($assignment->assignmentID));
+		
+		$calibrationSubmissionIDs = array();
+		
+		while($res = $sh->fetch())
+        {
+			$calibrationSubmissionIDs[] = $res->submissionID;
+        }
+        return $calibrationSubmissionIDs;
+	}
+
+	/*
 	function getAssignedCalibrationReviewsInSubmissionOrder(PeerReviewAssignment $assignment, UserID $reviewerID)
     {
         $sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_calibration_matches calib ON matches.matchID = calib.matchID  WHERE calib.assignmentID = ? && reviewerID = ? && instructorForced = 0 && calib.matchID IS NOT NULL ORDER BY matches.submissionID;");
@@ -1371,6 +1417,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
         return $assigned;
     }
+	*/
 
     //Because PHP doesn't do multiple inheritance, we have to define this method all over the place
     private function prepareQuery($name, $query)

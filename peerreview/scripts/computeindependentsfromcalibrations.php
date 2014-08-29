@@ -56,7 +56,7 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
         foreach($students as $student)
         {
             $html .= "<tr class='rowType$currentRowType'><td>".$userNameMap[$student->id]."</td><td>";
-            $score = $dataMgr->getWeightedAverageScore($student);
+            $score = computeWeightedAverage($dataMgr->getCalibrationScores($student));
             $html .= precisionFloat($score);
 			$numReviews = $dataMgr->numCalibrationReviews($student);
 			$html .= "<td>".$numReviews."</td>";

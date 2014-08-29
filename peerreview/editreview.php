@@ -189,9 +189,14 @@ try
 		//Miguel: new calibration score briefing
 		if($isCalibration)
 		{
-			$weightedaveragescore = $dataMgr->getWeightedAverageScore($reviewerID);
-			$score = convertTo10pointScale($weightedaveragescore, $assignment->assignmentID);
+			$numberOfCalibrations = $dataMgr->numCalibrationReviews($reviewerID);
+			if($numberOfCalibrations){
+				$score = convertTo10pointScale(computeWeightedAverage($dataMgr->getCalibrationScores($reviewerID)), $assignment->assignmentID);
+			} else {
+				$score = "--";
+			}
 			$content .= "<h4>Current Weighted Average Score: $score / $assignment->calibrationMaxScore</h4>";
+			
 		}
     }
 

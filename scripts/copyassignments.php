@@ -40,6 +40,8 @@ class CopyAssignmentsScript extends Script
 		
 		$html .= "</div>\n";
 		
+		$html .= "<p><input type='checkbox' name='includeCalibration' value='includeCalibration'> Include calibration submissions and calibration reviews</p>";
+		
 		$html .= "<table align='left' width='50%'>";
 		$html .= "<tr><td>Anchor&nbsp;on&nbsp;Start&nbsp;Date:</td><td><input type='text' name='anchorDate' id='anchorDate' /></td></tr>";		
         $html .= "<input type='hidden' name='anchorDateSeconds' id='anchorDateSeconds' />";
@@ -49,7 +51,7 @@ class CopyAssignmentsScript extends Script
 		
         $html .= set_element_to_date("anchorDate", round(microtime(time())));
 		
-		//TODO: Revise the trigger to convert anchorDate to anchorDateSeconds
+		//Maybe revise the trigger to convert anchorDate to anchorDateSeconds
 		$html .= "<script type='text/javascript'> $('form').submit(function() {
 			$('#anchorDateSeconds').val(moment($('#anchorDate').val(), 'MM/DD/YYYY HH:mm').unix());
 			})</script>\n";	
@@ -117,38 +119,100 @@ class CopyAssignmentsScript extends Script
 			$i = 0;
 			
 			//Create copied assignments 
-			foreach($assignments as $assignment){
-				 $copiedAssignment = $assignment;
-				 $copiedAssignment->assignmentID = NULL;
-				 $startDate = $copiedAssignment->submissionStartDate;
-				 $base = $anchor_date + $deltas[$i];
+			foreach($assignments as $assignment)
+			{
+				$originalAssignmentID = $assignment->assignmentID;
+				$originalAssignment = $dataMgr->getAssignment($originalAssignmentID);
+				
+				$copiedAssignment = $assignment;
+				$copiedAssignment->assignmentID = NULL;
+				$startDate = $copiedAssignment->submissionStartDate;
+				$base = $anchor_date + $deltas[$i];
+				
+				$copiedAssignment->name .= " (Copy)";
 				 
-				 $copiedAssignment->submissionStartDate = $base;
-				 $copiedAssignment->submissionStopDate = $copiedAssignment->submissionStopDate - $startDate + $base;
-				 $copiedAssignment->reviewStartDate = $copiedAssignment->reviewStartDate - $startDate + $base;
-				 $copiedAssignment->reviewStopDate = $copiedAssignment->reviewStopDate - $startDate + $base;
- 				 $copiedAssignment->markPostDate = $copiedAssignment->markPostDate - $startDate + $base;
- 				 $copiedAssignment->appealStopDate = $copiedAssignment->appealStopDate - $startDate + $base;
-				 $copiedAssignments[] = $copiedAssignment;
+				$copiedAssignment->submissionStartDate = $base;
+				$copiedAssignment->submissionStopDate = $copiedAssignment->submissionStopDate - $startDate + $base;
+				$copiedAssignment->reviewStartDate = $copiedAssignment->reviewStartDate - $startDate + $base;
+				$copiedAssignment->reviewStopDate = $copiedAssignment->reviewStopDate - $startDate + $base;
+ 				$copiedAssignment->markPostDate = $copiedAssignment->markPostDate - $startDate + $base;
+ 				$copiedAssignment->appealStopDate = $copiedAssignment->appealStopDate - $startDate + $base;
+				$copiedAssignments[] = $copiedAssignment;
 				 
-				 $dataMgr->saveAssignment($copiedAssignment, $copiedAssignment->assignmentType);
-				 $i++;
+				$dataMgr->saveAssignment($copiedAssignment, $copiedAssignment->assignmentType);
+				$i++;
+				
+				$questionsToCopy = array();
+				$originalOrderOfQuestionIDs = array();
+				$numReviewQuestions = 0;
+				//Get all review questions from original assignment and add it to copied assignment
+				foreach($originalAssignment->getReviewQuestions() as $reviewQuestion)
+			    {
+			     	$originalOrderOfQuestionIDs[] = $reviewQuestion->questionID->id;
+					$numReviewQuestions++;
+					$reviewQuestion->questionID = NULL;
+					$questionsToCopy[] = $reviewQuestion;
+			    }
+				
+				//Must add questions in reverse to copy original order
+				for($j = $numReviewQuestions - 1; $j >= 0; $j--)
+				{
+				 	$copiedAssignment->saveReviewQuestion($questionsToCopy[$j]);
+				}
+				 
+				$copiedOrderOfQuestionIDs = array();
+				foreach($copiedAssignment->getReviewQuestions() as $question)
+				{
+					$copiedOrderOfQuestionIDs[] = $question->questionID->id;
+				}
+				
+				if(array_key_exists('includeCalibration',$_POST))
+				{
+					$submissionIDtoreviewsMap = $originalAssignment->getCorrectReviewMap(); //Miguel: new method of searching for submissions that have been reviewed by 'correctly'
+					
+					//Copy original submissions to copied assignment
+					foreach($submissionIDtoreviewsMap as $submissionID => $reviews)
+					{
+					 	//copiedSubmission should be exactly like original submission
+						$copiedSubmission = $originalAssignment->getSubmission(New SubmissionID($submissionID));
+						
+						//Save as new submission in db 
+						$copiedSubmission->submissionID = NULL;
+						$copiedAssignment->saveSubmission($copiedSubmission);
+						
+						$newSubmissionID = $copiedAssignment->getSubmissionID($copiedSubmission->authorID);
+						
+						foreach($reviews as $reviewObj)
+						{
+							$review = $originalAssignment->getReview($reviewObj->matchID);
+							$newMatchID = $copiedAssignment->createMatch($newSubmissionID, $review->reviewerID, true, 1);
+							 
+							$copiedReview = new Review($copiedAssignment);
+							$copiedReview->submissionID = $newSubmissionID;
+							$copiedReview->reviewerID = $review->reviewerID;
+							$copiedReview->matchID = $newMatchID;
+							$copiedReview->answers = array();
+							
+							for($i = 0; $i < $numReviewQuestions; $i++)
+							{
+								$answer = $review->answers[$originalOrderOfQuestionIDs[$i]];
+								$copiedReview->answers[$copiedOrderOfQuestionIDs[$i]] = $answer;
+							}
+		
+						 	$copiedAssignment->saveReview($copiedReview);
+						}
+					}
+				}
 			}
 			
+			//The printed output
 			$html .= "<p>The following assignments have been created:</p>";
-			
 			$bg = '#eeeeee';
-			
 			foreach($copiedAssignments as $copiedAssignment){
-				
 				 $bg = ($bg == '#eeeeee' ? '#ffffff' : '#eeeeee');
-				
 				 $html .= "<div style='background-color:$bg'>";
-				
 	             $html .= "<h3>".$copiedAssignment->name."</h3>";
-				 
 				 $html .= $copiedAssignment->getHeaderHTML($USERID);
-				 
 				 $html .= "</div>";
 			}
 			

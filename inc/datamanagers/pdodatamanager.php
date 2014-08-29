@@ -72,12 +72,12 @@ class PDODataManager extends DataManager
         
 		$this->getCalibrationAssignmentHeadersQuery = $this->db->prepare("SELECT a.assignmentID, a.name, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_calibration_matches pr WHERE a.assignmentID = pr.assignmentID AND courseID = ? ORDER BY displayPriority DESC;");
 		
-		//$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT pram.submissionID, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_marks prarm, peer_review_assignment_calibration_matches pracm WHERE pram.reviewerID = ? AND pram.matchID = prarm.matchID AND prarm.matchID = pracm.matchID ORDER BY pram.submissionID DESC");
-		//$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT pram.matchID, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_marks prarm WHERE pram.reviewerID = ? AND pram.matchID = prarm.matchID AND prarm.matchID IN (SELECT DISTINCT matchID FROM peer_review_assignment_calibration_matches) ORDER BY pram.matchID DESC");
-		//$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT pram.matchID, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_marks prarm, peer_review_assignment_calibration_matches pracm WHERE pram.reviewerID = ? AND pram.matchID = prarm.matchID AND prarm.matchID = pracm.matchID ORDER BY pram.matchID DESC");
-		$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), prara.reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm, peer_review_assignment_calibration_matches pracm WHERE pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID AND pram.matchID = pracm.matchID ORDER BY prara.reviewTimeStamp DESC");
+		#before deprication of calibration matches
+		//$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), prara.reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm, peer_review_assignment_calibration_matches pracm WHERE pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID AND pram.matchID = pracm.matchID ORDER BY prara.reviewTimeStamp DESC;");
+		#after deprication of calibration matches
+		$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), prara.reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;"); 
 		
-		$this->numCalibrationReviewsQuery = $this->db->prepare("SELECT COUNT(pram.matchID) FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm, peer_review_assignment_calibration_matches pracm WHERE pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID AND pram.matchID = pracm.matchID");
+		$this->numCalibrationReviewsQuery = $this->db->prepare("SELECT COUNT(DISTINCT pram.matchID) FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;");
         
         //Now we can set up all the assignment data managers
         parent::__construct();
@@ -494,22 +494,18 @@ class PDODataManager extends DataManager
         return $headers;
     }
 	
-	function getWeightedAverageScore(UserID $reviewerID)
+	function getCalibrationScores(UserID $reviewerID)
 	{
 		$this->getCalibrationReviewsQuery->execute(array($reviewerID));
 		
-		$total = 0;
-		$totalweights = 0;
-		$count = 0;
+		$calibrationScores = array();
 		
 		while($res = $this->getCalibrationReviewsQuery->fetch())
 		{
-	    	$weight = pow(0.5, $count);
-	    	$total += $res->reviewPoints * $weight;
-			$totalweights += $weight;
-	    	$count++;
+	    	$calibrationScores[$res->reviewTimeStamp]= $res->reviewPoints;
+
 		}
-		return $total / $totalweights;
+		return $calibrationScores;
 	}
 	
 	function numCalibrationReviews(UserID $reviewerID)

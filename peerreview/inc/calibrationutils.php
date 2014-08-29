@@ -27,10 +27,6 @@ function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorRe
         $points = -1;
     }
 	*/
-    /*
-    print_r($differences);
-    echo "$points\n\n";
-*/
 
     /* At some point, we should actually honour this stuff
     if(sizeof(array_filter($differences, function($x) use($assignment) { return $x > $assignment->reviewScoreMaxDeviationForGood; })) <= $assignment->reviewScoreMaxCountsForGood && max($differences) <= $assignment->reviewScoreMaxDeviationForGood)
@@ -77,18 +73,18 @@ function computeReviewPointsForAssignments(UserID $student, $assignments)
 }
 */
 
-function computeWeightedAverage($reviews)
+function computeWeightedAverage($scores)
 {
-	krsort($reviews);
+	krsort($scores);
 	
 	$total = 0;
 	$totalweights = 0;
 	$i = 0;
 	
-    foreach($reviews as $review)
+    foreach($scores as $score)
     {
     	$weight = pow(0.5, $i);
-    	$total += $review * $weight;
+    	$total += $score * $weight;
 		$totalweights += $weight;
     	$i++;
     }

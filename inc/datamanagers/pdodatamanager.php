@@ -494,24 +494,18 @@ class PDODataManager extends DataManager
         return $headers;
     }
 	
-	function getWeightedAverageScore(UserID $reviewerID)
+	function getCalibrationScores(UserID $reviewerID)
 	{
 		$this->getCalibrationReviewsQuery->execute(array($reviewerID));
 		
-		$total = 0;
-		$totalweights = 0;
-		$count = 0;
+		$calibrationScores = array();
 		
 		while($res = $this->getCalibrationReviewsQuery->fetch())
 		{
-	    	$weight = pow(0.5, $count);
-	    	$total += $res->reviewPoints * $weight;
-			$totalweights += $weight;
-	    	$count++;
-			print_r($res->reviewPoints);
-			print_r($weight);
+	    	$calibrationScores[$res->reviewTimeStamp]= $res->reviewPoints;
+
 		}
-		return $total / $totalweights;
+		return $calibrationScores;
 	}
 	
 	function numCalibrationReviews(UserID $reviewerID)

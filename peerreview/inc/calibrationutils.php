@@ -73,18 +73,18 @@ function computeReviewPointsForAssignments(UserID $student, $assignments)
 }
 */
 
-function computeWeightedAverage($reviews)
+function computeWeightedAverage($scores)
 {
-	krsort($reviews);
+	krsort($scores);
 	
 	$total = 0;
 	$totalweights = 0;
 	$i = 0;
 	
-    foreach($reviews as $review)
+    foreach($scores as $score)
     {
     	$weight = pow(0.5, $i);
-    	$total += $review * $weight;
+    	$total += $score * $weight;
 		$totalweights += $weight;
     	$i++;
     }

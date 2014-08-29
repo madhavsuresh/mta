@@ -1222,15 +1222,13 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
         return $reviewMap;
     }
-    //|
-    //| Inspired
-    //V
+
     function getCorrectReviewMap(PeerReviewAssignment $assignment)
     {
         //First, figure out what should be there
         $reviewMap = array();
 
-        $sh = $this->prepareQuery("getExistingReviewerMapQuery2", "SELECT matches.submissionID, matches.reviewerID, answers.questionID, matches.matchID, matches.instructorForced FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID LEFT JOIN peer_review_assignment_review_answers answers ON matches.matchID = answers.matchID JOIN users ON matches.reviewerID = users.userID WHERE matches.calibrationState = 1 && subs.assignmentID = ? GROUP BY matches.matchID ORDER BY users.userType, matches.matchID;"); # 1 indicates 'correct' review 
+        $sh = $this->prepareQuery("getCorrectReviewerMapQuery", "SELECT matches.submissionID, matches.reviewerID, answers.questionID, matches.matchID, matches.instructorForced FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID LEFT JOIN peer_review_assignment_review_answers answers ON matches.matchID = answers.matchID JOIN users ON matches.reviewerID = users.userID WHERE matches.calibrationState = 1 && subs.assignmentID = ? GROUP BY matches.matchID ORDER BY users.userType, matches.matchID;"); # 1 indicates 'correct' review 
         $sh->execute(array($assignment->assignmentID));
         while($res = $sh->fetch())
         {

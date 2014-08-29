@@ -40,6 +40,8 @@ class CopyAssignmentsScript extends Script
 		
 		$html .= "</div>\n";
 		
+		$html .= "<p><input type='checkbox' name='includeCalibration' value='includeCalibration' checked/> Include calibration submissions and calibration reviews</p>";
+		
 		$html .= "<table align='left' width='50%'>";
 		$html .= "<tr><td>Anchor&nbsp;on&nbsp;Start&nbsp;Date:</td><td><input type='text' name='anchorDate' id='anchorDate' /></td></tr>";		
         $html .= "<input type='hidden' name='anchorDateSeconds' id='anchorDateSeconds' />";
@@ -151,6 +153,7 @@ class CopyAssignmentsScript extends Script
 					$reviewQuestion->questionID = NULL;
 					$questionsToCopy[] = $reviewQuestion;
 			    }
+				
 				//Must add questions in reverse to copy original order
 				for($j = $numReviewQuestions - 1; $j >= 0; $j--)
 				{
@@ -162,44 +165,44 @@ class CopyAssignmentsScript extends Script
 				{
 					$copiedOrderOfQuestionIDs[] = $question->questionID->id;
 				}
-				 
-				$submissionIDtoreviewsMap = $originalAssignment->getCorrectReviewMap(); //Miguel: new method of searching for submissions that have been reviewed by 'correctly'
 				
-				//Copy original submissions to copied assignment
-				foreach($submissionIDtoreviewsMap as $submissionID => $reviews)
+				if(array_key_exists('includeCalibration',$_POST))
 				{
-				 	//copiedSubmission should be exactly like original submission
-					$copiedSubmission = $originalAssignment->getSubmission(New SubmissionID($submissionID));
+					$submissionIDtoreviewsMap = $originalAssignment->getCorrectReviewMap(); //Miguel: new method of searching for submissions that have been reviewed by 'correctly'
 					
-					//Save as new submission in db 
-					$copiedSubmission->submissionID = NULL;
-					$copiedAssignment->saveSubmission($copiedSubmission);
-					
-					$newSubmissionID = $copiedAssignment->getSubmissionID($copiedSubmission->authorID);
-					
-					print_r($reviewObj);
-					
-					foreach($reviews as $reviewObj)
-					{					
-						$newMatchID = $copiedAssignment->createMatch($newSubmissionID, $reviewObj->reviewerID, true, 1);
-						 
-						$copiedReview = new Review($copiedAssignment);
-						$copiedReview->submissionID = $newSubmissionID;
-						$copiedReview->reviewerID = $reviewObj->reviewerID;
-						$copiedReview->matchID = $newMatchID;
-						$copiedReview->answers = array();
-						 
-						for($i = 0; $i < $numReviewQuestions; $i++)
+					//Copy original submissions to copied assignment
+					foreach($submissionIDtoreviewsMap as $submissionID => $reviews)
+					{
+					 	//copiedSubmission should be exactly like original submission
+						$copiedSubmission = $originalAssignment->getSubmission(New SubmissionID($submissionID));
+						
+						//Save as new submission in db 
+						$copiedSubmission->submissionID = NULL;
+						$copiedAssignment->saveSubmission($copiedSubmission);
+						
+						$newSubmissionID = $copiedAssignment->getSubmissionID($copiedSubmission->authorID);
+						
+						foreach($reviews as $reviewObj)
 						{
-							$answer = $review->answers[$originalOrderOfQuestionIDs[$i]];
-							$copiedReview->answers[$copiedOrderOfQuestionIDs[$i]] = $answer;
+							$review = $originalAssignment->getReview($reviewObj->matchID);
+							$newMatchID = $copiedAssignment->createMatch($newSubmissionID, $review->reviewerID, true, 1);
+							 
+							$copiedReview = new Review($copiedAssignment);
+							$copiedReview->submissionID = $newSubmissionID;
+							$copiedReview->reviewerID = $review->reviewerID;
+							$copiedReview->matchID = $newMatchID;
+							$copiedReview->answers = array();
+							
+							for($i = 0; $i < $numReviewQuestions; $i++)
+							{
+								$answer = $review->answers[$originalOrderOfQuestionIDs[$i]];
+								$copiedReview->answers[$copiedOrderOfQuestionIDs[$i]] = $answer;
+							}
+		
+						 	$copiedAssignment->saveReview($copiedReview);
 						}
-	
-					 	$copiedAssignment->saveReview($copiedReview);
 					}
 				}
-				
-				 
 			}
 			
 			//The printed output

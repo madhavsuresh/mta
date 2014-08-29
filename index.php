@@ -28,8 +28,11 @@ try
 		{
 			$content .= "<h1>TODO</h1>\n";
             $content .= "<table align='left'>\n";
+			
+			$output = array();
 			foreach($assignments as $assignment)
 			{
+				
 				if(!$assignment->showForUser($USERID))
                 continue;
        			
@@ -37,13 +40,13 @@ try
 				{
 					if(!($assignment->password == NULL) AND !($dataMgr->hasEnteredPassword($assignment->assignmentID, $USERID)))
 					{
-						$content .= "<tr><td><h4><i>$assignment->name</i></h4></td><td>Password</td></td><td>Enter password:<form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='text' name='password' size='10'/><input type='submit' value='Enter'/></form></td><td>".date('F jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
+						$output[$assignment->submissionStopDate] = "<tr><td><h4><i>$assignment->name</i></h4></td><td>Password</td></td><td>Enter password:<form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='text' name='password' size='10'/><input type='submit' value='Enter'/></form></td><td>".date('F jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
 					}
 					else 
 					{
 						if(!$assignment->submissionExists($USERID))
 						{
-							$content .= "<tr><td><h4><i>$assignment->name</i></h4></td><td>".ucfirst($assignment->submissionType)."</td><td><form action='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Create Submission'/></form></td><td>".date('F jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
+							$output[$assignment->submissionStopDate] = "<tr><td><h4><i>$assignment->name</i></h4></td><td>".ucfirst($assignment->submissionType)."</td><td><form action='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Create Submission'/></form></td><td>".date('F jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
 						}
 					}
 				
@@ -55,11 +58,18 @@ try
 				{
 					if(!$assignment->reviewExists($matchID) AND ($assignment->reviewStartDate <= $NOW AND $assignment->reviewStopDate > $NOW))
 					{
-						$content .= "<tr><td><h4><i>$assignment->name</i></h4></td><td>Peer Review</td><td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."' method='post'><input type='submit' value='Go'></form></td><td>".date('F jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";	
+						$output[$assignment->reviewStopDate] .= "<tr><td><h4><i>$assignment->name</i></h4></td><td>Peer Review</td><td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."' method='post'><input type='submit' value='Go'></form></td><td>".date('F jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";	
 					}
 					$id++;			
 				} 
 			}
+			ksort($output);
+			
+			foreach($output as $item)
+			{
+				$content .= $item;
+			}
+			
 			$content .= "</table><br>";
 		}
 

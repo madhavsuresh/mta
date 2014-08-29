@@ -281,7 +281,7 @@ class PeerReviewAssignment extends Assignment
                             //$pointsRunningTotal = max(0, $pointsRunningTotal + $obj->points);
                         }
                         //$html .= "<tr><td></td><td>$pointsRunningTotal points total</td></tr>";
-                        $html .= "<tr><td>Weighted Average</td><td>".convertTo10pointScale($dataMgr->getWeightedAverageScore($user), $this->assignmentID)."</td></tr>";
+                        $html .= "<tr><td>Weighted Average</td><td>".convertTo10pointScale(computeWeightedAverage($dataMgr->getCalibrationScores($user)), $this->assignmentID)."</td></tr>";
                         $html .= "</table>";
                     }
                 }
@@ -538,7 +538,7 @@ class PeerReviewAssignment extends Assignment
         $html .= "<tr><td>Threshold score for advancement</td><td><input type='text' name='calibrationThresholdScore' value='$this->calibrationThresholdScore'/></td></tr>\n";
         $html .= "</table><br>\n";
 		
-        global $dataMgr;
+        /*global $dataMgr;
         $html .= "<h3>Calibration Pool Selection</h3>";
 
         foreach($dataMgr->getAssignmentHeaders() as $assgn)
@@ -551,7 +551,7 @@ class PeerReviewAssignment extends Assignment
                 $tmp = "checked";
 
             $html .= "<input type='checkbox' name='calibrationPoolAssignmentIds[]' value='$assgn->assignmentID' $tmp /> $assgn->name <br>\n";
-        }
+        }*/
 
         return $html;
     }

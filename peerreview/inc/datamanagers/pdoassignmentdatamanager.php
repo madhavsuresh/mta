@@ -803,7 +803,71 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
     }
 
-    function createMatch(PeerReviewAssignment $assignment, SubmissionID $submissionID, UserID $reviewerID, $instructorForced=False, $calibrationState=0)
+	//modified function getUserIDForAnonymousSubmission to also handle copying submissions from anonymous 
+	//and make the newly generated usernames, firstnames and lastnames more manageable 
+	function getUserIDForCopyingSubmission(PeerReviewAssignment $assignment, UserID $baseID, $username)
+	{
+        global $dataMgr;
+		
+		$sh = $this->db->prepare("SELECT userType FROM users WHERE userID = ?;");
+		$sh->execute(array($baseID));
+		$userType = $sh->fetch()->userType;
+		
+		if($userType = 'anonymous')
+			$isShadow = true;
+		else 
+			$isShadow = false;
+	
+		if($isShadow)
+		{
+			//trim username to its original
+			$index = strrpos($username, '__anonymous');
+			if($index===false)	throw new Exception('Anonymous user not properly formed');
+			$username = substr($username, 0, $index);
+		}
+		$basename = $username."__anonymous";	
+
+        //Try and find an unused anonymous id
+        $sh = $this->db->prepare("SELECT userID from users WHERE NOT EXISTS (SELECT * from peer_review_assignment_submissions WHERE userID = authorID && assignmentID= ?) && (userType = 'anonymous' && substr(username, 1, ?) = ? && courseID = ?) ORDER BY userID LIMIT 1;");
+        $sh->execute(array(
+            $assignment->assignmentID,
+            strlen($basename),
+            $basename,
+            $dataMgr->courseID
+        ));
+
+        if($res = $sh->fetch())
+        {
+            //Return the id
+            return new UserID($res->userID);
+        }
+        else
+        {
+            //We have to go and create a new shadow user
+            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' && substr(username, 1, ?) = ? && courseId = ?;");
+            $sh->execute(array(strlen($basename), $basename, $dataMgr->courseID));
+            $nameInfo = $this->dataMgr->getUserFirstAndLastNames($baseID);
+            $count = $sh->fetch()->count;
+            $lastName = $nameInfo->lastName;
+            if($count > 0)
+            {
+            	if($isShadow)
+            	{
+			        $j= strrpos($lastName, " (");
+					if($j===false); else $lastName = substr($lastName, 0, $j);
+                }
+				$lastName.= " (".($count+1).")";
+            }
+			
+            if($isShadow) 
+            return $this->dataMgr->addUser($basename.$count, $nameInfo->firstName, $lastName, 0, 'anonymous');
+			else
+			return $this->dataMgr->addUser($basename.$count, "Anonymous ".$nameInfo->firstName, $lastName, 0, 'anonymous');
+        }
+	
+	}
+
+  	function createMatch(PeerReviewAssignment $assignment, SubmissionID $submissionID, UserID $reviewerID, $instructorForced=False, $calibrationState=0)
     {
       # Hacky bool translation
       if($instructorForced)

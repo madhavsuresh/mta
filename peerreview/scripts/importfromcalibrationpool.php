@@ -113,15 +113,28 @@ class ImportFromCalibrationPoolPeerReviewScript extends Script
 			
 			//TODO: Check if that the radio questions have the same values and range
 			
+			//NOTE: not all these submissions maybe instructor submissions.
 			$authorIDtosubmissionIDMapForPool = $selectedPool->getAuthorSubmissionMap();
+			
+			$oldToNewAuthorIDMap = array();
 					
-			foreach($authorIDtosubmissionIDMapForPool as $submissionID)
+			foreach($authorIDtosubmissionIDMapForPool as $authorID => $submissionID)
 			{
 				$submission = $selectedPool->getSubmission($submissionID);					 
 				
 				$submission->submissionID = NULL;
 				
 				//TODO: Check if author of a submission from pool is already an author in this assignment
+				if($assignment->submissionExists(new UserID($authorID)))
+				{
+					$newAuthorID = $assignment->getUserIDForCopyingSubmission($submission->authorID, $dataMgr->getUserInfo($submission->authorID)->username);
+					$submission->authorID = $newAuthorID;
+					$oldToNewAuthorIDMap[$authorID] = $newAuthorID->id;
+				}
+				else
+				{
+					$oldToNewAuthorIDMap[$submission->authorID->id] = $submission->authorID->id;
+				}
 				
 				//TODO: Check if submission from  pool is the same 'textually' as submission already in this assignment
 				
@@ -138,7 +151,7 @@ class ImportFromCalibrationPoolPeerReviewScript extends Script
 			 	{
 					$review = $selectedPool->getReview($matchID);
 					 
-					$copiedSubmissionID = $authorIDtosubmissionIDMapForAssignment[$authorID];
+					$copiedSubmissionID = $authorIDtosubmissionIDMapForAssignment[$oldToNewAuthorIDMap[$authorID]];
 					 
 					$newmatchID = $assignment->createMatch($copiedSubmissionID, $review->reviewerID, true, 1); //new match made with newly implemented flag '1' to indicate calibrationKey
 					 
@@ -160,7 +173,6 @@ class ImportFromCalibrationPoolPeerReviewScript extends Script
 			
 			//The printed output
 			$html .= "<p>The calibration submissions and reveiws have been imported</p>";
-			
 		} else {
 			$html .= "<p>No calibration pool was selected for importing calibration submissions and reviews</p>\n";
 		}

@@ -43,7 +43,8 @@ class PeerReviewAssignment extends Assignment
     public $submissionSettings;
 
     public $calibrationPoolAssignmentIds = array();
-
+	
+	public $extraCalibrations = 0;
 
     public $dateFormat = "MMMM Do YYYY, HH:mm";
 
@@ -226,7 +227,7 @@ class PeerReviewAssignment extends Assignment
                         $html .= "</table>";
                     }
                     $html .= "<br>";
-                    if((!$pending && count($this->calibrationPoolAssignmentIds) > 0) || (!$pending && count($this->getCalibrationSubmissionIDs()) > 0))
+                    if(/*!$pending && count($this->calibrationPoolAssignmentIds) > 0 ||*/ !$pending && count($this->getCalibrationSubmissionIDs()) > 0)
                         $html .= "<a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$this->assignmentID")."'>Request Calibration Review</a><br>";
                     #Do they have reviews to do?
                     $reviewAssignments = $this->dataMgr->getAssignedReviews($this, $user);
@@ -237,8 +238,7 @@ class PeerReviewAssignment extends Assignment
                         # Flag independents
                         # $html .= "<tr><td>";
                         # $html .= $this->getPoolStatusHTML($user);
-                        # $html .= "</td></tr>";
-                          
+                        # $html .= "</td></tr>";   
                         
                         $id = 0;
                         foreach($reviewAssignments as $matchID)
@@ -381,6 +381,8 @@ class PeerReviewAssignment extends Assignment
 		$this->calibrationMaxScore = intval($POST["calibrationMaxScore"]);
 		$this->calibrationThresholdMSE = floatval($POST["calibrationThresholdMSE"]);
 		$this->calibrationThresholdScore = floatval($POST["calibrationThresholdScore"]);
+		
+		$this->extraCalibrations = intval($POST["extraCalibrations"]);
 		
         if(!array_key_exists("calibrationPoolAssignmentIds", $POST))
             $this->calibrationPoolAssignmentIds = array();
@@ -536,6 +538,8 @@ class PeerReviewAssignment extends Assignment
         $html .= "<tr><td>&nbsp;</td></tr>";
         $html .= "<tr><td>Threshold mean-square-deviation for advancement</td><td><input type='text' name='calibrationThresholdMSE' value='$this->calibrationThresholdMSE'/></td></tr>\n";
         $html .= "<tr><td>Threshold score for advancement</td><td><input type='text' name='calibrationThresholdScore' value='$this->calibrationThresholdScore'/></td></tr>\n";
+        $html .= "<tr><td>&nbsp;</td></tr>";
+        $html .= "<tr><td>Extra calibrations for supervised students</td><td><input type='text' name='extraCalibrations' value='$this->extraCalibrations'/></td></tr>\n";
         $html .= "</table><br>\n";
 		
         /*global $dataMgr;

@@ -118,6 +118,11 @@ class CopyAssignmentsScript extends Script
 			
 			$i = 0;
 			
+			$withCalibration = false;
+			if(array_key_exists('includeCalibration', $_POST)){
+				$withCalibration = true;
+			}
+			
 			//Create copied assignments 
 			foreach($assignments as $assignment)
 			{
@@ -166,30 +171,40 @@ class CopyAssignmentsScript extends Script
 					$copiedOrderOfQuestionIDs[] = $question->questionID->id;
 				}
 				
-				if(array_key_exists('includeCalibration',$_POST))
+				if($withCalibration)
 				{
 					$submissionIDtoreviewsMap = $originalAssignment->getCorrectReviewMap(); //Miguel: new method of searching for submissions that have been reviewed by 'correctly'
 					
+					$oldToNewAuthorIDMap = array();
 					//Copy original submissions to copied assignment
 					foreach($submissionIDtoreviewsMap as $submissionID => $reviews)
 					{
 					 	//copiedSubmission should be exactly like original submission
-						$copiedSubmission = $originalAssignment->getSubmission(New SubmissionID($submissionID));
+						$submission = $originalAssignment->getSubmission(New SubmissionID($submissionID));
+						
+						$copiedSubmission = $submission;
+						
+						if(!$copiedAssignment->isInSameCourse($originalAssignment))
+						{
+							$newAuthorID = $copiedAssignment->getUserIDForCopyingSubmission($submission->authorID, $dataMgr->getUsername($submission->authorID));
+							$copiedSubmission->authorID = $newAuthorID;
+						}
 						
 						//Save as new submission in db 
 						$copiedSubmission->submissionID = NULL;
 						$copiedAssignment->saveSubmission($copiedSubmission);
 						
-						$newSubmissionID = $copiedAssignment->getSubmissionID($copiedSubmission->authorID);
-						
 						foreach($reviews as $reviewObj)
 						{
 							$review = $originalAssignment->getReview($reviewObj->matchID);
-							$newMatchID = $copiedAssignment->createMatch($newSubmissionID, $review->reviewerID, true, 1);
+							
+							$newReviewerID = $copiedAssignment->getUserIDForCopyingReview($review->reviewerID, $dataMgr->getUsername($review->reviewerID), $copiedSubmission->submissionID);
+							
+							$newMatchID = $copiedAssignment->createMatch($copiedSubmission->submissionID, $newReviewerID, true, 1);
 							 
 							$copiedReview = new Review($copiedAssignment);
-							$copiedReview->submissionID = $newSubmissionID;
-							$copiedReview->reviewerID = $review->reviewerID;
+							$copiedReview->submissionID = $copiedSubmission->submissionID;
+							$copiedReview->reviewerID = $newReviewerID;
 							$copiedReview->matchID = $newMatchID;
 							$copiedReview->answers = array();
 							

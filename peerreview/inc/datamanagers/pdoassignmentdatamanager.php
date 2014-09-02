@@ -771,6 +771,67 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
     }
 
+	function getUserIDForCopyingReview(PeerReviewAssignment $assignment, UserID $baseID, $username, SubmissionID $submissionID)
+    {
+        global $dataMgr;
+        //Try and find an unused anonymous id
+        $sh = $this->db->prepare("SELECT userType FROM users WHERE userID = ?;");
+		$sh->execute(array($baseID));
+		$userType = $sh->fetch()->userType;
+		
+		if($userType = 'anonymous' || $userType = 'shadowmarker' || $userType = 'shadowinstructor' || $userType = 'marker' || $userType = 'instructor')
+			$isShadow = true;
+		else 
+			$isShadow = false;
+	
+		if($isShadow)
+		{
+			//trim username to its original
+			$index = strrpos($username, '__anonymous');
+			if($index===false); else
+			$username = substr($username, 0, $index);
+		}
+		$basename = $username."__anonymous";	
+        
+        $sh = $this->db->prepare("SELECT userID from users, assignments WHERE assignments.courseID = users.courseID && assignments.assignmentID = ? && NOT EXISTS (SELECT * from peer_review_assignment_matches WHERE userID = reviewerID && submissionID = ?) && (userType = 'anonymous' && substr(username, 1, ?) = ?) ORDER BY userID LIMIT 1;");
+        $sh->execute(array(
+        	$assignment->assignmentID,
+            $submissionID,
+            strlen($basename),
+            $basename
+        ));
+
+        if($res = $sh->fetch())
+        {
+            //Return the id
+            return new UserID($res->userID);
+        }
+        else
+        {
+            //We have to go and create a new shadow user
+            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' && substr(username, 1, ?) = ? && courseId = ?;");
+            $sh->execute(array(strlen($basename), $basename, $dataMgr->courseID));
+            $nameInfo = $this->dataMgr->getUserFirstAndLastNames($baseID);
+            $count = $sh->fetch()->count;
+            $lastName = $nameInfo->lastName;
+            $firstName = $nameInfo->firstName;
+            if($count > 0)
+            {
+            	if($isShadow)
+            	{
+            		$i = strpos($firstName, "Anonymous");
+            		if($k===false); else $firstName = substr($firstName, 10, strlen($firstName));
+			        $j= strrpos($lastName, " (");
+					if($j===false); else $lastName = substr($lastName, 0, $j);
+                }
+				$firstName = "Anonymous ".$firstName;
+				$lastName.= " (".($count+1).")";
+            }
+			
+			return $this->dataMgr->addUser($basename.$count, $firstName, $lastName, 0, 'anonymous');
+        }
+    }
+
     function getUserIDForAnonymousSubmission(PeerReviewAssignment $assignment, UserID $baseID, $username)
     {
         global $dataMgr;
@@ -813,8 +874,10 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		$sh->execute(array($baseID));
 		$userType = $sh->fetch()->userType;
 		
-		if($userType = 'anonymous')
+		if($userType = 'anonymous' || $userType = 'shadowmarker' || $userType = 'shadowinstructor' || $userType = 'marker' || $userType = 'instructor')
+		{
 			$isShadow = true;
+		}
 		else 
 			$isShadow = false;
 	
@@ -822,7 +885,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		{
 			//trim username to its original
 			$index = strrpos($username, '__anonymous');
-			if($index===false)	throw new Exception('Anonymous user not properly formed');
+			if($index===false); else
 			$username = substr($username, 0, $index);
 		}
 		$basename = $username."__anonymous";	
@@ -849,20 +912,21 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             $nameInfo = $this->dataMgr->getUserFirstAndLastNames($baseID);
             $count = $sh->fetch()->count;
             $lastName = $nameInfo->lastName;
+            $firstName = $nameInfo->firstName;
             if($count > 0)
             {
             	if($isShadow)
             	{
+            		$i = strpos($firstName, "Anonymous");
+            		if($k===false); else $firstName = substr($firstName, 10, strlen($firstName));
 			        $j= strrpos($lastName, " (");
 					if($j===false); else $lastName = substr($lastName, 0, $j);
                 }
+				$firstName = "Anonymous ".$firstName;
 				$lastName.= " (".($count+1).")";
             }
 			
-            if($isShadow) 
-            return $this->dataMgr->addUser($basename.$count, $nameInfo->firstName, $lastName, 0, 'anonymous');
-			else
-			return $this->dataMgr->addUser($basename.$count, "Anonymous ".$nameInfo->firstName, $lastName, 0, 'anonymous');
+			return $this->dataMgr->addUser($basename.$count, $firstName, $lastName, 0, 'anonymous');
         }
 	
 	}
@@ -900,6 +964,17 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     function getInstructorMatchesForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
         $sh = $this->db->prepare("SELECT matches.matchID as matchID FROM peer_review_assignment_matches matches JOIN users ON users.userID = matches.reviewerID WHERE userType in ('instructor', 'marker', 'shadowinstructor', 'shadowmarker') && submissionID = ?;");
+        $sh->execute(array($submissionID));
+        $ids = array();
+        while($res = $sh->fetch()){
+            $ids[] = new MatchID($res->matchID);
+        }
+        return $ids;
+    }
+	
+	function getSpecialMatchesForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
+    {
+        $sh = $this->db->prepare("SELECT matches.matchID as matchID FROM peer_review_assignment_matches matches JOIN users ON users.userID = matches.reviewerID WHERE userType in ('instructor', 'marker', 'shadowinstructor', 'shadowmarker', 'anonymous') && submissionID = ?;");
         $sh->execute(array($submissionID));
         $ids = array();
         while($res = $sh->fetch()){
@@ -1287,6 +1362,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $reviewMap;
     }
 
+    //Get calibration reviews for calibration submissions 
     function getCorrectReviewMap(PeerReviewAssignment $assignment)
     {
         //First, figure out what should be there
@@ -1482,6 +1558,13 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $assigned;
     }
 	*/
+	function isInSameCourse(PeerReviewAssignment $assignment, Assignment $otherAssignment)
+	{
+		$sh = $this->prepareQuery("isInSameCourse", "SELECT x.courseID FROM assignments x, assignments y WHERE x.courseID = y.courseID && x.assignmentID = ? && y.assignmentID = ?");
+		$sh->execute(array($assignment->assignmentID, $otherAssignment->assignmentID));
+		$res = $sh->fetch();
+		return $res != NULL;
+	}
 
     //Because PHP doesn't do multiple inheritance, we have to define this method all over the place
     private function prepareQuery($name, $query)

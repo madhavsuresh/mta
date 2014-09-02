@@ -26,9 +26,14 @@ try
 		
 		if($dataMgr->isStudent($USERID))
 		{
-			$output = array();
+			if($scores = $dataMgr->getCalibrationScores($USERID)) {
+				$currentAverage = computeWeightedAverage($scores);
+			} else {
+				$currentAverage = "--";
+			}
+			$totalReviews = $dataMgr->numCalibrationReviews($USERID);
 			
-			$calOutput = array();
+			$output = array();
 			
 			foreach($assignments as $assignment)
 			{
@@ -40,16 +45,24 @@ try
 				{
 					if(!($assignment->password == NULL) AND !($dataMgr->hasEnteredPassword($assignment->assignmentID, $USERID)))
 					{
-						$output[$assignment->submissionStopDate] = "<tr><td><h4><i>$assignment->name</i></h4></td><td>Password</td></td><td>Enter password:<form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='text' name='password' size='10'/><input type='submit' value='Enter'/></form></td><td>".date('F jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
+						$output[$assignment->submissionStopDate] = 
+						"<tr><td><h4><i>$assignment->name</i></h4></td>
+						<td>Password</td></td><td>Enter password:<form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='text' name='password' size='10'/></td>
+						<td><input type='submit' value='Enter'/></form></td>
+						<td>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
 					}
 					else 
 					{
 						if(!$assignment->submissionExists($USERID))
 						{
-							$output[$assignment->submissionStopDate] = "<tr><td><h4><i>$assignment->name</i></h4></td><td>".ucfirst($assignment->submissionType)."</td><td><form action='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Create Submission'/></form></td><td>".date('F jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
+							$output[$assignment->submissionStopDate] = 
+							"<tr><td><h4><i>$assignment->name</i></h4></td>
+							<td>".ucfirst($assignment->submissionType)."</td>
+							<td></td>
+							<td><form action='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Create Submission'/></form></td>
+							<td>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
 						}
-					}
-				
+					}	
 				}
 
 				if($assignment->reviewStartDate <= $NOW AND $assignment->reviewStopDate > $NOW)
@@ -60,7 +73,12 @@ try
 					{
 						if(!$assignment->reviewExists($matchID))
 						{
-							$output[$assignment->reviewStopDate] = "<tr><td><h4><i>$assignment->name</i></h4></td><td>Peer Review</td><td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."' method='post'><input type='submit' value='Go'></form></td><td>".date('F jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";	
+							$output[$assignment->reviewStopDate] = 
+							"<tr><td><h4><i>$assignment->name</i></h4></td>
+							<td>Peer Review</td>
+							<td></td>
+							<td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."' method='post'><input type='submit' value='Go'></form></td>
+							<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";	
 						}
 						$id++;			
 					} 
@@ -70,13 +88,18 @@ try
 	                {
 	                    $independents = $assignment->getIndependentUsers();
 	                    //if student is supervised and has done less than the extra calibrations required
-	                    if(!array_key_exists($USERID->id, $independents) && $assignment->numCalibrationReviewsDone($USERID) < $assignment->extraCalibrations)
+	                    if($currentAverage != "--") $currentAverage = convertTo10pointScale($currentAverage, $assignment->assignmentID) ;
+	                    if(!array_key_exists($USERID->id, $independents) && (currentAverage == "--" || $currentAverage < $assignment->calibrationThresholdScore) && $assignment->getNewCalibrationSubmissionForUser($USERID) != NULL)
 	                    {
-	                    	$calOutput[$assignment->reviewStopDate] .= "<tr><td>Calibrations from $assignment->name:</td><td>".$assignment->numCalibrationReviewsDone($USERID)." / $assignment->extraCalibrations completed</td><td><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'>Request Calibration Review</a></td></tr>";
-	                    }
+	                    	$output[$assignment->reviewStopDate] = 
+	                    	"<tr><td><h4><i>$assignment->name</i></h4></td>
+	                    	<td>Calibration Review: <br/>".$assignment->numCalibrationReviewsDone($USERID)." of $assignment->extraCalibrations completed</td>
+	                    	<td>Current Average: ".$currentAverage." <br/> Threshold: $assignment->calibrationThresholdScore</td> 
+	                    	<td><form action='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Request Calibration Review'></a></td>
+	                    	<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
+	                   	}
 	                }
                 }
-				
 			}
 			ksort($output);
 			
@@ -88,13 +111,6 @@ try
 			}
 			$content .= "</table><br>";
 			
-			$content .= "<h1>CALIBRATIONS</h1>\n";
-			$content .= "<table align='left'>\n";
-			foreach($calOutput as $item)
-			{
-				$content .= $item;
-			}
-			$content .= "</table><br>";
 		}
 
         if($dataMgr->isInstructor($USERID))

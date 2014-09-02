@@ -964,7 +964,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     function getInstructorMatchesForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
         //$sh = $this->db->prepare("SELECT matches.matchID as matchID FROM peer_review_assignment_matches matches JOIN users ON users.userID = matches.reviewerID WHERE userType in ('instructor', 'marker', 'shadowinstructor', 'shadowmarker') && submissionID = ?;");
-        $sh = $this->db->prepare("SELECT matches.matchID as matchID FROM peer_review_assignment_matches matches WHERE matches.calibrationState = 1 && userType in ('instructor', 'marker', 'shadowinstructor', 'shadowmarker', 'anonymous') && submissionID = ?;");
+        $sh = $this->db->prepare("SELECT matches.matchID as matchID FROM peer_review_assignment_matches matches WHERE matches.calibrationState = 1 && userType in ('instructor', 'marker', 'shadowinstructor', 'shadowmarker') && submissionID = ?;");
         $sh->execute(array($submissionID));
         $ids = array();
         while($res = $sh->fetch()){

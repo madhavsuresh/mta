@@ -43,7 +43,8 @@ class PeerReviewAssignment extends Assignment
     public $submissionSettings;
 
     public $calibrationPoolAssignmentIds = array();
-
+	
+	public $extraCalibrations;
 
     public $dateFormat = "MMMM Do YYYY, HH:mm";
 
@@ -382,6 +383,8 @@ class PeerReviewAssignment extends Assignment
 		$this->calibrationThresholdMSE = floatval($POST["calibrationThresholdMSE"]);
 		$this->calibrationThresholdScore = floatval($POST["calibrationThresholdScore"]);
 		
+		$this->extraCalibrations = intval($POST["extraCalibrations"]);
+		
         if(!array_key_exists("calibrationPoolAssignmentIds", $POST))
             $this->calibrationPoolAssignmentIds = array();
         else
@@ -536,6 +539,8 @@ class PeerReviewAssignment extends Assignment
         $html .= "<tr><td>&nbsp;</td></tr>";
         $html .= "<tr><td>Threshold mean-square-deviation for advancement</td><td><input type='text' name='calibrationThresholdMSE' value='$this->calibrationThresholdMSE'/></td></tr>\n";
         $html .= "<tr><td>Threshold score for advancement</td><td><input type='text' name='calibrationThresholdScore' value='$this->calibrationThresholdScore'/></td></tr>\n";
+        $html .= "<tr><td>&nbsp;</td></tr>";
+        $html .= "<tr><td>Extra calibrations for supervised students</td><td><input type='text' name='extraCalibrations' value='$this->extraCalibrations'/></td></tr>\n";
         $html .= "</table><br>\n";
 		
         /*global $dataMgr;

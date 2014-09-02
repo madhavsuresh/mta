@@ -1,0 +1,1 @@
+ALTER TABLE `peer_review_assignment` ADD `extraCalibrations` INT(11) NULL ;

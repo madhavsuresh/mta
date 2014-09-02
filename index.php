@@ -62,15 +62,22 @@ try
 					}
 					$id++;			
 				} 
+				
+				/*$calibrationReviewAssignments = $assignment->getCalibrationReviews($USERID);
+				foreach($calibrationReviewAssignments as $matchID)
+				{
+					
+				}*/
 			}
 			ksort($output);
-			
 			foreach($output as $item)
 			{
 				$content .= $item;
 			}
-			
 			$content .= "</table><br>";
+			
+			$content .= "<h1>CALIBRATIONS</h1>\n";
+			$content .= "<table align='left'>\n";
 		}
 
         if($dataMgr->isInstructor($USERID))

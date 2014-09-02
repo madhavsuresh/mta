@@ -36,7 +36,7 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
         //$minimumCalibrationReviews = require_from_post("minimumReviews");
         //$independentThreshold = require_from_post("threshold");
 
-        $assignments = $dataMgr->getCalibrationAssignments();
+        //$assignments = $dataMgr->getCalibrationAssignments();
         $userNameMap = $dataMgr->getUserDisplayMap();
         $students = $dataMgr->getStudents();
         if(array_key_exists("keep", $_POST)){
@@ -45,10 +45,11 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
             $independents = array();
         }
         
+        /*
         $html = "<h2>Used Assignments</h2>";
         foreach($assignments as $asn){
             $html .= $asn->name . "<br>";
-        }
+        }*/
 
         $html .= "<table width='100%'>\n";
         $html .= "<tr><td><h2>Student</h2></td><td><h2>Weighted Average Score</h2></td><td><h2>Calibration Reviews Done</h2></td><td><h2>Status</h2></td></tr>\n";
@@ -56,12 +57,12 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
         foreach($students as $student)
         {
             $html .= "<tr class='rowType$currentRowType'><td>".$userNameMap[$student->id]."</td><td>";
-            $score = computeWeightedAverage($dataMgr->getCalibrationScores($student));
+            $score = convertTo10pointScale(computeWeightedAverage($dataMgr->getCalibrationScores($student)), $currentAssignment->assignmentID);
             $html .= precisionFloat($score);
 			$numReviews = $dataMgr->numCalibrationReviews($student);
 			$html .= "<td>".$numReviews."</td>";
             $html .= "</td><td>\n";
-            if($score <= $currentAssignment->calibrationThresholdMSE && $numReviews >= $currentAssignment->calibrationMinCount && !array_key_exists($student->id, $independents))
+            if($score >= $currentAssignment->calibrationThresholdScore && $numReviews >= $currentAssignment->calibrationMinCount && !array_key_exists($student->id, $independents))
             {
                 $independents[] = $student;
                 $html .= "Independent";

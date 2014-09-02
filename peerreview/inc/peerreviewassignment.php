@@ -44,7 +44,7 @@ class PeerReviewAssignment extends Assignment
 
     public $calibrationPoolAssignmentIds = array();
 	
-	public $extraCalibrations;
+	public $extraCalibrations = 0;
 
     public $dateFormat = "MMMM Do YYYY, HH:mm";
 
@@ -227,7 +227,7 @@ class PeerReviewAssignment extends Assignment
                         $html .= "</table>";
                     }
                     $html .= "<br>";
-                    if((!$pending && count($this->calibrationPoolAssignmentIds) > 0) || (!$pending && count($this->getCalibrationSubmissionIDs()) > 0))
+                    if(/*!$pending && count($this->calibrationPoolAssignmentIds) > 0 ||*/ !$pending && count($this->getCalibrationSubmissionIDs()) > 0)
                         $html .= "<a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$this->assignmentID")."'>Request Calibration Review</a><br>";
                     #Do they have reviews to do?
                     $reviewAssignments = $this->dataMgr->getAssignedReviews($this, $user);
@@ -238,8 +238,7 @@ class PeerReviewAssignment extends Assignment
                         # Flag independents
                         # $html .= "<tr><td>";
                         # $html .= $this->getPoolStatusHTML($user);
-                        # $html .= "</td></tr>";
-                          
+                        # $html .= "</td></tr>";   
                         
                         $id = 0;
                         foreach($reviewAssignments as $matchID)

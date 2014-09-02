@@ -26,10 +26,10 @@ try
 		
 		if($dataMgr->isStudent($USERID))
 		{
-			$content .= "<h1>TODO</h1>\n";
-            $content .= "<table align='left'>\n";
-			
 			$output = array();
+			
+			$calOutput = array();
+			
 			foreach($assignments as $assignment)
 			{
 				
@@ -52,24 +52,36 @@ try
 				
 				}
 
-				$reviewAssignments = $assignment->getAssignedReviews($USERID);
-				$id=0;
-				foreach($reviewAssignments as $matchID)
+				if($assignment->reviewStartDate <= $NOW AND $assignment->reviewStopDate > $NOW)
 				{
-					if(!$assignment->reviewExists($matchID) AND ($assignment->reviewStartDate <= $NOW AND $assignment->reviewStopDate > $NOW))
+					$reviewAssignments = $assignment->getAssignedReviews($USERID);
+					$id=0;
+					foreach($reviewAssignments as $matchID)
 					{
-						$output[$assignment->reviewStopDate] .= "<tr><td><h4><i>$assignment->name</i></h4></td><td>Peer Review</td><td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."' method='post'><input type='submit' value='Go'></form></td><td>".date('F jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";	
-					}
-					$id++;			
-				} 
+						if(!$assignment->reviewExists($matchID))
+						{
+							$output[$assignment->reviewStopDate] = "<tr><td><h4><i>$assignment->name</i></h4></td><td>Peer Review</td><td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."' method='post'><input type='submit' value='Go'></form></td><td>".date('F jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";	
+						}
+						$id++;			
+					} 
 				
-				/*$calibrationReviewAssignments = $assignment->getCalibrationReviews($USERID);
-				foreach($calibrationReviewAssignments as $matchID)
-				{
-					
-				}*/
+                	$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();
+	                if($availableCalibrationSubmissions)
+	                {
+	                    $independents = $assignment->getIndependentUsers();
+	                    //if student is supervised and has done less than the extra calibrations required
+	                    if(!array_key_exists($USERID->id, $independents) && $assignment->numCalibrationReviewsDone($USERID) < $assignment->extraCalibrations)
+	                    {
+	                    	$calOutput[$assignment->reviewStopDate] .= "<tr><td>Calibrations from $assignment->name:</td><td>".$assignment->numCalibrationReviewsDone($USERID)." / $assignment->extraCalibrations completed</td><td><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'>Request Calibration Review</a></td></tr>";
+	                    }
+	                }
+                }
+				
 			}
 			ksort($output);
+			
+			$content .= "<h1>TODO</h1>\n";
+            $content .= "<table align='left'>\n";
 			foreach($output as $item)
 			{
 				$content .= $item;
@@ -78,6 +90,11 @@ try
 			
 			$content .= "<h1>CALIBRATIONS</h1>\n";
 			$content .= "<table align='left'>\n";
+			foreach($calOutput as $item)
+			{
+				$content .= $item;
+			}
+			$content .= "</table><br>";
 		}
 
         if($dataMgr->isInstructor($USERID))

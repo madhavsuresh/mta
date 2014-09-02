@@ -117,6 +117,8 @@ class ImportFromCalibrationPoolPeerReviewScript extends Script
 			$authorIDtosubmissionIDMapForPool = $selectedPool->getAuthorSubmissionMap();
 			
 			$oldToNewAuthorIDMap = array();
+			
+			$oldToNewReviewerIDMap = array();
 					
 			foreach($authorIDtosubmissionIDMapForPool as $authorID => $submissionID)
 			{
@@ -125,16 +127,15 @@ class ImportFromCalibrationPoolPeerReviewScript extends Script
 				$submission->submissionID = NULL;
 				
 				//TODO: Check if author of a submission from pool is already an author in this assignment
-				if($assignment->submissionExists(new UserID($authorID)))
+
+				if($assignment->submissionExists(new UserID($authorID)) || !$assignment->isInSameCourse($selectedPool))
 				{
-					$newAuthorID = $assignment->getUserIDForCopyingSubmission($submission->authorID, $dataMgr->getUserInfo($submission->authorID)->username);
+					$newAuthorID = $assignment->getUserIDForCopyingSubmission($submission->authorID, $dataMgr->getUsername($submission->authorID));
 					$submission->authorID = $newAuthorID;
 					$oldToNewAuthorIDMap[$authorID] = $newAuthorID->id;
 				}
 				else
-				{
-					$oldToNewAuthorIDMap[$submission->authorID->id] = $submission->authorID->id;
-				}
+					$oldToNewAuthorIDMap[$authorID] = $submission->authorID->id;
 				
 				//TODO: Check if submission from  pool is the same 'textually' as submission already in this assignment
 				
@@ -143,21 +144,29 @@ class ImportFromCalibrationPoolPeerReviewScript extends Script
 			
 			$authorIDtosubmissionIDMapForAssignment = $assignment->getAuthorSubmissionMap();
 			
+			$oldToNewReviewerIDMap[$authorID] = array();
+			
 			foreach($authorIDtosubmissionIDMapForPool as $authorID => $submissionID)
 			{
-				$matchIDs = $selectedPool->getInstructorMatchesForSubmission($submissionID); //gets 'correct' reviews the old-fashioned way
+				$matchIDs = $selectedPool->getSpecialMatchesForSubmission($submissionID); //gets 'correct' reviews the old-fashioned way
 				
 				foreach($matchIDs as $matchID)
 			 	{
 					$review = $selectedPool->getReview($matchID);
 					 
 					$copiedSubmissionID = $authorIDtosubmissionIDMapForAssignment[$oldToNewAuthorIDMap[$authorID]];
-					 
-					$newmatchID = $assignment->createMatch($copiedSubmissionID, $review->reviewerID, true, 1); //new match made with newly implemented flag '1' to indicate calibrationKey
+					if(!$copiedSubmissionID)
+						throw new Exception("Submission by an author was not properly transcribed");
+					
+					$newReviewerID = $assignment->getUserIDForCopyingReview($review->reviewerID, $dataMgr->getUsername($review->reviewerID), $copiedSubmissionID);
+					
+					$oldToNewReviewerIDMap[$authorID][$review->reviewerID->id] = $newReviewerID->id;
+					
+					$newmatchID = $assignment->createMatch($copiedSubmissionID, $newReviewerID, true, 1); //new match made with newly implemented flag '1' to indicate calibrationKey
 					 
 					$copiedReview = new Review($assignment);
 					$copiedReview->submissionID = $copiedSubmissionID;
-					$copiedReview->reviewerID = $review->reviewerID;
+					$copiedReview->reviewerID = $newReviewerID;
 					$copiedReview->matchID = $newmatchID;
 					$copiedReview->answers = array();
 						 
@@ -172,7 +181,26 @@ class ImportFromCalibrationPoolPeerReviewScript extends Script
 			}
 			
 			//The printed output
-			$html .= "<p>The calibration submissions and reveiws have been imported</p>";
+			$html .= "<p>The calibration submissions and reviews have been imported</p>";
+			
+			$html .= "<table align='left' width='100%'>";
+			$html .= "<tr><td><h2>Submissions by</h2></td><td><h2>Transcribed by</h2></td><td><h2>Reviews by</h2></td><td><h2>Transcribed by</h2></td><tr>";
+			foreach($oldToNewAuthorIDMap as $oldAuthorID => $newAuthorID)
+			{	
+				$html .= "<tr><td>".$dataMgr->getUserDisplayName(new UserID($oldAuthorID))."</td><td>".$dataMgr->getUserDisplayName(new UserID($oldAuthorID))."</td><td><table align='left'>";
+				foreach($oldToNewReviewerIDMap[$oldAuthorID] as $oldReviewerID => $newReviewerID)
+				{
+					$html .= "<tr><td>".$dataMgr->getUserDisplayName(new UserID($oldReviewerID))."</td></tr>";
+				}
+				$html .= "</table></td><td><table align='left'>";
+				foreach($oldToNewReviewerIDMap[$oldAuthorID] as $newReviewerID)
+				{
+					$html .= "<tr><td>".$dataMgr->getUserDisplayName(new UserID($newReviewerID))."</td></tr>";
+				}
+				$html .= "</table></td></tr>";
+			}
+			$html .= "</table>";
+			
 		} else {
 			$html .= "<p>No calibration pool was selected for importing calibration submissions and reviews</p>\n";
 		}

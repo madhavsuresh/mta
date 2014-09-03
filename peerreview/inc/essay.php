@@ -1,5 +1,6 @@
 <?php
 require_once(dirname(__FILE__)."/submission.php");
+require_once(dirname(__FILE__)."/calibrationutils.php");
 
 class EssaySubmission extends Submission
 {
@@ -53,22 +54,48 @@ class EssaySubmission extends Submission
 
     function _getFormHTML()
     {
+    	global $USERID, $dataMgr;	
+	
         $html = "";
-        if(sizeof($this->submissionSettings->topics))
-        {
-            $html  = "Topic: <select name='topic' id='topicSelect'>\n";
-            $html .= "<option value='NULL'></option>\n";
-            for($i = 0; $i < sizeof($this->submissionSettings->topics); $i++)
-            {
-                $tmp = '';
-                if(!is_null($this->topicIndex) && $i == $this->topicIndex)
-                    $tmp = "selected";
-                $html .= "<option value='$i' $tmp>".$this->submissionSettings->topics[$i]."</option>\n";
-            }
-            $html .= "</select><br>";
-            $html .= "<div class=errorMsg><div class='errorField' id='error_topic'></div></div><br>\n";
-        }
-
+		if($this->submissionSettings->autoAssignEssayTopic && $dataMgr->isStudent($USERID))
+		{
+			if(sizeof($this->submissionSettings->topics))
+	        {
+				/*$k = sizeof($this->submissionSettings->topics);
+				$USERstudentID = $dataMgr->getUserInfo($USERID)->studentID;
+				$topicsString = ""; 
+				foreach($this->submissionSettings->topics as $topic)
+				{
+					$topicsString .= $topic;
+				}
+				$newHash = sha1($USERstudentID + $topicsString);
+				$i = $newHash % $k;*/
+				
+				$i = topicHash($USERID, $this->submissionSettings->topics);
+				
+				$this->topicIndex = $i;
+				$html .= "<h1>Topic: ".$this->submissionSettings->topics[$i]."</h2>";
+				$html .= "<input type='hidden' name='topic' value='$i'>";
+			}
+		}
+		else 
+		{
+			if(sizeof($this->submissionSettings->topics))
+	        {
+	            $html  = "Topic: <select name='topic' id='topicSelect'>\n";
+	            $html .= "<option value='NULL'></option>\n";
+	            for($i = 0; $i < sizeof($this->submissionSettings->topics); $i++)
+	            {
+	                $tmp = '';
+	                if(!is_null($this->topicIndex) && $i == $this->topicIndex)
+	                    $tmp = "selected";
+	                $html .= "<option value='$i' $tmp>".$this->submissionSettings->topics[$i]."</option>\n";
+	            }
+	            $html .= "</select><br>";
+	            $html .= "<div class=errorMsg><div class='errorField' id='error_topic'></div></div><br>\n";
+	        }
+		}
+		
         $html .= "<textarea name='text' cols='60' rows='40' class='mceEditor' id='essayEdit' accept-charset='utf-8'>\n";
         $html .= htmlentities($this->text, ENT_COMPAT|ENT_HTML401,'UTF-8');
         $html .= "</textarea><br>\n";
@@ -82,6 +109,7 @@ class EssaySubmission extends Submission
 class EssaySubmissionSettings extends SubmissionSettings
 {
     public $topics = array();
+    public $autoAssignEssayTopic = false;
 
     function getFormHTML()
     {
@@ -91,6 +119,8 @@ class EssaySubmissionSettings extends SubmissionSettings
         foreach($this->topics as $topic)
             $html .= "$topic\n";
         $html .= "</textarea></td><tr>\n";
+		$checked = $this->autoAssignEssayTopic ? "checked" : "";
+		$html .= "<tr><td></td><td><input type='checkbox' name='autoAssignEssayTopic' id='autoAssignEssayTopic' $checked></input>&nbspAutomatically assign topic</td></tr>";
         $html .= "</table>\n";
         return $html;
     }
@@ -109,6 +139,7 @@ class EssaySubmissionSettings extends SubmissionSettings
                 $this->topics[] = $topic;
             }
         }
+		$this->autoAssignEssayTopic = isset_bool($POST['autoAssignEssayTopic']);
     }
 };
 
@@ -127,6 +158,8 @@ class EssayPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
             $sh->execute(array($assignment->assignmentID, $i, $topic));
             $i++;
         }
+		$sh = $this->prepareQuery("setAutoAssignEssayTopicQuery", "UPDATE peer_review_assignment SET autoAssignEssayTopic = ? WHERE assignmentID = ?;");
+		$sh->execute(array($assignment->submissionSettings->autoAssignEssayTopic, $assignment->assignmentID));
     }
 
     function loadAssignmentSubmissionSettings(PeerReviewAssignment $assignment)
@@ -140,6 +173,11 @@ class EssayPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
         {
             $assignment->submissionSettings->topics[] = $res->topic;
         }
+        
+		$sh = $this->db->prepare('SELECT autoAssignEssayTopic FROM peer_review_assignment WHERE assignmentID = ?;');
+		$sh->execute(array($assignment->assignmentID));
+		$res = $sh->fetch();
+		$assignment->submissionSettings->autoAssignEssayTopic = $res->autoAssignEssayTopic;
     }
 
     function getAssignmentSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
@@ -168,5 +206,3 @@ class EssayPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
         }
     }
 }
-
-

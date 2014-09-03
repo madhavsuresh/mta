@@ -1,5 +1,6 @@
 <?php
 require_once("inc/common.php");
+require_once("inc/calibrationutils.php");
 try
 {
     $title .= " | Edit Review";
@@ -184,6 +185,19 @@ try
         $content .= $review->getFormHTML();
         $content .= "<br><br><input type='submit' name='saveAction' id='saveButton' value='Submit' /><input type='submit' name='saveAction' value='Save Draft' />\n";
         $content .= "</form>\n";
+		
+		//Miguel: new calibration score briefing
+		if($isCalibration)
+		{
+			$numberOfCalibrations = $dataMgr->numCalibrationReviews($reviewerID);
+			if($numberOfCalibrations){
+				$score = convertTo10pointScale(computeWeightedAverage($dataMgr->getCalibrationScores($reviewerID)), $assignment->assignmentID);
+			} else {
+				$score = "--";
+			}
+			$content .= "<h4>Current Weighted Average Score: $score / $assignment->calibrationMaxScore</h4>";
+			
+		}
     }
 
     render_page();

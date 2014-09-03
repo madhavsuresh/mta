@@ -1,0 +1,1 @@
+ALTER TABLE `peer_review_assignment` ADD `calibrationMinCount` INT(11) NOT NULL , ADD `calibrationMaxScore` INT(11) NOT NULL , ADD `calibrationThresholdMSE` FLOAT NOT NULL , ADD `calibrationThresholdScore` FLOAT NOT NULL ;

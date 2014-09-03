@@ -2,6 +2,7 @@
 require_once(dirname(__FILE__)."/common.php");
 require_once("inc/assignment.php");
 require_once("reviewquestions.php");
+require_once(dirname(__FILE__)."/calibrationutils.php");
 
 class PeerReviewAssignment extends Assignment
 {
@@ -26,17 +27,24 @@ class PeerReviewAssignment extends Assignment
     public $defaultNumberOfReviews = 3;
     public $allowRequestOfReviews = false;
 
+    /*$%$
     public $reviewScoreMaxDeviationForGood = 0;
     public $reviewScoreMaxCountsForGood = 0;
     
     public $reviewScoreMaxDeviationForPass = 0;
     public $reviewScoreMaxCountsForPass = 0;
-
+	*/
+	public $calibrationMinCount = 0;
+	public $calibrationMaxScore = 0;
+	public $calibrationThresholdMSE = 0;
+	public $calibrationThresholdScore = 0;
+	
     public $submissionType;
     public $submissionSettings;
 
     public $calibrationPoolAssignmentIds = array();
-
+	
+	public $extraCalibrations = 0;
 
     public $dateFormat = "MMMM Do YYYY, HH:mm";
 
@@ -194,7 +202,7 @@ class PeerReviewAssignment extends Assignment
                               $mark = $this->dataMgr->getReviewMark($this, $matchID);
                               $doneCalibrations[$id] = new stdClass;
                               if($mark->isValid){
-                                $doneCalibrations[$id]->text = "($mark->reviewPoints)"; 
+                                $doneCalibrations[$id]->text = "(".convertTo10pointScale($mark->reviewPoints, $this->assignmentID).")"; 
                                 $doneCalibrations[$id]->points = $mark->reviewPoints; 
                               }else{
                                 $doneCalibrations[$id]->text = "";
@@ -219,7 +227,7 @@ class PeerReviewAssignment extends Assignment
                         $html .= "</table>";
                     }
                     $html .= "<br>";
-                    if(!$pending && count($this->calibrationPoolAssignmentIds) > 0)
+                    if(/*!$pending && count($this->calibrationPoolAssignmentIds) > 0 ||*/ !$pending && count($this->getCalibrationSubmissionIDs()) > 0)
                         $html .= "<a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$this->assignmentID")."'>Request Calibration Review</a><br>";
                     #Do they have reviews to do?
                     $reviewAssignments = $this->dataMgr->getAssignedReviews($this, $user);
@@ -230,8 +238,7 @@ class PeerReviewAssignment extends Assignment
                         # Flag independents
                         # $html .= "<tr><td>";
                         # $html .= $this->getPoolStatusHTML($user);
-                        # $html .= "</td></tr>";
-                          
+                        # $html .= "</td></tr>";   
                         
                         $id = 0;
                         foreach($reviewAssignments as $matchID)
@@ -264,16 +271,17 @@ class PeerReviewAssignment extends Assignment
                     if(sizeof($doneCalibrations) > 0){
                         $html .= "<br>Completed Calibration Reviews:<br>";
                         $html .= "<table align=left width=100%>";
-                        $pointsRunningTotal = 0;
+                        //$pointsRunningTotal = 0;
                         foreach($doneCalibrations as $id => $obj)
                         {
                             $html .= "<tr><td>";
                             $temp=$id+1;
                             $html .= "<a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$this->assignmentID&calibration=$id")."''>Calibration Review $temp</a>";
                             $html .= "</td><td>".$obj->text."</td><tr>";
-                            $pointsRunningTotal = max(0, $pointsRunningTotal + $obj->points);
+                            //$pointsRunningTotal = max(0, $pointsRunningTotal + $obj->points);
                         }
-                        $html .= "<tr><td></td><td>$pointsRunningTotal points total</td></tr>";
+                        //$html .= "<tr><td></td><td>$pointsRunningTotal points total</td></tr>";
+                        $html .= "<tr><td>Weighted Average</td><td>".convertTo10pointScale(computeWeightedAverage($dataMgr->getCalibrationScores($user)), $this->assignmentID)."</td></tr>";
                         $html .= "</table>";
                     }
                 }
@@ -362,12 +370,20 @@ class PeerReviewAssignment extends Assignment
         $this->showMarksForReviewedSubmissions = isset_bool($POST['showMarksForReviewedSubmissions']);
         $this->showPoolStatus = isset_bool($POST['showPoolStatus']);
         
+		/*$%$
         $this->reviewScoreMaxDeviationForGood = floatval($POST["reviewScoreMaxDeviationForGood"]);
         $this->reviewScoreMaxCountsForGood = intval($POST["reviewScoreMaxCountsForGood"]);
 
         $this->reviewScoreMaxDeviationForPass = floatval($POST["reviewScoreMaxDeviationForPass"]);
         $this->reviewScoreMaxCountsForPass = intval($POST["reviewScoreMaxCountsForPass"]);
-
+		*/
+		$this->calibrationMinCount = intval($POST["calibrationMinCount"]);
+		$this->calibrationMaxScore = intval($POST["calibrationMaxScore"]);
+		$this->calibrationThresholdMSE = floatval($POST["calibrationThresholdMSE"]);
+		$this->calibrationThresholdScore = floatval($POST["calibrationThresholdScore"]);
+		
+		$this->extraCalibrations = intval($POST["extraCalibrations"]);
+		
         if(!array_key_exists("calibrationPoolAssignmentIds", $POST))
             $this->calibrationPoolAssignmentIds = array();
         else
@@ -504,7 +520,7 @@ class PeerReviewAssignment extends Assignment
         $html .= "<input type='hidden' name='markPostDateSeconds' id='markPostDateSeconds' />\n";
         $html .= "<input type='hidden' name='appealStopDateSeconds' id='appealStopDateSeconds' />\n";
 
-
+		/*$%$
         $html .= "<h3>Calibration Auto Scoring</h3>";
         $html .= "<table align='left' width='100%'>\n";
         $html .= "<tr><td width='320px'>Max review score deviation for good</td><td><input type='text' name='reviewScoreMaxDeviationForGood' value='$this->reviewScoreMaxDeviationForGood'/></td></tr>\n";
@@ -513,9 +529,20 @@ class PeerReviewAssignment extends Assignment
         $html .= "<tr><td>Max review score deviation for pass</td><td><input type='text' name='reviewScoreMaxDeviationForPass' value='$this->reviewScoreMaxDeviationForPass'/></td></tr>\n";
         $html .= "<tr><td>Max counts of max deviation for pass</td><td><input type='text' name='reviewScoreMaxCountsForPass' value='$this->reviewScoreMaxCountsForPass'/></td></tr>\n";
         $html .= "</table><br>\n";
-
-
-        global $dataMgr;
+		*/
+		
+		$html .= "<h3>Calibration Configurations</h3>";
+        $html .= "<table align='left' width='100%'>\n";
+		$html .= "<tr><td width='320px'>Minimum number of calibration reviews for advancement</td><td><input type='text' name='calibrationMinCount' value='$this->calibrationMinCount'/></td></tr>\n";
+        $html .= "<tr><td>Maximum score for a review</td><td><input type='text' name='calibrationMaxScore' value='$this->calibrationMaxScore'/></td></tr>\n";
+        $html .= "<tr><td>&nbsp;</td></tr>";
+        $html .= "<tr><td>Threshold mean-square-deviation for advancement</td><td><input type='text' name='calibrationThresholdMSE' value='$this->calibrationThresholdMSE'/></td></tr>\n";
+        $html .= "<tr><td>Threshold score for advancement</td><td><input type='text' name='calibrationThresholdScore' value='$this->calibrationThresholdScore'/></td></tr>\n";
+        $html .= "<tr><td>&nbsp;</td></tr>";
+        $html .= "<tr><td>Extra calibrations for supervised students</td><td><input type='text' name='extraCalibrations' value='$this->extraCalibrations'/></td></tr>\n";
+        $html .= "</table><br>\n";
+		
+        /*global $dataMgr;
         $html .= "<h3>Calibration Pool Selection</h3>";
 
         foreach($dataMgr->getAssignmentHeaders() as $assgn)
@@ -528,7 +555,7 @@ class PeerReviewAssignment extends Assignment
                 $tmp = "checked";
 
             $html .= "<input type='checkbox' name='calibrationPoolAssignmentIds[]' value='$assgn->assignmentID' $tmp /> $assgn->name <br>\n";
-        }
+        }*/
 
         return $html;
     }

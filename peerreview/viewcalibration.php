@@ -1,5 +1,6 @@
 <?php 
 require_once("inc/common.php");
+require_once(dirname(__FILE__)."/inc/calibrationutils.php");
 
 try
 {
@@ -68,9 +69,13 @@ try
         $content .= "<h1>$reviewerName's Review</h1>\n";
         $content .= $review->getHTML();
 
-        //Tell them how many points they recieved
-        $content .= "<h1>Review Points</h1>\n";
-        $content .= $assignmentWithSubmission->getReviewMark($matchID)->getReviewPoints();
+        //Tell them the calibration score they recieved
+        $content .= "<h1>Calibration Score</h1>\n";
+        $content .= convertTo10pointScale($assignmentWithSubmission->getReviewMark($matchID)->getReviewPoints(), $assignment->assignmentID);
+
+		//Tell them their current average score
+        $content .= "<h1>Current Weighted Average</h1>\n";
+        $content .= convertTo10pointScale(computeWeightedAverage(($dataMgr->getCalibrationScores($reviewerID))), $assignment->assignmentID);
 
         if(array_key_exists("saved", $_GET))
         $content .= "<br><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=".$assignment->assignmentID)."'>Get another calibration essay</a>";

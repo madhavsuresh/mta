@@ -4,15 +4,18 @@ require_once(dirname(__FILE__)."/common.php");
 function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorReview, Review $review)
 {
     //get an array of all the differences
-    $differences = array(); 
+    $squarederrors = array(); 
     foreach($assignment->getReviewQuestions() as $question)
     {
         $id = $question->questionID->id;
-        $differences[] = abs($question->getScore($instructorReview->answers[$id]) - $question->getScore($review->answers[$id]) );
+        $squarederrors[] = pow(abs($question->getScore($instructorReview->answers[$id]) - $question->getScore($review->answers[$id]) ), 2);
     }
 
-    $sumDiff = array_reduce($differences, function($u, $v) { return $u + $v; } );
+    $sum = array_reduce($squarederrors , function($u, $v) { return $u + $v; } );
+	
+	$meansquarederror = $sum / count($squarederrors);
 
+	/*
     //yay for hard coded crap
     if(max($differences) <= 1 && $sumDiff <= 1){
         $points = 1;
@@ -23,11 +26,7 @@ function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorRe
     }else{
         $points = -1;
     }
-
-    /*
-    print_r($differences);
-    echo "$points\n\n";
-*/
+	*/
 
     /* At some point, we should actually honour this stuff
     if(sizeof(array_filter($differences, function($x) use($assignment) { return $x > $assignment->reviewScoreMaxDeviationForGood; })) <= $assignment->reviewScoreMaxCountsForGood && max($differences) <= $assignment->reviewScoreMaxDeviationForGood)
@@ -39,9 +38,10 @@ function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorRe
         $points = -1;
     */
 
-    return new ReviewMark(0, null, true, $points);
+    return new ReviewMark(0, null, true, $meansquarederror);
 }
 
+/*
 function computeReviewPointsForAssignments(UserID $student, $assignments)
 {
     $points = array();
@@ -51,9 +51,79 @@ function computeReviewPointsForAssignments(UserID $student, $assignments)
         {
             $mark = $assignment->getReviewMark($matchID);
             if($mark->isValid)
-                $points[$matchID->id] = $mark->getReviewPoints();
+                $points[$matchID->id] = $mark->getReviewPoints(); //Use timestamp as key
         }
     }
-    ksort($points);
-    return array_reduce($points, function($v, $w) { return max($v+$w, 0); });
+    
+    krsort($points);
+    //return array_reduce($points, function($v, $w) { return max($v+$w, 0); });
+    
+	$total = 0;
+	$totalweights = 0;
+	$i = 0;
+    foreach($points as $point)
+    {
+    	$weight = pow(0.5, $i);
+    	$total += $point * $weight;
+		$totalweights += $weight;
+    	$i++;
+    }
+	
+	return $total/ $totalweights; 
+}
+*/
+
+function computeWeightedAverage($scores)
+{
+	krsort($scores);
+	
+	$total = 0;
+	$totalweights = 0;
+	$i = 0;
+	
+    foreach($scores as $score)
+    {
+    	$weight = pow(0.5, $i);
+    	$total += $score * $weight;
+		$totalweights += $weight;
+    	$i++;
+    }
+	
+	return $total/ $totalweights; 
+}
+
+function convertTo10pointScale($weightedaveragescore, AssignmentID $assignmentID)
+{
+	global $dataMgr;
+	
+	$assignment = $dataMgr->getAssignment($assignmentID);
+	$maxScore = $assignment->calibrationMaxScore;
+	$thresholdMSE = $assignment->calibrationThresholdMSE;
+	$thresholdScore = $assignment->calibrationThresholdScore;
+	
+	return max(0, precisionFloat( -( ($maxScore - $thresholdScore) / $thresholdMSE) * $weightedaveragescore + $maxScore));
+}
+
+function topicHash(UserID $userID, $topics)
+{
+	global $dataMgr;
+	
+	if(!$dataMgr->isStudent($userID))
+		throw new Exception('User is not a student');
+	
+	if($assignment->submissionSettings->topics)
+		throw new Exception('Assignment is not an Essay');
+	
+	$k = sizeof($topics);
+	$UserStudentID = $dataMgr->getUserInfo($userID)->studentID;
+	$topicsString = ""; 
+	foreach($topics as $topic)
+	{
+		$topicsString .= $topic;
+	}
+	$hash = sha1($UserStudentID.$topicsString);
+	#print_r($UserStudentID.$topicsString);
+	#print_r(" --> ".$hash);
+	#print_r(" % $k = ".($hash % $k));
+	return $hash % $k;
 }

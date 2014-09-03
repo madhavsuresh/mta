@@ -32,7 +32,7 @@ try
         //Try to scan the script
         $obj = new stdClass;
         $status = 0;
-        exec("php -l \"".escapeshellcmd($script)."\" 2>&1", $results, $status);
+        exec(str_ireplace("^\\", "/", "php -l \"".escapeshellcmd($script)."\" 2>&1"), $results, $status); //Miguel: changed backslashes to forwardslashes due to WIndows environment
         $scriptFileBaseName = basename($script, ".php");
         $obj->name = $scriptFileBaseName;
         $obj->desc = "";

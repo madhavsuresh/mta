@@ -58,7 +58,6 @@ class PDODataManager extends DataManager
         $this->getEnteredPasswordQuery = $this->db->prepare("SELECT userID from assignment_password_entered WHERE assignmentID = ? && userID = ?;");
         $this->userEnteredPasswordQuery = $this->db->prepare("INSERT INTO assignment_password_entered (assignmentID, userID) VALUES (?, ?);");
 
-
         $this->addAssignmentToCourseQuery = $this->db->prepare( "INSERT INTO assignments (courseID, name, displayPriority, assignmentType) SELECT :courseID, :name, COUNT(courseID), :type FROM assignments WHERE courseID=:courseID;",
                                                                 array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
         $this->removeAssignmentFromCourseQuery = $this->db->prepare("DELETE FROM assignments WHERE assignmentID = ?;");
@@ -66,7 +65,20 @@ class PDODataManager extends DataManager
         //$this->getConfigPropertyQuery = $this->db->prepare("SELECT *;");
         //$this->assignmentSwapDisplayOrderQuery = $this->db->prepare("UPDATE assignments SET
 
-
+ 		$this->getAllAssignmentHeadersQuery = $this->db->prepare("SELECT assignmentID, name, courseID, assignmentType, displayPriority FROM assignments WHERE assignmentType = 'peerreview' ORDER BY displayPriority ASC;");
+		//$this->getAllCalibrationPoolsQuery = $this->db->prepare("SELECT assignmentID, a.name, a.courseID, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_submissions ps, users u WHERE ps.assignmentID = a.assignmentID AND ps.authorID = u.a AND u.userType = 'anonymous' ORDER BY displayPriority ASC;");
+		$this->getAllCalibrationPoolsQuery = $this->db->prepare("SELECT a.assignmentID, a.name, a.courseID, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_calibration_pools pcp WHERE a.assignmentID = pcp.poolAssignmentID ORDER BY displayPriority ASC;");
+        
+		$this->getCalibrationAssignmentHeadersQuery = $this->db->prepare("SELECT a.assignmentID, a.name, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_calibration_matches pr WHERE a.assignmentID = pr.assignmentID AND courseID = ? ORDER BY displayPriority DESC;");
+		
+		#before deprication of calibration matches
+		//$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), prara.reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm, peer_review_assignment_calibration_matches pracm WHERE pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID AND pram.matchID = pracm.matchID ORDER BY prara.reviewTimeStamp DESC;");
+		#after deprication of calibration matches
+		$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), prara.reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 2 AND pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;"); 
+		
+		$this->numCalibrationReviewsQuery = $this->db->prepare("SELECT COUNT(DISTINCT pram.matchID) FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 2 AND pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;");
+        
+        $this->isInSameCourseQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE courseID = ? && assignmentID = ?");
         //Now we can set up all the assignment data managers
         parent::__construct();
     }
@@ -448,4 +460,58 @@ class PDODataManager extends DataManager
         $sh = $this->db->prepare("INSERT INTO course (name, displayName, authType, registrationType, browsable) VALUES (?, ?, ?, ?, ?);");
         $sh->execute(array($name, $displayName, $authType, $regType, $browsable));
     }
+	
+	function getAllAssignmentHeaders()
+    {
+        $this->getAllAssignmentHeadersQuery->execute();
+        $headers = array();
+        while($res = $this->getAllAssignmentHeadersQuery->fetch())
+        {
+            $headers[] = new GlobalAssignmentHeader(new AssignmentID($res->assignmentID), $res->name, new CourseID($res->courseID) , $res->assignmentType, $res->displayPriority);
+        }
+        return $headers;
+    }
+	
+	function getAllCalibrationPoolHeaders()
+    {
+        $this->getAllCalibrationPoolsQuery->execute();
+        $headers = array();
+        while($res = $this->getAllCalibrationPoolsQuery->fetch())
+        {
+            $headers[] = new GlobalAssignmentHeader(new AssignmentID($res->assignmentID), $res->name, new CourseID($res->courseID) , $res->assignmentType, $res->displayPriority);
+        }
+        return $headers;
+    }
+	
+	function getCalibrationAssignmentHeaders()
+    {
+        $this->getCalibrationAssignmentHeadersQuery->execute(array($this->courseID));
+        $headers = array();
+        while($res = $this->getCalibrationAssignmentHeadersQuery->fetch())
+        {
+            $headers[] = new AssignmentHeader(new AssignmentID($res->assignmentID), $res->name, $res->assignmentType, $res->displayPriority);
+        }
+        return $headers;
+    }
+	
+	function getCalibrationScores(UserID $reviewerID)
+	{
+		$this->getCalibrationReviewsQuery->execute(array($reviewerID));
+		
+		$calibrationScores = array();
+		
+		while($res = $this->getCalibrationReviewsQuery->fetch())
+		{
+	    	$calibrationScores[$res->reviewTimeStamp]= $res->reviewPoints;
+		}
+		return $calibrationScores;
+	}
+	
+	function numCalibrationReviews(UserID $reviewerID)
+	{
+		$this->numCalibrationReviewsQuery->execute(array($reviewerID));
+        $res = $this->numCalibrationReviewsQuery->fetch(PDO::FETCH_NUM);
+        return $res[0];
+	}
+	
 }

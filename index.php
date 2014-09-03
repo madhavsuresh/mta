@@ -26,12 +26,10 @@ try
 		
 		if($dataMgr->isStudent($USERID))
 		{
-			if($scores = $dataMgr->getCalibrationScores($USERID)) {
+			if($scores = $dataMgr->getCalibrationScores($USERID))
 				$currentAverage = computeWeightedAverage($scores);
-			} else {
+			else 
 				$currentAverage = "--";
-			}
-			$totalReviews = $dataMgr->numCalibrationReviews($USERID);
 			
 			$output = array();
 			
@@ -45,7 +43,7 @@ try
 				{
 					if(!($assignment->password == NULL) AND !($dataMgr->hasEnteredPassword($assignment->assignmentID, $USERID)))
 					{
-						$output[$assignment->submissionStopDate] = 
+						$output[$assignment->submissionStopDate] .= 
 						"<tr><td><h4><i>$assignment->name</i></h4></td>
 						<td>Password</td></td><td>Enter password:<form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='text' name='password' size='10'/></td>
 						<td><input type='submit' value='Enter'/></form></td>
@@ -55,7 +53,7 @@ try
 					{
 						if(!$assignment->submissionExists($USERID))
 						{
-							$output[$assignment->submissionStopDate] = 
+							$output[$assignment->submissionStopDate] .= 
 							"<tr><td><h4><i>$assignment->name</i></h4></td>
 							<td>".ucfirst($assignment->submissionType)."</td>
 							<td></td>
@@ -67,38 +65,57 @@ try
 
 				if($assignment->reviewStartDate <= $NOW AND $assignment->reviewStopDate > $NOW)
 				{
-					$reviewAssignments = $assignment->getAssignedReviews($USERID);
-					$id=0;
-					foreach($reviewAssignments as $matchID)
+					if($assignment->password == NULL || $dataMgr->hasEnteredPassword($assignment->assignmentID, $USERID))
 					{
-						if(!$assignment->reviewExists($matchID))
+						$reviewAssignments = $assignment->getAssignedReviews($USERID);
+						$id=0;
+						foreach($reviewAssignments as $matchID)
 						{
-							$output[$assignment->reviewStopDate] = 
-							"<tr><td><h4><i>$assignment->name</i></h4></td>
-							<td>Peer Review</td>
-							<td></td>
-							<td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."' method='post'><input type='submit' value='Go'></form></td>
-							<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";	
-						}
-						$id++;			
-					} 
-				
-                	$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();
-	                if($availableCalibrationSubmissions)
-	                {
-	                    $independents = $assignment->getIndependentUsers();
-	                    //if student is supervised and has done less than the extra calibrations required
-	                    if($currentAverage != "--") $currentAverage = convertTo10pointScale($currentAverage, $assignment->assignmentID) ;
-	                    if(!array_key_exists($USERID->id, $independents) && (currentAverage == "--" || $currentAverage < $assignment->calibrationThresholdScore) && $assignment->getNewCalibrationSubmissionForUser($USERID) != NULL)
-	                    {
-	                    	$output[$assignment->reviewStopDate] = 
-	                    	"<tr><td><h4><i>$assignment->name</i></h4></td>
-	                    	<td>Calibration Review: <br/>".$assignment->numCalibrationReviewsDone($USERID)." of $assignment->extraCalibrations completed</td>
-	                    	<td>Current Average: ".$currentAverage." <br/> Threshold: $assignment->calibrationThresholdScore</td> 
-	                    	<td><form action='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Request Calibration Review'></a></td>
-	                    	<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
-	                   	}
-	                }
+							if(!$assignment->reviewExists($matchID))
+							{
+								$output[$assignment->reviewStopDate] .= 
+								"<tr><td><h4><i>$assignment->name</i></h4></td>
+								<td>Peer Review</td>
+								<td></td>
+								<td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."' method='post'><input type='submit' value='Go'></form></td>
+								<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
+							}
+							$id++;			
+						} 
+					
+	                	$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();
+		                if($availableCalibrationSubmissions)
+		                {
+		                    $independents = $assignment->getIndependentUsers();
+		                    //if student is supervised and has done less than the extra calibrations required
+		                    if($currentAverage != "--") 
+		                    	$convertedAverage = convertTo10pointScale($currentAverage, $assignment->assignmentID); 
+		                    else 
+		                   		$convertedAverage = $currentAverage;
+							
+							/*if($assignment->submissionSettings->autoAssignEssayTopic == true && sizeof($assignment->submissionSettings->topics))
+								{
+									$i = topicHash($USERID, $assignment->submissionSettings->autoAssignEssay);
+									$isMoreEssays = $assignment->getNewCalibrationSubmissionForUserRestricted($USERID, $i);
+								}
+							else*/
+								$isMoreEssays = $assignment->getNewCalibrationSubmissionForUser($USERID);
+							
+		                    if(!array_key_exists($USERID->id, $independents) && ($convertedAverage == "--" || $convertedAverage < $assignment->calibrationThresholdScore) && $isMoreEssays != NULL)
+		                    {
+		                    	$completionStatus = "";
+								if($assignment->numCalibrationReviewsDone($USERID) < $assignment->extraCalibrations)
+		                    		$completionStatus .= "<br/>".$assignment->numCalibrationReviewsDone($USERID)." of $assignment->extraCalibrations completed";
+								
+		                    	$output[$assignment->reviewStopDate] .= 
+		                    	"<tr><td><h4><i>$assignment->name</i></h4></td>
+		                    	<td>Calibration Review: $completionStatus</td>
+		                    	<td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
+		                    	<td><form action='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Request Calibration Review'></a></td>
+		                    	<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";	
+		                   	}
+		                }
+		           	}
                 }
 			}
 			ksort($output);

@@ -103,3 +103,27 @@ function convertTo10pointScale($weightedaveragescore, AssignmentID $assignmentID
 	
 	return max(0, precisionFloat( -( ($maxScore - $thresholdScore) / $thresholdMSE) * $weightedaveragescore + $maxScore));
 }
+
+function topicHash(UserID $userID, $topics)
+{
+	global $dataMgr;
+	
+	if(!$dataMgr->isStudent($userID))
+		throw new Exception('User is not a student');
+	
+	if($assignment->submissionSettings->topics)
+		throw new Exception('Assignment is not an Essay');
+	
+	$k = sizeof($topics);
+	$UserStudentID = $dataMgr->getUserInfo($userID)->studentID;
+	$topicsString = ""; 
+	foreach($topics as $topic)
+	{
+		$topicsString .= $topic;
+	}
+	print_r($UserStudentID.$topicsString);
+	$hash = sha1($UserStudentID.$topicsString);
+	print_r(" --> ".$hash);
+	print_r(" % $k = ".($hash % $k));
+	return $hash % $k;
+}

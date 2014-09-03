@@ -523,9 +523,21 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     function getNewCalibrationSubmissionForUser(PeerReviewAssignment $assignment, UserID $userid)
     {
         //$sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT submissionID FROM `peer_review_assignment_submissions` subs LEFT JOIN peer_review_assignment_calibration_pools pools ON subs.assignmentID = pools.poolAssignmentID WHERE pools.assignmentID = ? && submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY RAND() LIMIT 1;");
-		$sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT subs.submissionID FROM `peer_review_assignment_submissions` subs LEFT JOIN peer_review_assignment_matches matches ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? && matches.calibrationState = 1 && subs.submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY RAND() LIMIT 1;");
+		$sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT subs.submissionID FROM `peer_review_assignment_submissions` subs JOIN peer_review_assignment_matches matches ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? && matches.calibrationState = 1 && subs.submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY RAND() LIMIT 1;");
         
         $sh->execute(array($assignment->assignmentID, $userid));
+
+        if($res = $sh->fetch()) {
+            return new SubmissionID($res->submissionID);
+        }
+        return NULL;
+    }
+    
+    function getNewCalibrationSubmissionForUserRestricted(PeerReviewAssignment $assignment, UserID $userid, $topicIndex)
+    {
+    	$sh = $this->prepareQuery("getNewCalibSubmissionForUserRestrictedQuery", "SELECT subs.submissionID FROM `peer_review_assignment_submissions` subs, peer_review_assignment_matches matches, peer_review_assignment_essays essays WHERE subs.submissionID = essays.submissionID && subs.submissionID = matches.submissionID && subs.assignmentID = ? && matches.calibrationState = 1 && subs.submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) && essays.topicIndex <> ? ORDER BY RAND() LIMIT 1;");
+    	
+    	$sh->execute(array($assignment->assignmentID, $userid, $topicIndex));
 
         if($res = $sh->fetch()) {
             return new SubmissionID($res->submissionID);
@@ -829,7 +841,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 				$lastName.= " (".($count+1).")";
             }
 			
-			return $this->dataMgr->addUser($basename.$count, $firstName, $lastName, 0, 'shadowinstructor');
+			return $this->dataMgr->addUser($basename.$count, $firstName, $lastName, 0, 'anonymous');
         }
     }
 

@@ -1,5 +1,6 @@
 <?php
 require_once(dirname(__FILE__)."/submission.php");
+require_once(dirname(__FILE__)."/calibrationutils.php");
 
 class EssaySubmission extends Submission
 {
@@ -53,10 +54,33 @@ class EssaySubmission extends Submission
 
     function _getFormHTML()
     {
+    	global $USERID, $dataMgr;	
+	
         $html = "";
-		if(!$this->submissionSettings->autoAssignEssayTopic)
+		if($this->submissionSettings->autoAssignEssayTopic && $dataMgr->isStudent($USERID))
 		{
-	        if(sizeof($this->submissionSettings->topics))
+			if(sizeof($this->submissionSettings->topics))
+	        {
+				/*$k = sizeof($this->submissionSettings->topics);
+				$USERstudentID = $dataMgr->getUserInfo($USERID)->studentID;
+				$topicsString = ""; 
+				foreach($this->submissionSettings->topics as $topic)
+				{
+					$topicsString .= $topic;
+				}
+				$newHash = sha1($USERstudentID + $topicsString);
+				$i = $newHash % $k;*/
+				
+				$i = topicHash($USERID, $this->submissionSettings->topics);
+				
+				$this->topicIndex = $i;
+				$html .= "<h1>Topic: ".$this->submissionSettings->topics[$i]."</h2>";
+				$html .= "<input type='hidden' name='topic' value='$i'>";
+			}
+		}
+		else 
+		{
+			if(sizeof($this->submissionSettings->topics))
 	        {
 	            $html  = "Topic: <select name='topic' id='topicSelect'>\n";
 	            $html .= "<option value='NULL'></option>\n";
@@ -70,21 +94,6 @@ class EssaySubmission extends Submission
 	            $html .= "</select><br>";
 	            $html .= "<div class=errorMsg><div class='errorField' id='error_topic'></div></div><br>\n";
 	        }
-		}
-		else 
-		{
-			if(sizeof($this->submissionSettings->topics))
-	        {
-				global $USERID, $dataMgr;
-				
-				$k = sizeof($this->submissionSettings->topics);
-				$USERstudentID = $dataMgr->getUserInfo($USERID)->studentID;
-				$i = sha1($USERstudentID) % $k;
-				
-				$this->topicIndex = $i;
-				$html .= "<h1>Topic: ".$this->submissionSettings->topics[$i]."</h2>";
-				$html .= "<input type='hidden' name='topic' value='$i'>";
-			}
 		}
 		
         $html .= "<textarea name='text' cols='60' rows='40' class='mceEditor' id='essayEdit' accept-charset='utf-8'>\n";
@@ -197,5 +206,3 @@ class EssayPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
         }
     }
 }
-
-

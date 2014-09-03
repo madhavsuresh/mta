@@ -121,9 +121,9 @@ function topicHash(UserID $userID, $topics)
 	{
 		$topicsString .= $topic;
 	}
-	print_r($UserStudentID.$topicsString);
 	$hash = sha1($UserStudentID.$topicsString);
-	print_r(" --> ".$hash);
-	print_r(" % $k = ".($hash % $k));
+	#print_r($UserStudentID.$topicsString);
+	#print_r(" --> ".$hash);
+	#print_r(" % $k = ".($hash % $k));
 	return $hash % $k;
 }

@@ -54,21 +54,28 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
         $html .= "<table width='100%'>\n";
         $html .= "<tr><td><h2>Student</h2></td><td><h2>Weighted Average Score</h2></td><td><h2>Calibration Reviews Done</h2></td><td><h2>Status</h2></td></tr>\n";
         $currentRowType = 0;
+
+		$count = 1;
         foreach($students as $student)
         {
-            $html .= "<tr class='rowType$currentRowType'><td>".$userNameMap[$student->id]."</td><td>";
-            $score = convertTo10pointScale(computeWeightedAverage($dataMgr->getCalibrationScores($student)), $currentAssignment->assignmentID);
-            $html .= precisionFloat($score);
+            $html .= "<tr class='rowType$currentRowType'><td>".$userNameMap[$student->id]."</td>";
+			$scores = $dataMgr->getCalibrationScores($student);
+			if($scores)
+            	$average = convertTo10pointScale(computeWeightedAverage($scores), $currentAssignment->assignmentID);
+			else 
+				$average = "--";
+            $html .= "<td>$average</td>";
 			$numReviews = $dataMgr->numCalibrationReviews($student);
 			$html .= "<td>".$numReviews."</td>";
             $html .= "</td><td>\n";
-            if($score >= $currentAssignment->calibrationThresholdScore && $numReviews >= $currentAssignment->calibrationMinCount && !array_key_exists($student->id, $independents))
+            if($average >= $currentAssignment->calibrationThresholdScore && $numReviews >= $currentAssignment->calibrationMinCount && !in_array($student->id, $independents))
             {
                 $independents[] = $student;
                 $html .= "Independent";
             }
             $html .= "</td></tr>\n";
             $currentRowType = ($currentRowType+1)%2;
+            $count++;
         }
         $html .= "</table>\n";
 

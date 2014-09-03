@@ -104,6 +104,15 @@ function convertTo10pointScale($weightedaveragescore, AssignmentID $assignmentID
 	return max(0, precisionFloat( -( ($maxScore - $thresholdScore) / $thresholdMSE) * $weightedaveragescore + $maxScore));
 }
 
+function convertTo10pointScale_($weightedaveragescore, PeerReviewAssignment $assignment)
+{
+	$maxScore = $assignment->calibrationMaxScore;
+	$thresholdMSE = $assignment->calibrationThresholdMSE;
+	$thresholdScore = $assignment->calibrationThresholdScore;
+	
+	return max(0, precisionFloat( -( ($maxScore - $thresholdScore) / $thresholdMSE) * $weightedaveragescore + $maxScore));
+}
+
 function topicHash(UserID $userID, $topics)
 {
 	global $dataMgr;

@@ -33,6 +33,7 @@ try
 				$currentAverage = "--";
 			
 			$output = array();
+			$calOutput = array();
 			
 			foreach($assignments as $assignment)
 			{
@@ -84,7 +85,7 @@ try
 							$id++;			
 						} 
 					
-	                	$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();
+	                	$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();#$#
 		                if($availableCalibrationSubmissions)
 		                {
 		                    $independents = $assignment->getIndependentUsers();
@@ -113,11 +114,17 @@ try
 		                    	<td>Calibration Review $completionStatus</td>
 		                    	<td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
 		                    	<td><form action='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Request Calibration Review'></a></td>
-		                    	<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";	
+		                    	<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
 		                   	}
 		                }
 		           	}
                 }
+
+				$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();
+				if($availableCalibrationSubmissions){
+					//PITSTOP
+					$calOutput[$assignment->reviewStartDate] = "";
+				}
 			}
 			ksort($output);
 			
@@ -128,8 +135,6 @@ try
 				$content .= $item;
 			}
 			$content .= "</table><br>";
-			
-			global $dataMgr;	
 			
 			/*$dummyAssignment = new PeerReviewAssignment(new AssignmentID(0), "dummy", $dataMgr);
 			//$dummyAssignment->calibrationMaxScore = 10;

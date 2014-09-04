@@ -33,34 +33,41 @@ try
 				$currentAverage = "--";
 			
 			$output = array();
-			$calOutput = array();
+			$items = array();
+			
+			$latestCalibrationAssignment = NULL;
 			
 			foreach($assignments as $assignment)
-			{
-				
+			{				
 				if(!$assignment->showForUser($USERID))
                 continue;
        			
 				if($assignment->submissionStartDate <= $NOW AND $assignment->submissionStopDate > $NOW)
 				{
 					if(!($assignment->password == NULL) AND !($dataMgr->hasEnteredPassword($assignment->assignmentID, $USERID)))
-					{
-						$output[$assignment->submissionStopDate] .= 
-						"<tr><td><h4><i>$assignment->name</i></h4></td>
+					{		
+						$item = new stdClass();
+						$item->endDate = $assignment->submissionStopDate;
+						$item->html =
+						"<table width='100%' align='left'><tr><td><h4><i>$assignment->name</i></h4></td>
 						<td>Password</td></td><td>Enter password:<form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='text' name='password' size='10'/></td>
 						<td><input type='submit' value='Enter'/></form></td>
-						<td>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
+						<td>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr></table>\n";
 					}
 					else 
 					{
 						if(!$assignment->submissionExists($USERID))
 						{
+							$item = new stdClass();
+							$item->endDate = $assignment->submissionStopDate;
+							$item->html =
 							$output[$assignment->submissionStopDate] .= 
-							"<tr><td><h4><i>$assignment->name</i></h4></td>
+							"<table width='100%' align='left'><tr><td><h4><i>$assignment->name</i></h4></td>
 							<td>".ucfirst($assignment->submissionType)."</td>
 							<td></td>
 							<td><form action='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Create Submission'/></form></td>
-							<td>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
+							<td>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr></table>\n";
+							//insert()
 						}
 					}	
 				}
@@ -77,11 +84,11 @@ try
 							if(!$assignment->reviewExists($matchID))
 							{
 								$output[$assignment->reviewStopDate] .= 
-								"<tr><td><h4><i>$assignment->name</i></h4></td>
+								"<table width='100%' align='left'><tr><td><h4><i>$assignment->name</i></h4></td>
 								<td>Peer Review $temp</td>
 								<td></td>
 								<td><a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."''>Peer Review $temp</a></td>
-								<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
+								<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr></table>\n";
 							}
 							$id++;			
 						} 
@@ -94,11 +101,11 @@ try
 							{
 								$temp = $id+1;
 								$output[$assignment->reviewStopDate] .=
-								"<tr><td><h4><i>$assignment->name</i></h4></td>
+								"<table width='100%' align='left'><tr><td><h4><i>$assignment->name</i></h4></td>
 								<td>Calibration Review $temp</td>
 								<td></td>
 								<td><a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&calibration=$id")."''>Calibration Review $temp</a></td>
-								<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
+								<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr></table>\n";
 							}
 							$id++;
 						}			
@@ -107,6 +114,8 @@ try
 	                	$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();#$#
 		                if($availableCalibrationSubmissions && $assignment->extraCalibrations > 0)
 		                {
+		                	$latestCalibrationAssignment = $assignment;
+							
 		                    $independents = $assignment->getIndependentUsers();
 		                    //if student is supervised and has done less than the extra calibrations required
 		                    if($currentAverage != "--") 
@@ -142,11 +151,11 @@ try
 									$moreCalibrations = "<td>No more available calibrations</td>";
 								
 		                    	$output[$assignment->reviewStopDate] .= 
-		                    	"<tr><td><h4><i>$assignment->name</i></h4></td>
+		                    	"<table width='100%' align='left'><tr><td><h4><i>$assignment->name</i></h4></td>
 		                    	<td>Calibration Review $completionStatus</td>
 		                    	<td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
 		                    	$moreCalibrations
-		                    	<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
+		                    	<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr></table>\n";
 		                   	}
 		                }
 		           	}
@@ -156,30 +165,27 @@ try
 			ksort($output);
 			
 			$content .= "<h1>TODO</h1>\n";
-            $content .= "<table align='left'>\n";
 			foreach($output as $item)
 			{
 				$content .= $item;
 			}
-			$content .= "</table><br>";
 			
-			/*$dummyAssignment = new PeerReviewAssignment(new AssignmentID(0), "dummy", $dataMgr);
-			//$dummyAssignment->calibrationMaxScore = 10;
-			//$dummyAssignment->calibrationThresholdMSE = 1.75; 
-			//$dummyAssignment->calibrationThresholdScore = 8; 
-			
-			$reviewerAverage = convertTo10pointScale($currentAverage, $dummyAssignment); 
-			
-			$status = "";
-			if($reviewerAverage < $dummyAssignment->calibrationThresholdScore)
-				$status = "Supervised";
-			else
-				$status = "Independent";*/
-			
-			/*$content .= "<h1>Calibration</h1>\n";
+			if($latestCalibrationAssignment != NULL)
+			{
+			    if($currentAverage != "--") 
+                	$reviewerAverage = convertTo10pointScale($currentAverage, $assignment); 
+                else 
+               		$reviewerAverage = $currentAverage;
+				$status = "";
+				if($reviewAverage == "--"|| $reviewerAverage < $latestCalibrationAssignment->calibrationThresholdScore)
+					$status = "Supervised";
+				else
+					$status = "Independent";
+			}
+			$content .= "<h1>Calibration</h1>\n";
 			$content .= "<h2>Current Review Status : ".$status."</h2>";
-			$content .= "<h2>Current Weighted Average : ".$reviewAverage."</h2>";
-			$content .= "<h2>Threshold: ".$threshold."</h2>";*/
+			$content .= "<h2>Current Weighted Average : ".$reviewerAverage."</h2>";
+			$content .= "<h2>Threshold: ".$latestCalibrationAssignment->calibrationThresholdScore."</h2>";
 		}
 
         if($dataMgr->isInstructor($USERID))
@@ -226,6 +232,24 @@ try
     }
 }catch(Exception $e) {
     render_exception_page($e);
+}
+
+function insert($object, $array)
+{
+	$length = sizeof($array);
+
+	for($i = 0; $i < $length; $i++)
+	{
+		if($object->endDate < $array[$i]->endDate)
+		{
+			for($j = $i; $j < $length; $j++)
+			{
+				$temp = $array[$j];
+				$array[$j] = $object;
+				$array = $array[$j+1];
+			}
+		}
+	}
 }
 
 ?>

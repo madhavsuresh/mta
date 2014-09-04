@@ -61,7 +61,7 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
             $html .= "<tr class='rowType$currentRowType'><td>".$userNameMap[$student->id]."</td>";
 			$scores = $dataMgr->getCalibrationScores($student);
 			if($scores)
-            	$average = convertTo10pointScale(computeWeightedAverage($scores), $currentAssignment->assignmentID);
+            	$average = convertTo10pointScale(computeWeightedAverage($scores), $currentAssignment);
 			else 
 				$average = "--";
             $html .= "<td>$average</td>";

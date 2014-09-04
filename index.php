@@ -79,13 +79,13 @@ try
 								"<tr><td><h4><i>$assignment->name</i></h4></td>
 								<td>Peer Review</td>
 								<td></td>
-								<td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."' method='post'><input type='submit' value='Go'></form></td>
+								<td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."' method='get'><input type='submit' value='Go'></form></td>
 								<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
 							}
 							$id++;			
 						} 
 					
-						$calibrationReviewAssignments = $assignment->getAssignedCalibrationReviews($USERID);
+						/*$calibrationReviewAssignments = $assignment->getAssignedCalibrationReviews($USERID);
 						$id=0;
 						foreach($calibrationReviewAssignments as $matchID)
 						{
@@ -99,7 +99,7 @@ try
 								<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
 							}
 							$id++;
-						}					
+						}*/				
 					
 						//TO-DO: Clean-up logic flow
 	                	$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();#$#

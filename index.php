@@ -73,37 +73,39 @@ try
 						$id=0;
 						foreach($reviewAssignments as $matchID)
 						{
+							$temp = $id+1;
 							if(!$assignment->reviewExists($matchID))
 							{
 								$output[$assignment->reviewStopDate] .= 
 								"<tr><td><h4><i>$assignment->name</i></h4></td>
-								<td>Peer Review</td>
+								<td>Peer Review $temp</td>
 								<td></td>
-								<td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."' method='get'><input type='submit' value='Go'></form></td>
+								<td><a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."''>Peer Review $temp</a></td>
 								<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
 							}
 							$id++;			
 						} 
 					
-						/*$calibrationReviewAssignments = $assignment->getAssignedCalibrationReviews($USERID);
+						$calibrationReviewAssignments = $assignment->getAssignedCalibrationReviews($USERID);
 						$id=0;
 						foreach($calibrationReviewAssignments as $matchID)
 						{
 							if(!$assignment->reviewExists($matchID))
 							{
+								$temp = $id+1;
 								$output[$assignment->reviewStopDate] .=
 								"<tr><td><h4><i>$assignment->name</i></h4></td>
-								<td>Calibration Review</td>
+								<td>Calibration Review $temp</td>
 								<td></td>
-								<td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&calibration=$id")."' method='post'><input type='submit' value='Go'></form></td>
+								<td><a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&calibration=$id")."''>Calibration Review $temp</a></td>
 								<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
 							}
 							$id++;
-						}*/				
+						}			
 					
 						//TO-DO: Clean-up logic flow
 	                	$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();#$#
-		                if($availableCalibrationSubmissions)
+		                if($availableCalibrationSubmissions && $assignment->extraCalibrations > 0)
 		                {
 		                    $independents = $assignment->getIndependentUsers();
 		                    //if student is supervised and has done less than the extra calibrations required
@@ -114,7 +116,7 @@ try
 							
 							if($assignment->submissionSettings->autoAssignEssayTopic == true && sizeof($assignment->submissionSettings->topics))
 								{
-									$i = topicHash($USERID, $assignment->submissionSettings->autoAssignEssay);
+									$i = topicHash($USERID, $assignment->submissionSettings->topics);
 									$isMoreEssays = $assignment->getNewCalibrationSubmissionForUserRestricted($USERID, $i);
 								}
 							else
@@ -124,7 +126,7 @@ try
 							
 								$enoughScore = ($convertedAverage != "--" && $convertedAverage >= $assignment->calibrationThresholdScore);
 								
-								$enoughReviews = $doneForThisAssignment >= $assignment->extraCalibrations;
+								$enoughReviews = $doneForThisAssignment >= $assignment->calibrationMinCount;
 								
 								$enough = $enoughScore && $enoughReviews;
 								
@@ -150,11 +152,6 @@ try
 		           	}
                 }
 
-				$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();
-				if($availableCalibrationSubmissions){
-					//PITSTOP
-					$calOutput[$assignment->reviewStartDate] = "";
-				}
 			}
 			ksort($output);
 			

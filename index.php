@@ -121,7 +121,7 @@ try
 			}
 			ksort($output);
 			
-			$content .= "<h1>TODO</h1>\n";
+			$content .= "<h1>Tasks</h1>\n";
             $content .= "<table align='left'>\n";
 			foreach($output as $item)
 			{

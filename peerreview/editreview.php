@@ -191,7 +191,7 @@ try
 		{
 			$numberOfCalibrations = $dataMgr->numCalibrationReviews($reviewerID);
 			if($numberOfCalibrations){
-				$score = convertTo10pointScale(computeWeightedAverage($dataMgr->getCalibrationScores($reviewerID)), $assignment->assignmentID);
+				$score = convertTo10pointScale(computeWeightedAverage($dataMgr->getCalibrationScores($reviewerID)), $assignment);
 			} else {
 				$score = "--";
 			}

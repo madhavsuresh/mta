@@ -92,11 +92,8 @@ function computeWeightedAverage($scores)
 	return $total/ $totalweights; 
 }
 
-function convertTo10pointScale($weightedaveragescore, AssignmentID $assignmentID)
+function convertTo10pointScale($weightedaveragescore, Assignment $assignment)
 {
-	global $dataMgr;
-	
-	$assignment = $dataMgr->getAssignment($assignmentID);
 	$maxScore = $assignment->calibrationMaxScore;
 	$thresholdMSE = $assignment->calibrationThresholdMSE;
 	$thresholdScore = $assignment->calibrationThresholdScore;

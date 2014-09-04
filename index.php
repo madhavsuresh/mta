@@ -33,6 +33,7 @@ try
 				$currentAverage = "--";
 			
 			$output = array();
+			$calOutput = array();
 			
 			foreach($assignments as $assignment)
 			{
@@ -78,46 +79,82 @@ try
 								"<tr><td><h4><i>$assignment->name</i></h4></td>
 								<td>Peer Review</td>
 								<td></td>
-								<td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."' method='post'><input type='submit' value='Go'></form></td>
+								<td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."' method='get'><input type='submit' value='Go'></form></td>
 								<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
 							}
 							$id++;			
 						} 
 					
-	                	$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();
+						/*$calibrationReviewAssignments = $assignment->getAssignedCalibrationReviews($USERID);
+						$id=0;
+						foreach($calibrationReviewAssignments as $matchID)
+						{
+							if(!$assignment->reviewExists($matchID))
+							{
+								$output[$assignment->reviewStopDate] .=
+								"<tr><td><h4><i>$assignment->name</i></h4></td>
+								<td>Calibration Review</td>
+								<td></td>
+								<td><form action='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&calibration=$id")."' method='post'><input type='submit' value='Go'></form></td>
+								<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
+							}
+							$id++;
+						}*/				
+					
+						//TO-DO: Clean-up logic flow
+	                	$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();#$#
 		                if($availableCalibrationSubmissions)
 		                {
 		                    $independents = $assignment->getIndependentUsers();
 		                    //if student is supervised and has done less than the extra calibrations required
 		                    if($currentAverage != "--") 
-		                    	$convertedAverage = convertTo10pointScale($currentAverage, $assignment->assignmentID); 
+		                    	$convertedAverage = convertTo10pointScale($currentAverage, $assignment); 
 		                    else 
 		                   		$convertedAverage = $currentAverage;
 							
-							/*if($assignment->submissionSettings->autoAssignEssayTopic == true && sizeof($assignment->submissionSettings->topics))
+							if($assignment->submissionSettings->autoAssignEssayTopic == true && sizeof($assignment->submissionSettings->topics))
 								{
 									$i = topicHash($USERID, $assignment->submissionSettings->autoAssignEssay);
 									$isMoreEssays = $assignment->getNewCalibrationSubmissionForUserRestricted($USERID, $i);
 								}
-							else*/
+							else
 								$isMoreEssays = $assignment->getNewCalibrationSubmissionForUser($USERID);
+								
+								$doneForThisAssignment = $assignment->numCalibrationReviewsDone($USERID);
 							
-		                    if(!array_key_exists($USERID->id, $independents) && ($convertedAverage == "--" || $convertedAverage < $assignment->calibrationThresholdScore) && $isMoreEssays != NULL)
+								$enoughScore = ($convertedAverage != "--" && $convertedAverage >= $assignment->calibrationThresholdScore);
+								
+								$enoughReviews = $doneForThisAssignment >= $assignment->extraCalibrations;
+								
+								$enough = $enoughScore && $enoughReviews;
+								
+		                    if(!array_key_exists($USERID->id, $independents) && !$enough /*&& $isMoreEssays != NULL*/)
 		                    {
 		                    	$completionStatus = "";
-								if($assignment->numCalibrationReviewsDone($USERID) < $assignment->extraCalibrations)
-		                    		$completionStatus .= "<br/>".$assignment->numCalibrationReviewsDone($USERID)." of $assignment->extraCalibrations completed";
+								if($doneForThisAssignment < $assignment->extraCalibrations)
+		                    		$completionStatus .= "<br/>".$doneForThisAssignment." of $assignment->extraCalibrations completed";
+								
+								if($isMoreEssays)
+									$moreCalibrations = "<td><form action='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Request Calibration Review'></a></td>";
+								else 
+									$moreCalibrations = "<td>No more available calibrations</td>";
 								
 		                    	$output[$assignment->reviewStopDate] .= 
 		                    	"<tr><td><h4><i>$assignment->name</i></h4></td>
 		                    	<td>Calibration Review $completionStatus</td>
 		                    	<td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
-		                    	<td><form action='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Request Calibration Review'></a></td>
-		                    	<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";	
+		                    	$moreCalibrations
+		                    	<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
 		                   	}
 		                }
 		           	}
                 }
+
+				$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();
+				if($availableCalibrationSubmissions){
+					//PITSTOP
+					$calOutput[$assignment->reviewStartDate] = "";
+				}
 			}
 			ksort($output);
 			
@@ -129,14 +166,12 @@ try
 			}
 			$content .= "</table><br>";
 			
-			global $dataMgr;	
-			
 			/*$dummyAssignment = new PeerReviewAssignment(new AssignmentID(0), "dummy", $dataMgr);
 			//$dummyAssignment->calibrationMaxScore = 10;
 			//$dummyAssignment->calibrationThresholdMSE = 1.75; 
 			//$dummyAssignment->calibrationThresholdScore = 8; 
 			
-			$reviewerAverage = convertTo10pointScale_($currentAverage, $dummyAssignment); 
+			$reviewerAverage = convertTo10pointScale($currentAverage, $dummyAssignment); 
 			
 			$status = "";
 			if($reviewerAverage < $dummyAssignment->calibrationThresholdScore)

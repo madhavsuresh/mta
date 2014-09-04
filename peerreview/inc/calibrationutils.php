@@ -92,11 +92,8 @@ function computeWeightedAverage($scores)
 	return $total/ $totalweights; 
 }
 
-function convertTo10pointScale($weightedaveragescore, AssignmentID $assignmentID)
+function convertTo10pointScale($weightedaveragescore, Assignment $assignment)
 {
-	global $dataMgr;
-	
-	$assignment = $dataMgr->getAssignment($assignmentID);
 	$maxScore = $assignment->calibrationMaxScore;
 	$thresholdMSE = $assignment->calibrationThresholdMSE;
 	$thresholdScore = $assignment->calibrationThresholdScore;
@@ -121,7 +118,7 @@ function topicHash(UserID $userID, $topics)
 		throw new Exception('User is not a student');
 	
 	if($assignment->submissionSettings->topics)
-		throw new Exception('Assignment is not an Essay');
+		throw new Exception('Assignment is not an essay with multiple topics');
 	
 	$k = sizeof($topics);
 	$UserStudentID = $dataMgr->getUserInfo($userID)->studentID;

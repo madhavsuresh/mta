@@ -202,7 +202,7 @@ class PeerReviewAssignment extends Assignment
                               $mark = $this->dataMgr->getReviewMark($this, $matchID);
                               $doneCalibrations[$id] = new stdClass;
                               if($mark->isValid){
-                                $doneCalibrations[$id]->text = "(".convertTo10pointScale($mark->reviewPoints, $this->assignmentID).")"; 
+                                $doneCalibrations[$id]->text = "(".convertTo10pointScale($mark->reviewPoints, $this).")"; 
                                 $doneCalibrations[$id]->points = $mark->reviewPoints; 
                               }else{
                                 $doneCalibrations[$id]->text = "";
@@ -281,7 +281,7 @@ class PeerReviewAssignment extends Assignment
                             //$pointsRunningTotal = max(0, $pointsRunningTotal + $obj->points);
                         }
                         //$html .= "<tr><td></td><td>$pointsRunningTotal points total</td></tr>";
-                        $html .= "<tr><td>Weighted Average</td><td>".convertTo10pointScale(computeWeightedAverage($dataMgr->getCalibrationScores($user)), $this->assignmentID)."</td></tr>";
+                        $html .= "<tr><td>Weighted Average</td><td>".convertTo10pointScale(computeWeightedAverage($dataMgr->getCalibrationScores($user)), $this)."</td></tr>";
                         $html .= "</table>";
                     }
                 }

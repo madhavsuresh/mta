@@ -71,11 +71,11 @@ try
 
         //Tell them the calibration score they recieved
         $content .= "<h1>Calibration Score</h1>\n";
-        $content .= convertTo10pointScale($assignmentWithSubmission->getReviewMark($matchID)->getReviewPoints(), $assignment->assignmentID);
+        $content .= convertTo10pointScale($assignmentWithSubmission->getReviewMark($matchID)->getReviewPoints(), $assignment);
 
 		//Tell them their current average score
         $content .= "<h1>Current Weighted Average</h1>\n";
-        $content .= convertTo10pointScale(computeWeightedAverage(($dataMgr->getCalibrationScores($reviewerID))), $assignment->assignmentID);
+        $content .= convertTo10pointScale(computeWeightedAverage(($dataMgr->getCalibrationScores($reviewerID))), $assignment);
 
         if(array_key_exists("saved", $_GET))
         $content .= "<br><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=".$assignment->assignmentID)."'>Get another calibration essay</a>";

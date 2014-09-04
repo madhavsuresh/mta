@@ -24,6 +24,7 @@ try
         #Figure out what courses are availible, and display them to the user (showing what roles they have)
         $assignments = $dataMgr->getAssignments();
 		
+		#TODO Section and Calibration Section processing
 		if($dataMgr->isStudent($USERID))
 		{
 			if($scores = $dataMgr->getCalibrationScores($USERID))
@@ -109,7 +110,7 @@ try
 								
 		                    	$output[$assignment->reviewStopDate] .= 
 		                    	"<tr><td><h4><i>$assignment->name</i></h4></td>
-		                    	<td>Calibration Review: $completionStatus</td>
+		                    	<td>Calibration Review $completionStatus</td>
 		                    	<td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
 		                    	<td><form action='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Request Calibration Review'></a></td>
 		                    	<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";	
@@ -128,6 +129,25 @@ try
 			}
 			$content .= "</table><br>";
 			
+			global $dataMgr;	
+			
+			/*$dummyAssignment = new PeerReviewAssignment(new AssignmentID(0), "dummy", $dataMgr);
+			//$dummyAssignment->calibrationMaxScore = 10;
+			//$dummyAssignment->calibrationThresholdMSE = 1.75; 
+			//$dummyAssignment->calibrationThresholdScore = 8; 
+			
+			$reviewerAverage = convertTo10pointScale_($currentAverage, $dummyAssignment); 
+			
+			$status = "";
+			if($reviewerAverage < $dummyAssignment->calibrationThresholdScore)
+				$status = "Supervised";
+			else
+				$status = "Independent";*/
+			
+			/*$content .= "<h1>Calibration</h1>\n";
+			$content .= "<h2>Current Review Status : ".$status."</h2>";
+			$content .= "<h2>Current Weighted Average : ".$reviewAverage."</h2>";
+			$content .= "<h2>Threshold: ".$threshold."</h2>";*/
 		}
 
         if($dataMgr->isInstructor($USERID))

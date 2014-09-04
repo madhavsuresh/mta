@@ -32,26 +32,51 @@ class AssignCalibrationsPeerReviewScript extends Script
         $independents = $assignment->getIndependentUsers();
         $userNameMap = $dataMgr->getUserDisplayMap();
 
+		if($assignment->submissionSettings->autoAssignEssayTopic == true && sizeof($assignment->submissionSettings->topics) > 1)
+			$isAutoAssign = true;
+			
         foreach($students as $student)
-        {
+        {     	
             if(array_key_exists($student->id, $independents)){
                 $html .= $userNameMap[$student->id] . " is independent.<br>";
                 continue;
             }
-
-            $reviewAssignments = $assignment->getAssignedCalibrationReviews($student);
-            $i = 0;
-            for($i = sizeof($reviewAssignments); $i < $numCalibrations; $i++)
-            {
-                $submissionID = $assignment->getNewCalibrationSubmissionForUser($student);
-
-                if(is_null($submissionID))
-                {
-                    $html .= "<span class='error'>" . $userNameMap[$student->id] . " ran out of calibrations to do!</span><br>";
-                    break;
-                }
-                $assignment->assignCalibrationReview($submissionID, $student, true); 
-            }
+			
+			if($isAutoAssign)
+			{
+        		$topicIndex = topicHash($student, $assignments->submissionSettings->topics);
+        		
+				$reviewAssignments = $assignment->getAssignedCalibrationReviews($student);
+	            $i = 0;
+	            for($i = sizeof($reviewAssignments); $i < $numCalibrations; $i++)
+	            {
+	                $submissionID = $assignment->getNewCalibrationSubmissionForUserRestricted($student, $topicIndex);
+	
+	                if(is_null($submissionID))
+	                {
+	                    $html .= "<span class='error'>" . $userNameMap[$student->id] . " ran out of calibrations to do!</span><br>";
+	                    break;
+	                }
+	                $assignment->assignCalibrationReview($submissionID, $student, true); 
+	            }
+			}
+			else
+			{
+	            $reviewAssignments = $assignment->getAssignedCalibrationReviews($student);
+	            $i = 0;
+	            for($i = sizeof($reviewAssignments); $i < $numCalibrations; $i++)
+	            {
+	                $submissionID = $assignment->getNewCalibrationSubmissionForUser($student);
+	
+	                if(is_null($submissionID))
+	                {
+	                    $html .= "<span class='error'>" . $userNameMap[$student->id] . " ran out of calibrations to do!</span><br>";
+	                    break;
+	                }
+	                $assignment->assignCalibrationReview($submissionID, $student, true); 
+	            }
+			}
+			
             $html .= $userNameMap[$student->id] . " has $i calibrations.<br>";
 
         }

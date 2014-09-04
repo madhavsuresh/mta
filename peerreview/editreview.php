@@ -195,7 +195,7 @@ try
 			} else {
 				$score = "--";
 			}
-			$content .= "<h4>Current Weighted Average Score: $score / $assignment->calibrationMaxScore</h4>";
+			$content .= "<h4>Current Weighted Average: $score / $assignment->calibrationMaxScore</h4>";
 			
 		}
     }

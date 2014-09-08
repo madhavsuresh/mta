@@ -282,9 +282,9 @@ a.editmarklink:active  {
 .column3A {width: 13%;}
 .column3B {width: 17%;}
 
-.calbAssign{
+.calibAssign{
 	background-color: #B0E0E6;
-	border-radius: 20px;
+	border-radius: 12px;
 	padding: 2%;
 	-moz-border-radius: 30px;
 	-khtml-border-radius: 30px;
@@ -292,5 +292,15 @@ a.editmarklink:active  {
 	width: 50%;;
 	margin-bottom: 1%;
 }
+
+.TODO{
+	border-radius: 12px;
+	-moz-border-radius: 30px;
+	-khtml-border-radius: 30px;
+	-webkit-border-radius: 30px;
+	width: 100%;
+	margin: 0 auto;
+}
+
 
 

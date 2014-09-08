@@ -49,7 +49,7 @@ try
 						$item->assignmentID = $assignment->assignmentID;
 						$item->endDate = $assignment->submissionStopDate;
 						$item->html = 
-						"<table width='100%' align='left'><tr><td class='column1'><h4>$assignment->name</h4></td>
+						"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 						<td class='column2'>Password</td></td>
 						<td class='column3A'>Enter password:<form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='text' name='password' size='10'/></td>
 						<td class='column3B'><input type='submit' value='Enter'/></form></td>
@@ -65,11 +65,11 @@ try
 							$item->assignmentID = $assignment->assignmentID;
 							$item->endDate = $assignment->submissionStopDate;
 							$item->html =
-							"<table width='100%' align='left'><tr><td class='column1'><h4>$assignment->name</h4></td>
+							"<table width='100%' class='tables'><tr><td class='column1'><h4>$assignment->name</h4></td>
 							<td class='column2'>".ucfirst($assignment->submissionType)."</td>
 							
 							<td class='column3'><form action='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Create Submission'/></form></td>
-							<td class='column4'>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr></table>\n";
+							<td class='column4'>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr></table></div>\n";
 							insert($item, $items);
 						}
 					}	
@@ -91,7 +91,7 @@ try
 								$item->assignmentID = $assignment->assignmentID;
 								$item->endDate = $assignment->reviewStopDate;
 								$item->html = 
-								"<table width='100%' align='left'><tr><td class='column1'><h4>$assignment->name</h4></td>
+								"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 								<td class='column2'>Peer Review $temp</td>
 								
 								<td class='column3'><a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."''><button>Go</button></a></td>
@@ -113,7 +113,7 @@ try
 								$item->assignmentID = $assignment->assignmentID;
 								$item->endDate = $assignment->reviewStopDate;
 								$item->html = 
-								"<table width='100%' align='left'><tr><td class='column1'><h4>$assignment->name</h4></td>
+								"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 								<td class='column2'>Calibration Review $temp</td>
 
 								<td class='column3'><a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&calibration=$id")."''><button>Go</button></a></td>
@@ -144,7 +144,7 @@ try
 								$isMoreEssays = $assignment->getNewCalibrationSubmissionForUser($USERID);
 
 								$doneForThisAssignment = $assignment->numCalibrationReviewsDone($USERID);
-								$enoughScore = ($convertedAverage != "--" && $convertedAverage >= $assignment->calibrationThresholdScore);
+								$enoughScore = $convertedAverage != "--" && $convertedAverage >= $assignment->calibrationThresholdScore;
 								$enoughReviews = $doneForThisAssignment >= $assignment->calibrationMinCount;
 								$enough = $enoughScore && $enoughReviews;
 								
@@ -164,7 +164,7 @@ try
 								$item->assignmentID = $assignment->assignmentID;
 								$item->endDate = $assignment->reviewStopDate;
 		                    	$item->html = 
-		                    	"<table width='100%' align='left'><tr><td class='column1'><h4>$assignment->name</h4></td>
+		                    	"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 		                    	<td class='column2'>Calibration Review $completionStatus</td>
 		                    	<td class='column3A'>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
 		                    	$moreCalibrations
@@ -177,31 +177,31 @@ try
 			}
 			
 			$content .= "<h1>TODO</h1>\n";
-			$content .= "<table width='100%' align='left'>";
-			$bg = '#eeeeee';
+			$bg = '#ffffff';
 			foreach($items as $item)
 			{
 				$bg = ($bg == '#eeeeee' ? '#ffffff' : '#eeeeee');
-				$content .= "<div width='100%' height='150px' style='background-color:$bg'>";
+				$content .= "<div class='TODO' style='background-color:$bg;'>";
 				$content .= $item->html;
 				$content .= "</div>";
 			}
-			$content .= "</table>";
 			
 			$latestCalibrationID = NULL;
 			foreach($assignments as $assignment)
 			{
 				if($assignment->extraCalibrations > 0)
 				{
-					/*if($latestCalibrationID != NULL)
+					if($latestCalibrationID == NULL)
 						$latestCalibrationID = $assignment->assignmentID;
 					$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
-					if($latestCalibrationAssignment->reviewEndDate < $assignment->reviewEndDate)
-						$latestCalibrationID = $assignment->assignmentID;*/
+					if($latestCalibrationAssignment->reviewStopDate < $assignment->reviewStopDate)
+						$latestCalibrationID = $assignment->assignmentID;
 				}
 			}
-			//Use another way to get latest effective Review Assignment
 			
+			$status = "";
+			$reviewerAverage = "";
+			$threshold = "";
 			if($latestCalibrationID != NULL)
 			{
 				$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
@@ -209,11 +209,11 @@ try
                 	$reviewerAverage = convertTo10pointScale($currentAverage, $latestCalibrationAssignment); 
                 else 
                		$reviewerAverage = $currentAverage;
-				$status = "";
-				if($reviewAverage == "--"|| $reviewerAverage < $latestCalibrationAssignment->calibrationThresholdScore)
+				if($reviewerAverage == "--" || $reviewerAverage < $latestCalibrationAssignment->calibrationThresholdScore)
 					$status = "Supervised";
 				else
 					$status = "Independent";
+				$threshold = $latestCalibrationAssignment->calibrationThresholdScore;
 			}
 			
 			$content .= "<h1>Calibration</h1>\n";
@@ -221,7 +221,6 @@ try
 			$content .= "<h2>Current Weighted Average : ".$reviewerAverage."</h2>";
 			$content .= "<h2>Threshold: ".$latestCalibrationAssignment->calibrationThresholdScore."</h2>";
 						
-			$bg = '#eeeeee';
 			foreach($assignments as $assignment)
 			{
 				$calibrationAssignments = $assignment->getAssignedCalibrationReviews($USERID);
@@ -254,8 +253,7 @@ try
 						}
 						$id = $id+1;
 					}
-					$bg = ($bg == '#eeeeee' ? '#ffffff' : '#eeeeee');
-					$content .= "<div class='calbAssign' 'style='background-color:$bg;'>";
+					$content .= "<div class='calibAssign'>";
 	            	$content .= "<h3>$assignment->name</h3>";
 					$content .= "<table width='100%'>";
 					$content .= "<tr><td width='70%'><table>";
@@ -337,10 +335,13 @@ try
 function insert($object, &$array)
 {
 	$length = sizeof($array);
-	for($i = 0; $i <= $length; $i++)
+	if($length == 0)
 	{
-		if($array[$i] == NULL)
-			$array[$i] = $object;
+		$array[0] = $object;
+		return;
+	}
+	for($i = 0; $i < $length; $i++)
+	{
 		if($object->endDate < $array[$i]->endDate)
 		{
 			for($j = $length; $j > $i; $j--)
@@ -348,9 +349,10 @@ function insert($object, &$array)
 				$array[$j] = $array[$j-1];
 			}
 			$array[$i] = $object;
-			break;
+			return;
 		}
 	}
+	$array[$length] = $object;
 }
 
 ?>

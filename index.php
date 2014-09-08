@@ -51,8 +51,8 @@ try
 						$item->html = 
 						"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 						<td class='column2'>Password</td></td>
-						<td class='column3A'>Enter password:<form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='text' name='password' size='10'/></td>
-						<td class='column3B'><input type='submit' value='Enter'/></form></td>
+						<td class='column3'><table width='100%'><td>Enter password:<form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='text' name='password' size='10'/></td>
+						<td><input type='submit' value='Enter'/></form></td></table></td>
 						<td class='column4'>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr></table>\n";
 						insert($item, $items);
 					}
@@ -154,10 +154,10 @@ try
 								if($doneForThisAssignment < $assignment->extraCalibrations)
 		                    		$completionStatus .= "<br/>".$doneForThisAssignment." of $assignment->extraCalibrations completed";
 								
-								if($isMoreEssays)
-									$moreCalibrations = "<td class='column3A'><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>Request Calibration Review</button></a></td>";
+								/*if($isMoreEssays)
+									$moreCalibrations = "<td class='column3B'><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>Request Calibration Review</button></a></td>";
 								else 
-									$moreCalibrations = "<td class='column3A'>No more available calibrations</td>";
+									$moreCalibrations = "<td class='column3B'>No more available calibrations</td>";*/
 								
 								$item = new stdClass();
 								$item->type = "Calibration";
@@ -166,8 +166,8 @@ try
 		                    	$item->html = 
 		                    	"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 		                    	<td class='column2'>Calibration Review $completionStatus</td>
-		                    	<td class='column3A'>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
-		                    	$moreCalibrations
+		                    	<td class='column3'><table wdith='100%'><td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
+		                    	<td><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>Request Calibration Review</button></a></td></table></td>
 		                    	<td class='column4'>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr></table>\n";
 								insert($item, $items);
 		                   	}
@@ -177,10 +177,10 @@ try
 			}
 			
 			$content .= "<h1>TODO</h1>\n";
-			$bg = '#ffffff';
+			$bg = '';
 			foreach($items as $item)
 			{
-				$bg = ($bg == '#eeeeee' ? '#ffffff' : '#eeeeee');
+				$bg = ($bg == '#E0E0E0' ? '' : '#E0E0E0');
 				$content .= "<div class='TODO' style='background-color:$bg;'>";
 				$content .= $item->html;
 				$content .= "</div>";
@@ -189,13 +189,16 @@ try
 			$latestCalibrationID = NULL;
 			foreach($assignments as $assignment)
 			{
-				if($assignment->extraCalibrations > 0)
+				if($assignment->extraCalibrations > 0 && $assignment->getCalibrationSubmissionIDs())
 				{
 					if($latestCalibrationID == NULL)
 						$latestCalibrationID = $assignment->assignmentID;
-					$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
-					if($latestCalibrationAssignment->reviewStopDate < $assignment->reviewStopDate)
-						$latestCalibrationID = $assignment->assignmentID;
+					else
+					{
+						$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
+						if($latestCalibrationAssignment->reviewStopDate < $assignment->reviewStopDate)
+							$latestCalibrationID = $assignment->assignmentID;
+					}
 				}
 			}
 			
@@ -209,7 +212,7 @@ try
                 	$reviewerAverage = convertTo10pointScale($currentAverage, $latestCalibrationAssignment); 
                 else 
                		$reviewerAverage = $currentAverage;
-				if($reviewerAverage == "--" || $reviewerAverage < $latestCalibrationAssignment->calibrationThresholdScore)
+				if(($reviewerAverage == "--" || $reviewerAverage < $latestCalibrationAssignment->calibrationThresholdScore) || $dataMgr->numCalibrationReviews($USERID) < $latestCalibrationAssignment->calibrationMinCount)
 					$status = "Supervised";
 				else
 					$status = "Independent";

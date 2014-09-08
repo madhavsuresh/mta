@@ -69,7 +69,7 @@ try
 							<td class='column2'>".ucfirst($assignment->submissionType)."</td>
 							
 							<td class='column3'><form action='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Create Submission'/></form></td>
-							<td class='column4'>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr></table></div>\n";
+							<td class='column4'>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr></table>\n";
 							insert($item, $items);
 						}
 					}	
@@ -299,6 +299,9 @@ try
             $content .= "</tr></table><br>\n";
         }
 
+        if($dataMgr->isMarker($USERID))
+			require_once("TODO_TA.php");
+		
         $content .= "<h1>Assignments</h1>\n";
         $currentRowIndex = 0;
         foreach($assignments as $assignment)

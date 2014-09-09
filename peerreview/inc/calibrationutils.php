@@ -111,7 +111,7 @@ function topicHash(UserID $userID, $topics)
 	return $hash % $k;
 }
 
-function hasReachedThreshold(UserID $studentID, Assignment $latestCalibrationAssignment)
+function calibrationHistory(UserID $studentID, Assignment $latestCalibrationAssignment)
 {
 	global $dataMgr;
 	
@@ -120,15 +120,26 @@ function hasReachedThreshold(UserID $studentID, Assignment $latestCalibrationAss
 	$scores = $dataMgr->getCalibrationScores($studentID);
 	$calibReviews = $dataMgr->numCalibrationReviews($studentID);
 	
+	$result = new stdClass;
+	$result->hasReached = false;
+	$result->score = NULL;
+	$result->reviewNum = NULL;
+
 	for($i = $minimum; $i <= $calibReviews; $i++)
 	{
-		print_r($i);
 		//get oldest $i reviews and maintain order from newest to oldest
 		$sampleScores = array_slice($scores, -$i, $i, true);
-		if(computeWeightedAverage($sampleScores) <= $threshold)
-			return true;
+		$weightedAverage = computeWeightedAverage($sampleScores);
+		if($weightedAverage <= $threshold)
+		{
+			$result->hasReached = true;
+			$result->score = convertTo10pointScale($weightedAverage, $latestCalibrationAssignment);
+			$result->reviewNum = $i;
+			break;
+		}	
 	}
-	return false;
+
+	return $result; 
 }
 
 function isFlaggedIndependent(UserID $studentID)
@@ -143,7 +154,7 @@ function isFlaggedIndependent(UserID $studentID)
 //Maybe can eliminate second argument by calling latestCalibrationAssignment function
 function isIndependent(UserID $studentID, Assignment $latestCalibrationAssignment)
 {
-	return hasReachedThreshold($studentID, $latestCalibrationAssignment) || isFlaggedIndependent($studentID);
+	return calibrationHistory($studentID, $latestCalibrationAssignment)->hasReached || isFlaggedIndependent($studentID);
 }
 
 

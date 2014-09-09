@@ -50,7 +50,6 @@ try
 					}
 				}
 			}
-			
 			$status = "";
 			$reviewerAverage = "";
 			$threshold = "";
@@ -63,9 +62,9 @@ try
                 else 
                		$reviewerAverage = $currentAverage;
 				if(isIndependent($USERID, $latestCalibrationAssignment))
-					$status = "<span style='color:green'>Independent</span>";
+					$status = "Independent";
 				else
-					$status = "<span style='color:red'>Supervised</span>";
+					$status = "Supervised";
 				$threshold = $latestCalibrationAssignment->calibrationThresholdScore;
 			}
 			
@@ -182,8 +181,6 @@ try
 								$enoughReviews = $totalCalibrationsDone >= $assignment->calibrationMinCount;
 								$enough = $enoughScore && $enoughReviews;*/
 							
-							//!!!PITSTOP!!!
-							//SHOULD I CHANGE THIS TO THE FUNCTION isIndependent
 		                    if(!isIndependent($USERID, $latestCalibrationAssignment) && $isMoreEssays != NULL)
 		                    {
 		                    	$doneForThisAssignment = $assignment->numCalibrationReviewsDone($USERID);
@@ -224,9 +221,19 @@ try
 			}
 			
 			$content .= "<h1>Calibration</h1>\n";
-			$content .= "<h2>Current Review Status : ".$status."</h2>";
-			$content .= "<h2>Current Weighted Average : ".$reviewerAverage."</h2>";
-			$content .= "<h2>Threshold: ".$latestCalibrationAssignment->calibrationThresholdScore."</h2>";
+			if($status == "Independent")
+				$color = "green";
+			else
+				$color = "red";
+			$content .= "<h2>Current Review Status : <span style='color:$color'>".$status."</span></h2>\n";
+			$calibrationHistory = calibrationHistory($USERID, $latestCalibrationAssignment);
+			if($calibrationHistory->hasReached)
+				$content .= "<h4 style='color:green'>Promoted with score ".$calibrationHistory->score." on review no. ".$calibrationHistory->reviewNum."</h4>\n";
+			if($status == "Independent")
+				$content .= "<h4 style='color:green'>All calibration reviews are now for practice</h4>\n";
+			$content .= "<h2>Current Weighted Average : ".$reviewerAverage."</h2>\n";
+			$content .= "<h2>Threshold: ".$latestCalibrationAssignment->calibrationThresholdScore."</h2>\n";
+			$content .= "<h2>Minimum Reviews Required: ".$latestCalibrationAssignment->calibrationMinCount."</h2>\n";
 						
 			foreach($assignments as $assignment)
 			{
@@ -286,7 +293,12 @@ try
 						$content .= "</table>";
 					}
 					$content .= "</td><td>";
-					$content .= "<td width='30%'><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>Request Calibration Review</button></a></td>";
+					$buttonMessage = "Request Calibration Review";
+					if($status=="Independent")
+					{
+						$buttonMessage = "Request Practice Review";
+					}
+					$content .= "<td width='30%'><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>$buttonMessage</button></a></td>";
 					$content .= '</td><tr></table>';
 					$content .= "</div>";
 				}

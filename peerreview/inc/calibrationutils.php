@@ -41,7 +41,7 @@ function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorRe
     return new ReviewMark(0, null, true, $meansquarederror);
 }
 
-/*
+
 function computeReviewPointsForAssignments(UserID $student, $assignments)
 {
     $points = array();
@@ -51,27 +51,13 @@ function computeReviewPointsForAssignments(UserID $student, $assignments)
         {
             $mark = $assignment->getReviewMark($matchID);
             if($mark->isValid)
-                $points[$matchID->id] = $mark->getReviewPoints(); //Use timestamp as key
+                $points[$matchID->id] = $mark->getReviewPoints();
         }
     }
-    
-    krsort($points);
-    //return array_reduce($points, function($v, $w) { return max($v+$w, 0); });
-    
-	$total = 0;
-	$totalweights = 0;
-	$i = 0;
-    foreach($points as $point)
-    {
-    	$weight = pow(0.5, $i);
-    	$total += $point * $weight;
-		$totalweights += $weight;
-    	$i++;
-    }
-	
-	return $total/ $totalweights; 
+    ksort($points);
+    return array_reduce($points, function($v, $w) { return max($v+$w, 0); });
 }
-*/
+
 
 function computeWeightedAverage($scores)
 {
@@ -93,15 +79,6 @@ function computeWeightedAverage($scores)
 }
 
 function convertTo10pointScale($weightedaveragescore, Assignment $assignment)
-{
-	$maxScore = $assignment->calibrationMaxScore;
-	$thresholdMSE = $assignment->calibrationThresholdMSE;
-	$thresholdScore = $assignment->calibrationThresholdScore;
-	
-	return max(0, precisionFloat( -( ($maxScore - $thresholdScore) / $thresholdMSE) * $weightedaveragescore + $maxScore));
-}
-
-function convertTo10pointScale_($weightedaveragescore, PeerReviewAssignment $assignment)
 {
 	$maxScore = $assignment->calibrationMaxScore;
 	$thresholdMSE = $assignment->calibrationThresholdMSE;
@@ -133,3 +110,41 @@ function topicHash(UserID $userID, $topics)
 	#print_r(" % $k = ".($hash % $k));
 	return $hash % $k;
 }
+
+function hasReachedThreshold(UserID $studentID, Assignment $latestCalibrationAssignment)
+{
+	global $dataMgr;
+	
+	$threshold = $latestCalibrationAssignment->calibrationThresholdMSE;
+	$minimum = $latestCalibrationAssignment->calibrationMinCount;
+	$scores = $dataMgr->getCalibrationScores($studentID);
+	$calibReviews = $dataMgr->numCalibrationReviews($studentID);
+	
+	for($i = $minimum; $i <= $calibReviews; $i++)
+	{
+		print_r($i);
+		//get oldest $i reviews and maintain order from newest to oldest
+		$sampleScores = array_slice($scores, -$i, $i, true);
+		if(computeWeightedAverage($sampleScores) <= $threshold)
+			return true;
+	}
+	return false;
+}
+
+function isFlaggedIndependent(UserID $studentID)
+{
+	global $dataMgr;
+	
+	$latestAssignmentID = new AssignmentID($dataMgr->latestCalibrationAssignment());
+	$latestAssignment = $dataMgr->getAssignment($latestAssignmentID);
+	return array_key_exists($studentID->id, $latestAssignment->getIndependentUsers());
+}
+
+//Maybe can eliminate second argument by calling latestCalibrationAssignment function
+function isIndependent(UserID $studentID, Assignment $latestCalibrationAssignment)
+{
+	return hasReachedThreshold($studentID, $latestCalibrationAssignment) || isFlaggedIndependent($studentID);
+}
+
+
+

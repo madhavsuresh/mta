@@ -51,8 +51,8 @@ try
 						$item->html = 
 						"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 						<td class='column2'>Password</td></td>
-						<td class='column3'><table width='100%'><td>Enter password:<form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='text' name='password' size='10'/></td>
-						<td><input type='submit' value='Enter'/></form></td></table></td>
+						<td class='column3'><form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><table width='100%'><td>Enter password:<input type='text' name='password' size='10'/></td>
+						<td><input type='submit' value='Enter'/></td></table></form></td>
 						<td class='column4'>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr></table>\n";
 						insert($item, $items);
 					}
@@ -143,15 +143,15 @@ try
 							else
 								$isMoreEssays = $assignment->getNewCalibrationSubmissionForUser($USERID);
 
-								$doneForThisAssignment = $assignment->numCalibrationReviewsDone($USERID);
+								$totalCalibrationsDone = $dataMgr->numCalibrationReviews($USERID);
 								$enoughScore = $convertedAverage != "--" && $convertedAverage >= $assignment->calibrationThresholdScore;
-								$enoughReviews = $doneForThisAssignment >= $assignment->calibrationMinCount;
+								$enoughReviews = $totalCalibrationsDone >= $assignment->calibrationMinCount;
 								$enough = $enoughScore && $enoughReviews;
 								
 		                    if(!array_key_exists($USERID->id, $independents) && !$enough && $isMoreEssays != NULL)
 		                    {
 		                    	$completionStatus = "";
-								if($doneForThisAssignment < $assignment->extraCalibrations)
+								if($totalCalibrationsDone < $assignment->extraCalibrations)
 		                    		$completionStatus .= "<br/>".$doneForThisAssignment." of $assignment->extraCalibrations completed";
 								
 								/*if($isMoreEssays)
@@ -212,10 +212,10 @@ try
                 	$reviewerAverage = convertTo10pointScale($currentAverage, $latestCalibrationAssignment); 
                 else 
                		$reviewerAverage = $currentAverage;
-				if(($reviewerAverage == "--" || $reviewerAverage < $latestCalibrationAssignment->calibrationThresholdScore) || $dataMgr->numCalibrationReviews($USERID) < $latestCalibrationAssignment->calibrationMinCount)
-					$status = "Supervised";
+				if(isIndependent($USERID, $latestCalibrationAssignment))
+					$status = "<span style='color:green'>Independent</span>";
 				else
-					$status = "Independent";
+					$status = "<span style='color:red'>Supervised</span>";
 				$threshold = $latestCalibrationAssignment->calibrationThresholdScore;
 			}
 			

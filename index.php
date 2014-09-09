@@ -69,7 +69,7 @@ try
 						<td class='column2'>Password</td></td>
 						<td class='column3'><form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><table width='100%'><td>Enter password:<input type='text' name='password' size='10'/></td>
 						<td><input type='submit' value='Enter'/></td></table></form></td>
-						<td class='column4'>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr></table>\n";
+						<td class='column4'>".phpDate($assignment->submissionStopDate)."</td></tr></table>\n";
 						insert($item, $items);
 					}
 					else 
@@ -85,7 +85,7 @@ try
 							<td class='column2'>".ucfirst($assignment->submissionType)."</td>
 							
 							<td class='column3'><form action='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Create Submission'/></form></td>
-							<td class='column4'>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr></table>\n";
+							<td class='column4'>".phpDate($assignment->submissionStopDate)."</td></tr></table>\n";
 							insert($item, $items);
 						}
 					}	
@@ -111,7 +111,7 @@ try
 								<td class='column2'>Peer Review $temp</td>
 								
 								<td class='column3'><a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."''><button>Go</button></a></td>
-								<td class='column4'>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr></table>\n";
+								<td class='column4'>".phpDate($assignment->reviewStopDate)."</td></tr></table>\n";
 								insert($item, $items);
 							}
 							$id++;			
@@ -133,7 +133,7 @@ try
 								<td class='column2'>Calibration Review $temp</td>
 
 								<td class='column3'><a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&calibration=$id")."''><button>Go</button></a></td>
-								<td class='column4'>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr></table>\n";
+								<td class='column4'>".phpDate($assignment->reviewStopDate)."</td></tr></table>\n";
 								insert($item, $items);
 							}
 							$id++;
@@ -183,7 +183,7 @@ try
 		                    	<td class='column2'>Calibration Review $completionStatus</td>
 		                    	<td class='column3'><table wdith='100%'><td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
 		                    	<td><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>Request Calibration Review</button></a></td></table></td>
-		                    	<td class='column4'>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr></table>\n";
+		                    	<td class='column4'>".phpDate('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr></table>\n";
 								insert($item, $items);
 		                   	}
 		                }
@@ -303,6 +303,11 @@ try
 			}
 		}
 
+		if($dataMgr->isMarker($USERID))
+		{
+			require_once("tasks_TA.php");
+		}
+
         if($dataMgr->isInstructor($USERID))
         {
             //Give them the option of creating an assignment, or running global scripts
@@ -347,29 +352,6 @@ try
     }
 }catch(Exception $e) {
     render_exception_page($e);
-}
-
-function insert($object, &$array)
-{
-	$length = sizeof($array);
-	if($length == 0)
-	{
-		$array[0] = $object;
-		return;
-	}
-	for($i = 0; $i < $length; $i++)
-	{
-		if($object->endDate < $array[$i]->endDate)
-		{
-			for($j = $length; $j > $i; $j--)
-			{
-				$array[$j] = $array[$j-1];
-			}
-			$array[$i] = $object;
-			return;
-		}
-	}
-	$array[$length] = $object;
 }
 
 ?>

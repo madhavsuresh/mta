@@ -77,6 +77,8 @@ class PDODataManager extends DataManager
 		$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), prara.reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 2 AND pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;"); 
 		
 		$this->numCalibrationReviewsQuery = $this->db->prepare("SELECT COUNT(DISTINCT pram.matchID) FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 2 AND pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;");
+       	
+       	$this->latestCalibrationAssignmentQuery = $this->db->prepare("SELECT peer_review_assignment.assignmentID FROM peer_review_assignment, peer_review_assignment_independent WHERE peer_review_assignment.assignmentID = peer_review_assignment_independent.assignmentID ORDER BY peer_review_assignment.reviewStopDate DESC LIMIT 10");
         
         $this->isInSameCourseQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE courseID = ? && assignmentID = ?");
         //Now we can set up all the assignment data managers
@@ -514,4 +516,10 @@ class PDODataManager extends DataManager
         return $res[0];
 	}
 	
+	function latestCalibrationAssignment()
+	{
+		$this->latestCalibrationAssignmentQuery->execute();
+		$res = $this->latestCalibrationAssignmentQuery->fetch();
+		return $res->assignmentID;
+	}
 }

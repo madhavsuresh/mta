@@ -24,43 +24,86 @@ try
         #Figure out what courses are availible, and display them to the user (showing what roles they have)
         $assignments = $dataMgr->getAssignments();
 		
-		#TODO Section and Calibration Section processing
+		#TO-DO Section and Calibration Section processing
 		if($dataMgr->isStudent($USERID))
-		{
+		{		
 			if($scores = $dataMgr->getCalibrationScores($USERID))
 				$currentAverage = computeWeightedAverage($scores);
 			else 
 				$currentAverage = "--";
 			
 			$output = array();
-			$calOutput = array();
+			$items = array();
 			
+			$latestCalibrationID = NULL;
 			foreach($assignments as $assignment)
 			{
-				
+				if($assignment->extraCalibrations > 0 && $assignment->getCalibrationSubmissionIDs())
+				{
+					if($latestCalibrationID == NULL)
+						$latestCalibrationID = $assignment->assignmentID;
+					else
+					{
+						$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
+						if($latestCalibrationAssignment->reviewStopDate < $assignment->reviewStopDate)
+							$latestCalibrationID = $assignment->assignmentID;
+					}
+				}
+			}
+			$status = "";
+			$reviewerAverage = "";
+			$threshold = "";
+			$latestCalibrationAssignment = NULL;
+			if($latestCalibrationID != NULL)
+			{
+				$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
+			    if($currentAverage != "--") 
+                	$reviewerAverage = convertTo10pointScale($currentAverage, $latestCalibrationAssignment); 
+                else 
+               		$reviewerAverage = $currentAverage;
+				if(isIndependent($USERID, $latestCalibrationAssignment))
+					$status = "Independent";
+				else
+					$status = "Supervised";
+				$threshold = $latestCalibrationAssignment->calibrationThresholdScore;
+			}
+			
+			foreach($assignments as $assignment)
+			{			
 				if(!$assignment->showForUser($USERID))
                 continue;
        			
 				if($assignment->submissionStartDate <= $NOW AND $assignment->submissionStopDate > $NOW)
 				{
 					if(!($assignment->password == NULL) AND !($dataMgr->hasEnteredPassword($assignment->assignmentID, $USERID)))
-					{
-						$output[$assignment->submissionStopDate] .= 
-						"<tr><td><h4><i>$assignment->name</i></h4></td>
-						<td>Password</td></td><td>Enter password:<form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><input type='text' name='password' size='10'/></td>
-						<td><input type='submit' value='Enter'/></form></td>
-						<td>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
+					{		
+						$item = new stdClass();
+						$item->type = "Password";
+						$item->assignmentID = $assignment->assignmentID;
+						$item->endDate = $assignment->submissionStopDate;
+						$item->html = 
+						"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
+						<td class='column2'>Password</td></td>
+						<td class='column3'><form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><table width='100%'><td>Enter password:<input type='text' name='password' size='10'/></td>
+						<td><input type='submit' value='Enter'/></td></table></form></td>
+						<td class='column4'>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr></table>\n";
+						insert($item, $items);
 					}
 					else 
 					{
 						if(!$assignment->submissionExists($USERID))
 						{
-							$output[$assignment->submissionStopDate] .= 
-							"<tr><td><h4><i>$assignment->name</i></h4></td>
-							<td>".ucfirst($assignment->submissionType)."</td>
-							<td></td>
-							<td><form action='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Create Submission'/></form></td>
-							<td>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr>\n";
+							$item = new stdClass();
+							$item->type = "Submission";
+							$item->assignmentID = $assignment->assignmentID;
+							$item->endDate = $assignment->submissionStopDate;
+							$item->html =
+							"<table width='100%' class='tables'><tr><td class='column1'><h4>$assignment->name</h4></td>
+							<td class='column2'>".ucfirst($assignment->submissionType)."</td>
+							
+							<td class='column3'><form action='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Create Submission'/></form></td>
+							<td class='column4'>".date('M jS Y, H:i', $assignment->submissionStopDate)."</td></tr></table>\n";
+							insert($item, $items);
 						}
 					}	
 				}
@@ -76,12 +119,17 @@ try
 							$temp = $id+1;
 							if(!$assignment->reviewExists($matchID))
 							{
-								$output[$assignment->reviewStopDate] .= 
-								"<tr><td><h4><i>$assignment->name</i></h4></td>
-								<td>Peer Review $temp</td>
-								<td></td>
-								<td><a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."''>Peer Review $temp</a></td>
-								<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
+								$item = new stdClass();
+								$item->type = "Peer Review";
+								$item->assignmentID = $assignment->assignmentID;
+								$item->endDate = $assignment->reviewStopDate;
+								$item->html = 
+								"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
+								<td class='column2'>Peer Review $temp</td>
+								
+								<td class='column3'><a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."''><button>Go</button></a></td>
+								<td class='column4'>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr></table>\n";
+								insert($item, $items);
 							}
 							$id++;			
 						} 
@@ -90,15 +138,20 @@ try
 						$id=0;
 						foreach($calibrationReviewAssignments as $matchID)
 						{
+							$temp = $id+1;
 							if(!$assignment->reviewExists($matchID))
 							{
-								$temp = $id+1;
-								$output[$assignment->reviewStopDate] .=
-								"<tr><td><h4><i>$assignment->name</i></h4></td>
-								<td>Calibration Review $temp</td>
-								<td></td>
-								<td><a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&calibration=$id")."''>Calibration Review $temp</a></td>
-								<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
+								$item = new stdClass();
+								$item->type = "Calibration";
+								$item->assignmentID = $assignment->assignmentID;
+								$item->endDate = $assignment->reviewStopDate;
+								$item->html = 
+								"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
+								<td class='column2'>Calibration Review $temp</td>
+
+								<td class='column3'><a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&calibration=$id")."''><button>Go</button></a></td>
+								<td class='column4'>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr></table>\n";
+								insert($item, $items);
 							}
 							$id++;
 						}			
@@ -106,8 +159,9 @@ try
 						//TO-DO: Clean-up logic flow
 	                	$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();#$#
 		                if($availableCalibrationSubmissions && $assignment->extraCalibrations > 0)
-		                {
+		                {					
 		                    $independents = $assignment->getIndependentUsers();
+							
 		                    //if student is supervised and has done less than the extra calibrations required
 		                    if($currentAverage != "--") 
 		                    	$convertedAverage = convertTo10pointScale($currentAverage, $assignment); 
@@ -121,65 +175,134 @@ try
 								}
 							else
 								$isMoreEssays = $assignment->getNewCalibrationSubmissionForUser($USERID);
-								
-								$doneForThisAssignment = $assignment->numCalibrationReviewsDone($USERID);
+
+								/*$totalCalibrationsDone = $dataMgr->numCalibrationReviews($USERID);
+								$enoughScore = $convertedAverage != "--" && $convertedAverage >= $assignment->calibrationThresholdScore;
+								$enoughReviews = $totalCalibrationsDone >= $assignment->calibrationMinCount;
+								$enough = $enoughScore && $enoughReviews;*/
 							
-								$enoughScore = ($convertedAverage != "--" && $convertedAverage >= $assignment->calibrationThresholdScore);
-								
-								$enoughReviews = $doneForThisAssignment >= $assignment->calibrationMinCount;
-								
-								$enough = $enoughScore && $enoughReviews;
-								
-		                    if(!array_key_exists($USERID->id, $independents) && !$enough /*&& $isMoreEssays != NULL*/)
+		                    if(!isIndependent($USERID, $latestCalibrationAssignment) && $isMoreEssays != NULL)
 		                    {
+		                    	$doneForThisAssignment = $assignment->numCalibrationReviewsDone($USERID);
 		                    	$completionStatus = "";
 								if($doneForThisAssignment < $assignment->extraCalibrations)
-		                    		$completionStatus .= "<br/>".$doneForThisAssignment." of $assignment->extraCalibrations completed";
+		                    		$completionStatus .= "<br/>$doneForThisAssignment of $assignment->extraCalibrations completed";
 								
-								if($isMoreEssays)
-									$moreCalibrations = "<td><form action='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Request Calibration Review'></a></td>";
+								/*if($isMoreEssays)
+									$moreCalibrations = "<td class='column3B'><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>Request Calibration Review</button></a></td>";
 								else 
-									$moreCalibrations = "<td>No more available calibrations</td>";
+									$moreCalibrations = "<td class='column3B'>No more available calibrations</td>";*/
 								
-		                    	$output[$assignment->reviewStopDate] .= 
-		                    	"<tr><td><h4><i>$assignment->name</i></h4></td>
-		                    	<td>Calibration Review $completionStatus</td>
-		                    	<td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
-		                    	$moreCalibrations
-		                    	<td>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr>";
+								$item = new stdClass();
+								$item->type = "Calibration";
+								$item->assignmentID = $assignment->assignmentID;
+								$item->endDate = $assignment->reviewStopDate;
+		                    	$item->html = 
+		                    	"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
+		                    	<td class='column2'>Calibration Review $completionStatus</td>
+		                    	<td class='column3'><table wdith='100%'><td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
+		                    	<td><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>Request Calibration Review</button></a></td></table></td>
+		                    	<td class='column4'>".date('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr></table>\n";
+								insert($item, $items);
 		                   	}
 		                }
 		           	}
                 }
-
 			}
-			ksort($output);
 			
 			$content .= "<h1>Tasks</h1>\n";
-            $content .= "<table align='left'>\n";
-			foreach($output as $item)
+			$bg = '';
+			foreach($items as $item)
 			{
-				$content .= $item;
+				$bg = ($bg == '#E0E0E0' ? '' : '#E0E0E0');
+				$content .= "<div class='TODO' style='background-color:$bg;'>";
+				$content .= $item->html;
+				$content .= "</div>";
 			}
-			$content .= "</table><br>";
 			
-			/*$dummyAssignment = new PeerReviewAssignment(new AssignmentID(0), "dummy", $dataMgr);
-			//$dummyAssignment->calibrationMaxScore = 10;
-			//$dummyAssignment->calibrationThresholdMSE = 1.75; 
-			//$dummyAssignment->calibrationThresholdScore = 8; 
-			
-			$reviewerAverage = convertTo10pointScale($currentAverage, $dummyAssignment); 
-			
-			$status = "";
-			if($reviewerAverage < $dummyAssignment->calibrationThresholdScore)
-				$status = "Supervised";
+			$content .= "<h1>Calibration</h1>\n";
+			if($status == "Independent")
+				$color = "green";
 			else
-				$status = "Independent";*/
-			
-			/*$content .= "<h1>Calibration</h1>\n";
-			$content .= "<h2>Current Review Status : ".$status."</h2>";
-			$content .= "<h2>Current Weighted Average : ".$reviewAverage."</h2>";
-			$content .= "<h2>Threshold: ".$threshold."</h2>";*/
+				$color = "red";
+			$content .= "<h2>Current Review Status : <span style='color:$color'>".$status."</span></h2>\n";
+			$calibrationHistory = calibrationHistory($USERID, $latestCalibrationAssignment);
+			if($calibrationHistory->hasReached)
+				$content .= "<h4 style='color:green'>Promoted with score ".$calibrationHistory->score." on review no. ".$calibrationHistory->reviewNum."</h4>\n";
+			if($status == "Independent")
+				$content .= "<h4 style='color:green'>All calibration reviews are now for practice</h4>\n";
+			$content .= "<h2>Current Weighted Average : ".$reviewerAverage."</h2>\n";
+			$content .= "<h2>Threshold: ".$latestCalibrationAssignment->calibrationThresholdScore."</h2>\n";
+			$content .= "<h2>Minimum Reviews Required: ".$latestCalibrationAssignment->calibrationMinCount."</h2>\n";
+						
+			foreach($assignments as $assignment)
+			{
+				$calibrationAssignments = $assignment->getAssignedCalibrationReviews($USERID);
+				$doneCalibrations = array();
+				$unfinishedCalibrations = array();
+				if($calibrationAssignments)
+				{
+                    $id = 0;
+					foreach($calibrationAssignments as $matchID)
+					{
+						if($assignment->reviewExists($matchID))
+						{
+							$mark = $assignment->getReviewMark($matchID);
+							$doneCalibrations[$id] = new stdClass;
+		                    if($mark->isValid){
+		                        $doneCalibrations[$id]->text = "(".convertTo10pointScale($mark->reviewPoints, $assignment).")"; 
+		                        $doneCalibrations[$id]->points = $mark->reviewPoints;
+		                    }else{
+		                        $doneCalibrations[$id]->text = "";
+		                        $doneCalibrations[$id]->points = 0;
+							}
+						}
+						else
+						{
+						    if($assignment->reviewDraftExists($matchID)) {
+                                $unfinishedCalibrations[$id] = "In Progress";
+                            } else {
+                                $unfinishedCalibrations[$id] = "Not Complete";
+                            }
+						}
+						$id = $id+1;
+					}
+					$content .= "<div class='calibAssign'>";
+	            	$content .= "<h3>$assignment->name</h3>";
+					$content .= "<table width='100%'>";
+					$content .= "<tr><td width='70%'><table>";
+					foreach($doneCalibrations as $id => $obj)
+		            {
+		                $content .= "<tr><td>";
+		                $temp=$id+1;
+		                $content .= "<a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&calibration=$id")."''>Calibration Review $temp</a>";
+		                $content .= "</td><td>".$obj->text."</td><tr>";
+		            }
+					$content .= "</table>";
+					if(sizeof($unfinishedCalibrations) > 0)
+					{
+						$content .= "<h4>Unfinished Calibrations</h4>";
+						$content .= "<table width='100%'>";
+						foreach($unfinishedCalibrations as $id => $status)
+						{
+							$content .= "<tr><td>";
+							$temp=$id+1;
+							$content .= "<a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&calibration=$id")."''>Calibration Review $temp</a>";
+							$content .= "</td><td>".$status."</td><tr>";
+						}
+						$content .= "</table>";
+					}
+					$content .= "</td><td>";
+					$buttonMessage = "Request Calibration Review";
+					if($status=="Independent")
+					{
+						$buttonMessage = "Request Practice Review";
+					}
+					$content .= "<td width='30%'><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>$buttonMessage</button></a></td>";
+					$content .= '</td><tr></table>';
+					$content .= "</div>";
+				}
+			}
 		}
 
         if($dataMgr->isInstructor($USERID))
@@ -191,7 +314,7 @@ try
             $content .= "<td><a title='User Manager' href='".get_redirect_url("usermanager.php")."'><div class='icon userManager'></div></a></td>\n";
             $content .= "</tr></table><br>\n";
         }
-
+		
         $content .= "<h1>Assignments</h1>\n";
         $currentRowIndex = 0;
         foreach($assignments as $assignment)
@@ -226,6 +349,29 @@ try
     }
 }catch(Exception $e) {
     render_exception_page($e);
+}
+
+function insert($object, &$array)
+{
+	$length = sizeof($array);
+	if($length == 0)
+	{
+		$array[0] = $object;
+		return;
+	}
+	for($i = 0; $i < $length; $i++)
+	{
+		if($object->endDate < $array[$i]->endDate)
+		{
+			for($j = $length; $j > $i; $j--)
+			{
+				$array[$j] = $array[$j-1];
+			}
+			$array[$i] = $object;
+			return;
+		}
+	}
+	$array[$length] = $object;
 }
 
 ?>

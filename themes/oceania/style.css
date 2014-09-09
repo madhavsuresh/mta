@@ -274,3 +274,33 @@ a.editmarklink:active  {
 	width: 900px;
 }
 
+/*Miguel styles*/
+.column1 {width: 27%;}
+.column2 {width: 13%;}
+.column3 {width: 35%;}
+.column4 {width: 25%;}
+
+.calibAssign{
+	background-color: #CEE3F6;
+	border-radius: 12px;
+	padding: 2%;
+	-moz-border-radius: 30px;
+	-khtml-border-radius: 30px;
+	-webkit-border-radius: 30px;
+	width: 50%;;
+	margin-bottom: 1%;
+}
+
+.TODO{
+	padding-left: 10px;
+	border-radius: 12px;
+	-moz-border-radius: 30px;
+	-khtml-border-radius: 30px;
+	-webkit-border-radius: 30px;
+	width: 99%;
+	margin: 0 auto;
+	float: bottom;	
+}
+
+
+

@@ -298,9 +298,6 @@ try
             $content .= "<td><a title='User Manager' href='".get_redirect_url("usermanager.php")."'><div class='icon userManager'></div></a></td>\n";
             $content .= "</tr></table><br>\n";
         }
-
-        if($dataMgr->isMarker($USERID))
-			require_once("TODO_TA.php");
 		
         $content .= "<h1>Assignments</h1>\n";
         $currentRowIndex = 0;

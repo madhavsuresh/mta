@@ -35,6 +35,40 @@ try
 			$output = array();
 			$items = array();
 			
+			$latestCalibrationID = NULL;
+			foreach($assignments as $assignment)
+			{
+				if($assignment->extraCalibrations > 0 && $assignment->getCalibrationSubmissionIDs())
+				{
+					if($latestCalibrationID == NULL)
+						$latestCalibrationID = $assignment->assignmentID;
+					else
+					{
+						$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
+						if($latestCalibrationAssignment->reviewStopDate < $assignment->reviewStopDate)
+							$latestCalibrationID = $assignment->assignmentID;
+					}
+				}
+			}
+			
+			$status = "";
+			$reviewerAverage = "";
+			$threshold = "";
+			$latestCalibrationAssignment = NULL;
+			if($latestCalibrationID != NULL)
+			{
+				$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
+			    if($currentAverage != "--") 
+                	$reviewerAverage = convertTo10pointScale($currentAverage, $latestCalibrationAssignment); 
+                else 
+               		$reviewerAverage = $currentAverage;
+				if(isIndependent($USERID, $latestCalibrationAssignment))
+					$status = "<span style='color:green'>Independent</span>";
+				else
+					$status = "<span style='color:red'>Supervised</span>";
+				$threshold = $latestCalibrationAssignment->calibrationThresholdScore;
+			}
+			
 			foreach($assignments as $assignment)
 			{			
 				if(!$assignment->showForUser($USERID))
@@ -143,14 +177,14 @@ try
 							else
 								$isMoreEssays = $assignment->getNewCalibrationSubmissionForUser($USERID);
 
-								$totalCalibrationsDone = $dataMgr->numCalibrationReviews($USERID);
+								/*$totalCalibrationsDone = $dataMgr->numCalibrationReviews($USERID);
 								$enoughScore = $convertedAverage != "--" && $convertedAverage >= $assignment->calibrationThresholdScore;
 								$enoughReviews = $totalCalibrationsDone >= $assignment->calibrationMinCount;
-								$enough = $enoughScore && $enoughReviews;
+								$enough = $enoughScore && $enoughReviews;*/
 							
 							//!!!PITSTOP!!!
 							//SHOULD I CHANGE THIS TO THE FUNCTION isIndependent
-		                    if(!array_key_exists($USERID->id, $independents) && !$enough && $isMoreEssays != NULL)
+		                    if(!isIndependent($USERID, $latestCalibrationAssignment) && $isMoreEssays != NULL)
 		                    {
 		                    	$doneForThisAssignment = $assignment->numCalibrationReviewsDone($USERID);
 		                    	$completionStatus = "";
@@ -187,39 +221,6 @@ try
 				$content .= "<div class='TODO' style='background-color:$bg;'>";
 				$content .= $item->html;
 				$content .= "</div>";
-			}
-			
-			$latestCalibrationID = NULL;
-			foreach($assignments as $assignment)
-			{
-				if($assignment->extraCalibrations > 0 && $assignment->getCalibrationSubmissionIDs())
-				{
-					if($latestCalibrationID == NULL)
-						$latestCalibrationID = $assignment->assignmentID;
-					else
-					{
-						$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
-						if($latestCalibrationAssignment->reviewStopDate < $assignment->reviewStopDate)
-							$latestCalibrationID = $assignment->assignmentID;
-					}
-				}
-			}
-			
-			$status = "";
-			$reviewerAverage = "";
-			$threshold = "";
-			if($latestCalibrationID != NULL)
-			{
-				$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
-			    if($currentAverage != "--") 
-                	$reviewerAverage = convertTo10pointScale($currentAverage, $latestCalibrationAssignment); 
-                else 
-               		$reviewerAverage = $currentAverage;
-				if(isIndependent($USERID, $latestCalibrationAssignment))
-					$status = "<span style='color:green'>Independent</span>";
-				else
-					$status = "<span style='color:red'>Supervised</span>";
-				$threshold = $latestCalibrationAssignment->calibrationThresholdScore;
 			}
 			
 			$content .= "<h1>Calibration</h1>\n";

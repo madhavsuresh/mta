@@ -147,12 +147,15 @@ try
 								$enoughScore = $convertedAverage != "--" && $convertedAverage >= $assignment->calibrationThresholdScore;
 								$enoughReviews = $totalCalibrationsDone >= $assignment->calibrationMinCount;
 								$enough = $enoughScore && $enoughReviews;
-								
+							
+							//!!!PITSTOP!!!
+							//SHOULD I CHANGE THIS TO THE FUNCTION isIndependent
 		                    if(!array_key_exists($USERID->id, $independents) && !$enough && $isMoreEssays != NULL)
 		                    {
+		                    	$doneForThisAssignment = $assignment->numCalibrationReviewsDone($USERID);
 		                    	$completionStatus = "";
-								if($totalCalibrationsDone < $assignment->extraCalibrations)
-		                    		$completionStatus .= "<br/>".$doneForThisAssignment." of $assignment->extraCalibrations completed";
+								if($doneForThisAssignment < $assignment->extraCalibrations)
+		                    		$completionStatus .= "<br/>$doneForThisAssignment of $assignment->extraCalibrations completed";
 								
 								/*if($isMoreEssays)
 									$moreCalibrations = "<td class='column3B'><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>Request Calibration Review</button></a></td>";

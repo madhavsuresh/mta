@@ -192,6 +192,9 @@ try
 			}
 			
 			$content .= "<h1>Tasks</h1>\n";
+			if(!$items){
+				$content .= "You currently have no assigned tasks";
+			}
 			$bg = '';
 			foreach($items as $item)
 			{

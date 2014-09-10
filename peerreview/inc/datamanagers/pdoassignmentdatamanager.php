@@ -418,7 +418,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $map;
     }
 	
-	//Mod
+	//Modified original function to exclude submissions that are for calibration and have calibration reviews
     function getAuthorSubmissionMap_(PeerReviewAssignment $assignment)
     {
         $sh = $this->db->prepare("SELECT authorID, submissionID FROM peer_review_assignment_submissions LEFT JOIN peer_review_assignment_denied ON peer_review_assignment_submissions.authorID = peer_review_assignment_denied.userID && peer_review_assignment_submissions.assignmentID = peer_review_assignment_denied.assignmentID WHERE peer_review_assignment_denied.userID IS NULL && submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_matches WHERE calibrationState = 1) && peer_review_assignment_submissions.assignmentID = ?;");
@@ -1291,6 +1291,19 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $checks;
     }
 
+    function getSpotChecksForMarker(PeerReviewAssignment $assignment, UserID $userID)
+    {
+        $sh = $this->prepareQuery("getSpotChecksForMarkerQuery", "SELECT checks.submissionID, checkerID, status FROM peer_review_assignment_spot_checks checks JOIN peer_review_assignment_submissions subs ON checks.submissionID = subs.submissionID WHERE assignmentID = ? && checkerID = ?;");
+        $sh->execute(array($assignment->assignmentID,$userID));
+
+        $checks = array();
+        while($res = $sh->fetch())
+        {
+            $checks[$res->submissionID] = new SpotCheck(new SubmissionID($res->submissionID), new UserID($res->checkerID), $res->status);
+        }
+        return $checks;
+    }
+    
     function touchSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID, UserID $userID)
     {
         global $NOW;

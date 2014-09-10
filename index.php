@@ -35,37 +35,20 @@ try
 			$output = array();
 			$items = array();
 			
-			$latestCalibrationID = NULL;
+			$latestCalibrationAssignment = NULL;
 			foreach($assignments as $assignment)
 			{
-				if($assignment->extraCalibrations > 0 && $assignment->getCalibrationSubmissionIDs())
+				if($assignment->getCalibrationSubmissionIDs())
 				{
 					if($latestCalibrationID == NULL)
-						$latestCalibrationID = $assignment->assignmentID;
+						$latestCalibrationAssignment= $assignment;
 					else
 					{
 						$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
 						if($latestCalibrationAssignment->reviewStopDate < $assignment->reviewStopDate)
-							$latestCalibrationID = $assignment->assignmentID;
+							$latestCalibrationAssignment = $assignment;
 					}
 				}
-			}
-			$status = "";
-			$reviewerAverage = "";
-			$threshold = "";
-			$latestCalibrationAssignment = NULL;
-			if($latestCalibrationID != NULL)
-			{
-				$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
-			    if($currentAverage != "--") 
-                	$reviewerAverage = convertTo10pointScale($currentAverage, $latestCalibrationAssignment); 
-                else 
-               		$reviewerAverage = $currentAverage;
-				if(isIndependent($USERID, $latestCalibrationAssignment))
-					$status = "Independent";
-				else
-					$status = "Supervised";
-				$threshold = $latestCalibrationAssignment->calibrationThresholdScore;
 			}
 			
 			foreach($assignments as $assignment)
@@ -162,11 +145,9 @@ try
 		                {					
 		                    $independents = $assignment->getIndependentUsers();
 							
-		                    //if student is supervised and has done less than the extra calibrations required
+		                    $convertedAverage = "--";
 		                    if($currentAverage != "--") 
-		                    	$convertedAverage = convertTo10pointScale($currentAverage, $assignment); 
-		                    else 
-		                   		$convertedAverage = $currentAverage;
+		                    	$convertedAverage = convertTo10pointScale($currentAverage, $assignment);
 							
 							if($assignment->submissionSettings->autoAssignEssayTopic == true && sizeof($assignment->submissionSettings->topics))
 								{
@@ -220,20 +201,34 @@ try
 				$content .= "</div>";
 			}
 			
+			$status = "Supervised";
+			$reviewerAverage = "--";
+			$threshold = "";
+			$minimumReviews = "";
+			if($latestCalibrationAssignment != NULL)
+			{
+			    if($currentAverage != "--") 
+                	$reviewerAverage = convertTo10pointScale($currentAverage, $latestCalibrationAssignment); 
+				if(isIndependent($USERID, $latestCalibrationAssignment))
+					$status = "Independent";
+				$threshold = $latestCalibrationAssignment->calibrationThresholdScore;
+				$minimum = $latestCalibrationAssignment->calibrationMinCount;
+			}
+			
 			$content .= "<h1>Calibration</h1>\n";
-			if($status == "Independent")
-				$color = "green";
-			else
-				$color = "red";
+			if($status == "Independent") $color = "green"; else $color = "red";
 			$content .= "<h2>Current Review Status : <span style='color:$color'>".$status."</span></h2>\n";
-			$calibrationHistory = calibrationHistory($USERID, $latestCalibrationAssignment);
-			if($calibrationHistory->hasReached)
-				$content .= "<h4 style='color:green'>Promoted with score ".$calibrationHistory->score." on review no. ".$calibrationHistory->reviewNum."</h4>\n";
-			if($status == "Independent")
-				$content .= "<h4 style='color:green'>All calibration reviews are now for practice</h4>\n";
+			if($latestCalibrationAssignment)
+			{
+				$calibrationHistory = calibrationHistory($USERID, $latestCalibrationAssignment);
+				if($calibrationHistory->hasReached)
+					$content .= "<h4 style='color:green'>Promoted with score ".$calibrationHistory->score." on review no. ".$calibrationHistory->reviewNum."</h4>\n";
+				if($status == "Independent")
+					$content .= "<h4 style='color:green'>All calibration reviews are now for practice</h4>\n";
+			}
 			$content .= "<h2>Current Weighted Average : ".$reviewerAverage."</h2>\n";
-			$content .= "<h2>Threshold: ".$latestCalibrationAssignment->calibrationThresholdScore."</h2>\n";
-			$content .= "<h2>Minimum Reviews Required: ".$latestCalibrationAssignment->calibrationMinCount."</h2>\n";
+			$content .= "<h2>Threshold: ".$threshold."</h2>\n";
+			$content .= "<h2>Minimum Reviews Required: ".$minimumReviews."</h2>\n";
 						
 			foreach($assignments as $assignment)
 			{

@@ -80,6 +80,8 @@ function computeWeightedAverage($scores)
 
 function convertTo10pointScale($weightedaveragescore, Assignment $assignment)
 {
+	if(!is_numeric($weightedaveragescore))
+		throw new Exception('Non-numeric argument past as weighted average score');
 	$maxScore = $assignment->calibrationMaxScore;
 	$thresholdMSE = $assignment->calibrationThresholdMSE;
 	$thresholdScore = $assignment->calibrationThresholdScore;
@@ -112,31 +114,34 @@ function topicHash(UserID $userID, $topics)
 }
 
 function calibrationHistory(UserID $studentID, Assignment $latestCalibrationAssignment)
-{
-	global $dataMgr;
-	
-	$threshold = $latestCalibrationAssignment->calibrationThresholdMSE;
-	$minimum = $latestCalibrationAssignment->calibrationMinCount;
-	$scores = $dataMgr->getCalibrationScores($studentID);
-	$calibReviews = $dataMgr->numCalibrationReviews($studentID);
-	
+{	
 	$result = new stdClass;
 	$result->hasReached = false;
 	$result->score = NULL;
 	$result->reviewNum = NULL;
-
-	for($i = $minimum; $i <= $calibReviews; $i++)
+	
+	if($latestCalibrationAssignment != NULL)
 	{
-		//get oldest $i reviews and maintain order from newest to oldest
-		$sampleScores = array_slice($scores, -$i, $i, true);
-		$weightedAverage = computeWeightedAverage($sampleScores);
-		if($weightedAverage <= $threshold)
+		global $dataMgr;
+		
+		$threshold = $latestCalibrationAssignment->calibrationThresholdMSE;
+		$minimum = $latestCalibrationAssignment->calibrationMinCount;
+		$scores = $dataMgr->getCalibrationScores($studentID);
+		$calibReviews = $dataMgr->numCalibrationReviews($studentID);
+
+		for($i = $minimum; $i <= $calibReviews; $i++)
 		{
-			$result->hasReached = true;
-			$result->score = convertTo10pointScale($weightedAverage, $latestCalibrationAssignment);
-			$result->reviewNum = $i;
-			break;
-		}	
+			//get oldest $i reviews and maintain order from newest to oldest
+			$sampleScores = array_slice($scores, -$i, $i, true);
+			$weightedAverage = computeWeightedAverage($sampleScores);
+			if($weightedAverage <= $threshold)
+			{
+				$result->hasReached = true;
+				$result->score = convertTo10pointScale($weightedAverage, $latestCalibrationAssignment);
+				$result->reviewNum = $i;
+				break;
+			}	
+		}
 	}
 
 	return $result; 

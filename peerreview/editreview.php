@@ -186,6 +186,11 @@ try
         $content .= "<br><br><input type='submit' name='saveAction' id='saveButton' value='Submit' /><input type='submit' name='saveAction' value='Save Draft' />\n";
         $content .= "</form>\n";
 		
+		if(array_key_exists('showall',$_GET))
+		{
+			$reviews = $assignmentWithSubmission->getReviewsForSubmission($submission->submissionID);
+		}
+		
 		//Miguel: new calibration score briefing
 		if($isCalibration)
 		{

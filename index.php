@@ -212,7 +212,7 @@ try
 				if(isIndependent($USERID, $latestCalibrationAssignment))
 					$status = "Independent";
 				$threshold = $latestCalibrationAssignment->calibrationThresholdScore;
-				$minimum = $latestCalibrationAssignment->calibrationMinCount;
+				$minimumReviews = $latestCalibrationAssignment->calibrationMinCount;
 			}
 			
 			$content .= "<h1>Calibration</h1>\n";

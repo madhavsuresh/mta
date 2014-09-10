@@ -39,15 +39,17 @@ def submission_scores(assignmentID):
     for (subID,) in c:
         obj = {'subID':subID, 'reviewScores':[]}
         m = query("""
-        select mat.reviewerID, ans.questionID, ans.answerInt
+        select u.firstName, u.lastName, mat.reviewerID, ans.questionID, ans.answerInt
           from peer_review_assignment_matches mat
           join peer_review_assignment_review_answers ans on ans.matchID = mat.matchID
+          join peer_review_assignment_submissions sub on sub.submissionID = mat.submissionID
+          join users u on u.userID = sub.authorID
          where mat.submissionID = %s
            and ans.answerInt is not null
          order by mat.reviewerID, ans.questionID
         """, subID)
         lastStudent = None
-        for (reviewer, question, score) in m:
+        for (authorFirst, authorLast, reviewer, question, score) in m:
             if reviewer in instructors:
                 if 'instructorScore' not in obj:
                     obj['instructorScore'] = {}
@@ -55,6 +57,7 @@ def submission_scores(assignmentID):
             else:
                 if lastStudent <> reviewer:
                     obj['reviewScores'].append({})
+                    obj['author'] = "%s %s" % (authorFirst, authorLast)
                 obj['reviewScores'][-1][question] = float(score)
                 lastStudent = reviewer
         ret.append(obj)
@@ -94,4 +97,4 @@ def print_scores(assignID_or_name, courseID=3):
     print "#  sub   mse score"
     for sub in s:
         if 'instructorScore' in sub:
-            print "  %d %.3f %5.1f" % (sub['subID'], mse(sub), sum(sub['instructorScore'].values()))
+            print "  %d %.3f %5.1f \t%s" % (sub['subID'], mse(sub), sum(sub['instructorScore'].values()), sub['author'])

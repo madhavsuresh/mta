@@ -10,7 +10,6 @@ Deny from All
 AuthName "MTA Admin Pages"
 AuthType Basic
 AuthBasicProvider ldap
-AuthzLDAPAuthoritative on
 AuthLDAPUrl ldap://ldap.cs.ubc.ca/ou=People,dc=cs,dc=ubc,dc=ca?uid
 AuthLDAPGroupAttribute memberUid
 AuthLDAPGroupAttributeIsDN off

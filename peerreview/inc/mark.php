@@ -32,7 +32,7 @@ class Mark
 
     function loadFromPost($POST)
     {
-        if(!isset($POST["score"]) || !isset($POST["comments"]))
+        if(!isset($POST["score"]) || !isset($POST["comments"]) || !is_numeric($POST["score"]))
         {
             return "Could not load mark from POST";
         }

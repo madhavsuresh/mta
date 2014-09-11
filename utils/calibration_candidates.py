@@ -29,6 +29,8 @@ def submission_scores(assignmentID):
     instructors = set(id for (id,) in
                       query("select userID from users where userType in ('instructor', 'marker')"))
 
+    fame = set(id for (id,) in
+               query("select questionID from peer_review_assignment_questions where questionName like '%%all of%%'"))
     ret = []
 
     c = query("""
@@ -50,6 +52,8 @@ def submission_scores(assignmentID):
         """, subID)
         lastStudent = None
         for (authorFirst, authorLast, reviewer, question, score) in m:
+            if question in fame:
+                continue
             if reviewer in instructors:
                 if 'instructorScore' not in obj:
                     obj['instructorScore'] = {}

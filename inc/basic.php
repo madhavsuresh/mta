@@ -217,3 +217,32 @@ function isset_bool($x)
   else
     return 0;
 }
+
+function insert($object, &$array)
+{
+	$length = sizeof($array);
+	if($length == 0)
+	{
+		$array[0] = $object;
+		return;
+	}
+	for($i = 0; $i < $length; $i++)
+	{
+		if($object->endDate < $array[$i]->endDate)
+		{
+			for($j = $length; $j > $i; $j--)
+			{
+				$array[$j] = $array[$j-1];
+			}
+			$array[$i] = $object;
+			return;
+		}
+	}
+	$array[$length] = $object;
+}
+
+function phpDate($seconds)
+{
+	return date('M jS Y, H:i', $seconds);
+}
+

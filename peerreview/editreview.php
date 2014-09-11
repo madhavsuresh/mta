@@ -186,6 +186,60 @@ try
         $content .= "<br><br><input type='submit' name='saveAction' id='saveButton' value='Submit' /><input type='submit' name='saveAction' value='Save Draft' />\n";
         $content .= "</form>\n";
 		
+		if(array_key_exists("showall",$_GET))
+		{
+			$reviews = $assignmentWithSubmission->getReviewsForSubmission($submission->submissionID);
+			if($reviews)
+			{
+				$reviewMap = $assignmentWithSubmission->getReviewMap;
+				
+				$content .= "<div style='margin-top:20px; border-top: 3px solid #999; border-bottom: 3px solid #999;'><h1>Student Reviews</h1></div>";
+				foreach($reviews as $review)
+				{
+					if($dataMgr->isStudent($review->reviewerID) && !$reviewMap[$review->submissionID->id][$review->reviewerID->id]->instructorForced)
+					{
+						$content .= "<h1>".$dataMgr->getUserDisplayName($review->reviewerID)."'s Review</h1>\n";
+						$content .= $review->getHTML(true);
+	 				   
+	 				    $content .= "<h1>".$dataMgr->getUserDisplayName($review->reviewerID)."'s Current Review Score</h1>\n";
+					    //TODO: Remove this hardcoded bit for the window size
+					    $content .= precisionFloat(compute_peer_review_score_for_assignments($review->reviewerID, $assignment->getAssignmentsBefore(4))*100)."%";
+					    
+					    $matchID = $assignment->getMatchID($review->submissionID, $review->reviewerID);
+					    
+					    $content .= "<form id='mark$matchID' action='peerreview/submitmark.php?assignmentid=$assignment->assignmentID&type=review&matchid=$matchID' method='post'>\n";
+						$content .= $assignment->getReviewMark($matchID)->getFormHTML();
+						$content .= "<br><br><input type='submit' value='Submit' />\n";
+						$content .= "</form>\n";
+						
+						$content .= "<script type='text/javascript'>
+									$(document).ready(function(){
+									   var form = $('#mark$matchID');
+									   form.submit(function(){
+									      $.post($(this).attr('action'), $(this).serialize(), function(response){
+									      },'json');
+									      return false;
+									   });
+									});
+									</script>";
+									
+						//Message output to confirm review has been marked not working
+						/*$content .= "<h4 id='message$matchID'>Not Done</h4>";
+						$content .=	"<script type='text/javascript'>
+									   $('#mark$matchID').live('submit', function(){
+									      $.post($(this).attr('action'), $(this).serialize(), function(response){
+												$('#message$matchID').hide();
+									      },'json');
+									      return false;
+									   });
+									</script>";
+						*/
+						
+					}
+				}
+			}
+		}
+		
 		//Miguel: new calibration score briefing
 		if($isCalibration)
 		{

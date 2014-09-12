@@ -24,8 +24,14 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $html .= "<input type='text' name='spotCheckThreshold' value='80' size='10'/>%</td></tr>\n";
         $html .= "<tr><td>Auto Spot Check Probability</td><td>";
         $html .= "<input type='text' name='spotCheckProb' value='0.25' size='10'/></td></tr>\n";
-        $html .= "<tr><td>Seed</td><td>";
-        $html .= "<input type='text' name='seed' value='$assignment->submissionStartDate' size='30'/></td></tr>\n";
+        /*$html .= "<tr><td>Seed</td><td>";
+        $html .= "<input type='text' name='seed' value='$assignment->submissionStartDate' size='30'/></td></tr>\n";*/
+		$html .= "<tr><td>High Mark Bias</td><td>";
+		$html .= "<input type='text' name='highMarkBias' value='0' size='10'/></td></tr>\n";
+		$html .= "<tr><td>Calibration Threshold</td><td>";
+		$html .= "<input type='text' name='calibThreshold' value='8.5' size='10'/></td></tr>\n";
+		$html .= "<tr><td>Calibration Bias</td><td>";
+		$html .= "<input type='text' name='calibBias' value='0' size='10'/></td></tr>\n";
         $html .= "<tr><td>&nbsp</td></tr>\n";
 
         foreach($dataMgr->getMarkers() as $markerID)

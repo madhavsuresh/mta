@@ -93,15 +93,20 @@ foreach($assignments as $assignment)
 	}
 }
 
-
+$content .= "<div style='margin-bottom:20px'>";
 $content .= "<h1>Tasks</h1>\n";
-$bg = '';
-foreach($reviewTasks as $reviewTask)
+if($reviewTasks)
 {
-	$bg = ($bg == '#E0E0E0' ? '' : '#E0E0E0');
-	$content .= "<div class='TODO' style='background-color:$bg;'>";
-	$content .= $reviewTask->html;
-	$content .= "</div>";
+	$bg = '';
+	foreach($reviewTasks as $reviewTask)
+	{
+		$bg = ($bg == '#E0E0E0' ? '' : '#E0E0E0');
+		$content .= "<div class='TODO' style='background-color:$bg;'>";
+		$content .= $reviewTask->html;
+		$content .= "</div>";
+	}
 }
-
+else
+	$content .= "You currently have no assigned tasks";
+$content .= "</div>";
 ?>

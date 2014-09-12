@@ -516,7 +516,7 @@ class PDODataManager extends DataManager
         return $res[0];
 	}
 	
-	function latestCalibrationAssignment()
+	function latestAssignmentWithFlaggedIndependents()
 	{
 		$this->latestCalibrationAssignmentQuery->execute();
 		$res = $this->latestCalibrationAssignmentQuery->fetch();

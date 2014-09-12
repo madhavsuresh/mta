@@ -1,5 +1,6 @@
 <?php
 require_once("inc/common.php");
+require_once("peerreview/inc/calibrationutils.php");
 try
 {
     //Has the course been set?
@@ -35,21 +36,7 @@ try
 			$output = array();
 			$items = array();
 			
-			$latestCalibrationAssignment = NULL;
-			foreach($assignments as $assignment)
-			{
-				if($assignment->getCalibrationSubmissionIDs())
-				{
-					if($latestCalibrationID == NULL)
-						$latestCalibrationAssignment= $assignment;
-					else
-					{
-						$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
-						if($latestCalibrationAssignment->reviewStopDate < $assignment->reviewStopDate)
-							$latestCalibrationAssignment = $assignment;
-					}
-				}
-			}
+			$latestCalibrationAssignment = latestCalibrationAssignment();
 			
 			foreach($assignments as $assignment)
 			{			

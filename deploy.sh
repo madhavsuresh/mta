@@ -1,5 +1,5 @@
 #!/bin/sh
-$CWD=`dirname $0`
+CWD=`dirname $0`
 
 # Fetch changes without overwriting local
 git pull

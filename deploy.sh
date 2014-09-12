@@ -2,7 +2,7 @@
 CWD=`dirname $0`
 
 # Fetch changes without overwriting local
-git pull
+git pull --rebase
 
 # fix directory permissions
 find $CWD -type d -exec chmod a+rx '{}' \;

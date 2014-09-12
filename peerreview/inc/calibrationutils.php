@@ -99,7 +99,7 @@ function topicHash(UserID $userID, $topics)
 	if($assignment->submissionSettings->topics)
 		throw new Exception('Assignment is not an essay with multiple topics');
 	
-	$k = sizeof($topics);
+	$numTopics = sizeof($topics);
 	$UserStudentID = $dataMgr->getUserInfo($userID)->studentID;
 	$topicsString = ""; 
 	foreach($topics as $topic)
@@ -107,10 +107,9 @@ function topicHash(UserID $userID, $topics)
 		$topicsString .= $topic;
 	}
 	$hash = sha1($UserStudentID.$topicsString);
-	#print_r($UserStudentID.$topicsString);
-	#print_r(" --> ".$hash);
-	#print_r(" % $k = ".($hash % $k));
-	return $hash % $k;
+	$trimmed_converted = hexdec(substr($hash, 0, 8));
+	$index = $trimmed_converted % $numTopics;
+	return $index;
 }
 
 function calibrationHistory(UserID $studentID, Assignment $latestCalibrationAssignment)

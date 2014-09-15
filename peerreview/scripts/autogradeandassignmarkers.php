@@ -176,7 +176,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         }
 
 		mt_shuffle($independentSubs);
-		spotCheck($independentSubs, $randomSpotCheckProb);
+		pickSpotChecks($independentSubs, $randomSpotCheckProb);
 		
         //asort($submissionScores, SORT_NUMERIC);
         if ($targetLoadSum == 0)

@@ -1,6 +1,6 @@
 <?php
 
-function spotCheck(/*StdClass*/ $submissions, $fraction)
+function pickSpotChecks(/*StdClass*/ $submissions, $fraction)
 {
 	if($fraction > 1)
 		throw new Exception('Spot check fraction is greater than 1');
@@ -9,24 +9,47 @@ function spotCheck(/*StdClass*/ $submissions, $fraction)
 	
 	$subsToSpotCheck = array();
 	
-	$hotpotato_init = $num;
-	$hotpotato = $hotpotatoinit;
-	$index = 0;
+	$hotpotato_init = $num*2;
+	$hotpotato = $hotpotato_init;
 	
+	$output = "";
+	
+	$output .= "We need $count spot checks <table>";
 	while($count > 0)
 	{
+		//visualization
 		foreach($submissions as $key => $submission)
 		{
-			$hotpotato -= $submissions[$index]->weight;
+			$output .= "<tr><td>";
+			foreach($submissions as $key_ => $submission_)
+			{
+				$output .= "$submission_->submissionID => $submission_->weight, ";
+			}
+			$output .= "</td>";
+			$output .= "<td> $hotpotato - $submission->weight = ".($hotpotato - $submission->weight)."</td></tr>";
+			
+			$hotpotato -= $submission->weight;
 			if($hotpotato <= 0)
 			{
 				$hotpotato = $hotpotato_init;
-				$subsToSpotCheck[] = $submission;
+				$subToSpotCheck = new stdClass();
+				$subToSpotCheck->submissionID = $submission->submissionID;
+				$subToSpotCheck->authorID = $submission->authorID;
+				$subsToSpotCheck[] = $subToSpotCheck;
 				unset($submissions[$key]);
 				$count--;
+				if($count <= 0)
+					break;
 			}
 		}
 	}
+	
+	$output .= "</table>";
+	print_r($output);
+	
+	print_r($subsToSpotCheck);
+	
+	return $subsToSpotCheck;
 }
 
 ?>

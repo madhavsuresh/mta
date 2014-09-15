@@ -25,14 +25,14 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $html .= "<input type='text' name='spotCheckThreshold' value='80' size='10'/>%</td></tr>\n";
         $html .= "<tr><td>Auto Spot Check Probability</td><td>";
         $html .= "<input type='text' name='spotCheckProb' value='0.25' size='10'/></td></tr>\n";
-        /*$html .= "<tr><td>Seed</td><td>";
-        $html .= "<input type='text' name='seed' value='$assignment->submissionStartDate' size='30'/></td></tr>\n";*/
+        $html .= "<tr><td>Seed</td><td>";
+        $html .= "<input type='text' name='seed' value='$assignment->submissionStartDate' size='30'/></td></tr>\n";
 		$html .= "<tr><td>High Mark Bias</td><td>";
-		$html .= "<input type='text' name='highMarkBias' value='0' size='10'/></td></tr>\n";
+		$html .= "<input type='text' name='highMarkBias' value='2' size='10'/></td></tr>\n";
 		$html .= "<tr><td>Calibration Threshold</td><td>";
 		$html .= "<input type='text' name='calibThreshold' value='8.5' size='10'/></td></tr>\n";
 		$html .= "<tr><td>Calibration Bias</td><td>";
-		$html .= "<input type='text' name='calibBias' value='0' size='10'/></td></tr>\n";
+		$html .= "<input type='text' name='calibBias' value='1.5' size='10'/></td></tr>\n";
         $html .= "<tr><td>&nbsp</td></tr>\n";
 
         foreach($dataMgr->getMarkers() as $markerID)
@@ -100,7 +100,12 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $reviewedScores = array();
 		
 		$independentSubs = array();
-
+		$output = "<h3>High Mark Threshold: $highSpotCheckThreshold</h3>";
+		$output .= "<h3>Calibration Threshold: $calibThreshold</h3>";
+		$output .= "<h3>High Mark Bias: $highMarkBias";
+		$output .= "<h3>Calibration Bias: $calibBias";
+		$output .= "<table><tr><td>Name</td><td>Initial Weight</td><td>Median Score</td><td>Reviewers</td><td>Final Weight</td><tr>";
+		
         $html = "";
         foreach($submissions as $authorID => $submissionID)
         {
@@ -132,20 +137,37 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 
                 $assignment->saveSubmissionMark(new Mark($medScore, null, true), $submissionID);
 
+				//Package all independent submissions with their calculated weights
 				$independentSub = new stdClass();
 				$independentSub->submissionID = $submissionID->id;
                 $independentSub->authorID = $authorID->id;
-				
 				$independentSub->weight = sizeof($reviews);
+				$output .= "<tr><td>".$dataMgr->getUserDisplayName($authorID)."</td><td>".sizeof($reviews)."</td>";
+				$finalweight = sizeof($reviews);
 				if(1.0*$medScore/$assignment->maxSubmissionScore >= $highSpotCheckThreshold)
+				{
 					$independentSub->weight *= $highMarkBias;
+					$finalweight .= "*".$highMarkBias;
+					$output .= "<td><span style='color:red'>".(1.0*$medScore/$assignment->maxSubmissionScore)."</span></td><td><ul>";
+				}else
+					$output .= "<td>".(1.0*$medScore/$assignment->maxSubmissionScore)."</td><td><ul>";
 				foreach($reviews as $review)
 				{
-					if(getWeightedAverage($review->reviewerID, $assignment) > $calibThreshold)
+					if(getWeightedAverage($review->reviewerID, $assignment) < $calibThreshold)
+					{
 						$independentSub->weight *= $calibBias;
+						$finalweight .= "*".$calibBias;
+						$output .= "<li>".$dataMgr->getUserDisplayName($review->reviewerID)." - <span style='color:red'>".getWeightedAverage($review->reviewerID, $assignment)."</span></li>";
+					}
+					else
+					$output .= "<li>".$dataMgr->getUserDisplayName($review->reviewerID)." - ".getWeightedAverage($review->reviewerID, $assignment)."</li>";
 				}
 				
+				$finalweight .= " = ".$independentSub->weight;
+				$output .= "</ul></td><td>$finalweight</td>";
+				
 				$independentSubs[] = $independentSub;
+				
                 //Do we need to assign a spot check to this one?
                 /*if(1.0*$medScore/$assignment->maxSubmissionScore >= $highSpotCheckThreshold || 1.0*mt_rand()/mt_getrandmax() <= $randomSpotCheckProb )
                 {
@@ -175,8 +197,9 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             }
         }
 
+		//Shuffle independent submissions and spot check proportionally with their weights;
 		mt_shuffle($independentSubs);
-		pickSpotChecks($independentSubs, $randomSpotCheckProb);
+		$pendingSpotChecks = pickSpotChecks($independentSubs, $randomSpotCheckProb);
 		
         //asort($submissionScores, SORT_NUMERIC);
         if ($targetLoadSum == 0)
@@ -307,7 +330,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         }
         $html .= "</table>";
 
-        return $html;
+        return $output.$html;
     }
 
 }

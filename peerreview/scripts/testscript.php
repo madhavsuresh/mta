@@ -37,7 +37,7 @@ class TestScriptPeerReviewScript extends Script
 		
 		mt_shuffle($independentSubs2);
 		
-		spotCheck($independentSubs2, 0.3);
+		pickSpotChecks($independentSubs2, 0.3);
     }
 
 }

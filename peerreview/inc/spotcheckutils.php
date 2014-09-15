@@ -5,28 +5,34 @@ function pickSpotChecks(/*StdClass*/ $submissions, $fraction)
 	if($fraction > 1)
 		throw new Exception('Spot check fraction is greater than 1');
 	$num = sizeof($submissions);
-	$count = (int) $num * $fraction;
+	$count = ceil($num * $fraction);
 	
 	$subsToSpotCheck = array();
 	
-	$hotpotato_init = $num*2;
+	$hotpotato_init = $num*3;
 	$hotpotato = $hotpotato_init;
 	
 	$output = "";
+	$output .= "We need $count spot checks out of $num submissions<table>";
+	global $dataMgr;
 	
-	$output .= "We need $count spot checks <table>";
 	while($count > 0)
 	{
-		//visualization
 		foreach($submissions as $key => $submission)
 		{
+			//visualization
 			$output .= "<tr><td>";
 			foreach($submissions as $key_ => $submission_)
 			{
-				$output .= "$submission_->submissionID => $submission_->weight, ";
+				if($key == $key_)
+					$output .= "<strong>".$dataMgr->getUserDisplayName(new UserID($submission_->authorID))." => $submission_->weight</strong>, ";
+				else
+					$output .= $dataMgr->getUserDisplayName(new UserID($submission_->authorID))." => $submission_->weight, ";
+				
+				//$output .= "$submission_->authorID => $submission_->weight, ";
 			}
 			$output .= "</td>";
-			$output .= "<td> $hotpotato - $submission->weight = ".($hotpotato - $submission->weight)."</td></tr>";
+			$output .= "<td style='border-left: 1px solid #000000;'> $hotpotato - $submission->weight = ".($hotpotato - $submission->weight)."</td></tr>";
 			
 			$hotpotato -= $submission->weight;
 			if($hotpotato <= 0)

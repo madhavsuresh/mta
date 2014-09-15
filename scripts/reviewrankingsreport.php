@@ -18,6 +18,8 @@ class ReviewRankingsReportScript extends Script
 		
 		$assignments = $dataMgr->getAssignments();
 		
+		$latestCalibrationAssignment = latestCalibrationAssignment();
+		
 		$students = array();
 		foreach($dataMgr->getUserDisplayMap() as $user => $name)
         {
@@ -26,28 +28,42 @@ class ReviewRankingsReportScript extends Script
             }
             $student = new stdClass();
 			$student->name = $name;
-			$student->calibrationScore = getWeightedAverage(new UserID($user));
-			$student->reviewScore = precisionFloat(compute_peer_review_score_for_assignments(new UserID($user), $assignments));
-			$student->orderable = max($student->calibrationScore, $student->reviewScore);
+			$student->calibrationScore = (getWeightedAverage(new UserID($user), $latestCalibrationAssignment) == "--") ? 0 : (getWeightedAverage(new UserID($user), latestCalibrationAssignment()));
+			$student->reviewScore = precisionFloat(compute_peer_review_score_for_assignments(new UserID($user), $assignments))*100;
+			$student->orderable = max($student->calibrationScore*10, $student->reviewScore);
+			$student->maxScore = ($student->calibrationScore*10 > $student->reviewScore) ? 1 : 0; 
 			insertr($student, $students);
         }
         
         $html = "";
         $html .= "<h1>Student Calibration Averages and Review Scores</h1>";
-        $html .= "<table width=100%>";
+        $html .= "<div width=100%><table id='bargraph' width=100%>";
 		foreach($students as $student)
 		{
-			if($student->calibrationScore == "--")
-				$calibrationScore = 0;
-			else 
-				$calibrationScore = $student->calibrationScore*10;
-			$html .= "<tr><td width='10%'>$student->name</td><td width='90%'>
-			<div style='opacity: 0.5; height: 15px; width: ".(int) $calibrationScore."%; background-color: #CCC;'>$calibrationScore</div>
-			<div style='opacity: 0.5; position:relative; left:0px; height: 15px; width: ".($student->reviewScore*10)."%;'>$student->reviewScore</div>
-			</td></tr>";
+			if($student->maxScore == 1)
+				$html .= "<tr><td width='20%'>$student->name</td><td width='80%'>
+				<div style='opacity: 0.5; text-align: right; height: 20px; width: ".($student->calibrationScore*10)."%; background-color: #0080FF;'>$student->calibrationScore</div>
+				<div style='opacity: 0.5; text-align: right; margin-top: -20px; height: 20px; width: ".$student->reviewScore."%; background-color: #04B404;'>".$student->reviewScore."%</div>
+				</td></tr>";
+			else
+				$html .= "<tr><td width='20%'>$student->name</td><td width='80%'>
+				<div style='opacity: 0.5; text-align: right; height: 20px; width: ".($student->calibrationScore*10)."%; background-color: #0080FF;'>$student->calibrationScore</div>
+				<div style='opacity: 0.5; text-align: right; margin-top: -20px; height: 20px; width: ".$student->reviewScore."%; background-color: #04B404;'>".$student->reviewScore."%</div>
+				</td></tr>";
 		}
 		$html .= "</table>";
+		$html .= "<div id='threshold' style='border-left: 2px solid #000000;'>&nbsp</div>";
+		$html .= "<script type='text/javascript'>
+					var height = $('#bargraph').height();
+					$('#threshold').height(height);
+					var calibThreshold = ".$latestCalibrationAssignment->calibrationThresholdScore.";
+					var blah = 20 + 80 * (calibThreshold/10)
+					$('#threshold').css('margin-top', - height);
+					$('#threshold').css('margin-left', blah+'%');
+				 </script>";
+		$html .= "</div>";
 		
+
 		return $html;
     }
     function hasParams()

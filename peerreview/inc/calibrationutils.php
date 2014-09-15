@@ -150,7 +150,7 @@ function isFlaggedIndependent(UserID $studentID)
 {
 	global $dataMgr;
 	
-	$latestAssignmentID = new AssignmentID($dataMgr->latestCalibrationAssignment());
+	$latestAssignmentID = new AssignmentID($dataMgr->latestAssignmentWithFlaggedIndependents());
 	$latestAssignment = $dataMgr->getAssignment($latestAssignmentID);
 	return array_key_exists($studentID->id, $latestAssignment->getIndependentUsers());
 }
@@ -161,5 +161,43 @@ function isIndependent(UserID $studentID, Assignment $latestCalibrationAssignmen
 	return calibrationHistory($studentID, $latestCalibrationAssignment)->hasReached || isFlaggedIndependent($studentID);
 }
 
+//Calls the assignment with latest reviewEndDate and has at least one submission that has a calibration match ie. a calibrated submission
+function latestCalibrationAssignment()
+{
+	global $dataMgr;
+	
+	$latestCalibrationAssignment = NULL;
+	$assignments = $dataMgr->getAssignments();
+	foreach($assignments as $assignment)
+	{
+		if($assignment->getCalibrationSubmissionIDs())
+		{
+			if($latestCalibrationID == NULL)
+				$latestCalibrationAssignment= $assignment;
+			else
+			{
+				$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
+				if($latestCalibrationAssignment->reviewStopDate < $assignment->reviewStopDate)
+					$latestCalibrationAssignment = $assignment;
+			}
+		}
+	}
+	return $latestCalibrationAssignment;
+}
 
+function getWeightedAverage(UserID $userid, Assignment $assignment=NULL)
+{
+	global $dataMgr;
+	
+	$scores = $dataMgr->getCalibrationScores($userid);
+	
+	if($scores)
+		$average = computeWeightedAverage($scores);
+	else 
+		return "--";
 
+	if($assignment!=NULL)
+		return convertTo10pointScale($average, $assignment);
+	else
+		return $average;
+}

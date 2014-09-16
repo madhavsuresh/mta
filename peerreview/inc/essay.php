@@ -106,8 +106,9 @@ class EssaySubmissionSettings extends SubmissionSettings
 {
     public $topics = array();
     public $autoAssignEssayTopic = false;
+	public $essayWordLimit = NULL;
 
-    function getFormHTML()
+	function getFormHTML()
     {
         $html  = "<table width='100%' align='left'>\n";
         $html .= "<tr><td>Topic Combo Box Options (One per line)<br>Leave blank if you don't wany to have a selection</td>\n";
@@ -118,6 +119,7 @@ class EssaySubmissionSettings extends SubmissionSettings
 		$checked = $this->autoAssignEssayTopic ? "checked" : "";
 		$html .= "<tr><td></td><td><input type='checkbox' name='autoAssignEssayTopic' id='autoAssignEssayTopic' $checked></input>&nbspAutomatically assign topic</td></tr>";
         $html .= "</table>\n";
+        $html .= "Word Limit: <input type='text' name='essayWordLimit' id='essayWordLimit' value=".$this->essayWordLimit."></input>";
         return $html;
     }
 
@@ -136,6 +138,10 @@ class EssaySubmissionSettings extends SubmissionSettings
             }
         }
 		$this->autoAssignEssayTopic = isset_bool($POST['autoAssignEssayTopic']);
+		if(isset_bool($POST['essayWordLimit']))
+			$this->essayWordLimit = $POST['essayWordLimit'];
+		else
+			$this->essayWordLimit = NULL;
     }
 };
 
@@ -156,6 +162,8 @@ class EssayPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
         }
 		$sh = $this->prepareQuery("setAutoAssignEssayTopicQuery", "UPDATE peer_review_assignment SET autoAssignEssayTopic = ? WHERE assignmentID = ?;");
 		$sh->execute(array($assignment->submissionSettings->autoAssignEssayTopic, $assignment->assignmentID));
+		$sh = $this->prepareQuery("setEssayWordLimitQuery", "UPDATE peer_review_assignment SET essayWordLimit = ? WHERE assignmentID = ?;");
+		$sh->execute(array($assignment->submissionSettings->essayWordLimit, $assignment->assignmentID));
     }
 
     function loadAssignmentSubmissionSettings(PeerReviewAssignment $assignment)
@@ -170,10 +178,11 @@ class EssayPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
             $assignment->submissionSettings->topics[] = $res->topic;
         }
         
-		$sh = $this->db->prepare('SELECT autoAssignEssayTopic FROM peer_review_assignment WHERE assignmentID = ?;');
+		$sh = $this->db->prepare('SELECT autoAssignEssayTopic, essayWordLimit FROM peer_review_assignment WHERE assignmentID = ?;');
 		$sh->execute(array($assignment->assignmentID));
 		$res = $sh->fetch();
 		$assignment->submissionSettings->autoAssignEssayTopic = $res->autoAssignEssayTopic;
+		$assignment->submissionSettings->essayWordLimit= $res->essayWordLimit;
     }
 
     function getAssignmentSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)

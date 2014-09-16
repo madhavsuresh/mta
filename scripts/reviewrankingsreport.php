@@ -40,23 +40,27 @@ class ReviewRankingsReportScript extends Script
 			$student->reviewScore = precisionFloat(compute_peer_review_score_for_assignments(new UserID($user), $assignments))*100;
 			$student->orderable = max($student->calibrationScore*10, $student->reviewScore);
 			$student->other = min($student->reviewScore, $student->calibrationScore*10);
+			$student->max = ($student->calibrationScore*10 >= $student->reviewScore) ? 1 : 0;
 			insertr($student, $students);
         }
         
         $html = "";
         $html .= "<h1>Student Calibration Averages and Review Scores</h1>";
-		$html .= "<table style='margin-bottom:10px;'><tr><td>Calibration Weighted Average</td><td><div style='opacity: 0.5; height:20px; width:20px; background-color: #0080FF;'></div></td></tr>";
-		$html .= "<tr><td>Review Rolling Average</td><td><div style='opacity: 0.5; height:20px; width:20px; background-color: #04B404;;'></div></td></tr></table>";
+		$html .= "<table style='margin-bottom:10px;'><tr><td>Calibration Weighted Average</td><td><div style=' height:20px; width:20px; background-color: #99FF99;'></div></td></tr>";
+		$html .= "<tr><td>Review Rolling Average</td><td><div style=' height:20px; width:20px; background-color: #99CCFF;;'></div></td></tr></table>";
 		$html .= "<div id='thresholdlabel'>Calibration Threshold: <br>$latestCalibrationAssignment->calibrationThresholdScore</div>";
         $html .= "<div width=100%><table id='bargraph' width=100%>";
 		$i = 1;
 		foreach($students as $student)
 		{
-				$html .= "<tr><td width='5%'>$i</td> 
-				<td width='95%'>
-				<div style='opacity: 0.5; text-align: right; height: 20px; width: ".($student->calibrationScore*10)."%; background-color: #0080FF;'></div>
-				<div style='opacity: 0.5; text-align: right; margin-top: -20px; height: 20px; width: ".$student->reviewScore."%; background-color: #04B404;'></div>
-				</td></tr>";
+				$html .= "<tr><td width='5%'>$i</td><td width='95%'>";
+				if($student->max)
+					$html .= "<div style='text-align: right; height: 20px; width: ".($student->calibrationScore*10)."%; background-color: #99FF99;'></div>
+					<div style='text-align: right; margin-top: -20px; height: 20px; width: ".$student->reviewScore."%; background-color: #99CCFF;'></div>";
+				else
+					$html .= "<div style='text-align: right; height: 20px; width: ".$student->reviewScore."%; background-color: #99CCFF;'></div>
+					<div style='text-align: right; margin-top: -20px; height: 20px; width: ".($student->calibrationScore*10)."%; background-color: #99FF99;'></div>";
+				$html .= "</td></tr>";
 				$i = $i + 1;
 		}
 		$html .= "</table>";

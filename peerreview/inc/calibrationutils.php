@@ -99,7 +99,7 @@ function topicHash(UserID $userID, $topics)
 	if($assignment->submissionSettings->topics)
 		throw new Exception('Assignment is not an essay with multiple topics');
 	
-	$k = sizeof($topics);
+	$numTopics = sizeof($topics);
 	$UserStudentID = $dataMgr->getUserInfo($userID)->studentID;
 	$topicsString = ""; 
 	foreach($topics as $topic)
@@ -107,10 +107,9 @@ function topicHash(UserID $userID, $topics)
 		$topicsString .= $topic;
 	}
 	$hash = sha1($UserStudentID.$topicsString);
-	#print_r($UserStudentID.$topicsString);
-	#print_r(" --> ".$hash);
-	#print_r(" % $k = ".($hash % $k));
-	return $hash % $k;
+	$trimmed_converted = hexdec(substr($hash, 0, 8));
+	$index = $trimmed_converted % $numTopics;
+	return $index;
 }
 
 function calibrationHistory(UserID $studentID, Assignment $latestCalibrationAssignment)
@@ -151,7 +150,7 @@ function isFlaggedIndependent(UserID $studentID)
 {
 	global $dataMgr;
 	
-	$latestAssignmentID = new AssignmentID($dataMgr->latestCalibrationAssignment());
+	$latestAssignmentID = new AssignmentID($dataMgr->latestAssignmentWithFlaggedIndependents());
 	$latestAssignment = $dataMgr->getAssignment($latestAssignmentID);
 	return array_key_exists($studentID->id, $latestAssignment->getIndependentUsers());
 }
@@ -162,5 +161,42 @@ function isIndependent(UserID $studentID, Assignment $latestCalibrationAssignmen
 	return calibrationHistory($studentID, $latestCalibrationAssignment)->hasReached || isFlaggedIndependent($studentID);
 }
 
+//Calls the assignment with latest reviewEndDate and has at least one submission that has a calibration match ie. a calibrated submission
+function latestCalibrationAssignment()
+{
+	global $dataMgr;
+	
+	$latestCalibrationAssignment = NULL;
+	$assignments = $dataMgr->getAssignments();
+	foreach($assignments as $assignment)
+	{
+		if($assignment->getCalibrationSubmissionIDs())
+		{
+			if($latestCalibrationAssignment == NULL)
+			{
+				$latestCalibrationAssignment = $assignment;
+				break;
+			}
+			if($latestCalibrationAssignment->reviewStopDate < $assignment->reviewStopDate)
+				$latestCalibrationAssignment = $assignment;
+		}
+	}
+	return $latestCalibrationAssignment;
+}
 
+function getWeightedAverage(UserID $userid, Assignment $assignment=NULL)
+{
+	global $dataMgr;
+	
+	$scores = $dataMgr->getCalibrationScores($userid);
+	
+	if($scores)
+		$average = computeWeightedAverage($scores);
+	else 
+		return "--";
 
+	if($assignment!=NULL)
+		return convertTo10pointScale($average, $assignment);
+	else
+		return $average;
+}

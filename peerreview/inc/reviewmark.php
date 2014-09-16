@@ -46,7 +46,7 @@ class ReviewMark extends Mark
             $html = "$this->score";
             if(!is_null($outOf))
                 $html .= "/$outOf";
-            $html .= " for a total of $this->reviewPoints review points.";
+            //$html .= " for a total of $this->reviewPoints review points.";
             if($this->isAutomatic) {
                 $html .= "<br/><br/>This mark was assigned automatically\n";
             } else if($this->comments){

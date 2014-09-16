@@ -50,7 +50,7 @@ class AssignReviewsPeerReviewScript extends Script
 
         $assignments = $currentAssignment->getAssignmentsBefore($windowSize);
         $userNameMap = $dataMgr->getUserDisplayMap();
-        $authors = $currentAssignment->getAuthorSubmissionMap();
+        $authors = $currentAssignment->getAuthorSubmissionMap_();
         $assignmentIndependent = $currentAssignment->getIndependentUsers();
 
         $independents = array();

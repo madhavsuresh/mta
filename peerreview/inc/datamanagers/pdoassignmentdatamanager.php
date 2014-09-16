@@ -417,6 +417,21 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
         return $map;
     }
+	
+	//Modified original function to exclude submissions that are for calibration and have calibration reviews
+    function getAuthorSubmissionMap_(PeerReviewAssignment $assignment)
+    {
+        $sh = $this->db->prepare("SELECT authorID, submissionID FROM peer_review_assignment_submissions LEFT JOIN peer_review_assignment_denied ON peer_review_assignment_submissions.authorID = peer_review_assignment_denied.userID && peer_review_assignment_submissions.assignmentID = peer_review_assignment_denied.assignmentID WHERE peer_review_assignment_denied.userID IS NULL && submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_matches WHERE calibrationState = 1) && peer_review_assignment_submissions.assignmentID = ?;");
+        $sh->execute(array($assignment->assignmentID));
+
+        $map = array();
+        while($res = $sh->fetch())
+        {
+            $map[$res->authorID] = new SubmissionID($res->submissionID);
+        }
+        return $map;
+    }
+	
 
     function getReviewerAssignment(PeerReviewAssignment $assignment)
     {
@@ -1276,6 +1291,19 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $checks;
     }
 
+    function getSpotChecksForMarker(PeerReviewAssignment $assignment, UserID $userID)
+    {
+        $sh = $this->prepareQuery("getSpotChecksForMarkerQuery", "SELECT checks.submissionID, checkerID, status FROM peer_review_assignment_spot_checks checks JOIN peer_review_assignment_submissions subs ON checks.submissionID = subs.submissionID WHERE assignmentID = ? && checkerID = ?;");
+        $sh->execute(array($assignment->assignmentID,$userID));
+
+        $checks = array();
+        while($res = $sh->fetch())
+        {
+            $checks[$res->submissionID] = new SpotCheck(new SubmissionID($res->submissionID), new UserID($res->checkerID), $res->status);
+        }
+        return $checks;
+    }
+    
     function touchSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID, UserID $userID)
     {
         global $NOW;
@@ -1376,29 +1404,22 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $reviewMap;
     }
     
-    function getReviewMapForUser(PeerReviewAssignment $assignment, UserID $reviewerID)
+    function getReviewsForMarker(PeerReviewAssignment $assignment, UserID $reviewerID)
     {
-        //First, figure out what should be there
-        $reviewMap = array();
-
-        //This is a beast, all it does is grab a list of submission-reviewer ids for the current assignment, that actually have something in the answers array, ordering by user type then match id
-        //It also indicates if a match has answers (questionID != NULL)
-        $sh = $this->prepareQuery("getReviepMapForUserQuery", "SELECT peer_review_assignment_matches.submissionID, peer_review_assignment_matches.reviewerID, peer_review_assignment_review_answers.questionID, peer_review_assignment_matches.matchID, peer_review_assignment_matches.instructorForced FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID LEFT JOIN peer_review_assignment_review_answers ON peer_review_assignment_matches.matchID = peer_review_assignment_review_answers.matchID JOIN users ON peer_review_assignment_matches.reviewerID = users.userID WHERE peer_review_assignment_submissions.assignmentID = ? && peer_review_assignment_matches.reviewerID = ? GROUP BY peer_review_assignment_matches.matchID ORDER BY users.userType, peer_review_assignment_matches.matchID;");
-        $sh->execute(array($assignment->assignmentID), $reviewerID);
+        $reviews = array();
+		
+        $sh = $this->prepareQuery("getReviewsForMarkerQuery", "SELECT peer_review_assignment_matches.submissionID, peer_review_assignment_review_answers.questionID, peer_review_assignment_matches.matchID, peer_review_assignment_matches.instructorForced FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID LEFT JOIN peer_review_assignment_review_answers ON peer_review_assignment_matches.matchID = peer_review_assignment_review_answers.matchID JOIN users ON peer_review_assignment_matches.reviewerID = users.userID WHERE peer_review_assignment_submissions.assignmentID = ? && peer_review_assignment_matches.reviewerID = ? GROUP BY peer_review_assignment_matches.matchID ORDER BY users.userType, peer_review_assignment_matches.matchID;");
+        $sh->execute(array($assignment->assignmentID, $reviewerID));
         while($res = $sh->fetch())
         {
-            if(!array_key_exists($res->submissionID, $reviewMap))
-            {
-                $reviewMap[$res->submissionID] = array();
-            }
             $obj = new stdClass();
-            $obj->reviewerID = new UserID($res->reviewerID);
+            $obj->submissionID = new SubmissionID($res->submissionID);
             $obj->exists = !is_null($res->questionID);
             $obj->matchID = new MatchID($res->matchID);
             $obj->instructorForced = $res->instructorForced;
-            $reviewMap[$res->submissionID][] = $obj;
+            $reviews[] = $obj;
         }
-        return $reviewMap;
+        return $reviews;
     }
 
     //Get calibration reviews for calibration submissions 

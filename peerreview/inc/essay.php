@@ -57,25 +57,21 @@ class EssaySubmission extends Submission
     	global $USERID, $dataMgr;	
 	
         $html = "";
-		if($this->submissionSettings->autoAssignEssayTopic && $dataMgr->isStudent($USERID))
+		if($this->submissionSettings->autoAssignEssayTopic && $dataMgr->isStudent($USERID) && $this)
 		{
 			if(sizeof($this->submissionSettings->topics))
 	        {
-				/*$k = sizeof($this->submissionSettings->topics);
-				$USERstudentID = $dataMgr->getUserInfo($USERID)->studentID;
-				$topicsString = ""; 
-				foreach($this->submissionSettings->topics as $topic)
+				if(is_null($this->topicIndex))
 				{
-					$topicsString .= $topic;
+					$i = topicHash($USERID, $this->submissionSettings->topics);
+					$html .= "<h1>Topic: ".$this->submissionSettings->topics[$i]."</h2>";
+					$html .= "<input type='hidden' name='topic' value='$i'>";
 				}
-				$newHash = sha1($USERstudentID + $topicsString);
-				$i = $newHash % $k;*/
-				
-				$i = topicHash($USERID, $this->submissionSettings->topics);
-				
-				$this->topicIndex = $i;
-				$html .= "<h1>Topic: ".$this->submissionSettings->topics[$i]."</h2>";
-				$html .= "<input type='hidden' name='topic' value='$i'>";
+				else 
+				{
+					$html .= "<h1>Topic: ".$this->submissionSettings->topics[$this->topicIndex]."</h2>";
+					$html .= "<input type='hidden' name='topic' value='$this->topicIndex'>";
+				}
 			}
 		}
 		else 

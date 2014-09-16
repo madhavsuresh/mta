@@ -1,5 +1,6 @@
 <?php
 require_once("peerreview/inc/common.php");
+require_once("peerreview/inc/calibrationutils.php");
 
 class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 {
@@ -24,7 +25,13 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $html .= "<input type='text' name='spotCheckThreshold' value='80' size='10'/>%</td></tr>\n";
         $html .= "<tr><td>Auto Spot Check Probability</td><td>";
         $html .= "<input type='text' name='spotCheckProb' value='0.25' size='10'/></td></tr>\n";
-        $html .= "<tr><td>Seed</td><td>";
+		$html .= "<tr><td>High Mark Bias</td><td>";
+		$html .= "<input type='text' name='highMarkBias' value='2' size='10'/></td></tr>\n";
+		$html .= "<tr><td>Low Calibration Threshold</td><td>";
+		$html .= "<input type='text' name='calibThreshold' value='8.5' size='10'/></td></tr>\n";
+		$html .= "<tr><td>Calibration Bias</td><td>";
+		$html .= "<input type='text' name='calibBias' value='1.5' size='10'/></td></tr>\n";
+		$html .= "<tr><td>Seed</td><td>";
         $html .= "<input type='text' name='seed' value='$assignment->submissionStartDate' size='30'/></td></tr>\n";
         $html .= "<tr><td>&nbsp</td></tr>\n";
 
@@ -47,6 +54,9 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $randomSpotCheckProb = floatval(require_from_post("spotCheckProb"));
         $userNameMap = $dataMgr->getUserDisplayMap();
         $independents = $assignment->getIndependentUsers();
+		$highMarkBias = floatval(require_from_post("highMarkBias"));
+		$calibThreshold = floatval(require_from_post("calibThreshold"));
+		$calibBias = floatval(require_from_post("calibBias"));
 
         $markers = $dataMgr->getMarkers();
         mt_shuffle($markers);
@@ -88,7 +98,8 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $submissions =  $assignment->getAuthorSubmissionMap();
 
         $reviewedScores = array();
-
+		$independentSubs = array();
+		
         $html = "";
         foreach($submissions as $authorID => $submissionID)
         {
@@ -120,14 +131,30 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 
                 $assignment->saveSubmissionMark(new Mark($medScore, null, true), $submissionID);
 
+				//Package all independent submissions with their calculated weights
+				$independentSub = new stdClass();
+				$independentSub->submissionID = $submissionID->id;
+                $independentSub->authorID = $authorID->id;
+				$independentSub->weight = sizeof($reviews);
+				if(1.0*$medScore/$assignment->maxSubmissionScore >= $highSpotCheckThreshold)
+					$independentSub->weight *= $highMarkBias;
+				foreach($reviews as $review)
+				{
+					if(getWeightedAverage($review->reviewerID, $assignment) < $calibThreshold)
+						$independentSub->weight *= $calibBias;
+				}
+				
+				$independentSubs[] = $independentSub;
+				
+				//OLD spot checking method
                 //Do we need to assign a spot check to this one?
-                if(1.0*$medScore/$assignment->maxSubmissionScore >= $highSpotCheckThreshold || 1.0*mt_rand()/mt_getrandmax() <= $randomSpotCheckProb )
+                /*if(1.0*$medScore/$assignment->maxSubmissionScore >= $highSpotCheckThreshold || 1.0*mt_rand()/mt_getrandmax() <= $randomSpotCheckProb )
                 {
                     $obj = new stdClass;
                     $obj->submissionID = $submissionID->id;
                     $obj->authorID = $authorID->id;
                     $pendingSpotChecks[] = $obj;
-                }
+                }*/
 
                 //Update the reviewer's  marks
                 foreach($reviews as $review)
@@ -148,6 +175,11 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
                 $pendingSubmissions[] = $obj;
             }
         }
+
+		//Shuffle independent submissions and spot check proportionally with their weights;
+		mt_shuffle($independentSubs);
+		$pendingSpotChecks = pickSpotChecks($independentSubs, $randomSpotCheckProb);
+		
         //asort($submissionScores, SORT_NUMERIC);
         if ($targetLoadSum == 0)
             return "Only marks updated, no assignments to markers"; //$html;

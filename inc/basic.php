@@ -251,7 +251,19 @@ function insertr($object, &$array)
 	}
 	for($i = 0; $i < $length; $i++)
 	{
-		if($object->orderable  >= $array[$i]->orderable)
+		if($object->orderable == $array[$i]->orderable)
+		{
+			if($object->other > $array[$i]->other)
+			{
+				for($j = $length; $j > $i; $j--)
+				{
+					$array[$j] = $array[$j-1];
+				}
+				$array[$i] = $object;
+				return;
+			}	
+		}
+		elseif($object->orderable > $array[$i]->orderable)
 		{
 			for($j = $length; $j > $i; $j--)
 			{

@@ -32,24 +32,9 @@ try
 			else 
 				$currentAverage = "--";
 			
-			$output = array();
 			$items = array();
 			
-			$latestCalibrationAssignment = NULL;
-			foreach($assignments as $assignment)
-			{
-				if($assignment->getCalibrationSubmissionIDs())
-				{
-					if($latestCalibrationID == NULL)
-						$latestCalibrationAssignment= $assignment;
-					else
-					{
-						$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
-						if($latestCalibrationAssignment->reviewStopDate < $assignment->reviewStopDate)
-							$latestCalibrationAssignment = $assignment;
-					}
-				}
-			}
+			$latestCalibrationAssignment = latestCalibrationAssignment();
 			
 			foreach($assignments as $assignment)
 			{			
@@ -156,11 +141,6 @@ try
 								}
 							else
 								$isMoreEssays = $assignment->getNewCalibrationSubmissionForUser($USERID);
-
-								/*$totalCalibrationsDone = $dataMgr->numCalibrationReviews($USERID);
-								$enoughScore = $convertedAverage != "--" && $convertedAverage >= $assignment->calibrationThresholdScore;
-								$enoughReviews = $totalCalibrationsDone >= $assignment->calibrationMinCount;
-								$enough = $enoughScore && $enoughReviews;*/
 							
 		                    if(!isIndependent($USERID, $latestCalibrationAssignment) && $isMoreEssays != NULL)
 		                    {
@@ -168,11 +148,6 @@ try
 		                    	$completionStatus = "";
 								if($doneForThisAssignment < $assignment->extraCalibrations)
 		                    		$completionStatus .= "<br/>$doneForThisAssignment of $assignment->extraCalibrations completed";
-								
-								/*if($isMoreEssays)
-									$moreCalibrations = "<td class='column3B'><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>Request Calibration Review</button></a></td>";
-								else 
-									$moreCalibrations = "<td class='column3B'>No more available calibrations</td>";*/
 								
 								$item = new stdClass();
 								$item->type = "Calibration";
@@ -302,7 +277,7 @@ try
 				}
 			}
 		}
-
+		
 		if($dataMgr->isMarker($USERID))
 		{
 			require_once("tasks_TA.php");

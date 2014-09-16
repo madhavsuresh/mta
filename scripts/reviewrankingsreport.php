@@ -12,7 +12,15 @@ class ReviewRankingsReportScript extends Script
     {
         return "Show student rankings in weighted average calibration and rolling average review score";
     }
-    function getFormHTML()
+	function getFormHTML()
+    {
+        return "(None)";
+    }
+    function hasParams()
+    {
+        return false;
+    }
+    function executeAndGetResult()
     {
     	global $dataMgr;
 		
@@ -31,52 +39,42 @@ class ReviewRankingsReportScript extends Script
 			$student->calibrationScore = (getWeightedAverage(new UserID($user), $latestCalibrationAssignment) == "--") ? 0 : (getWeightedAverage(new UserID($user), latestCalibrationAssignment()));
 			$student->reviewScore = precisionFloat(compute_peer_review_score_for_assignments(new UserID($user), $assignments))*100;
 			$student->orderable = max($student->calibrationScore*10, $student->reviewScore);
-			$student->maxScore = ($student->calibrationScore*10 > $student->reviewScore) ? 1 : 0; 
+			$student->other = min($student->reviewScore, $student->calibrationScore*10);
 			insertr($student, $students);
         }
         
         $html = "";
         $html .= "<h1>Student Calibration Averages and Review Scores</h1>";
+		$html .= "<table style='margin-bottom:10px;'><tr><td>Calibration Weighted Average</td><td><div style='opacity: 0.5; height:20px; width:20px; background-color: #0080FF;'></div></td></tr>";
+		$html .= "<tr><td>Review Rolling Average</td><td><div style='opacity: 0.5; height:20px; width:20px; background-color: #04B404;;'></div></td></tr></table>";
+		$html .= "<div id='thresholdlabel'>Calibration Threshold: <br>$latestCalibrationAssignment->calibrationThresholdScore</div>";
         $html .= "<div width=100%><table id='bargraph' width=100%>";
+		$i = 1;
 		foreach($students as $student)
 		{
-			if($student->maxScore == 1)
-				$html .= "<tr><td width='20%'>$student->name</td><td width='80%'>
-				<div style='opacity: 0.5; text-align: right; height: 20px; width: ".($student->calibrationScore*10)."%; background-color: #0080FF;'>$student->calibrationScore</div>
-				<div style='opacity: 0.5; text-align: right; margin-top: -20px; height: 20px; width: ".$student->reviewScore."%; background-color: #04B404;'>".$student->reviewScore."%</div>
+				$html .= "<tr><td width='5%'>$i</td> 
+				<td width='95%'>
+				<div style='opacity: 0.5; text-align: right; height: 20px; width: ".($student->calibrationScore*10)."%; background-color: #0080FF;'></div>
+				<div style='opacity: 0.5; text-align: right; margin-top: -20px; height: 20px; width: ".$student->reviewScore."%; background-color: #04B404;'></div>
 				</td></tr>";
-			else
-				$html .= "<tr><td width='20%'>$student->name</td><td width='80%'>
-				<div style='opacity: 0.5; text-align: right; height: 20px; width: ".($student->calibrationScore*10)."%; background-color: #0080FF;'>$student->calibrationScore</div>
-				<div style='opacity: 0.5; text-align: right; margin-top: -20px; height: 20px; width: ".$student->reviewScore."%; background-color: #04B404;'>".$student->reviewScore."%</div>
-				</td></tr>";
+				$i = $i + 1;
 		}
 		$html .= "</table>";
 		$html .= "<div id='threshold' style='border-left: 2px solid #000000;'>&nbsp</div>";
-		$html .= "<script type='text/javascript'>
+		$html .= "</div>";
+				$html .= "<script type='text/javascript'>
 					var height = $('#bargraph').height();
 					$('#threshold').height(height);
 					var calibThreshold = ".$latestCalibrationAssignment->calibrationThresholdScore.";
-					var blah = 20 + 80 * (calibThreshold/10)
+					var x_pos = 5 + 95 * (calibThreshold/10);
 					$('#threshold').css('margin-top', - height);
-					$('#threshold').css('margin-left', blah+'%');
+					$('#threshold').css('margin-left', x_pos+'%');
+					$('#thresholdlabel').css('margin-left', x_pos+'%');
 				 </script>";
-		$html .= "</div>";
 		
 
 		return $html;
     }
-    function hasParams()
-    {
-        return true;
-    }
-	
-	function executeAndGetResult()
-	{
-		return "";
-	}
-	
-
 }
 
 ?>

@@ -173,7 +173,7 @@ class CopyAssignmentsScript extends Script
 				
 				if($withCalibration)
 				{
-					$submissionIDtoreviewsMap = $originalAssignment->getCorrectReviewMap(); //Miguel: new method of searching for submissions that have been reviewed by 'correctly'
+					$submissionIDtoreviewsMap = $originalAssignment->getCorrectReviewMap(); //Miguel: new method of searching for submissions that have been reviewed 'correctly'
 					
 					$oldToNewAuthorIDMap = array();
 					//Copy original submissions to copied assignment
@@ -184,7 +184,12 @@ class CopyAssignmentsScript extends Script
 						
 						$copiedSubmission = $submission;
 						
-						if(!$copiedAssignment->isInSameCourse($originalAssignment))
+						if($dataMgr->isStudent($submission->authorID))
+						{
+							$newAuthorID = $copiedAssignment->getUserIDForCopyingSubmission($USERID, $dataMgr->getUsername($USERID));
+							$copiedSubmission->authorID = $newAuthorID;
+						}
+						elseif(!$copiedAssignment->isInSameCourse($originalAssignment))
 						{
 							$newAuthorID = $copiedAssignment->getUserIDForCopyingSubmission($submission->authorID, $dataMgr->getUsername($submission->authorID));
 							$copiedSubmission->authorID = $newAuthorID;

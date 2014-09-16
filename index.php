@@ -159,7 +159,7 @@ try
 		                    	<td class='column2'>Calibration Review $completionStatus</td>
 		                    	<td class='column3'><table wdith='100%'><td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
 		                    	<td><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>Request Calibration Review</button></a></td></table></td>
-		                    	<td class='column4'>".phpDate('M jS Y, H:i', $assignment->reviewStopDate)."</td></tr></table>\n";
+		                    	<td class='column4'>".phpDate($assignment->reviewStopDate)."</td></tr></table>\n";
 								insert($item, $items);
 		                   	}
 		                }

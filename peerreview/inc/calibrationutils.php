@@ -172,14 +172,13 @@ function latestCalibrationAssignment()
 	{
 		if($assignment->getCalibrationSubmissionIDs())
 		{
-			if($latestCalibrationID == NULL)
-				$latestCalibrationAssignment= $assignment;
-			else
+			if($latestCalibrationAssignment == NULL)
 			{
-				$latestCalibrationAssignment = $dataMgr->getAssignment($latestCalibrationID);
-				if($latestCalibrationAssignment->reviewStopDate < $assignment->reviewStopDate)
-					$latestCalibrationAssignment = $assignment;
+				$latestCalibrationAssignment = $assignment;
+				break;
 			}
+			if($latestCalibrationAssignment->reviewStopDate < $assignment->reviewStopDate)
+				$latestCalibrationAssignment = $assignment;
 		}
 	}
 	return $latestCalibrationAssignment;

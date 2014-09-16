@@ -9,11 +9,15 @@ function pickSpotChecks(/*StdClass*/ $submissions, $fraction)
 	
 	$subsToSpotCheck = array();
 	
-	$hotpotato_init = $num*3;
-	$hotpotato = $hotpotato_init;
+	$weightsum = 0;
+	foreach($submissions as $submission)
+		$weightsum += $submission->weight;
+	
+	$hotpotato = rand(0, ceil($weightsum));
 	
 	$output = "";
-	$output .= "We need $count spot checks out of $num submissions<table>";
+	$output .= "Total weight is $weightsum. ";
+	$output .= "We need $count spot checks out of $num submissions<table>";	
 	global $dataMgr;
 	
 	while($count > 0)
@@ -37,7 +41,7 @@ function pickSpotChecks(/*StdClass*/ $submissions, $fraction)
 			$hotpotato -= $submission->weight;
 			if($hotpotato <= 0)
 			{
-				$hotpotato = $hotpotato_init;
+				$hotpotato = rand(0, $weightsum);
 				$subToSpotCheck = new stdClass();
 				$subToSpotCheck->submissionID = $submission->submissionID;
 				$subToSpotCheck->authorID = $submission->authorID;
@@ -51,9 +55,10 @@ function pickSpotChecks(/*StdClass*/ $submissions, $fraction)
 	}
 	
 	$output .= "</table>";
+	$output .= "We will spot check submissions from ";
+	foreach($subsToSpotCheck as $subToSpotCheck)
+		$output .= $dataMgr->getUserDisplayName(new UserID($subToSpotCheck->authorID)).", ";
 	print_r($output);
-	
-	print_r($subsToSpotCheck);
 	
 	return $subsToSpotCheck;
 }

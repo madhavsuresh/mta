@@ -49,7 +49,6 @@ try
     else #They've passed all the roadblocks - let them write something
     {
         $content .= init_tiny_mce(false);
-
         $content .= "<h1>Current Submission Question</h1>\n";
         #Remember that the submissionQuestion may have endlines in it
         $content .= $assignment->submissionQuestion;

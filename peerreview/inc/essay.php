@@ -42,13 +42,15 @@ class EssaySubmission extends Submission
         $code .= "$('#error_topic').parent().show();\n";
         $code .= "error = true;}\n";
 
-        /*$code .= "$('#error_essay').html('').parent().hide();\n";
-        //TODO: Make this a setting in an essay
-        $code .= "if(getWordCount('essayEdit') > 350) {";
-        //$code .= "if(getWordCount('essayEdit') > 99999) {";
-        $code .= "$('#error_essay').html('Essays must not be longer than 300 words. (Note: Some editors add phantom characters to your document, try cleaning the text by copying it into a program like notepad then pasting it in if you feel you receive this message in error)');\n";
-        $code .= "$('#error_essay').parent().show();\n";
-        $code .= "error = true;}";*/
+        if($this->submissionSettings->essayWordLimit > 0)
+		{
+			////Word limit enforced from assignment setting
+	        $code .= "$('#error_essay').html('').parent().hide();\n";
+	        $code .= "if(getWordCount('essayEdit') > ".$this->submissionSettings->essayWordLimit.") {";
+	        $code .= "$('#error_essay').html('This essay must not be longer than ".$this->submissionSettings->essayWordLimit." words. (Note: Some editors add phantom characters to your document, try cleaning the text by copying it into a program like notepad then pasting it in if you feel you receive this message in error)');\n";
+	        $code .= "$('#error_essay').parent().show();\n";
+	        $code .= "error = true;}";
+	    }
 		
         return $code;
     }
@@ -119,8 +121,8 @@ class EssaySubmissionSettings extends SubmissionSettings
         $html .= "</textarea></td><tr>\n";
 		$checked = $this->autoAssignEssayTopic ? "checked" : "";
 		$html .= "<tr><td></td><td><input type='checkbox' name='autoAssignEssayTopic' id='autoAssignEssayTopic' $checked></input>&nbspAutomatically assign topic</td></tr>";
-        $html .= "</table>\n";
-        $html .= "Word Limit: <input type='text' name='essayWordLimit' id='essayWordLimit' value=".$this->essayWordLimit."></input>";
+        $html .= "<tr><td><table><td>Word Limit:</td><td><input type='text' name='essayWordLimit' id='essayWordLimit' size= '20' value=".$this->essayWordLimit."></input>(Set to 0 for no limit)</td></table></td></tr>";
+		$html .= "</table>\n";
         return $html;
     }
 
@@ -139,10 +141,8 @@ class EssaySubmissionSettings extends SubmissionSettings
             }
         }
 		$this->autoAssignEssayTopic = isset_bool($POST['autoAssignEssayTopic']);
-		if(isset_bool($POST['essayWordLimit']))
-			$this->essayWordLimit = $POST['essayWordLimit'];
-		else
-			$this->essayWordLimit = NULL;
+		$this->essayWordLimit = $this->minLength = isset_bool($POST['essayWordLimit']) ? max(intval($POST['essayWordLimit']), 0) : 0;
+
     }
 };
 

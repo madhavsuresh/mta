@@ -49,7 +49,7 @@ try
     else #They've passed all the roadblocks - let them write something
     {
         $content .= init_tiny_mce(false);
-
+		print_r("The word limit is ".$assignment->submissionSettings->essayWordLimit);
         $content .= "<h1>Current Submission Question</h1>\n";
         #Remember that the submissionQuestion may have endlines in it
         $content .= $assignment->submissionQuestion;
@@ -77,6 +77,12 @@ try
         $content .= "<script type='text/javascript'> $(document).ready(function(){ $('#submission').submit(function() {\n";
         $content .= "var error = false;\n";
         $content .= $submission->getValidationCode();
+		//Word limit enforced from assignment setting
+		$content .= "$('#error_essay').html('').parent().hide();\n";
+        $content .= "if(getWordCount('essayEdit') > ".$assignment->submissionSettings->essayWordLimit.") {";
+        $content .= "$('#error_essay').html('This essay must not be longer than ".$assignment->submissionSettings->essayWordLimit.". (Note: Some editors add phantom characters to your document, try cleaning the text by copying it into a program like notepad then pasting it in if you feel you receive this message in error)');\n";
+        $content .= "$('#error_essay').parent().show();\n";
+        $content .= "error = true;}";
         $content .= "if(error){return false;}else{return true;}\n";
         $content .= "}); }); </script>\n";
     }

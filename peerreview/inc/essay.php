@@ -42,13 +42,14 @@ class EssaySubmission extends Submission
         $code .= "$('#error_topic').parent().show();\n";
         $code .= "error = true;}\n";
 
-        $code .= "$('#error_essay').html('').parent().hide();\n";
+        /*$code .= "$('#error_essay').html('').parent().hide();\n";
         //TODO: Make this a setting in an essay
         $code .= "if(getWordCount('essayEdit') > 350) {";
         //$code .= "if(getWordCount('essayEdit') > 99999) {";
         $code .= "$('#error_essay').html('Essays must not be longer than 300 words. (Note: Some editors add phantom characters to your document, try cleaning the text by copying it into a program like notepad then pasting it in if you feel you receive this message in error)');\n";
         $code .= "$('#error_essay').parent().show();\n";
-        $code .= "error = true;}";
+        $code .= "error = true;}";*/
+		
         return $code;
     }
 

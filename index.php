@@ -76,10 +76,10 @@ try
 						}
 					}	
 				}
-
-				if($assignment->reviewStartDate <= $NOW AND $assignment->reviewStopDate > $NOW)
+				
+				if($assignment->password == NULL || $dataMgr->hasEnteredPassword($assignment->assignmentID, $USERID))
 				{
-					if($assignment->password == NULL || $dataMgr->hasEnteredPassword($assignment->assignmentID, $USERID))
+					if($assignment->reviewStartDate <= $NOW AND $assignment->reviewStopDate > $NOW)
 					{
 						$reviewAssignments = $assignment->getAssignedReviews($USERID);
 						$id=0;
@@ -102,7 +102,10 @@ try
 							}
 							$id++;			
 						} 
+					}
 					
+					if($assignment->calibrationStartDate <= $NOW AND $assignment->calibrationStopDate > $NOW)
+					{
 						$calibrationReviewAssignments = $assignment->getAssignedCalibrationReviews($USERID);
 						$id=0;
 						foreach($calibrationReviewAssignments as $matchID)
@@ -124,7 +127,7 @@ try
 							}
 							$id++;
 						}			
-					
+
 						//TO-DO: Clean-up logic flow
 	                	$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();#$#
 		                if($availableCalibrationSubmissions && $assignment->extraCalibrations > 0)
@@ -159,7 +162,7 @@ try
 		                    	<td class='column2'>Calibration Review $completionStatus</td>
 		                    	<td class='column3'><table wdith='100%'><td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
 		                    	<td><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>Request Calibration Review</button></a></td></table></td>
-		                    	<td class='column4'>".phpDate($assignment->reviewStopDate)."</td></tr></table>\n";
+		                    	<td class='column4'>".phpDate($assignment->reviewStartDate)."</td></tr></table>\n";
 								insert($item, $items);
 		                   	}
 		                }

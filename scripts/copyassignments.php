@@ -142,6 +142,8 @@ class CopyAssignmentsScript extends Script
 				$copiedAssignment->reviewStopDate = $copiedAssignment->reviewStopDate - $startDate + $base;
  				$copiedAssignment->markPostDate = $copiedAssignment->markPostDate - $startDate + $base;
  				$copiedAssignment->appealStopDate = $copiedAssignment->appealStopDate - $startDate + $base;
+				$copiedAssignment->calibrationStartDate = $copiedAssignment->calibrationStartDate - $startDate + $base;
+				$copiedAssignment->calibrationStopDate = $copiedAssignment->calibrationStopDate - $startDate + $base;
 				$copiedAssignments[] = $copiedAssignment;
 				 
 				$dataMgr->saveAssignment($copiedAssignment, $copiedAssignment->assignmentType);

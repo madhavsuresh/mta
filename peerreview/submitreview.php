@@ -43,6 +43,8 @@ try
     $isCalibration = false;
     $beforeReviewStart = $NOW < $assignment->reviewStartDate;
     $afterReviewStop   = $assignment->reviewStopDate < $NOW;
+	$beforeCalibrationStart = $NOW < $assignment->calibrationStartDate;
+	$afterCalibrationStop   = $assignment->calibrationStopDate < $NOW;
 
     if(array_key_exists("review", $_GET) || array_key_exists("calibration", $_GET)){
         #We're in student mode
@@ -107,13 +109,15 @@ try
         #We can just override the data on this assignment so that we can force a write
         $beforeReviewStart = false;
         $afterReviewStop   = false;
+		$beforeCalibrationStart = false;
+		$afterCalibrationStop   = false;
     }
 
-    if($beforeReviewStart)
+    if($isCalibration ? $beforeCalibrationStart : $beforeReviewStart) 
     {
         displayReviewWithError('This assignment has not been posted');
     }
-    else if($afterReviewStop)
+    else if($isCalibration ? $afterCalibrationStop : $afterReviewStop)
     {
         displayReviewWithError('Reviews can no longer be submitted');
     }

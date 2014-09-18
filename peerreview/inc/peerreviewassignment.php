@@ -45,6 +45,8 @@ class PeerReviewAssignment extends Assignment
     public $calibrationPoolAssignmentIds = array();
 	
 	public $extraCalibrations = 0;
+	public $calibrationStartDate = 0;
+	public $calibrationStopDate = 0;
 
     public $dateFormat = "MMMM Do YYYY, HH:mm";
 
@@ -60,6 +62,8 @@ class PeerReviewAssignment extends Assignment
         $this->reviewStopDate = $NOW;
         $this->markPostDate = $NOW;
         $this->appealStopDate = $NOW;
+		$this->calibrationStartDate = $NOW;
+        $this->calibrationStopDate = $NOW;
     }
 
     function getAssignmentTypeDisplayName()
@@ -384,6 +388,9 @@ class PeerReviewAssignment extends Assignment
 		
 		$this->extraCalibrations = intval($POST["extraCalibrations"]);
 		
+		$this->calibrationStartDate  = intval($POST['calibrationStartDateSeconds']);
+        $this->calibrationStopDate  = intval($POST['calibrationStopDateSeconds']);
+		
         if(!array_key_exists("calibrationPoolAssignmentIds", $POST))
             $this->calibrationPoolAssignmentIds = array();
         else
@@ -465,6 +472,9 @@ class PeerReviewAssignment extends Assignment
         $html .= "<tr><td>&nbsp;</td></tr>\n";
         $html .= "<tr><td>Review&nbsp;Start&nbsp;Date</td><td><input type='text' name='reviewStartDate' id='reviewStartDate' /></td></tr>\n";
         $html .= "<tr><td>Review&nbsp;Stop&nbsp;Date</td><td><input type='text' name='reviewStopDate' id='reviewStopDate' /></td></tr>\n";
+		$html .= "<tr><td>&nbsp;</td></tr>\n";
+		$html .= "<tr><td>Calibration&nbsp;Start&nbsp;Date</td><td><input type='text' name='calibrationStartDate' id='calibrationStartDate' /></td></tr>\n";
+        $html .= "<tr><td>Calibration&nbsp;Stop&nbsp;Date</td><td><input type='text' name='calibrationStopDate' id='calibrationStopDate'/></td></tr>\n";
         $html .= "<tr><td>&nbsp;</td></tr>\n";
         $html .= "<tr><td>Mark&nbsp;Post&nbsp;Date</td><td><input type='text' name='markPostDate' id='markPostDate' /></td></tr>\n";
         $html .= "<tr><td>&nbsp;</td></tr>\n";
@@ -519,7 +529,9 @@ class PeerReviewAssignment extends Assignment
         $html .= "<input type='hidden' name='reviewStopDateSeconds' id='reviewStopDateSeconds' />\n";
         $html .= "<input type='hidden' name='markPostDateSeconds' id='markPostDateSeconds' />\n";
         $html .= "<input type='hidden' name='appealStopDateSeconds' id='appealStopDateSeconds' />\n";
-
+        $html .= "<input type='hidden' name='calibrationStartDateSeconds' id='calibrationStartDateSeconds' />\n";
+        $html .= "<input type='hidden' name='calibrationStopDateSeconds' id='calibrationStopDateSeconds' />\n";
+        
 		/*$%$
         $html .= "<h3>Calibration Auto Scoring</h3>";
         $html .= "<table align='left' width='100%'>\n";
@@ -584,6 +596,8 @@ class PeerReviewAssignment extends Assignment
         $code .= "$('#reviewStopDateSeconds').val(moment($('#reviewStopDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
         $code .= "$('#markPostDateSeconds').val(moment($('#markPostDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
         $code .= "$('#appealStopDateSeconds').val(moment($('#appealStopDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
+		$code .= "$('#calibrationStartDateSeconds').val(moment($('#calibrationStartDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
+		$code .= "$('#calibrationStopDateSeconds').val(moment($('#calibrationStopDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
 
         //Now we have to build the validators for each of the different types
         foreach($PEER_REVIEW_SUBMISSION_TYPES as $type => $displayType)
@@ -606,6 +620,7 @@ class PeerReviewAssignment extends Assignment
         $code .= "<script type='text/javascript'> $('#appealStopDate').datetimepicker({ defaultDate : new Date(".($this->appealStopDate*1000).")}); </script>\n";
         $code .= set_element_to_date("markPostDate", $this->markPostDate);
         $code .= set_element_to_date("appealStopDate", $this->appealStopDate);
+		$code .= $this->getScriptForDatePickers('calibrationStartDate','calibrationStopDate',$this->calibrationStartDate, $this->calibrationStopDate);
         return $code;
     }
 

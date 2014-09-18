@@ -151,11 +151,11 @@ function isFlaggedIndependent(UserID $studentID)
 	global $dataMgr;
 	
 	if($dataMgr->latestAssignmentWithFlaggedIndependents())
-	{	
+	{
 		$latestAssignmentID = new AssignmentID($dataMgr->latestAssignmentWithFlaggedIndependents());
 		$latestAssignment = $dataMgr->getAssignment($latestAssignmentID);
 		return array_key_exists($studentID->id, $latestAssignment->getIndependentUsers());
-	}
+	} 
 	return false;
 }
 

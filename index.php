@@ -104,7 +104,7 @@ try
 						} 
 					}
 					
-					if($assignment->calibrationStartDate <= $NOW AND $assignment->calibrationStopDate > $NOW)
+					if($assignment->calibrationStartDate <= $NOW AND $assignment->reviewStartDate > $NOW)
 					{
 						$calibrationReviewAssignments = $assignment->getAssignedCalibrationReviews($USERID);
 						$id=0;
@@ -116,7 +116,7 @@ try
 								$item = new stdClass();
 								$item->type = "Calibration";
 								$item->assignmentID = $assignment->assignmentID;
-								$item->endDate = $assignment->reviewStopDate;
+								$item->endDate = $assignment->reviewStartDate;
 								$item->html = 
 								"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 								<td class='column2'>Calibration Review $temp</td>
@@ -156,7 +156,7 @@ try
 								$item = new stdClass();
 								$item->type = "Calibration";
 								$item->assignmentID = $assignment->assignmentID;
-								$item->endDate = $assignment->reviewStopDate;
+								$item->endDate = $assignment->reviewStartDate;
 		                    	$item->html = 
 		                    	"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 		                    	<td class='column2'>Calibration Review $completionStatus</td>
@@ -214,11 +214,12 @@ try
 						
 			foreach($assignments as $assignment)
 			{
-				$calibrationAssignments = $assignment->getAssignedCalibrationReviews($USERID);
+				$availableCalibrationSubmissionIDs = $assignment->getCalibrationSubmissionIDs();
 				$doneCalibrations = array();
 				$unfinishedCalibrations = array();
-				if($calibrationAssignments)
+				if($availableCalibrationSubmissionIDs)
 				{
+					$calibrationAssignments = $assignment->getAssignedCalibrationReviews($USERID);
                     $id = 0;
 					foreach($calibrationAssignments as $matchID)
 					{

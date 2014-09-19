@@ -1026,9 +1026,9 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
 	function getSingleCalibrationKeyReviewForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
-        $ids = $this->getInstructorMatchesForSubmission($assignment, $submissionID);
+        $ids = $this->getCalibrationKeyMatchesForSubmission($assignment, $submissionID);
         if(sizeof($ids) != 1){
-            throw new Exception("Submission $submissionID does not have exactly 1 instructor review");
+            throw new Exception("Submission $submissionID does not have exactly 1 calibration key review");
         }
         return $this->getReview($assignment, $ids[0]);
     }

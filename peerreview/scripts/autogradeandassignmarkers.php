@@ -95,7 +95,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 
         $reviewMap = $assignment->getReviewMap();
         $scoreMap = $assignment->getMatchScoreMap();
-        $submissions =  $assignment->getAuthorSubmissionMap();
+        $submissions = $assignment->getAuthorSubmissionMap_();
 
         $reviewedScores = array();
 		$independentSubs = array();

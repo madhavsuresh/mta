@@ -226,17 +226,21 @@ try
 						
 						$content .= "<br><br><input type='submit' value='Submit' />\n";
 						$content .= "</form>\n";
-						$content .= "<div class=errorMsg><div class='errorField' id='no_mark$matchID'></div></div><br>\n";
+						$content .= "<div id='message$matchID'></div><br>\n";
 						
 						$content .= "<script type='text/javascript'>
 									$(document).ready(function(){
 										  $('#mark$matchID').submit(function(){
 									      $.post($(this).attr('action'), $(this).serialize(), function(response){
-									      		$('#no_mark$matchID').html('Mark submitted');	
+									      		$('#message$matchID').html('Mark submitted');	
 									      },'json');
-									      $('#no_mark$matchID').html('').parent().hide();
-									      $('#no_mark$matchID').html('Mark submitted');
-										  $('#no_mark$matchID').parent().show();
+									      if($('#score$matchID').val() != ''){
+									      	  $('#message$matchID').css('color','green');
+										      $('#message$matchID').html('Mark submitted');
+										  } else {
+										  	  $('#message$matchID').css('color','red');
+										      $('#message$matchID').html('You must enter a score');
+										  }
 									      return false;
 									   });
 									});
@@ -244,12 +248,12 @@ try
 									
 						/*$content .= "<script type='text/javascript'> $(document).ready(function(){ $('#mark$matchID').submit(function() {\n";
 				        $content .= "var error = false;\n";
-						$content .= "$('#no_mark$matchID').html('').parent().hide();\n";
+						$content .= "$('#message$matchID').html('').parent().hide();\n";
         				$content .= "if($('#score$matchID').val() == ''){";
-        				$content .= "$('#no_mark$matchID').html('You must enter a score');error = true;\n";
+        				$content .= "$('#message$matchID').html('You must enter a score');error = true;\n";
 						$content .= "}else{";
-						$content .= "$('#no_mark$matchID').html('Mark submitted'); error = false;\n";
-        				$content .= "}$('#no_mark$matchID').parent().show();\n";
+						$content .= "$('#message$matchID').html('Mark submitted'); error = false;\n";
+        				$content .= "}$('#message$matchID').parent().show();\n";
 				        $content .= "if(error){return false;}else{return true;}\n";
 				        $content .= "}); }); </script>\n";*/		
 					}

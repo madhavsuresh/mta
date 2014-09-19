@@ -68,19 +68,28 @@ def submission_scores(assignmentID):
 
     return ret
 
-def mse(submission, centroid=False):
+def centroid(submission):
+    qs = [q for q in submission['reviewScores'][0]]
+    ret = {}
+    denom = len(submission['reviewScores'])
+    for q in qs:
+        mean = sum(r[q] for r in submission['reviewScores'])/denom
+        ret[q] = mean
+    return ret
+
+def mse(submission, use_centroid=True):
     """
     Return the mean squared deviation of the student reviewers from the
     instructor reviewer, if present.  If no instructor review, then return
-    `None` if 'centroid' is `False`, or the mse from the centroid otherwise.
+    `None` if 'use_centroid' is `False`, or the mse from the centroid otherwise.
     """
-    if 'instructorScore' not in submission:
-        if centroid:
-            raise "Not implemented yet"
-        else:
-            return None
+    if 'instructorScore' in submission:
+        ins = submission['instructorScore']
+    elif use_centroid:
+        ins = centroid(submission)
+    else:
+        return None
 
-    ins = submission['instructorScore']
     devs = []
     for r in submission['reviewScores']:
         devs += [(r[q]-ins[q])**2.0 for q in ins]

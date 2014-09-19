@@ -226,8 +226,9 @@ try
 						
 						$content .= "<br><br><input type='submit' value='Submit' />\n";
 						$content .= "</form>\n";
-						$content .= "<div id='message$matchID'></div><br>\n";
 						
+						$content .= "<div id='message$matchID'></div><br>\n";
+				
 						$content .= "<script type='text/javascript'>
 									$(document).ready(function(){
 										  $('#mark$matchID').submit(function(){
@@ -255,7 +256,7 @@ try
 						$content .= "$('#message$matchID').html('Mark submitted'); error = false;\n";
         				$content .= "}$('#message$matchID').parent().show();\n";
 				        $content .= "if(error){return false;}else{return true;}\n";
-				        $content .= "}); }); </script>\n";*/		
+				        $content .= "}); }); </script>\n";*/	
 					}
 				}
 			}

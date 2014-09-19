@@ -29,7 +29,7 @@ try
         $assignmentWithSubmission = $dataMgr->getAssignment($dataMgr->getAssignmentDataManager("peerreview")->getAssignmentIDForMatchID($matchID));
 
         $submission = $assignmentWithSubmission->getSubmission($matchID);
-        $instructorReview = $assignmentWithSubmission->getSingleInstructorReviewForSubmission($submission->submissionID);
+        $instructorReview = $assignmentWithSubmission->getSingleCalibrationKeyReviewForSubmission($submission->submissionID);
         $review = $assignmentWithSubmission->getReview($matchID);
         $reviewerName = $dataMgr->getUserDisplayName($reviewerID);
     }

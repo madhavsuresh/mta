@@ -99,7 +99,7 @@ try
             else
                 throw new Exception("Unknown reviewer type '$reviewer'");
 
-            $matchID = $assignment->createMatch($submissionID, $reviewerID, true, 1); # '1' indicates calibrationKey which is a 'correct' review
+            $matchID = $assignment->createMatch($submissionID, $reviewerID, true);
         }
         else
         {
@@ -156,7 +156,7 @@ try
                 $content .= $assignmentWithSubmission->getReview($matchID)->getShortHTML();
             }else{
                 //Do the auto grade
-                $instructorReview = $assignmentWithSubmission->getSingleInstructorReviewForSubmission($review->submissionID);
+                $instructorReview = $assignmentWithSubmission->getSingleCalibrationKeyReviewForSubmission($review->submissionID);
 
                 $mark = generateAutoMark($assignmentWithSubmission, $instructorReview, $review);
                 $assignment->saveReviewMark($mark, $matchID);

@@ -984,19 +984,18 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
       $matchID = $this->createMatch($assignment, $submissionID, $reviewerID, false, 2); #'2' indicates calibrationAttempt
 
       # Hacky bool translation
-      if($required)
+      /*if($required)
         $required = 1;
       else
         $required = 0;
-      //$sh = $this->db->prepare("INSERT INTO peer_review_assignment_calibration_matches (matchID, assignmentID, required) VALUES (?, ?, ?);");
-      //$sh->execute(array($matchID, $assignment->assignmentID, $required));
+      $sh = $this->db->prepare("INSERT INTO peer_review_assignment_calibration_matches (matchID, assignmentID, required) VALUES (?, ?, ?);");
+      $sh->execute(array($matchID, $assignment->assignmentID, $required));*/
       return $matchID;
     }
 
     function getInstructorMatchesForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
-        //$sh = $this->db->prepare("SELECT matches.matchID as matchID FROM peer_review_assignment_matches matches JOIN users ON users.userID = matches.reviewerID WHERE userType in ('instructor', 'marker', 'shadowinstructor', 'shadowmarker') && submissionID = ?;");
-        $sh = $this->db->prepare("SELECT matches.matchID as matchID FROM peer_review_assignment_matches matches WHERE matches.calibrationState = 1 && submissionID = ?;");
+        $sh = $this->db->prepare("SELECT matches.matchID as matchID FROM peer_review_assignment_matches matches JOIN users ON users.userID = matches.reviewerID WHERE userType in ('instructor', 'marker', 'shadowinstructor', 'shadowmarker') && submissionID = ?;");
         $sh->execute(array($submissionID));
         $ids = array();
         while($res = $sh->fetch()){
@@ -1005,9 +1004,18 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $ids;
     }
 	
-	function getSpecialMatchesForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
+	function getSingleInstructorReviewForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
-        $sh = $this->db->prepare("SELECT matches.matchID as matchID FROM peer_review_assignment_matches matches JOIN users ON users.userID = matches.reviewerID WHERE userType in ('instructor', 'marker', 'shadowinstructor', 'shadowmarker', 'anonymous') && submissionID = ?;");
+        $ids = $this->getInstructorMatchesForSubmission($assignment, $submissionID);
+        if(sizeof($ids) != 1){
+            throw new Exception("Submission $submissionID does not have exactly 1 instructor review");
+        }
+        return $this->getReview($assignment, $ids[0]);
+    }
+	
+	function getCalibrationKeyMatchesForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
+    {
+        $sh = $this->db->prepare("SELECT matches.matchID as matchID FROM peer_review_assignment_matches matches WHERE matches.calibrationState = 1 && submissionID = ?;");
         $sh->execute(array($submissionID));
         $ids = array();
         while($res = $sh->fetch()){
@@ -1015,8 +1023,8 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
         return $ids;
     }
-    
-    function getSingleInstructorReviewForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
+
+	function getSingleCalibrationKeyReviewForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
         $ids = $this->getInstructorMatchesForSubmission($assignment, $submissionID);
         if(sizeof($ids) != 1){

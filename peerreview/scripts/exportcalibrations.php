@@ -42,7 +42,7 @@ class ExportCalibrationsPeerReviewScript extends Script
                 if($assignmentWithSubmission->getReviewMark($matchID)->isValid)
                 {
                     $review = $assignmentWithSubmission->getReview($matchID);
-                    $instructorReview = $assignmentWithSubmission->getSingleInstructorReviewForSubmission($review->submissionID);
+                    $instructorReview = $assignmentWithSubmission->getSingleCalibrationKeyReviewForSubmission($review->submissionID);
 
                     //If we've never seen this review before, we need to store it's assignment and the gold standard review
                     if(!array_key_exists($instructorReview->submissionID->id, $instructorReviews)){

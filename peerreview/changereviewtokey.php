@@ -24,13 +24,15 @@ try
 		$review->matchID = $newMatchID;
 		$assignment->saveReview($review);
 		
-		$markerDisplayName = $dataMgr->getUserDisplayNameQuery($review->reviewerID);
+		$markerDisplayName = $dataMgr->getUserDisplayName($review->reviewerID);
 		
 		$content .= "Review by ".$markerDisplayName." has been copied as a calibration review"; 
 	}elseif(0 == sizeof($matches))
 		$content .= "There is no marker review for this submission";
 	elseif(1 < sizeof($matches))
 		$content .= "There are more than one marker review for this submission";
+	
+	//check how many calibrationKey reviews there are after
 	
     render_page();
 }catch(Exception $e){

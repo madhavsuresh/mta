@@ -10,8 +10,8 @@ try
 
     $assignment = get_peerreview_assignment();
 
-    $beforeReviewStart = $NOW < $assignment->reviewStartDate;
-    $afterReviewStop   = $assignment->reviewStopDate < $NOW;
+	$beforeCalibrationStart = $NOW < $assignment->calibrationStartDate;
+	$afterCalibrationStop   = $assignment->calibrationStopDate < $NOW;
 
     if(array_key_exists("calibration", $_GET)){
         #We're in student mode
@@ -29,7 +29,7 @@ try
         $assignmentWithSubmission = $dataMgr->getAssignment($dataMgr->getAssignmentDataManager("peerreview")->getAssignmentIDForMatchID($matchID));
 
         $submission = $assignmentWithSubmission->getSubmission($matchID);
-        $instructorReview = $assignmentWithSubmission->getSingleInstructorReviewForSubmission($submission->submissionID);
+        $instructorReview = $assignmentWithSubmission->getSingleCalibrationKeyReviewForSubmission($submission->submissionID);
         $review = $assignmentWithSubmission->getReview($matchID);
         $reviewerName = $dataMgr->getUserDisplayName($reviewerID);
     }
@@ -39,11 +39,11 @@ try
     }
 
     #Check to make sure submissions are valid
-    if($beforeReviewStart)
+    if($beforeCalibrationStart)
     {
         $content .= 'This assignment has not been posted';
     }
-    else if($afterReviewStop)
+    else if($afterCalibrationStop)
     {
         $content .= 'Reviews can no longer be submitted';
     }

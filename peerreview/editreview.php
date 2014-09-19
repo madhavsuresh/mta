@@ -17,6 +17,9 @@ try
 
     $beforeReviewStart = $NOW < $assignment->reviewStartDate;
     $afterReviewStop   = $assignment->reviewStopDate < $NOW;
+	$beforeCalibrationStart = $NOW < $assignment->calibrationStartDate;
+	$afterCalibrationStop   = $assignment->calibrationStopDate < $NOW;
+	
     $isCalibration = false;
 
     if(array_key_exists("review", $_GET) || array_key_exists("calibration", $_GET)){
@@ -146,14 +149,16 @@ try
         #We can just override the data on this assignment so that we can force a write
         $beforeReviewStart = false;
         $afterReviewStop   = false;
+		$beforeCalibrationStart = false;
+		$afterCalibrationStop = false;
     }
 
     #Check to make sure submissions are valid
-    if($beforeReviewStart)
+    if($isCalibration ? $beforeCalibrationStart : $beforeReviewStart) 
     {
         $content .= 'This assignment has not been posted';
     }
-    else if($afterReviewStop)
+    else if($isCalibration ? $afterCalibrationStop : $afterReviewStop)
     {
         $content .= 'Reviews can no longer be submitted';
     }
@@ -191,7 +196,7 @@ try
 			$reviews = $assignmentWithSubmission->getReviewsForSubmission($submission->submissionID);
 			if($reviews)
 			{
-				$reviewMap = $assignmentWithSubmission->getReviewMap;
+				$reviewMap = $assignmentWithSubmission->getReviewMap();
 				
 				$content .= "<div style='margin-top:20px; border-top: 3px solid #999; border-bottom: 3px solid #999;'><h1>Student Reviews</h1></div>";
 				foreach($reviews as $review)
@@ -206,9 +211,19 @@ try
 					    $content .= precisionFloat(compute_peer_review_score_for_assignments($review->reviewerID, $assignment->getAssignmentsBefore(4))*100)."%";
 					    
 					    $matchID = $assignment->getMatchID($review->submissionID, $review->reviewerID);
-					    
+						$reviewMark = $assignment->getReviewMark($matchID);
+						
 					    $content .= "<form id='mark$matchID' action='peerreview/submitmark.php?assignmentid=$assignment->assignmentID&type=review&matchid=$matchID' method='post'>\n";
-						$content .= $assignment->getReviewMark($matchID)->getFormHTML();
+						//Extracted from ReviewMark Class. Need ID's on all inputs.
+						$content  = "<h1>Mark</h1>\n";
+				        $content .= "<h2>Score</h2>\n";
+				        $content .= "<input type='text' value='$reviewMark->score' name='score' id='score$matchID'>\n";
+				        $content .= "<h2>Comments</h2>\n";
+				        $content .= "<textarea name='comments' cols='60' rows='10'>\n";
+				        $content .= "$reviewMark->comments";
+				        $content .= "</textarea>\n";
+						if($reviewMark->markTimestamp) $html .= "<h4>Last Updated: ".date("Y-m-d H:i:s",$reviewMark->markTimestamp)."</h4>";
+						
 						$content .= "<br><br><input type='submit' value='Submit' />\n";
 						$content .= "</form>\n";
 						
@@ -223,6 +238,15 @@ try
 									});
 									</script>";
 									
+						/*$content .= "<script type='text/javascript'> $(document).ready(function(){ $('#mark$matchID').submit(function() {\n";
+				        $content .= "var error = false;\n";
+						$content  = "$('#no_mark$matchID').html('').parent().hide();\n";
+        				$content .= "if($('#score$matchID').val() == 'NULL') {";
+        				$content .= "$('#no_mark$matchID').html('You must enter a score');\n";
+        				$content .= "$('#no_mark$matchID').parent().show();\n";
+        				$content .= "error = true;}\n";
+				        $content .= "if(error){return false;}else{return true;}\n";
+				        $content .= "}); }); </script>\n";*/
 						//Message output to confirm review has been marked not working
 						/*$content .= "<h4 id='message$matchID'>Not Done</h4>";
 						$content .=	"<script type='text/javascript'>

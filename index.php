@@ -76,10 +76,10 @@ try
 						}
 					}	
 				}
-
-				if($assignment->reviewStartDate <= $NOW AND $assignment->reviewStopDate > $NOW)
+				
+				if($assignment->password == NULL || $dataMgr->hasEnteredPassword($assignment->assignmentID, $USERID))
 				{
-					if($assignment->password == NULL || $dataMgr->hasEnteredPassword($assignment->assignmentID, $USERID))
+					if($assignment->reviewStartDate <= $NOW AND $assignment->reviewStopDate > $NOW)
 					{
 						$reviewAssignments = $assignment->getAssignedReviews($USERID);
 						$id=0;
@@ -102,7 +102,10 @@ try
 							}
 							$id++;			
 						} 
+					}
 					
+					if($assignment->calibrationStartDate <= $NOW AND $assignment->reviewStartDate > $NOW)
+					{
 						$calibrationReviewAssignments = $assignment->getAssignedCalibrationReviews($USERID);
 						$id=0;
 						foreach($calibrationReviewAssignments as $matchID)
@@ -113,7 +116,7 @@ try
 								$item = new stdClass();
 								$item->type = "Calibration";
 								$item->assignmentID = $assignment->assignmentID;
-								$item->endDate = $assignment->reviewStopDate;
+								$item->endDate = $assignment->reviewStartDate;
 								$item->html = 
 								"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 								<td class='column2'>Calibration Review $temp</td>
@@ -124,7 +127,7 @@ try
 							}
 							$id++;
 						}			
-					
+
 						//TO-DO: Clean-up logic flow
 	                	$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();#$#
 		                if($availableCalibrationSubmissions && $assignment->extraCalibrations > 0)
@@ -153,13 +156,13 @@ try
 								$item = new stdClass();
 								$item->type = "Calibration";
 								$item->assignmentID = $assignment->assignmentID;
-								$item->endDate = $assignment->reviewStopDate;
+								$item->endDate = $assignment->reviewStartDate;
 		                    	$item->html = 
 		                    	"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 		                    	<td class='column2'>Calibration Review $completionStatus</td>
 		                    	<td class='column3'><table wdith='100%'><td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
 		                    	<td><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>Request Calibration Review</button></a></td></table></td>
-		                    	<td class='column4'>".phpDate($assignment->reviewStopDate)."</td></tr></table>\n";
+		                    	<td class='column4'>".phpDate($assignment->reviewStartDate)."</td></tr></table>\n";
 								insert($item, $items);
 		                   	}
 		                }
@@ -211,11 +214,12 @@ try
 						
 			foreach($assignments as $assignment)
 			{
-				$calibrationAssignments = $assignment->getAssignedCalibrationReviews($USERID);
+				$availableCalibrationSubmissionIDs = $assignment->getCalibrationSubmissionIDs();
 				$doneCalibrations = array();
 				$unfinishedCalibrations = array();
-				if($calibrationAssignments)
+				if($availableCalibrationSubmissionIDs)
 				{
+					$calibrationAssignments = $assignment->getAssignedCalibrationReviews($USERID);
                     $id = 0;
 					foreach($calibrationAssignments as $matchID)
 					{

@@ -148,7 +148,7 @@ class ImportFromCalibrationPoolPeerReviewScript extends Script
 			
 			foreach($authorIDtosubmissionIDMapForPool as $authorID => $submissionID)
 			{
-				$matchIDs = $selectedPool->getSpecialMatchesForSubmission($submissionID); //gets 'correct' reviews the old-fashioned way
+				$matchIDs = $selectedPool->getSingleInstructorReviewForSubmission($submissionID); //gets 'correct' reviews the old-fashioned way
 				
 				foreach($matchIDs as $matchID)
 			 	{

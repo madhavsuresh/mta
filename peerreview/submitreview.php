@@ -43,6 +43,8 @@ try
     $isCalibration = false;
     $beforeReviewStart = $NOW < $assignment->reviewStartDate;
     $afterReviewStop   = $assignment->reviewStopDate < $NOW;
+	$beforeCalibrationStart = $NOW < $assignment->calibrationStartDate;
+	$afterCalibrationStop   = $assignment->calibrationStopDate < $NOW;
 
     if(array_key_exists("review", $_GET) || array_key_exists("calibration", $_GET)){
         #We're in student mode
@@ -97,7 +99,7 @@ try
             else
                 throw new Exception("Unknown reviewer type '$reviewer'");
 
-            $matchID = $assignment->createMatch($submissionID, $reviewerID, true, 1); # '1' indicates calibrationKey which is a 'correct' review
+            $matchID = $assignment->createMatch($submissionID, $reviewerID, true);
         }
         else
         {
@@ -107,13 +109,15 @@ try
         #We can just override the data on this assignment so that we can force a write
         $beforeReviewStart = false;
         $afterReviewStop   = false;
+		$beforeCalibrationStart = false;
+		$afterCalibrationStop   = false;
     }
 
-    if($beforeReviewStart)
+    if($isCalibration ? $beforeCalibrationStart : $beforeReviewStart) 
     {
         displayReviewWithError('This assignment has not been posted');
     }
-    else if($afterReviewStop)
+    else if($isCalibration ? $afterCalibrationStop : $afterReviewStop)
     {
         displayReviewWithError('Reviews can no longer be submitted');
     }
@@ -152,7 +156,7 @@ try
                 $content .= $assignmentWithSubmission->getReview($matchID)->getShortHTML();
             }else{
                 //Do the auto grade
-                $instructorReview = $assignmentWithSubmission->getSingleInstructorReviewForSubmission($review->submissionID);
+                $instructorReview = $assignmentWithSubmission->getSingleCalibrationKeyReviewForSubmission($review->submissionID);
 
                 $mark = generateAutoMark($assignmentWithSubmission, $instructorReview, $review);
                 $assignment->saveReviewMark($mark, $matchID);

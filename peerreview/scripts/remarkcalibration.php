@@ -37,7 +37,7 @@ class RemarkCalibrationPeerReviewScript extends Script
                 if($assignmentWithSubmission->getReviewMark($matchID)->isValid)
                 {
                     $review = $assignmentWithSubmission->getReview($matchID);
-                    $instructorReview = $assignmentWithSubmission->getSingleInstructorReviewForSubmission($review->submissionID);
+                    $instructorReview = $assignmentWithSubmission->getSingleCalibrationKeyReviewForSubmission($review->submissionID);
                     $mark = generateAutoMark($assignmentWithSubmission, $instructorReview, $review);
                     $currentAssignment->saveReviewMark($mark, $matchID);
                 }

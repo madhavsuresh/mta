@@ -122,9 +122,11 @@ try
 
         #Middle Cell - Stuff about reviews
         $content .= "<table align='left' width='100%'>";
-
+		
         if($submissionID && array_key_exists($submissionID->id, $reviewMap))
         {
+        	$keyMatches = $assignment->getCalibrationKeyMatchesForSubmission($submissionID);
+        	
             foreach($reviewMap[$submissionID->id] as $reviewObj)
             {
                 $reviewerName = $displayMap[$reviewObj->reviewerID->id];
@@ -132,7 +134,10 @@ try
 
                 if($reviewObj->exists)
                 {
-                    $content .= "<a title='View' href='".get_redirect_url("peerreview/viewer.php?assignmentid=$assignment->assignmentID&type0=review&matchid0=$reviewObj->matchID")."'>Review by $reviewerName</a></td><tr>";
+               		if(in_array($reviewObj->matchID, $keyMatches))
+                    	$content .= "<a title='View' href='".get_redirect_url("peerreview/viewer.php?assignmentid=$assignment->assignmentID&type0=review&matchid0=$reviewObj->matchID")."'>Calibration Key by $reviewerName</a></td><tr>";
+					else
+						$content .= "<a title='View' href='".get_redirect_url("peerreview/viewer.php?assignmentid=$assignment->assignmentID&type0=review&matchid0=$reviewObj->matchID")."'>Review by $reviewerName</a></td><tr>";
                     $content .= "<tr><td><table align='right'><tr>";
                     $score = precisionFloat($scoreMap[$reviewObj->matchID->id]);
                     $content .= "<td>(Gave&nbsp;score&nbsp;of&nbsp;$score)</td>";
@@ -206,6 +211,7 @@ try
             $content .= "<tr><td><a href='viewer.php?assignmentid=$assignment->assignmentID&$args'>View All Reviews</a></td></tr>";
             $content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid=$submissionID&reviewer=anonymous&close=1")."'>Add Anonymous Review</a></td></tr>\n";
             $content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid=$submissionID&reviewer=instructor&close=1")."'>Add Instructor Review</a></td></tr>\n";
+			$content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/copymarkerreviewtokey.php?assignmentid=$assignment->assignmentID&submissionid=$submissionID")."'>Copy Marker Review to Calibration Review</a></td></tr>\n";
             if(array_key_exists($submissionID->id, $spotCheckMap))
             {
                 $spotCheck = $spotCheckMap[$submissionID->id];

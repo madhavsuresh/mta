@@ -520,6 +520,9 @@ class PDODataManager extends DataManager
 	{
 		$this->latestCalibrationAssignmentQuery->execute();
 		$res = $this->latestCalibrationAssignmentQuery->fetch();
-		return $res->assignmentID;
+		if($res)
+			return $res->assignmentID;
+		else
+			return NULL;
 	}
 }

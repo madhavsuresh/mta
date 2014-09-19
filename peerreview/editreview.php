@@ -232,9 +232,7 @@ try
 						$content .= "<script type='text/javascript'>
 									$(document).ready(function(){
 										  $('#mark$matchID').submit(function(){
-									      $.post($(this).attr('action'), $(this).serialize(), function(response){
-									      		$('#message$matchID').html('Mark submitted');	
-									      },'json');
+									      $.post($(this).attr('action'), $(this).serialize(), function(response){},'json');
 									      if($('#score$matchID').val() != ''){
 									      	  $('#message$matchID').css('color','green');
 										      $('#message$matchID').html('Mark submitted');

@@ -206,6 +206,7 @@ try
             $content .= "<tr><td><a href='viewer.php?assignmentid=$assignment->assignmentID&$args'>View All Reviews</a></td></tr>";
             $content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid=$submissionID&reviewer=anonymous&close=1")."'>Add Anonymous Review</a></td></tr>\n";
             $content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid=$submissionID&reviewer=instructor&close=1")."'>Add Instructor Review</a></td></tr>\n";
+			$content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/changereviewtokey.php?assignmentid=$assignment->assignmentID&submissionid=$submissionID")."'>Copy Marker Review to Calibration Review</a></td></tr>\n";
             if(array_key_exists($submissionID->id, $spotCheckMap))
             {
                 $spotCheck = $spotCheckMap[$submissionID->id];

@@ -984,12 +984,12 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
       $matchID = $this->createMatch($assignment, $submissionID, $reviewerID, false, 2); #'2' indicates calibrationAttempt
 
       # Hacky bool translation
-      if($required)
+      /*if($required)
         $required = 1;
       else
         $required = 0;
-      //$sh = $this->db->prepare("INSERT INTO peer_review_assignment_calibration_matches (matchID, assignmentID, required) VALUES (?, ?, ?);");
-      //$sh->execute(array($matchID, $assignment->assignmentID, $required));
+      $sh = $this->db->prepare("INSERT INTO peer_review_assignment_calibration_matches (matchID, assignmentID, required) VALUES (?, ?, ?);");
+      $sh->execute(array($matchID, $assignment->assignmentID, $required));*/
       return $matchID;
     }
 

@@ -99,7 +99,7 @@ try
             else
                 throw new Exception("Unknown reviewer type '$reviewer'");
 
-            $matchID = $assignment->createMatch($submissionID, $reviewerID, true, 1); # '1' indicates calibrationKey which is a 'correct' review
+            $matchID = $assignment->createMatch($submissionID, $reviewerID, true);
         }
         else
         {

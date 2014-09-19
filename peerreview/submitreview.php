@@ -156,7 +156,7 @@ try
                 $content .= $assignmentWithSubmission->getReview($matchID)->getShortHTML();
             }else{
                 //Do the auto grade
-                $instructorReview = $assignmentWithSubmission->getSingleInstructorReviewForSubmission($review->submissionID);
+                $instructorReview = $assignmentWithSubmission->getSingleCalibrationKeyReviewForSubmission($review->submissionID);
 
                 $mark = generateAutoMark($assignmentWithSubmission, $instructorReview, $review);
                 $assignment->saveReviewMark($mark, $matchID);

@@ -214,8 +214,8 @@ try
 						$reviewMark = $assignment->getReviewMark($matchID);
 						
 					    $content .= "<form id='mark$matchID' action='peerreview/submitmark.php?assignmentid=$assignment->assignmentID&type=review&matchid=$matchID' method='post'>\n";
-						//Extracted from ReviewMark Class. Need ID's on all inputs.
-						$content  = "<h1>Mark</h1>\n";
+						//Extracted from getFormHTML function from ReviewMark Class. Need ID's on every review's inputs.
+						$content .= "<h1>Mark</h1>\n";
 				        $content .= "<h2>Score</h2>\n";
 				        $content .= "<input type='text' value='$reviewMark->score' name='score' id='score$matchID'>\n";
 				        $content .= "<h2>Comments</h2>\n";
@@ -226,13 +226,17 @@ try
 						
 						$content .= "<br><br><input type='submit' value='Submit' />\n";
 						$content .= "</form>\n";
+						$content .= "<div class=errorMsg><div class='errorField' id='no_mark$matchID'></div></div><br>\n";
 						
 						$content .= "<script type='text/javascript'>
 									$(document).ready(function(){
-									   var form = $('#mark$matchID');
-									   form.submit(function(){
+										  $('#mark$matchID').submit(function(){
 									      $.post($(this).attr('action'), $(this).serialize(), function(response){
+									      		$('#no_mark$matchID').html('Mark submitted');	
 									      },'json');
+									      $('#no_mark$matchID').html('').parent().hide();
+									      $('#no_mark$matchID').html('Mark submitted');
+										  $('#no_mark$matchID').parent().show();
 									      return false;
 									   });
 									});
@@ -240,25 +244,14 @@ try
 									
 						/*$content .= "<script type='text/javascript'> $(document).ready(function(){ $('#mark$matchID').submit(function() {\n";
 				        $content .= "var error = false;\n";
-						$content  = "$('#no_mark$matchID').html('').parent().hide();\n";
-        				$content .= "if($('#score$matchID').val() == 'NULL') {";
-        				$content .= "$('#no_mark$matchID').html('You must enter a score');\n";
-        				$content .= "$('#no_mark$matchID').parent().show();\n";
-        				$content .= "error = true;}\n";
+						$content .= "$('#no_mark$matchID').html('').parent().hide();\n";
+        				$content .= "if($('#score$matchID').val() == ''){";
+        				$content .= "$('#no_mark$matchID').html('You must enter a score');error = true;\n";
+						$content .= "}else{";
+						$content .= "$('#no_mark$matchID').html('Mark submitted'); error = false;\n";
+        				$content .= "}$('#no_mark$matchID').parent().show();\n";
 				        $content .= "if(error){return false;}else{return true;}\n";
-				        $content .= "}); }); </script>\n";*/
-						//Message output to confirm review has been marked not working
-						/*$content .= "<h4 id='message$matchID'>Not Done</h4>";
-						$content .=	"<script type='text/javascript'>
-									   $('#mark$matchID').live('submit', function(){
-									      $.post($(this).attr('action'), $(this).serialize(), function(response){
-												$('#message$matchID').hide();
-									      },'json');
-									      return false;
-									   });
-									</script>";
-						*/
-						
+				        $content .= "}); }); </script>\n";*/		
 					}
 				}
 			}

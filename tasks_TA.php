@@ -23,16 +23,26 @@ foreach($assignments as $assignment)
 	//For each of the marker's assigned reviews
 	foreach($reviews as $reviewObj)
 	{
-		$studentReviews = $assignment->getReviewsForSubmission($reviewObj->submissionID);
+		//get all student reviews associated with this marker assigned review 
+		$studentReviews = $assignment->getStudentReviewsForSubmission($reviewObj->submissionID);
+		
 		$allReviewsMarked = true;
 		$numStudentReviews = 0;
 		$numUnmarkedStudentReviews = 0;
 		foreach($studentReviews as $studentReview)
 		{
-			if(!$dataMgr->isStudent($studentReview->reviewerID))
-				continue;
+			//The only way as of now to check if review is instructorForced is through reviewMap
 			if(!($reviewMap[$reviewObj->submissionID->id][$studentReview->reviewerID->id]->instructorForced))
 			{
+				//If the student's assigned review has not been done
+				if($studentReview->answers)
+				{
+					print_r("AUTOMARK TRIGGERED");
+					$mark = new ReviewMark();
+        			$mark->score = 0;
+					$mark->comments = "Review not done - Autograded";
+        			$assignment->saveReviewMark($mark, $assignment->getMatchID($reviewObj->submissionID , $studentReview->reviewerID));
+				}
 				if(!$assignment->getReviewMark($studentReview->matchID)->isValid)
 				{
 					$numUnmarkedStudentReviews++;

@@ -1273,6 +1273,31 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
         return $reviews;
     }
+    
+    //Only get matches whose reviewer is a student and is not for calibration
+    function getStudentMatchesForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
+    {
+        $sh = $this->prepareQuery("getStudentMatchesForSubmissionQuery", "SELECT matchID FROM peer_review_assignment_matches JOIN users ON reviewerID = userID WHERE submissionID = ? && userType = 'student' && calibrationState = 0 ORDER BY matchID;");
+        $sh->execute(array($submissionID));
+
+        $matches = array();
+        while($res = $sh->fetch())
+        {
+            $matches[] = new MatchID($res->matchID);
+        }
+        return $matches;
+    }
+	
+	function getStudentReviewsForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
+    {
+        $matches = $this->getStudentMatchesForSubmission($assignment, $submissionID);
+
+        $reviews = array();
+        foreach($matches as $matchID) {
+            $reviews[] = $this->getReview($assignment, $matchID);
+        }
+        return $reviews;
+    }
 
     function saveSpotCheck(PeerReviewAssignment $assignment, SpotCheck $check)
     {

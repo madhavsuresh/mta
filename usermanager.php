@@ -10,7 +10,7 @@ try
 
     function getTypeRow($currentType = '')
     {
-        $html = "<tr><td>Type</td><td><select name='userType'>\n";
+        $html = "<tr><td>Type</td><td><select name='userType' id='userType'>\n";
         foreach(array("student"=>"Student", "marker"=>"Marker", "instructor"=>"Instructor") as $type => $name){
             $html .= "<option";
             if($currentType == $type)
@@ -26,12 +26,23 @@ try
         if(array_key_exists("password", $_POST) && strlen($_POST["password"]) > 0){
             $authMgr->addUserAuthentication($_POST["username"], $_POST["password"]);
         }
-        //Do everything else
-        if(array_key_exists("userID", $_POST)){
-            $dataMgr->updateUser(new UserID($_POST["userID"]), $_POST["username"], $_POST["firstname"], $_POST["lastname"], $_POST["studentid"], $_POST["userType"]);
-        }else{
-            $dataMgr->addUser($_POST["username"], $_POST["firstname"], $_POST["lastname"], $_POST["studentid"], $_POST["userType"]);
-        }
+		if(in_array($_POST["userType"], array('instructor', 'marker')))
+		{
+			if(array_key_exists("userID", $_POST)){
+	            $dataMgr->updateUser(new UserID($_POST["userID"]), $_POST["username"], $_POST["firstname"], $_POST["lastname"], $_POST["studentid"], $_POST["userType"], floatval($_POST["markingLoad"]));
+	        }else{
+	            $dataMgr->addUser($_POST["username"], $_POST["firstname"], $_POST["lastname"], $_POST["studentid"], $_POST["userType"], floatval($_POST["markingLoad"]));
+	        }
+		}
+		else 
+		{	
+	        //Do everything else
+	        if(array_key_exists("userID", $_POST)){
+	            $dataMgr->updateUser(new UserID($_POST["userID"]), $_POST["username"], $_POST["firstname"], $_POST["lastname"], $_POST["studentid"], $_POST["userType"]);
+	        }else{
+	            $dataMgr->addUser($_POST["username"], $_POST["firstname"], $_POST["lastname"], $_POST["studentid"], $_POST["userType"]);
+	        }
+		}
         //The save completed without issue, fall back to the main page
     }
     

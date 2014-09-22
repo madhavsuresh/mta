@@ -164,7 +164,7 @@ abstract class AuthManager
 
 
     function getRegistrationFormHTML($username = "", $firstname = "", $lastname = "", $studentid = "", $extraRows="", $skipPassword=false, $target=null, $skipIdCheck=false)
-    {
+    {  	
         if(is_null($target))
             $target = get_redirect_url("?action=register");
 
@@ -196,6 +196,27 @@ abstract class AuthManager
         }
         $html .= $this->_getRegistrationFormHTML();
         $html .= $extraRows;
+    	$html .= "<tr id='markingLoadRow'><td>Marking Load:</td><td><input name='markingLoad' id='markingLoad'/></td></tr>\n";
+    	$html .= "<script>
+					$('#userType').change(function(){
+						if($('#userType').val() == 'marker')
+						{
+			        		$('#markingLoadRow').show();
+							$('#markingLoad').val('1');
+						}
+						else if($('#userType').val() == 'instructor')
+						{
+							$('#markingLoadRow').show();
+							$('#markingLoad').val('0');
+						}
+						else
+						{
+			            	$('#markingLoadRow').hide();
+							$('#markingLoad').val('0');
+						}
+			        });
+			        $('#userType').change();
+				</script>";
         $html .= "</table>\n";
 
         $html .= "<input type='submit' value='Register'/>\n";

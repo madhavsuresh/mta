@@ -103,6 +103,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $html = "";
         foreach($submissions as $authorID => $submissionID)
         {
+        	$emptyReviews = array();
             //TODO: This should probably output something useful...
             $authorID = new UserID($authorID);
 
@@ -112,6 +113,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
                 continue;
 
             $reviews = array_filter($reviewMap[$submissionID->id], function($x) { return $x->exists; });
+			$emptyReviews = array_filter($reviewMap[$submissionID->id], function($x) { return !$x->exists; });
 
             #Compute the mean score of this one, used for ranking to assign
             $submissionScores[$submissionID->id] =
@@ -174,6 +176,19 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
                 $obj->authorID = $authorID->id;
                 $pendingSubmissions[] = $obj;
             }
+			
+			//Autograde to 0 reviews that have not been done after the review stop date
+			global $NOW;
+			if($NOW > $assignment->reviewStopDate)
+			{
+				foreach($emptyReviews as $emptyReview)
+				{
+					$mark = new ReviewMark();
+					$mark->score = 0;
+					$mark->comments = "Review not done - Autograded";
+					$assignment->saveReviewMark($mark, $assignment->getMatchID($submissionID, $emptyReview->reviewerID));
+				}
+			}
         }
 
 		//Shuffle independent submissions and spot check proportionally with their weights;

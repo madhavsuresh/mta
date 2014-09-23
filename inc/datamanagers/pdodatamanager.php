@@ -81,6 +81,8 @@ class PDODataManager extends DataManager
        	$this->latestCalibrationAssignmentQuery = $this->db->prepare("SELECT peer_review_assignment.assignmentID FROM peer_review_assignment, peer_review_assignment_independent WHERE peer_review_assignment.assignmentID = peer_review_assignment_independent.assignmentID ORDER BY peer_review_assignment.reviewStopDate DESC LIMIT 10");
         
         $this->isInSameCourseQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE courseID = ? && assignmentID = ?");
+        
+		$this->getMarkingLoadQuery = $this->db->prepare("SELECT markingLoad FROM users WHERE userID=?");
         //Now we can set up all the assignment data managers
         parent::__construct();
     }
@@ -122,10 +124,10 @@ class PDODataManager extends DataManager
         $this->registrationType = $res->registrationType;
     }
 
-    function addUser($username, $firstName, $lastName, $studentID, $type='student')
+    function addUser($username, $firstName, $lastName, $studentID, $type='student', $markingLoad=0)
     {
-        $sh = $this->db->prepare("INSERT INTO users (courseID, username, firstName, lastName, studentID, userType) VALUES (?, ?, ?, ?, ?, ?);");
-        $sh->execute(array($this->courseID, $username, $firstName, $lastName, $studentID, $type));
+        $sh = $this->db->prepare("INSERT INTO users (courseID, username, firstName, lastName, studentID, userType, markingLoad) VALUES (?, ?, ?, ?, ?, ?);");
+        $sh->execute(array($this->courseID, $username, $firstName, $lastName, $studentID, $type, $markingLoad));
         return new UserID($this->db->lastInsertID());
     }
 
@@ -140,10 +142,18 @@ class PDODataManager extends DataManager
         return $ret;
     }
 
-    function updateUser(UserID $id, $username, $firstName, $lastName, $studentID, $type)
+    function updateUser(UserID $id, $username, $firstName, $lastName, $studentID, $type, $markingLoad=0)
     {
-        $sh = $this->db->prepare("UPDATE users SET username = ?, firstName = ?, lastName = ?, studentID = ?, userType = ? WHERE userID = ?;");
-        $sh->execute(array($username, $firstName, $lastName, $studentID, $type, $id));
+    	/*if($markingLoad != 0)
+		{*/
+			$sh = $this->db->prepare("UPDATE users SET username = ?, firstName = ?, lastName = ?, studentID = ?, userType = ?, markingLoad = ? WHERE userID = ?;");
+        	$sh->execute(array($username, $firstName, $lastName, $studentID, $type, $markingLoad, $id));
+		/*}
+		else
+		{
+			$sh = $this->db->prepare("UPDATE users SET username = ?, firstName = ?, lastName = ?, studentID = ?, userType = ? WHERE userID = ?;");
+        	$sh->execute(array($username, $firstName, $lastName, $studentID, $type, $id));
+		}*/
     }
 
     function getUserID($username)
@@ -524,5 +534,12 @@ class PDODataManager extends DataManager
 			return $res->assignmentID;
 		else
 			return NULL;
+	}
+	
+	function getMarkingLoad(UserID $markerID)
+	{
+		$this->getMarkingLoadQuery->execute(array($markerID));
+		$res = $this->getMarkingLoadQuery->fetch();
+		return $res->markingLoad;
 	}
 }

@@ -10,7 +10,7 @@ try
 
     function getTypeRow($currentType = '')
     {
-        $html = "<tr><td>Type</td><td><select name='userType'>\n";
+        $html = "<tr><td>Type</td><td><select name='userType' id='userType'>\n";
         foreach(array("student"=>"Student", "marker"=>"Marker", "instructor"=>"Instructor") as $type => $name){
             $html .= "<option";
             if($currentType == $type)
@@ -26,12 +26,23 @@ try
         if(array_key_exists("password", $_POST) && strlen($_POST["password"]) > 0){
             $authMgr->addUserAuthentication($_POST["username"], $_POST["password"]);
         }
-        //Do everything else
-        if(array_key_exists("userID", $_POST)){
-            $dataMgr->updateUser(new UserID($_POST["userID"]), $_POST["username"], $_POST["firstname"], $_POST["lastname"], $_POST["studentid"], $_POST["userType"]);
-        }else{
-            $dataMgr->addUser($_POST["username"], $_POST["firstname"], $_POST["lastname"], $_POST["studentid"], $_POST["userType"]);
-        }
+		if(in_array($_POST["userType"], array('instructor', 'marker')))
+		{
+			if(array_key_exists("userID", $_POST)){
+	            $dataMgr->updateUser(new UserID($_POST["userID"]), $_POST["username"], $_POST["firstname"], $_POST["lastname"], $_POST["studentid"], $_POST["userType"], floatval($_POST["markingLoad"]));
+	        }else{
+	            $dataMgr->addUser($_POST["username"], $_POST["firstname"], $_POST["lastname"], $_POST["studentid"], $_POST["userType"], floatval($_POST["markingLoad"]));
+	        }
+		}
+		else 
+		{	
+	        //Do everything else
+	        if(array_key_exists("userID", $_POST)){
+	            $dataMgr->updateUser(new UserID($_POST["userID"]), $_POST["username"], $_POST["firstname"], $_POST["lastname"], $_POST["studentid"], $_POST["userType"]);
+	        }else{
+	            $dataMgr->addUser($_POST["username"], $_POST["firstname"], $_POST["lastname"], $_POST["studentid"], $_POST["userType"]);
+	        }
+		}
         //The save completed without issue, fall back to the main page
     }
     
@@ -76,12 +87,13 @@ try
     if(array_key_exists("new", $_GET))
     {
         //If we're editing, then these variables have all been filled up
-        $content .= $authMgr->getRegistrationFormHTML("", "", "", "", getTypeRow(), !$authMgr->supportsSettingPassword(), "?courseid=$dataMgr->courseID&save=1", true);
+        $content .= $authMgr->getRegistrationFormHTML("", "", "", "", getTypeRow(), "", !$authMgr->supportsSettingPassword(), "?courseid=$dataMgr->courseID&save=1", true);
     }
     else if (array_key_exists("edit", $_GET))
     {
         $user = $dataMgr->getUserInfo(new UserID($_GET["edit"]));
-        $content .= $authMgr->getRegistrationFormHTML($user->username, $user->firstName, $user->lastName, $user->studentID, getTypeRow($user->userType) . "<input type='hidden' name='userID' value='$user->userID' />", !$authMgr->supportsSettingPassword(), "?courseid=$dataMgr->courseID&save=1", true);
+		$markingLoad = $dataMgr->getMarkingLoad(new UserID($_GET["edit"]));
+        $content .= $authMgr->getRegistrationFormHTML($user->username, $user->firstName, $user->lastName, $user->studentID, getTypeRow($user->userType) . "<input type='hidden' name='userID' value='$user->userID' />", $markingLoad, !$authMgr->supportsSettingPassword(), "?courseid=$dataMgr->courseID&save=1", true);
     }
     else if(array_key_exists("upload", $_GET))
     {

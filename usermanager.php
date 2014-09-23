@@ -87,12 +87,13 @@ try
     if(array_key_exists("new", $_GET))
     {
         //If we're editing, then these variables have all been filled up
-        $content .= $authMgr->getRegistrationFormHTML("", "", "", "", getTypeRow(), !$authMgr->supportsSettingPassword(), "?courseid=$dataMgr->courseID&save=1", true);
+        $content .= $authMgr->getRegistrationFormHTML("", "", "", "", getTypeRow(), "", !$authMgr->supportsSettingPassword(), "?courseid=$dataMgr->courseID&save=1", true);
     }
     else if (array_key_exists("edit", $_GET))
     {
         $user = $dataMgr->getUserInfo(new UserID($_GET["edit"]));
-        $content .= $authMgr->getRegistrationFormHTML($user->username, $user->firstName, $user->lastName, $user->studentID, getTypeRow($user->userType) . "<input type='hidden' name='userID' value='$user->userID' />", !$authMgr->supportsSettingPassword(), "?courseid=$dataMgr->courseID&save=1", true);
+		$markingLoad = $dataMgr->getMarkingLoad(new UserID($_GET["edit"]));
+        $content .= $authMgr->getRegistrationFormHTML($user->username, $user->firstName, $user->lastName, $user->studentID, getTypeRow($user->userType) . "<input type='hidden' name='userID' value='$user->userID' />", $markingLoad, !$authMgr->supportsSettingPassword(), "?courseid=$dataMgr->courseID&save=1", true);
     }
     else if(array_key_exists("upload", $_GET))
     {

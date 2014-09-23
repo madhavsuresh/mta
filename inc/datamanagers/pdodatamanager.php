@@ -81,6 +81,8 @@ class PDODataManager extends DataManager
        	$this->latestCalibrationAssignmentQuery = $this->db->prepare("SELECT peer_review_assignment.assignmentID FROM peer_review_assignment, peer_review_assignment_independent WHERE peer_review_assignment.assignmentID = peer_review_assignment_independent.assignmentID ORDER BY peer_review_assignment.reviewStopDate DESC LIMIT 10");
         
         $this->isInSameCourseQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE courseID = ? && assignmentID = ?");
+        
+		$this->getMarkingLoadQuery = $this->db->prepare("SELECT markingLoad FROM users WHERE userID=?");
         //Now we can set up all the assignment data managers
         parent::__construct();
     }
@@ -145,7 +147,7 @@ class PDODataManager extends DataManager
     	/*if($markingLoad != 0)
 		{*/
 			$sh = $this->db->prepare("UPDATE users SET username = ?, firstName = ?, lastName = ?, studentID = ?, userType = ?, markingLoad = ? WHERE userID = ?;");
-        	$sh->execute(array($username, $firstName, $lastName, $studentID, $type, $id, $markingLoad));
+        	$sh->execute(array($username, $firstName, $lastName, $studentID, $type, $markingLoad, $id));
 		/*}
 		else
 		{
@@ -532,5 +534,12 @@ class PDODataManager extends DataManager
 			return $res->assignmentID;
 		else
 			return NULL;
+	}
+	
+	function getMarkingLoad(UserID $markerID)
+	{
+		$this->getMarkingLoadQuery->execute(array($markerID));
+		$res = $this->getMarkingLoadQuery->fetch();
+		return $res->markingLoad;
 	}
 }

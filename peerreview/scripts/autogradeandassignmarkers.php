@@ -38,7 +38,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         foreach($dataMgr->getMarkers() as $markerID)
         {
             $html .= "<tr><td>".$dataMgr->getUserDisplayName(new UserID($markerID))."'s Load</td><td>";
-            $html .= "<input type='text' name='load$markerID' value='0' size='30'/></td></tr>\n";
+            $html .= "<input type='text' name='load$markerID' value='".$dataMgr->getMarkingLoad(new UserID($markerID))."' size='30'/></td></tr>\n";
         }
         $html .= "</table>\n";
         return $html;

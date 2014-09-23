@@ -525,6 +525,20 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $assigned;
     }
     
+    function getMarkerToSubmissionsMap(PeerReviewAssignment $assignment)
+    {
+        $sh = $this->db->prepare("SELECT reviewerID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? && instructorForced = 0 && matches.calibrationState = '0' ORDER BY matches.matchID;");
+        $sh->execute(array($assignment->assignmentID));
+        $map = array();
+        while($res = $sh->fetch())
+        {
+        	if(!array_key_exists($res->reviewerID, $assigned))
+        		$map[$res->reviewerID] = array();
+            $map[$res->reviewerID][$res->submissionID] = new SubmissionID($res->submissionID);
+        }
+        return $map;
+    }
+    
     function getAssignedCalibrationReviews(PeerReviewAssignment $assignment, UserID $reviewerID)
     {
         //$sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_calibration_matches calib ON matches.matchID = calib.matchID  WHERE calib.assignmentID = ? && reviewerID = ? && instructorForced = 0 && calib.matchID IS NOT NULL ORDER BY matches.matchID;");
@@ -1595,6 +1609,36 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         while($res = $sh->fetch())
         {
             $map[$res->matchID] = $res->needsResponse;
+        }
+        return $map;
+    }
+	
+	function getReviewAppealMapBySubmission(PeerReviewAssignment $assignment)
+    {
+        $sh = $this->prepareQuery("getReviewAppealMapBySubmissionQuery", "SELECT matches.submissionID, matches.matchID, users.userType='student' as needsResponse FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID && messages.matchID = messages2.matchID && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && messages.appealType = 'review' ORDER BY matches.submissionID;");
+        $sh->execute(array($assignment->assignmentID));
+
+        $map = array();
+        while($res = $sh->fetch())
+        {
+        	if(!array_key_exists($res->submissionID, $map))
+				$map[$res->submissionID] = array();
+            $map[$res->submissionID][$res->matchID] = $res->needsResponse;
+        }
+        return $map;
+    }
+	
+	function getReviewMarkAppealMapBySubmission(PeerReviewAssignment $assignment)
+    {
+        $sh = $this->prepareQuery("getReviewMarkAppealMapBySubmissionQuery", "SELECT matches.submissionID, matches.matchID, users.userType='student' as needsResponse FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID && messages.matchID = messages2.matchID && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && messages.appealType = 'reviewmark' ORDER BY matches.submissionID;");
+        $sh->execute(array($assignment->assignmentID));
+
+        $map = array();
+        while($res = $sh->fetch())
+        {
+        	if(array_key_exists($res->submissionID, $map))
+				$map[$res->submissionID] = array();
+            $map[$res->submissionID][$res->matchID] = $res->needsResponse;
         }
         return $map;
     }

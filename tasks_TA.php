@@ -16,9 +16,65 @@ foreach($assignments as $assignment)
 	$spotChecks = $assignment->getSpotChecksForMarker($USERID);
 	$reviewMap = $assignment->getReviewMap();
 	
+	if($assignment->assignmentID->id == 104)
+	{
+		$appealMap = $assignment->getReviewAppealMapBySubmission();
+    	$markAppealMap = $assignment->getReviewMarkAppealMapBySubmission();
+		$markerToSubmissionsMap = $assignment->getMarkerToSubmissionsMap();
+		//print_r($appealMap);
+		//print_r($markAppealMap);
+		
+		$markers = $dataMgr->getMarkers();
+		$markingLoadMap = array();
+		$sumLoad = 0;
+		foreach($markers as $markerID)
+		{
+			$markerLoad = $dataMgr->getMarkingLoad(new UserID($markerID));
+			$markingLoadMap[$markerID] = $markerLoad;
+			$sumLoad += $markerLoad;
+		}
+		
+		$targetLoads = array();
+		foreach($markers as $markerID)
+			$targetLoads[$markerID] = precisionFloat($markingLoadMap[$markerID]/$sumLoad);
+		
+		$markerAppealSubs = array();
+		foreach($markers as $markerID)
+			$markerAppealSubs[$markerID] = 0;
+		
+		$assignedJobs = 0;
+		$loadDefecits = array();
+		$markerTasks = array();
+		foreach($markers as $markerID)
+			$markerTasks[$markerID] = array();
+		foreach($markAppealMap as $submissionID => $submissionAppeals)
+		{
+			foreach($markers as $markerID)
+        		$loadDefecits[$markerID] = $targetLoads[$markerID] - 1.0*$markerAppealSubs[$markerID]/($assignedJobs+1);
+			while(1)
+			{
+				if(sizeof($loadDefecits)==0)
+				{
+					throw new Exception('Somehow this submission has been reviewed by all markers');
+				}
+				$res = array_keys($loadDefecits, max($loadDefecits));
+           		$markerID = $res[0];
+				if(array_key_exists($submissionID->id, $markerToSubmissionsMap[$markers[$i]]))
+				{
+					unset($loadDefecits[$markerID]);
+					continue;
+				}
+				//Assign all submission appeals (most likely only one but hey ... it doesn't hurt to be robust)
+				foreach($submissionAppeals as $submissionAppeal)
+					$markerTasks[$markerID] = $submissionAppeal;
+				break;
+			}
+		}
+	}
+
 	$color = '';
 	if($NOW >= $assignment->markPostDate)
-		$color = 'red'; 
+		$color = 'red';
 	
 	//For each of the marker's assigned reviews
 	foreach($reviews as $reviewObj)

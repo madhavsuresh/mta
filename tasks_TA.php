@@ -18,13 +18,15 @@ foreach($assignments as $assignment)
 	
 	if($assignment->assignmentID->id == 104)
 	{
+		$spotCheckMap = $assignment->getSpotCheckMap();
 		$appealMap = $assignment->getReviewAppealMapBySubmission();
-    	$markAppealMap = $assignment->getReviewMarkAppealMapBySubmission();
+    	//$markAppealMap = $assignment->getReviewMarkAppealMapBySubmission();
 		$markerToSubmissionsMap = $assignment->getMarkerToSubmissionsMap();
 		//print_r($appealMap);
 		//print_r($markAppealMap);
 		
 		$markers = $dataMgr->getMarkers();
+		
 		$markingLoadMap = array();
 		$sumLoad = 0;
 		foreach($markers as $markerID)
@@ -38,19 +40,19 @@ foreach($assignments as $assignment)
 		foreach($markers as $markerID)
 			$targetLoads[$markerID] = precisionFloat($markingLoadMap[$markerID]/$sumLoad);
 		
-		$markerAppealSubs = array();
+		$markerSubs = array();
 		foreach($markers as $markerID)
-			$markerAppealSubs[$markerID] = 0;
+			$markerSubs[$markerID] = 0;
 		
 		$assignedJobs = 0;
 		$loadDefecits = array();
 		$markerTasks = array();
 		foreach($markers as $markerID)
 			$markerTasks[$markerID] = array();
-		foreach($markAppealMap as $submissionID => $submissionAppeals)
+		foreach($appealMap as $submissionID => $reviewAppeals)
 		{
 			foreach($markers as $markerID)
-        		$loadDefecits[$markerID] = $targetLoads[$markerID] - 1.0*$markerAppealSubs[$markerID]/($assignedJobs+1);
+        		$loadDefecits[$markerID] = $targetLoads[$markerID] - 1.0*$markerSubs[$markerID]/($assignedJobs+1);
 			while(1)
 			{
 				if(sizeof($loadDefecits)==0)
@@ -59,17 +61,53 @@ foreach($assignments as $assignment)
 				}
 				$res = array_keys($loadDefecits, max($loadDefecits));
            		$markerID = $res[0];
-				if(array_key_exists($submissionID->id, $markerToSubmissionsMap[$markers[$i]]))
+				if(array_key_exists($submissionID, $markerToSubmissionsMap[$markerID]))
 				{
 					unset($loadDefecits[$markerID]);
 					continue;
 				}
-				//Assign all submission appeals (most likely only one but hey ... it doesn't hurt to be robust)
-				foreach($submissionAppeals as $submissionAppeal)
-					$markerTasks[$markerID] = $submissionAppeal;
+				//Assign all review appeals (most likely only one but hey ... it doesn't hurt to be robust)
+				$markerTasks[$markerID][$submissionID] = array();
+				foreach($reviewAppeals as $matchID => $needsResponse)
+				{
+					$markerTasks[$markerID][$submissionID][$matchID] = $needsResponse;
+				}
+				$markerSubs[$markerID]++;
+				$assignedJobs++;
 				break;
 			}
 		}
+		/*foreach($appealMap as $submissionID => $submissionAppeals)
+		{
+			foreach($markers as $markerID)
+        		$loadDefecits[$markerID] = $targetLoads[$markerID] - 1.0*$markerSubs[$markerID]/($assignedJobs+1);
+			while(1)
+			{
+				if(sizeof($loadDefecits)==0)
+				{
+					throw new Exception('Somehow this submission has been reviewed by all markers');
+				}
+				$res = array_keys($loadDefecits, max($loadDefecits));
+           		$markerID = $res[0];
+				if(array_key_exists($submissionID, $markerToSubmissionsMap[$markerID]))
+				{
+					unset($loadDefecits[$markerID]);
+					continue;
+				}
+				if(!array_key_exists($submissionID, $markerTasks[$markerID]))
+				{
+					$markerTasks[$markerID][$submissionID] = array();
+					$markerSubs[$markerID]++;
+					$assignedJobs++;
+				}
+				foreach($submissionAppeals as $matchID => $needsResponse)
+				{
+					$markerTasks[$markerID][$submissionID][$matchID] = $needsResponse;
+				}
+				break;
+			}
+		}*/
+		print_r($markerTasks);
 	}
 
 	$color = '';
@@ -156,6 +194,7 @@ foreach($assignments as $assignment)
 	}
 }
 
+$content .= print_r($spotChecks, true);
 $content .= "<div style='margin-bottom:20px'>";
 $content .= "<h1>Tasks</h1>\n";
 if($reviewTasks)

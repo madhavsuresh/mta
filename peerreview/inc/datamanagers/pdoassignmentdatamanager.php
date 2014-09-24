@@ -527,7 +527,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     
     function getMarkerToSubmissionsMap(PeerReviewAssignment $assignment)
     {
-        $sh = $this->db->prepare("SELECT reviewerID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? && instructorForced = 0 && matches.calibrationState = '0' ORDER BY matches.matchID;");
+        $sh = $this->db->prepare("SELECT matches.reviewerID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? && instructorForced = 1 && matches.calibrationState = '0';");
         $sh->execute(array($assignment->assignmentID));
         $map = array();
         while($res = $sh->fetch())
@@ -1625,6 +1625,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 				$map[$res->submissionID] = array();
             $map[$res->submissionID][$res->matchID] = $res->needsResponse;
         }
+		
         return $map;
     }
 	
@@ -1636,7 +1637,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $map = array();
         while($res = $sh->fetch())
         {
-        	if(array_key_exists($res->submissionID, $map))
+        	if(!array_key_exists($res->submissionID, $map))
 				$map[$res->submissionID] = array();
             $map[$res->submissionID][$res->matchID] = $res->needsResponse;
         }

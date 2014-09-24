@@ -20,7 +20,7 @@ foreach($assignments as $assignment)
 	{
 		$spotCheckMap = $assignment->getSpotCheckMap();
 		$appealMap = $assignment->getReviewAppealMapBySubmission();
-    	//$markAppealMap = $assignment->getReviewMarkAppealMapBySubmission();
+    	$markAppealMap = $assignment->getReviewMarkAppealMapBySubmission();
 		$markerToSubmissionsMap = $assignment->getMarkerToSubmissionsMap();
 		//print_r($appealMap);
 		//print_r($markAppealMap);
@@ -49,7 +49,7 @@ foreach($assignments as $assignment)
 		$markerTasks = array();
 		foreach($markers as $markerID)
 			$markerTasks[$markerID] = array();
-		foreach($appealMap as $submissionID => $reviewAppeals)
+		foreach($markAppealMap as $submissionID => $reviewAppeals)
 		{
 			foreach($markers as $markerID)
         		$loadDefecits[$markerID] = $targetLoads[$markerID] - 1.0*$markerSubs[$markerID]/($assignedJobs+1);
@@ -77,7 +77,7 @@ foreach($assignments as $assignment)
 				break;
 			}
 		}
-		/*foreach($appealMap as $submissionID => $submissionAppeals)
+		foreach($appealMap as $submissionID => $submissionAppeals)
 		{
 			foreach($markers as $markerID)
         		$loadDefecits[$markerID] = $targetLoads[$markerID] - 1.0*$markerSubs[$markerID]/($assignedJobs+1);
@@ -106,7 +106,7 @@ foreach($assignments as $assignment)
 				}
 				break;
 			}
-		}*/
+		}
 		print_r($markerTasks);
 	}
 

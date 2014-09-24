@@ -67,11 +67,8 @@ foreach($appealMap as $submissionID => $reviewAppeals)
 			continue;
 		}
 		
-		$markerTasks[$markerID][$submissionID] = array();
-		foreach($reviewAppeals as $matchID => $needsResponse)
-		{
-			$markerTasks[$markerID][$submissionID][$matchID] = $needsResponse;
-		}
+		$markerTasks[$markerID][$submissionID] = $reviewAppeals;
+
 		$markerSubs[$markerID]++;
 		$assignedJobs++;
 		break;
@@ -79,6 +76,7 @@ foreach($appealMap as $submissionID => $reviewAppeals)
 }
 
 return $markerTasks;
+
 }
 	
 ?>

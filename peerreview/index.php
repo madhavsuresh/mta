@@ -1,5 +1,6 @@
 <?php
 require_once("inc/common.php");
+require_once("peerreview/inc/appealstaskmanager.php");
 try
 {
     $title .= " | Mark Assignment";
@@ -44,6 +45,16 @@ try
     $stats = $assignment->getAssignmentStatistics();
     $userStats = $assignment->getAssignmentStatisticsForUser($USERID);
     $displayMap = $dataMgr->getUserDisplayMap();
+
+	$appealsTaskMap = getAppealsTaskMap($assignment);
+	$submissionToMarkerMap = array();
+	foreach($appealsTaskMap as $markerID => $submissions)
+	{
+		foreach($submissions as $submissionID => $set)
+		{
+			$submissionToMarkerMap[$submissionID] = $dataMgr->getUserDisplayName(new UserID($markerID));
+		}
+	}
 
     //Start making the big table
     $content .= "<h1>Submissions (".$stats->numSubmissions."/".$stats->numPossibleSubmissions.") and Reviews (".$stats->numStudentReviews."/".$stats->numPossibleStudentReviews.")</h1>";
@@ -164,7 +175,7 @@ try
                             $appealText = "Unanswered Appeal";
                         else
                             $appealText = "Appeal";
-                        $content .= "</tr><td colspan='2'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=review")."'>$appealText</a></td>";
+                        $content .= "</tr><td colspan='2'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=review")."'>$appealText assigned to ".$submissionToMarkerMap[$submissionID->id]."</a></td>";
                     }
                     //Is there an appeal for this review's mark?
                     if(array_key_exists($reviewObj->matchID->id, $markAppealMap))
@@ -174,7 +185,7 @@ try
                             $appealText = "Unanswered Mark Appeal";
                         else
                             $appealText = "Mark Appeal";
-                        $content .= "</tr><td colspan='2'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=reviewmark")."'>$appealText</a></td>";
+                        $content .= "</tr><td colspan='2'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=reviewmark")."'>$appealText assigned to ".$submissionToMarkerMap[$submissionID->id]."</a></td>";
                     }
                     $content .= "</tr></table></td></tr>";
                 }

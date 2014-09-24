@@ -17,12 +17,6 @@ foreach($assignments as $assignment)
 	$spotChecks = $assignment->getSpotChecksForMarker($USERID);
 	$reviewMap = $assignment->getReviewMap();
 	
-	//if($assignment->assignmentID->id == 104)
-	//{
-		$appealsTaskMap = getAppealsTaskMap($assignment);
-		print_r($appealsTaskMap);
-	//}
-	
 	$color = '';
 	if($NOW >= $assignment->markPostDate)
 		$color = 'red';
@@ -106,19 +100,36 @@ foreach($assignments as $assignment)
         }
 	}
 
+	$appealsTaskMap = getAppealsTaskMap($assignment);
+
 	if(isset($appealsTaskMap[$USERID->id]))
 	{
-		print_r("HOLLA");
 		foreach($appealsTaskMap[$USERID->id] as $submissions)
 		{
-			$reviewTask = new stdClass();
-			$reviewTask->endDate = $assignment->markPostDate;
-			$reviewTask->html = 
-			"<table width='100%'></tr><td class='column1'><h4>$assignment->name</h4></td>
-			<td class='column2'>Appeal</td>
-			<td class='column3'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=review")."'><button>Appeal</button></a></td>
-			<td class='column4'><span style='color:$color'>".phpDate($assignment->markPostDate)."</span></td></tr></table>\n";
-			insert($reviewTask, $reviewTasks);
+			$reviewAppeals = array_filter($submissions->review, function($v){return $v;});
+			$reviewMarkAppeals = array_filter($submissions->reviewmark, function($v){return $v;});
+			foreach($reviewAppeals as $matchID => $needsResponse)
+			{
+				$reviewTask = new stdClass();
+				$reviewTask->endDate = $assignment->markPostDate;
+				$reviewTask->html = 
+				"<table width='100%'></tr><td class='column1'><h4>$assignment->name</h4></td>
+				<td class='column2'>Review Appeal</td>
+				<td class='column3'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$matchID&appealtype=review")."'><button>Answer</button></a></td>
+				<td class='column4'><span style='color:$color'>".phpDate($assignment->markPostDate)."</span></td></tr></table>\n";
+				insert($reviewTask, $reviewTasks);	
+			}
+			foreach($reviewMarkAppeals as $matchID => $needsResponse)
+			{
+				$reviewTask = new stdClass();
+				$reviewTask->endDate = $assignment->markPostDate;
+				$reviewTask->html = 
+				"<table width='100%'></tr><td class='column1'><h4>$assignment->name</h4></td>
+				<td class='column2'>Review Mark Appeal</td>
+				<td class='column3'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$matchID&appealtype=reviewmark")."'><button>Answer</button></a></td>
+				<td class='column4'><span style='color:$color'>".phpDate($assignment->markPostDate)."</span></td></tr></table>\n";
+				insert($reviewTask, $reviewTasks);	
+			}
 		}
 	}
 }

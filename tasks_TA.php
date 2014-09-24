@@ -1,5 +1,6 @@
 <?php
 require_once("inc/common.php");
+require_once("peerreview/inc/appealstaskmanager.php");
 
 global $assignments;
 global $dataMgr;
@@ -16,100 +17,12 @@ foreach($assignments as $assignment)
 	$spotChecks = $assignment->getSpotChecksForMarker($USERID);
 	$reviewMap = $assignment->getReviewMap();
 	
-	if($assignment->assignmentID->id == 104)
-	{
-		$spotCheckMap = $assignment->getSpotCheckMap();
-		$appealMap = $assignment->getReviewAppealMapBySubmission();
-    	$markAppealMap = $assignment->getReviewMarkAppealMapBySubmission();
-		$markerToSubmissionsMap = $assignment->getMarkerToSubmissionsMap();
-		//print_r($appealMap);
-		//print_r($markAppealMap);
-		
-		$markers = $dataMgr->getMarkers();
-		
-		$markingLoadMap = array();
-		$sumLoad = 0;
-		foreach($markers as $markerID)
-		{
-			$markerLoad = $dataMgr->getMarkingLoad(new UserID($markerID));
-			$markingLoadMap[$markerID] = $markerLoad;
-			$sumLoad += $markerLoad;
-		}
-		
-		$targetLoads = array();
-		foreach($markers as $markerID)
-			$targetLoads[$markerID] = precisionFloat($markingLoadMap[$markerID]/$sumLoad);
-		
-		$markerSubs = array();
-		foreach($markers as $markerID)
-			$markerSubs[$markerID] = 0;
-		
-		$assignedJobs = 0;
-		$loadDefecits = array();
-		$markerTasks = array();
-		foreach($markers as $markerID)
-			$markerTasks[$markerID] = array();
-		foreach($markAppealMap as $submissionID => $reviewAppeals)
-		{
-			foreach($markers as $markerID)
-        		$loadDefecits[$markerID] = $targetLoads[$markerID] - 1.0*$markerSubs[$markerID]/($assignedJobs+1);
-			while(1)
-			{
-				if(sizeof($loadDefecits)==0)
-				{
-					throw new Exception('Somehow this submission has been reviewed by all markers');
-				}
-				$res = array_keys($loadDefecits, max($loadDefecits));
-           		$markerID = $res[0];
-				if(array_key_exists($submissionID, $markerToSubmissionsMap[$markerID]))
-				{
-					unset($loadDefecits[$markerID]);
-					continue;
-				}
-				//Assign all review appeals (most likely only one but hey ... it doesn't hurt to be robust)
-				$markerTasks[$markerID][$submissionID] = array();
-				foreach($reviewAppeals as $matchID => $needsResponse)
-				{
-					$markerTasks[$markerID][$submissionID][$matchID] = $needsResponse;
-				}
-				$markerSubs[$markerID]++;
-				$assignedJobs++;
-				break;
-			}
-		}
-		foreach($appealMap as $submissionID => $submissionAppeals)
-		{
-			foreach($markers as $markerID)
-        		$loadDefecits[$markerID] = $targetLoads[$markerID] - 1.0*$markerSubs[$markerID]/($assignedJobs+1);
-			while(1)
-			{
-				if(sizeof($loadDefecits)==0)
-				{
-					throw new Exception('Somehow this submission has been reviewed by all markers');
-				}
-				$res = array_keys($loadDefecits, max($loadDefecits));
-           		$markerID = $res[0];
-				if(array_key_exists($submissionID, $markerToSubmissionsMap[$markerID]))
-				{
-					unset($loadDefecits[$markerID]);
-					continue;
-				}
-				if(!array_key_exists($submissionID, $markerTasks[$markerID]))
-				{
-					$markerTasks[$markerID][$submissionID] = array();
-					$markerSubs[$markerID]++;
-					$assignedJobs++;
-				}
-				foreach($submissionAppeals as $matchID => $needsResponse)
-				{
-					$markerTasks[$markerID][$submissionID][$matchID] = $needsResponse;
-				}
-				break;
-			}
-		}
-		print_r($markerTasks);
-	}
-
+	//if($assignment->assignmentID->id == 104)
+	//{
+		$appealsTaskMap = getAppealsTaskMap($assignment);
+		print_r($appealsTaskMap);
+	//}
+	
 	$color = '';
 	if($NOW >= $assignment->markPostDate)
 		$color = 'red';
@@ -187,14 +100,29 @@ foreach($assignments as $assignment)
 			$reviewTask->html = 
 			"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 			<td class='column2'>Spot Check</td>
-            <td><a  target='_blank' href='peerreview/viewer.php?assignmentid=$assignment->assignmentID&$args&type$i=spotcheck&submissionid$i=$spotCheck->submissionID'><button>Confirm</button><br></a></td>
+            <td><a target='_blank' href='peerreview/viewer.php?assignmentid=$assignment->assignmentID&$args&type$i=spotcheck&submissionid$i=$spotCheck->submissionID'><button>Confirm</button><br></a></td>
             <td class='column4'><span style='color:$color'>".phpDate($assignment->markPostDate)."</span></td></tr></table>\n";
 			insert($reviewTask, $reviewTasks);
         }
 	}
+
+	if(isset($appealsTaskMap[$USERID->id]))
+	{
+		print_r("HOLLA");
+		foreach($appealsTaskMap[$USERID->id] as $submissions)
+		{
+			$reviewTask = new stdClass();
+			$reviewTask->endDate = $assignment->markPostDate;
+			$reviewTask->html = 
+			"<table width='100%'></tr><td class='column1'><h4>$assignment->name</h4></td>
+			<td class='column2'>Appeal</td>
+			<td class='column3'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=review")."'><button>Appeal</button></a></td>
+			<td class='column4'><span style='color:$color'>".phpDate($assignment->markPostDate)."</span></td></tr></table>\n";
+			insert($reviewTask, $reviewTasks);
+		}
+	}
 }
 
-$content .= print_r($spotChecks, true);
 $content .= "<div style='margin-bottom:20px'>";
 $content .= "<h1>Tasks</h1>\n";
 if($reviewTasks)

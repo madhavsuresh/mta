@@ -44,10 +44,13 @@ try
             break;
         case "reviewmark":
             //Get the specified id
-            $reviews= $assignment->getAssignedReviews($USERID);
+            $matches = $assignment->getAssignedReviews($USERID);
+			$reviews = array();
+			foreach($matches as $match)
+				$reviews[] = $assignment->getReview($match);
             $reviews = array_values(array_filter($reviews, function($v) { return sizeof($v->answers) > 0; }));
             if(isset($reviews[$reviewid])) {
-                $review = $assignment->getReview($reviews[$reviewid]);
+                $review = $reviews[$reviewid];
             } else {
                 throw new Exception("Invalid review ID");
             }

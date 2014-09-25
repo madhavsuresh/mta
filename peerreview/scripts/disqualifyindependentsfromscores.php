@@ -48,17 +48,23 @@ class DisqualifyIndependentsFromScoresPeerReviewScript extends Script
 
             # Don't disqualify someone for never having been marked
             if(count_valid_peer_review_marks_for_assignments($student, $assignments) < 1)
-              continue;
-            
+			{
+				$currentRowType = ($currentRowType+1)%2;
+            	continue;
+			}
             $score = compute_peer_review_score_for_assignments($student, $assignments) * 100;
             $html .= precisionFloat($score);
             $html .= "</td><td>\n";
             if($score < $independentThreshold)
             {
-              unset($independents[$student->id]);
-              $html .= "Disqualified (forced to supervised)";
+            	if(array_key_exists($student->id, $independents))
+				{			
+            		unset($independents[$student->id]);
+					$dataMgr->demote($student);
+              		$html .= "Disqualified (forced to supervised)";
+              	}
             }
-            $html .= "</td></tr>\n";
+            $html .= "&nbsp</td></tr>\n";
             $currentRowType = ($currentRowType+1)%2;
         }
         $html .= "</table>\n";

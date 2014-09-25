@@ -532,7 +532,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $map = array();
         while($res = $sh->fetch())
         {
-        	if(!array_key_exists($res->reviewerID, $assigned))
+        	if(!array_key_exists($res->reviewerID, $map))
         		$map[$res->reviewerID] = array();
             $map[$res->reviewerID][$res->submissionID] = new SubmissionID($res->submissionID);
         }

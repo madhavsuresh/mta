@@ -40,19 +40,25 @@ foreach($markers as $markerID)
 $assignedJobs = 0;
 $loadDefecits = array();
 
-foreach($appealMap as $submissionID => $reviewAppeals)
+foreach($appealMap as $submissionID => $appeals)
 {
 	foreach($markers as $markerID)
 	{
-		//if($targetLoads[$markerID] == 0)
-		//	continue;
+		if($targetLoads[$markerID] == 0)
+			continue;
 		$loadDefecits[$markerID] = $targetLoads[$markerID] - 1.0*$markerSubs[$markerID]/($assignedJobs+1);
 	}
 	while(1)
 	{
 		if(!(sizeof($loadDefecits)>0))
 		{
-			throw new Exception('Somehow a submission has been reviewed and/or spotchecked by all markers');
+			//throw new Exception('Somehow a submission has been reviewed and/or spotchecked by all available markers');
+			
+			//Just going to leave it unassigned
+			//break;
+			
+			$markerTasks[0][$submissionID] = $appeals;
+			break;
 		}
 		$res = array_keys($loadDefecits, max($loadDefecits));
    		$markerID = $res[0];
@@ -67,7 +73,7 @@ foreach($appealMap as $submissionID => $reviewAppeals)
 			continue;
 		}
 		
-		$markerTasks[$markerID][$submissionID] = $reviewAppeals;
+		$markerTasks[$markerID][$submissionID] = $appeals;
 
 		$markerSubs[$markerID]++;
 		$assignedJobs++;

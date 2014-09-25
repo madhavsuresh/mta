@@ -83,9 +83,6 @@ class PDODataManager extends DataManager
         $this->isInSameCourseQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE courseID = ? && assignmentID = ?");
         
 		$this->getMarkingLoadQuery = $this->db->prepare("SELECT markingLoad FROM users WHERE userID=?");
-		
-		$this->demoteQuery = $this->db->prepare("INSERT INTO demotion_log (userID, demotionDate) VALUES (:userID, FROM_UNIXTIME(:demotionDate)) ON DUPLICATE KEY UPDATE demotionDate=FROM_UNIXTIME(:demotionDate);");
-		$this->getDemotionDateQuery = $this->db->prepare("SELECT demotionDate FROM demotion_log WHERE userID = ?");
         //Now we can set up all the assignment data managers
         parent::__construct();
     }
@@ -546,16 +543,18 @@ class PDODataManager extends DataManager
 		return $res->markingLoad;
 	}
 	
-	function demote(UserID $userID)
+	function demote(UserID $userID, $demotionThreshold)
 	{
 		global $NOW;
-		$this->demoteQuery->execute(array("userID"=>$userID, "demotionDate"=>$NOW));
+		$sh = $this->prepareQuery("demoteQuery", "INSERT INTO peer_review_assignment_demotion_log (userID, demotionDate, demotionThreshold) VALUES (:userID, FROM_UNIXTIME(:demotionDate), :demotionThreshold) ON DUPLICATE KEY UPDATE demotionDate=FROM_UNIXTIME(:demotionDate), demotionThreshold=:demotionThreshold;");
+		$sh->execute(array("userID"=>$userID, "demotionDate"=>$NOW, "demotionThreshold"=>$demotionThreshold));
 	}
 	
-	function getDemotionDate(UserID $userID)
+	function getDemotionEntry(UserID $userID)
 	{
-		$this->getDemotionDateQuery->execute(array($userID));
+		$sh = $this->prepareQuery("getDemotionEntryQuery", "SELECT demotionDate, demotionThreshold FROM peer_review_assignment_demotion_log WHERE userID = ?;");
+		$sh->execute(array($userID));
 		$res = $sh->fetch();
-		return $res[0];
+		return $res;
 	}
 }

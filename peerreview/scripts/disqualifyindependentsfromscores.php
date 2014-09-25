@@ -32,7 +32,7 @@ class DisqualifyIndependentsFromScoresPeerReviewScript extends Script
         $currentAssignment = get_peerreview_assignment();
 
         $windowSize = require_from_post("windowsize");
-        $independentThreshold = require_from_post("threshold");
+        $independentThreshold = floatval(require_from_post("threshold"));
 
         $assignments = $currentAssignment->getAssignmentsBefore($windowSize);
         $userNameMap = $dataMgr->getUserDisplayMap();
@@ -60,11 +60,11 @@ class DisqualifyIndependentsFromScoresPeerReviewScript extends Script
             	if(array_key_exists($student->id, $independents))
 				{			
             		unset($independents[$student->id]);
-					$dataMgr->demote($student);
+					$dataMgr->demote($student, $independentThreshold);
               		$html .= "Disqualified (forced to supervised)";
               	}
             }
-            $html .= "&nbsp</td></tr>\n";
+            $html .= "</td></tr>\n";
             $currentRowType = ($currentRowType+1)%2;
         }
         $html .= "</table>\n";

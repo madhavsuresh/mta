@@ -1,5 +1,6 @@
 <?php
 require_once("inc/common.php");
+require_once("peerreview/inc/appealstaskmanager.php");
 try
 {
     $title .= " | Mark Assignment";
@@ -62,6 +63,33 @@ try
     }
     $content .= "<a title='New' target='_blank' href='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID&authorid=".$assignment->getUserIDForAnonymousSubmission($USERID, $authMgr->getCurrentUsername())."&close=1")."'>Create Instructor Submission</a>\n";
 
+    $unansweredAppeals = 0; $unassignedAppeals = 0; $unansweredUnassignedAppeals = 0;
+	$appealsTaskMap = getAppealsTaskMap($assignment);
+	$submissionWithAppealToAssignedMap = array();
+	foreach($appealsTaskMap as $markerID => $submissions)
+	{
+		foreach($submissions as $submissionID => $set)
+		{
+			if($markerID==0)
+			{
+				$unassignedAppeals += sizeof($set->review);
+				$unassignedAppeals += sizeof($set->reviewmark);
+				$unansweredUnassignedAppeals += array_reduce($set->review, function($res, $needsResponse){ return $res + $needsResponse;});
+				$unansweredUnassignedAppeals += array_reduce($set->reviewmark, function($res, $needsResponse){ return $res + $needsResponse;});
+			}
+			else
+				$submissionWithAppealToAssignedMap[$submissionID] = $dataMgr->getUserDisplayName(new UserID($markerID));
+			$unansweredAppeals += array_reduce($set->review, function($res, $needsResponse){ return $res + $needsResponse;});
+			$unansweredAppeals += array_reduce($set->reviewmark, function($res, $needsResponse){ return $res + $needsResponse;});
+		}
+	}	
+	
+    $content .= "<table width='35%'>\n";
+    $content .= "<tr><td>Unanswered Appeals</td><td>$unansweredAppeals</td></tr>";
+	$content .= "<tr><td>Unassigned Appeals</td><td>$unassignedAppeals</td></tr>";
+	$content .= "<tr><td>Unanswered and Unassigned Appeals</td><td>$unansweredUnassignedAppeals</td></tr>";
+    $content .= "</table>\n";
+	
     #Now start going through stuff by user names
     $content .= "<table width='100%'>\n";
     $currentRowIndex = 0;
@@ -156,6 +184,8 @@ try
                     }else{
                         $content .= "<td width='20'>&nbsp;</td>\n";
                     }
+					if(isset($submissionWithAppealToAssignedMap[$submissionID->id]))
+						$assigned = " assigned to ".$submissionWithAppealToAssignedMap[$submissionID->id];
                     //Is there an appeal for this review?
                     if(array_key_exists($reviewObj->matchID->id, $appealMap))
                     {
@@ -164,7 +194,7 @@ try
                             $appealText = "Unanswered Appeal";
                         else
                             $appealText = "Appeal";
-                        $content .= "</tr><td colspan='2'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=review")."'>$appealText</a></td>";
+                        $content .= "</tr><td colspan='2'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=review")."'>$appealText$assigned</a></td>";
                     }
                     //Is there an appeal for this review's mark?
                     if(array_key_exists($reviewObj->matchID->id, $markAppealMap))
@@ -174,7 +204,7 @@ try
                             $appealText = "Unanswered Mark Appeal";
                         else
                             $appealText = "Mark Appeal";
-                        $content .= "</tr><td colspan='2'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=reviewmark")."'>$appealText</a></td>";
+                        $content .= "</tr><td colspan='2'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=reviewmark")."'>$appealText$assigned</a></td>";
                     }
                     $content .= "</tr></table></td></tr>";
                 }

@@ -60,11 +60,7 @@ class DisqualifyIndependentsFromScoresPeerReviewScript extends Script
             	if(array_key_exists($student->id, $independents))
 				{			
             		unset($independents[$student->id]);
-<<<<<<< HEAD
 					$dataMgr->demote($student, $independentThreshold);
-=======
-					$dataMgr->demote($student);
->>>>>>> ca118c097bb2fc64eb0daed905db111983903d52
               		$html .= "Disqualified (forced to supervised)";
               	}
             }

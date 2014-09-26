@@ -178,11 +178,8 @@ function latestCalibrationAssignment()
 		if($assignment->getCalibrationSubmissionIDs())
 		{
 			if($latestCalibrationAssignment == NULL)
-			{
 				$latestCalibrationAssignment = $assignment;
-				break;
-			}
-			if($latestCalibrationAssignment->reviewStopDate < $assignment->reviewStopDate)
+			elseif($latestCalibrationAssignment->calibrationStopDate < $assignment->calibrationStopDate)
 				$latestCalibrationAssignment = $assignment;
 		}
 	}
@@ -201,7 +198,7 @@ function getWeightedAverage(UserID $userid, Assignment $assignment=NULL)
 		$average = "--";
 
 	if($assignment!=NULL)
-		return convertTo10pointScale($average, $assignment);
-	else
-		return $average;
+		$average = convertTo10pointScale($average, $assignment);
+
+	return $average;
 }

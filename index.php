@@ -28,10 +28,8 @@ try
 		#TO-DO Section and Calibration Section processing
 		if($dataMgr->isStudent($USERID))
 		{		
-			if($scores = $dataMgr->getCalibrationScores($USERID))
-				$currentAverage = computeWeightedAverage($scores);
-			else 
-				$currentAverage = "--";
+			$currentAverage = getWeightedAverage($USERID);
+			$demotion = $dataMgr->getDemotionEntry($USERID);
 			
 			$items = array();
 			
@@ -134,9 +132,7 @@ try
 		                {					
 		                    $independents = $assignment->getIndependentUsers();
 							
-		                    $convertedAverage = "--";
-		                    if($currentAverage != "--") 
-		                    	$convertedAverage = convertTo10pointScale($currentAverage, $assignment);
+		                    $convertedAverage = convertTo10pointScale($currentAverage, $assignment);
 							
 							if($assignment->submissionSettings->autoAssignEssayTopic == true && sizeof($assignment->submissionSettings->topics))
 								{
@@ -183,14 +179,10 @@ try
 				$content .= "</div>";
 			}
 			
-			$status = "Supervised";
-			$reviewerAverage = "--";
-			$threshold = "";
-			$minimumReviews = "";
+			$status = "Supervised"; $reviewerAverage = "--"; $threshold = ""; $minimumReviews = "";
 			if($latestCalibrationAssignment != NULL)
 			{
-			    if($currentAverage != "--") 
-                	$reviewerAverage = convertTo10pointScale($currentAverage, $latestCalibrationAssignment); 
+                $reviewerAverage = convertTo10pointScale($currentAverage, $latestCalibrationAssignment); 
 				if(isIndependent($USERID, $latestCalibrationAssignment))
 					$status = "Independent";
 				$threshold = $latestCalibrationAssignment->calibrationThresholdScore;
@@ -198,7 +190,7 @@ try
 			}
 			
 			$content .= "<h1>Calibration</h1>\n";
-			if($status == "Independent") $color = "green"; else $color = "red";
+			$color = ($status == "Independent") ? "green" : "red";
 			$content .= "<h2>Current Review Status : <span style='color:$color'>".$status."</span></h2>\n";
 			if($latestCalibrationAssignment)
 			{
@@ -207,18 +199,21 @@ try
 					$content .= "<h4 style='color:green'>Promoted with score ".$calibrationHistory->score." on review no. ".$calibrationHistory->reviewNum."</h4>\n";
 				if($status == "Independent")
 					$content .= "<h4 style='color:green'>All calibration reviews are now for practice</h4>\n";
+				if($status == "Supervised" && $demotion != NULL)
+					$content .= "<h4 style='color:red'>You have been placed back into the supervised pool because the average TA grades for your reviews is lower than $demotion->demotionThreshold%</h4>\n";
 			}
 			$content .= "<h2>Current Weighted Average : ".$reviewerAverage."</h2>\n";
 			$content .= "<h2>Threshold: ".$threshold."</h2>\n";
-			$content .= "<h2>Minimum Reviews Required: ".$minimumReviews."</h2>\n";
+			$content .= "<h2>Number of Effective Calibrations Done: ".$dataMgr->numCalibrationReviews($USERID)."</h2>\n";
+			$content .= "<h2>Minimum Calibrations Required: ".$minimumReviews."</h2>\n";
 						
 			foreach($assignments as $assignment)
 			{
 				$availableCalibrationSubmissionIDs = $assignment->getCalibrationSubmissionIDs();
-				$doneCalibrations = array();
-				$unfinishedCalibrations = array();
 				if($availableCalibrationSubmissionIDs)
 				{
+					$doneCalibrations = array();
+					$unfinishedCalibrations = array();
 					$calibrationAssignments = $assignment->getAssignedCalibrationReviews($USERID);
                     $id = 0;
 					foreach($calibrationAssignments as $matchID)
@@ -230,6 +225,9 @@ try
 		                    if($mark->isValid){
 		                        $doneCalibrations[$id]->text = "(".convertTo10pointScale($mark->reviewPoints, $assignment).")"; 
 		                        $doneCalibrations[$id]->points = $mark->reviewPoints;
+		                       	$review = $assignment->getReview($matchID);
+								if($demotion ? $demotion->demotionDate >= $review->reviewTimestamp : false)
+									$doneCalibrations[$id]->text = "<span style='color:red'>".$doneCalibrations[$id]->text."</span>";
 		                    }else{
 		                        $doneCalibrations[$id]->text = "";
 		                        $doneCalibrations[$id]->points = 0;
@@ -271,11 +269,7 @@ try
 						$content .= "</table>";
 					}
 					$content .= "</td><td>";
-					$buttonMessage = "Request Calibration Review";
-					if($status=="Independent")
-					{
-						$buttonMessage = "Request Practice Review";
-					}
+					$buttonMessage = ($status=="Independent") ? "Request Practice Review" : "Request Calibration Review";
 					$content .= "<td width='30%'><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>$buttonMessage</button></a></td>";
 					$content .= '</td><tr></table>';
 					$content .= "</div>";

@@ -52,19 +52,15 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
         }*/
 
         $html .= "<table width='100%'>\n";
-        $html .= "<tr><td><h2>Student</h2></td><td><h2>Weighted Average Score</h2></td><td><h2>Calibration Reviews Done</h2></td><td><h2>Status</h2></td></tr>\n";
+        $html .= "<tr><td><h2>Student</h2></td><td><h2>Weighted Average Score</h2></td><td><h2>Effective Calibration Reviews Done</h2></td><td><h2>Status</h2></td></tr>\n";
         $currentRowType = 0;
 
 		$count = 1;
         foreach($students as $student)
         {
             $html .= "<tr class='rowType$currentRowType'><td>".$userNameMap[$student->id]."</td>";
-			$scores = $dataMgr->getCalibrationScores($student);
-			if($scores)
-            	$average = convertTo10pointScale(computeWeightedAverage($scores), $currentAssignment);
-			else 
-				$average = "--";
-            $html .= "<td>$average</td>";
+			$weightedAverage = getWeightedAverage($student, $currentAssignment);
+            $html .= "<td>$weightedAverage</td>";
 			$numReviews = $dataMgr->numCalibrationReviews($student);
 			$html .= "<td>".$numReviews."</td>";
             $html .= "</td><td>\n";

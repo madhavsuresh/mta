@@ -285,7 +285,7 @@ class PeerReviewAssignment extends Assignment
                             //$pointsRunningTotal = max(0, $pointsRunningTotal + $obj->points);
                         }
                         //$html .= "<tr><td></td><td>$pointsRunningTotal points total</td></tr>";
-                        $html .= "<tr><td>Weighted Average</td><td>".convertTo10pointScale(computeWeightedAverage($dataMgr->getCalibrationScores($user)), $this)."</td></tr>";
+                        $html .= "<tr><td>Weighted Average</td><td>".getWeightedAverage($user, $this)."</td></tr>";
                         $html .= "</table>";
                     }
                 }
@@ -307,7 +307,7 @@ class PeerReviewAssignment extends Assignment
                         $hasUpdate = false;
                         foreach($this->dataMgr->getMatchesForSubmission($this, $this->getSubmissionID($user)) as $matchID)
                         {
-                            $hasUpdate |= $this->dataMgr->hasNewAppealMessage($this, $matchID, "review");
+                           $hasUpdate |= $this->dataMgr->hasNewAppealMessage($this, $matchID, "review");
                         }
                         if($hasUpdate)
                            $html .= "<tr><td colsplan='2'>(Appeal updated)</td></tr>\n";

@@ -75,6 +75,7 @@ class PDODataManager extends DataManager
 		//$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), prara.reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm, peer_review_assignment_calibration_matches pracm WHERE pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID AND pram.matchID = pracm.matchID ORDER BY prara.reviewTimeStamp DESC;");
 		#after deprication of calibration matches
 		$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), prara.reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 2 AND pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;"); 
+		$this->getCalibrationReviewsAfterDateQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), prara.reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 2 AND pram.reviewerID = ? AND prara.reviewTimestamp > FROM_UNIXTIME(?) AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;");
 		
 		$this->numCalibrationReviewsQuery = $this->db->prepare("SELECT COUNT(DISTINCT pram.matchID) FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 2 AND pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;");
        	
@@ -83,9 +84,6 @@ class PDODataManager extends DataManager
         $this->isInSameCourseQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE courseID = ? && assignmentID = ?");
         
 		$this->getMarkingLoadQuery = $this->db->prepare("SELECT markingLoad FROM users WHERE userID=?");
-		
-		$this->demoteQuery = $this->db->prepare("INSERT INTO demotion_log (userID, demotionDate) VALUES (:userID, FROM_UNIXTIME(:demotionDate)) ON DUPLICATE KEY UPDATE demotionDate=FROM_UNIXTIME(:demotionDate);");
-		$this->getDemotionDateQuery = $this->db->prepare("SELECT demotionDate FROM demotion_log WHERE userID = ?");
         //Now we can set up all the assignment data managers
         parent::__construct();
     }
@@ -509,15 +507,24 @@ class PDODataManager extends DataManager
         return $headers;
     }
 	
-	function getCalibrationScores(UserID $reviewerID)
+	function getCalibrationScores(UserID $reviewerID, $demotionDate=NULL)
 	{
-		$this->getCalibrationReviewsQuery->execute(array($reviewerID));
-		
 		$calibrationScores = array();
-		
-		while($res = $this->getCalibrationReviewsQuery->fetch())
+		if($demotionDate)
 		{
-	    	$calibrationScores[$res->reviewTimeStamp]= $res->reviewPoints;
+			$this->getCalibrationReviewsAfterDateQuery->execute(array($reviewerID, $demotionDate));
+			while($res = $this->getCalibrationReviewsAfterDateQuery->fetch())
+			{
+		    	$calibrationScores[$res->reviewTimeStamp]= $res->reviewPoints;
+			}
+		}
+		else
+		{
+			$this->getCalibrationReviewsQuery->execute(array($reviewerID));
+			while($res = $this->getCalibrationReviewsQuery->fetch())
+			{
+		    	$calibrationScores[$res->reviewTimeStamp]= $res->reviewPoints;
+			}
 		}
 		return $calibrationScores;
 	}
@@ -546,7 +553,6 @@ class PDODataManager extends DataManager
 		return $res->markingLoad;
 	}
 	
-<<<<<<< HEAD
 	function demote(UserID $userID, $demotionThreshold)
 	{
 		global $NOW;
@@ -560,18 +566,5 @@ class PDODataManager extends DataManager
 		$sh->execute(array($userID));
 		$res = $sh->fetch();
 		return $res;
-=======
-	function demote(UserID $userID)
-	{
-		global $NOW;
-		$this->demoteQuery->execute(array("userID"=>$userID, "demotionDate"=>$NOW));
-	}
-	
-	function getDemotionDate(UserID $userID)
-	{
-		$this->getDemotionDateQuery->execute(array($userID));
-		$res = $sh->fetch();
-		return $res[0];
->>>>>>> ca118c097bb2fc64eb0daed905db111983903d52
 	}
 }

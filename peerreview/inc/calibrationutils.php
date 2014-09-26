@@ -81,7 +81,8 @@ function computeWeightedAverage($scores)
 function convertTo10pointScale($weightedaveragescore, Assignment $assignment)
 {
 	if(!is_numeric($weightedaveragescore))
-		throw new Exception('Non-numeric argument past as weighted average score');
+		//throw new Exception('Non-numeric argument past as weighted average score');
+		return "--";
 	$maxScore = $assignment->calibrationMaxScore;
 	$thresholdMSE = $assignment->calibrationThresholdMSE;
 	$thresholdScore = $assignment->calibrationThresholdScore;
@@ -197,7 +198,7 @@ function getWeightedAverage(UserID $userid, Assignment $assignment=NULL)
 	if($scores)
 		$average = computeWeightedAverage($scores);
 	else 
-		return "--";
+		$average = "--";
 
 	if($assignment!=NULL)
 		return convertTo10pointScale($average, $assignment);

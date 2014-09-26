@@ -75,12 +75,14 @@ class PDODataManager extends DataManager
 		//$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), prara.reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm, peer_review_assignment_calibration_matches pracm WHERE pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID AND pram.matchID = pracm.matchID ORDER BY prara.reviewTimeStamp DESC;");
 		#after deprication of calibration matches
 		$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), prara.reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 2 AND pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;"); 
+		$this->getCalibrationReviewsAfterDateQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), prara.reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 2 AND pram.reviewerID = ? AND prara.reviewTimestamp > FROM_UNIXTIME(?) AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;");
 		
 		$this->numCalibrationReviewsQuery = $this->db->prepare("SELECT COUNT(DISTINCT pram.matchID) FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 2 AND pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;");
+       	$this->numCalibrationReviewsAfterDateQuery = $this->db->prepare("SELECT COUNT(DISTINCT pram.matchID) FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 2 AND pram.reviewerID = ? AND prara.reviewTimestamp > FROM_UNIXTIME(?) AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;");
        	
-       	$this->latestCalibrationAssignmentQuery = $this->db->prepare("SELECT peer_review_assignment.assignmentID FROM peer_review_assignment, peer_review_assignment_independent WHERE peer_review_assignment.assignmentID = peer_review_assignment_independent.assignmentID ORDER BY peer_review_assignment.reviewStopDate DESC LIMIT 10");
+       	$this->latestAssignmentWithFlaggedIndependentsQuery = $this->db->prepare("SELECT peer_review_assignment.assignmentID FROM peer_review_assignment, peer_review_assignment_independent WHERE peer_review_assignment.assignmentID = peer_review_assignment_independent.assignmentID ORDER BY peer_review_assignment.calibrationStopDate DESC LIMIT 10");
         
-        $this->isInSameCourseQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE courseID = ? && assignmentID = ?");
+       	$this->isInSameCourseQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE courseID = ? && assignmentID = ?");
         
 		$this->getMarkingLoadQuery = $this->db->prepare("SELECT markingLoad FROM users WHERE userID=?");
         //Now we can set up all the assignment data managers
@@ -508,28 +510,47 @@ class PDODataManager extends DataManager
 	
 	function getCalibrationScores(UserID $reviewerID)
 	{
-		$this->getCalibrationReviewsQuery->execute(array($reviewerID));
-		
+		$demotionDate = $this->getDemotionEntry($reviewerID)->demotionDate;
 		$calibrationScores = array();
-		
-		while($res = $this->getCalibrationReviewsQuery->fetch())
+		if($demotionDate)
 		{
-	    	$calibrationScores[$res->reviewTimeStamp]= $res->reviewPoints;
+			$this->getCalibrationReviewsAfterDateQuery->execute(array($reviewerID, $demotionDate));
+			while($res = $this->getCalibrationReviewsAfterDateQuery->fetch())
+			{
+		    	$calibrationScores[$res->reviewTimeStamp]= $res->reviewPoints;
+			}
+		}
+		else
+		{
+			$this->getCalibrationReviewsQuery->execute(array($reviewerID));
+			while($res = $this->getCalibrationReviewsQuery->fetch())
+			{
+		    	$calibrationScores[$res->reviewTimeStamp]= $res->reviewPoints;
+			}
 		}
 		return $calibrationScores;
 	}
 	
 	function numCalibrationReviews(UserID $reviewerID)
 	{
-		$this->numCalibrationReviewsQuery->execute(array($reviewerID));
-        $res = $this->numCalibrationReviewsQuery->fetch(PDO::FETCH_NUM);
+		$demotionDate = $this->getDemotionEntry($reviewerID)->demotionDate;
+		if($demotionDate)
+		{
+			$this->numCalibrationReviewsAfterDateQuery->execute(array($reviewerID, $demotionDate));
+			$res = $this->numCalibrationReviewsAfterDateQuery->fetch(PDO::FETCH_NUM);
+		}
+		else
+		{
+			$this->numCalibrationReviewsQuery->execute(array($reviewerID));
+			$res = $this->numCalibrationReviewsQuery->fetch(PDO::FETCH_NUM);
+		}
         return $res[0];
 	}
 	
 	function latestAssignmentWithFlaggedIndependents()
 	{
-		$this->latestCalibrationAssignmentQuery->execute();
-		$res = $this->latestCalibrationAssignmentQuery->fetch();
+		$this->latestAssignmentWithFlaggedIndependentsQuery->execute();
+		$res = $this->latestAssignmentWithFlaggedIndependentsQuery->fetch();
 		if($res)
 			return $res->assignmentID;
 		else
@@ -541,5 +562,28 @@ class PDODataManager extends DataManager
 		$this->getMarkingLoadQuery->execute(array($markerID));
 		$res = $this->getMarkingLoadQuery->fetch();
 		return $res->markingLoad;
+	}
+	
+	function demote(UserID $userID, $demotionThreshold)
+	{
+		global $NOW;
+		$sh = $this->prepareQuery("demoteQuery", "INSERT INTO peer_review_assignment_demotion_log (userID, demotionDate, demotionThreshold) VALUES (:userID, FROM_UNIXTIME(:demotionDate), :demotionThreshold) ON DUPLICATE KEY UPDATE demotionDate=FROM_UNIXTIME(:demotionDate), demotionThreshold=:demotionThreshold;");
+		$sh->execute(array("userID"=>$userID, "demotionDate"=>$NOW, "demotionThreshold"=>$demotionThreshold));
+	}
+	
+	function getDemotionEntry(UserID $userID)
+	{
+		$sh = $this->prepareQuery("getDemotionEntryQuery", "SELECT UNIX_TIMESTAMP(demotionDate) as demotionDate, demotionThreshold FROM peer_review_assignment_demotion_log WHERE userID = ?;");
+		$sh->execute(array($userID->id));
+		$res = $sh->fetch();
+		if($res)
+		{
+			$entry = new stdClass;
+			$entry->demotionDate = $res->demotionDate;
+			$entry->demotionThreshold = $res->demotionThreshold;
+			return $entry;
+		}
+		else 
+			return NULL;
 	}
 }

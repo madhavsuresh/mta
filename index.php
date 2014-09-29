@@ -227,7 +227,7 @@ try
 		                        $doneCalibrations[$id]->points = $mark->reviewPoints;
 		                       	$review = $assignment->getReview($matchID);
 								if($demotion ? $demotion->demotionDate >= $review->reviewTimestamp : false)
-									$doneCalibrations[$id]->text = "<span style='color:red'>".$doneCalibrations[$id]->text."</span>";
+									$doneCalibrations[$id]->text = "<span style='color:gray'>".$doneCalibrations[$id]->text."</span>";
 		                    }else{
 		                        $doneCalibrations[$id]->text = "";
 		                        $doneCalibrations[$id]->points = 0;

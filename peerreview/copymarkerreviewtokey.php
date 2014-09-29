@@ -29,7 +29,7 @@ try
 		$review = $assignment->getReview($markerMatches[0]);
 		$markerDisplayName = $dataMgr->getUserDisplayName($review->reviewerID);
 		$newReviewerID = $assignment->getUserIDForCopyingReview($review->reviewerID, $dataMgr->getUsername($review->reviewerID), $submission->submissionID);
-		$newMatchID = $assignment->createMatch($submission->submissionID, $newReviewerID, true, 1);
+		$newMatchID = $assignment->createMatch($submission->submissionID, $newReviewerID, true, 'key');
 		$review->reviewerID = $newReviewerID;
 		$newAnonymousName = $dataMgr->getUserDisplayName($newReviewerID);
 		$review->matchID = $newMatchID;

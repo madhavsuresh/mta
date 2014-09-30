@@ -468,14 +468,14 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             {
                 if($numUsers == 0)
                 {
-                    $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? && instructorForced=0;");
+                    $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? && instructorForced=0 && calibrationState = 'none';");
                 }
                 else
                 {
                     $paramStr = "";
                     for($i=0; $i < $numUsers-1;$i++) { $paramStr.="?,";}
                     $paramStr.="?";
-                    $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? && reviewerID NOT IN ($paramStr) && instructorForced=0;");
+                    $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? && reviewerID NOT IN ($paramStr) && instructorForced=0 && calibrationState = 'none';");
                 }
             }
             return $map[$numUsers];
@@ -515,7 +515,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         //$sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_calibration_matches calib ON matches.matchID = calib.matchID  WHERE subs.assignmentID = ? && reviewerID = ? && instructorForced = 0 && calib.matchID IS NULL ORDER BY matches.matchID;");
         //$sh->execute(array($assignment->assignmentID, $reviewerID));
-        $sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? && reviewerID = ? && instructorForced = 0 && matches.calibrationState = 'none' ORDER BY matches.matchID;");
+        $sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? && reviewerID = ? && instructorForced = 0 && (matches.calibrationState = 'none' || matches.calibrationState = 'covert') ORDER BY matches.matchID;");
         $sh->execute(array($assignment->assignmentID, $reviewerID));
         $assigned = array();
         while($res = $sh->fetch())
@@ -1702,6 +1702,20 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		return $res[0];
 	}
 
+	function getStudentToCovertCalibrationReviewsMap(PeerReviewAssignment $assignment)
+	{
+		$sh = $this->prepareQuery("getStudentToCovertCalibrationReviewsMap", "SELECT reviewerID, matchID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID WHERE calibrationState = 'covert' && subs.assignmentID = ? ORDER BY reviewerID, matchID"); 
+		$sh->execute(array($assignment->assignmentID));
+		$covertCalibrations = array();
+		while($res = $sh->fetch())
+		{
+			if(!array_key_exists($res->reviewerID, $covertCalibrations))
+				$covertCalibrations[$res->reviewerID] = array();
+			$covertCalibrations[$res->reviewerID][] = $res->matchID;		
+		}
+		return $covertCalibrations;
+	}
+
     //Because PHP doesn't do multiple inheritance, we have to define this method all over the place
     private function prepareQuery($name, $query)
     {
@@ -1710,4 +1724,5 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
         return $this->$name;
     }
+	
 };

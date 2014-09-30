@@ -32,7 +32,9 @@ class AssignReviewsPeerReviewScript extends Script
         $html .= "<input type='text' name='scorenoise' id='scorenoise' value='0.01' size='10'/></td></tr>";
         $html .= "<tr><td>Seed</td><td>";
         $html .= "<input type='text' name='seed' id='seed' value='$assignment->submissionStartDate' size='30'/></td></tr>";
-        $html .= "</table>\n";
+        $html .= "<tr><td>Number of Covert Calibrations to assign</td><td>";
+        $html .= "<input type='text' name='numCovertCalibrations' id='numCovertCalibrations' value='0' size='10'/></td></tr>";
+		$html .= "</table>\n";
         return $html;
     }
     function executeAndGetResult()
@@ -46,6 +48,7 @@ class AssignReviewsPeerReviewScript extends Script
         $this->scoreNoise = require_from_post("scorenoise");
         $this->maxAttempts = require_from_post("maxattempts");
         $this->seed = require_from_post("seed");
+        $this->numCovertCalibrations = require_from_post("numCovertCalibrations");
         $this->scoreMap = array();
 
         $assignments = $currentAssignment->getAssignmentsBefore($windowSize);
@@ -53,6 +56,15 @@ class AssignReviewsPeerReviewScript extends Script
         $authors = $currentAssignment->getAuthorSubmissionMap_();
         $assignmentIndependent = $currentAssignment->getIndependentUsers();
 
+        //First delete old covert calibration reviews
+		foreach($currentAssignment->getStudentToCovertCalibrationReviewsMap() as $student => $covertCalibrations)
+		{
+			foreach($covertCalibrations as $matchID)
+			{
+				$currentAssignment->removeMatch(new MatchID($matchID));
+			}
+		}
+        
         $independents = array();
         $supervised = array();
         foreach($authors as $author => $essayID)
@@ -106,7 +118,30 @@ class AssignReviewsPeerReviewScript extends Script
             $reviewerAssignment[$authors[$author]->id] = $reviewers;
 
         $currentAssignment->saveReviewerAssignment($reviewerAssignment);
-
+		
+		
+		/*//Assign new covert calibrations
+		$covertCalibrations = array();
+		foreach($assignmentIndependent as $independent)
+		{
+			$covertCalibrations[$independent->id] = array();
+			for($i=0; $i<$this->numCovertCalibrations; $i++)
+			{
+				$newSubmissionID = $currentAssignment->getNewCalibrationSubmissionForUser($independent);
+				if($newSubmissionID)
+					$covertCalibrations[$independent->id][] = $newSubmissionID;
+				else
+					throw new Exception("Could not get $this->numCovertCalibrations covert calibration for all independents in this assignment");
+			}
+		}
+		foreach($covertCalibrations as $independent => $covertSubmissions)
+		{
+			foreach($covertSubmissions as $submissionID)
+			{
+				$currentAssignment->createMatch($submissionID, new UserID($independent), false, 'covert');
+			}
+		}*/
+		
         return $html;
     }
 
@@ -129,14 +164,14 @@ class AssignReviewsPeerReviewScript extends Script
         return $html;
     }
 
-    private function getReviewAssignment($students)
+    private function getReviewAssignment($students, $withCovertCalibrations=false)
     {
         mt_srand($this->seed);
         #print_r($students);
         for($i = 0; $i < $this->maxAttempts; $i++)
         {
             try {
-                $res = $this->_getReviewAssignment($students);
+                $res = $this->_getReviewAssignment($students, $withCovertCalibrations);
                 return $res;
             }catch(Exception $e){
                 //They didn't get it
@@ -145,15 +180,30 @@ class AssignReviewsPeerReviewScript extends Script
         throw new Exception("Could not get a reviewer assignment - try increasing the number of attempts or the score noise. If that fails, play with your seeds and hope for the best.");
     }
 
-    private function _getReviewAssignment($students)
+    private function _getReviewAssignment($students, $withCovertCalibrations)
     {
         //First, we need to build up our array of student/scores, such that we get a total ordering
         $reviewers = array();
         $randMax = mt_getrandmax();
+		$totalReviews = $this->numReviews + $this->numCovertCalibrations;
+		$covertIndices = array();
+		if($withCovertCalibrations)
+		{
+			$indices = array();
+			for($i = 0; $i < $totalReviews; $i++)
+				$indices[] = $i;
+			shuffle($indices);
+			$covertIndices = array_slice($indices, 0, $this->numCovertCalibrations);
+		}
+		
         foreach($students as $student => $score)
         {
-            for($i = 0; $i < $this->numReviews; $i++)
+            for($i = 0; $i < $totalReviews; $i++)
             {
+            	if(in_array($i, $covertIndices))
+				{
+					continue;
+				}
                 $obj = new stdClass;
                 $obj->student = $student;
                 $offset = 0;

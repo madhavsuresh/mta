@@ -459,9 +459,10 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         //We need to create matches for everything in the list here
         $checkForMatch = $this->db->prepare("SELECT matchID FROM peer_review_assignment_matches WHERE submissionID=? && reviewerID = ?;");
         $insertMatch = $this->db->prepare("INSERT INTO peer_review_assignment_matches (submissionID, reviewerID, instructorForced) VALUES (?, ?, 0);");
+       	$insertCovertMatch = $this->db->prepare("INSERT INTO peer_review_assignment_matches (submissionID, reviewerID, instructorForced, calibrationState) VALUES (?, ?, 0, 'covert');");
 
         //Make a dictionary for the clean query
-        $cleanQueries = array();
+  		$cleanQueries = array();
         function prepareCleanQuery(&$map, $db, $numUsers)
         {
             if(!array_key_exists($numUsers, $map))
@@ -481,21 +482,35 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             return $map[$numUsers];
         }
 
-        foreach($this->getAuthorSubmissionMap($assignment) as $authorID => $submissionID)
+        
+        $authors_ = $this->getAuthorSubmissionMap_($assignment);
+		$stuff = $this->getAuthorSubmissionMap($assignment);
+		$stuff2 = shuffle_assoc2($stuff);
+        foreach($stuff2 as $authorID => $submissionID)
         {
             //See if this match exists
             if(array_key_exists($submissionID->id, $reviewerAssignment))
             {
-                $reviewers = $reviewerAssignment[$submissionID->id];
-                foreach($reviewers as $reviewerID)
-                {
-                    $checkForMatch->execute(array($submissionID, $reviewerID));
-                    if(!$res = $checkForMatch->fetch())
-                    {
-                        //We need to insert this match
-                        $insertMatch->execute(array($submissionID, $reviewerID));
-                    }
+            	$reviewers = $reviewerAssignment[$submissionID->id];
+            	if(array_key_exists($authorID, $authors_))
+				{
+	                foreach($reviewers as $reviewerID)
+	                {
+	                    $checkForMatch->execute(array($submissionID, $reviewerID));
+	                    if(!$res = $checkForMatch->fetch())
+	                    {
+	                        //We need to insert this match
+	                        $insertMatch->execute(array($submissionID, $reviewerID));
+	                    }
+	                }
                 }
+				else
+				{
+					foreach($reviewers as $reviewerID)
+	                {	
+						$insertCovertMatch->execute(array($submissionID, $reviewerID));
+					}
+				}
             }
             else
             {

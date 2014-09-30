@@ -34,6 +34,10 @@ class AssignReviewsPeerReviewScript extends Script
         $html .= "<input type='text' name='seed' id='seed' value='$assignment->submissionStartDate' size='30'/></td></tr>";
         $html .= "<tr><td>Number of Covert Calibrations to assign</td><td>";
         $html .= "<input type='text' name='numCovertCalibrations' id='numCovertCalibrations' value='0' size='10'/></td></tr>";
+		$html .= "<tr><td>When exhausted</td><td>";
+		$html .= "<input type='radio' name='exhaustedCondition' id='exhaustedCondition' value='peerreview'>";
+		$html .= "<input type='radio' name='exhaustedCondition' id='exhaustedCondition' value='none'>";
+		$html .= "<input type='radio' name='exhaustedCondition' id='exhaustedCondition' value='error'>";
 		$html .= "</table>\n";
         return $html;
     }
@@ -49,13 +53,15 @@ class AssignReviewsPeerReviewScript extends Script
         $this->maxAttempts = require_from_post("maxattempts");
         $this->seed = require_from_post("seed");
         $this->numCovertCalibrations = require_from_post("numCovertCalibrations");
+        $this->exhaustedCondition = require_from_post("exhaustedCondition");
         $this->scoreMap = array();
 
         $assignments = $currentAssignment->getAssignmentsBefore($windowSize);
         $userNameMap = $dataMgr->getUserDisplayMap();
-        $authors = $currentAssignment->getAuthorSubmissionMap_();
+		$authors = $currentAssignment->getAuthorSubmissionMap();
+        $authors_ = $currentAssignment->getAuthorSubmissionMap_();
         $assignmentIndependent = $currentAssignment->getIndependentUsers();
-
+        
         //First delete old covert calibration reviews
 		foreach($currentAssignment->getStudentToCovertCalibrationReviewsMap() as $student => $covertCalibrations)
 		{
@@ -64,10 +70,10 @@ class AssignReviewsPeerReviewScript extends Script
 				$currentAssignment->removeMatch(new MatchID($matchID));
 			}
 		}
-        
+		
         $independents = array();
         $supervised = array();
-        foreach($authors as $author => $essayID)
+        foreach($authors_ as $author => $essayID)
         {
             $score = compute_peer_review_score_for_assignments(new UserID($author), $assignments);
 
@@ -103,7 +109,27 @@ class AssignReviewsPeerReviewScript extends Script
           $html .= "<p><b style='color:red'>Warning: Topped up supervised pool with ".($numIndep-count($independents))." independent students.</b>";
         }
             
-        $independentAssignment = $this->getReviewAssignment($independents);
+		for($j = 0; $j < $this->numCovertCalibrations; $j++)
+		{
+			foreach($independents as $independent => $_)
+			{
+				$tracker .= $independent;
+				$newSubmissionID = $currentAssignment->getNewCalibrationSubmissionForUser(new UserID($independent));
+				if($newSubmissionID)
+				{
+					if(!array_key_exists($newSubmissionID->id, $reviewerAssignment))
+						$reviewerAssignment[$newSubmissionID->id] = array();
+					$reviewerAssignment[$newSubmissionID->id][] = $independent;
+				}
+				else
+				{
+					throw new Exception("Some independent student has exhausted all calibration reviews and thus cannot be assigned a covert peer review.");
+					//if($this->exhaustedCondition == 'peerreview')			
+				}
+			}
+		}
+		
+        $independentAssignment = $this->getReviewAssignment($independents, true);
         $supervisedAssignment = $this->getReviewAssignment($supervised);
 
         //Build the HTML for this
@@ -113,34 +139,11 @@ class AssignReviewsPeerReviewScript extends Script
         $html .= $this->getTableForAssignment($supervisedAssignment, $supervised);
 
         foreach($independentAssignment as $author => $reviewers)
-            $reviewerAssignment[$authors[$author]->id] = $reviewers;
+            $reviewerAssignment[$authors[$author]->id] = $reviewers;	
         foreach($supervisedAssignment as $author => $reviewers)
             $reviewerAssignment[$authors[$author]->id] = $reviewers;
-
+		
         $currentAssignment->saveReviewerAssignment($reviewerAssignment);
-		
-		
-		/*//Assign new covert calibrations
-		$covertCalibrations = array();
-		foreach($assignmentIndependent as $independent)
-		{
-			$covertCalibrations[$independent->id] = array();
-			for($i=0; $i<$this->numCovertCalibrations; $i++)
-			{
-				$newSubmissionID = $currentAssignment->getNewCalibrationSubmissionForUser($independent);
-				if($newSubmissionID)
-					$covertCalibrations[$independent->id][] = $newSubmissionID;
-				else
-					throw new Exception("Could not get $this->numCovertCalibrations covert calibration for all independents in this assignment");
-			}
-		}
-		foreach($covertCalibrations as $independent => $covertSubmissions)
-		{
-			foreach($covertSubmissions as $submissionID)
-			{
-				$currentAssignment->createMatch($submissionID, new UserID($independent), false, 'covert');
-			}
-		}*/
 		
         return $html;
     }
@@ -185,25 +188,12 @@ class AssignReviewsPeerReviewScript extends Script
         //First, we need to build up our array of student/scores, such that we get a total ordering
         $reviewers = array();
         $randMax = mt_getrandmax();
-		$totalReviews = $this->numReviews + $this->numCovertCalibrations;
-		$covertIndices = array();
-		if($withCovertCalibrations)
-		{
-			$indices = array();
-			for($i = 0; $i < $totalReviews; $i++)
-				$indices[] = $i;
-			shuffle($indices);
-			$covertIndices = array_slice($indices, 0, $this->numCovertCalibrations);
-		}
+		$peerReviews = ($withCovertCalibrations) ? $this->numReviews : ($this->numReviews + $this->numCovertCalibrations);
 		
         foreach($students as $student => $score)
         {
-            for($i = 0; $i < $totalReviews; $i++)
+            for($i = 0; $i < $peerReviews; $i++)
             {
-            	if(in_array($i, $covertIndices))
-				{
-					continue;
-				}
                 $obj = new stdClass;
                 $obj->student = $student;
                 $offset = 0;
@@ -228,7 +218,7 @@ class AssignReviewsPeerReviewScript extends Script
         shuffle_assoc($assignment);
 
         //Now start putting stuff in
-        for($i = 0; $i < $this->numReviews; $i++)
+        for($i = 0; $i < $peerReviews; $i++)
         {
             foreach($assignment as $student => &$assigned)
             {
@@ -236,7 +226,8 @@ class AssignReviewsPeerReviewScript extends Script
             }
             //Reallocate the order of the assignment by the sum of reviewer scores
             uasort($assignment, array($this, "compareReviewerScores"));
-        }
+		}
+		
         return $assignment;
     }
 

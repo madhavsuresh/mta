@@ -96,7 +96,7 @@ def mse(submission, use_centroid=True):
 
     return sum(devs)/len(devs)
 
-def print_scores(assignID_or_name, courseID=3):
+def print_scores(assignID_or_name, courseID=3, use_centroid=True):
     if isinstance(assignID_or_name, int):
         ((name,),) = query("select name from assignments where assignmentID = %s" % assignID_or_name)
         assignID = assignID_or_name
@@ -105,9 +105,12 @@ def print_scores(assignID_or_name, courseID=3):
         name = assignID_or_name
     else:
         raise ValueError("assignID_or_name must be int or str, not %s" % type(assignID_or_name))
-    s = sorted(submission_scores(assignID), key=mse)
+    s = sorted(submission_scores(assignID), key=lambda s: mse(s, use_centroid))
     print "Assignment %d -- %s" % (assignID, name)
     print "#  sub   mse score"
     for sub in s:
         if 'instructorScore' in sub:
             print "  %d %.3f %5.1f \t%s" % (sub['subID'], mse(sub), sum(sub['instructorScore'].values()), sub['author'])
+        elif use_centroid:
+            print "  %d %.3f %5.1f \t%s" % (sub['subID'], mse(sub), sum(centroid(sub).values()), sub['author'])
+            

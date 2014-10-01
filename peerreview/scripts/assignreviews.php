@@ -32,12 +32,12 @@ class AssignReviewsPeerReviewScript extends Script
         $html .= "<input type='text' name='scorenoise' id='scorenoise' value='0.01' size='10'/></td></tr>";
         $html .= "<tr><td>Seed</td><td>";
         $html .= "<input type='text' name='seed' id='seed' value='$assignment->submissionStartDate' size='30'/></td></tr>";
-        $html .= "<tr><td>Number of Covert Calibrations to assign</td><td>";
+        $html .= "<tr><td>Number of covert reviews to assign</td><td>";
         $html .= "<input type='text' name='numCovertCalibrations' id='numCovertCalibrations' value='0' size='10'/></td></tr>";
-		$html .= "<tr><td>When exhausted</td><td>";
-		$html .= "<input type='radio' name='exhaustedCondition' id='exhaustedCondition' value='peerreview'>";
-		$html .= "<input type='radio' name='exhaustedCondition' id='exhaustedCondition' value='none'>";
-		$html .= "<input type='radio' name='exhaustedCondition' id='exhaustedCondition' value='error'>";
+		$html .= "<tr><td>When covert reviews are exhausted</td><td>";
+		$html .= "<input type='radio' name='exhaustedCondition' id='exhaustedCondition' value='peerreview' checked='checked'>Assign peer review if available<br>";
+		$html .= "<input type='radio' name='exhaustedCondition' id='exhaustedCondition' value='error'>Stop and report error";
+		$html .= "</td></tr>";
 		$html .= "</table>\n";
         return $html;
     }
@@ -53,7 +53,8 @@ class AssignReviewsPeerReviewScript extends Script
         $this->maxAttempts = require_from_post("maxattempts");
         $this->seed = require_from_post("seed");
         $this->numCovertCalibrations = require_from_post("numCovertCalibrations");
-        $this->exhaustedCondition = require_from_post("exhaustedCondition");
+		if($this->numCovertCalibrations > 0)
+        	$this->exhaustedCondition = require_from_post("exhaustedCondition");
         $this->scoreMap = array();
 
         $assignments = $currentAssignment->getAssignmentsBefore($windowSize);
@@ -63,9 +64,9 @@ class AssignReviewsPeerReviewScript extends Script
         $assignmentIndependent = $currentAssignment->getIndependentUsers();
         
         //First delete old covert calibration reviews
-		foreach($currentAssignment->getStudentToCovertCalibrationReviewsMap() as $student => $covertCalibrations)
+		foreach($currentAssignment->getStudentToCovertReviewsMap() as $student => $covertReviews)
 		{
-			foreach($covertCalibrations as $matchID)
+			foreach($covertReviews as $matchID)
 			{
 				$currentAssignment->removeMatch(new MatchID($matchID));
 			}
@@ -108,42 +109,76 @@ class AssignReviewsPeerReviewScript extends Script
           }
           $html .= "<p><b style='color:red'>Warning: Topped up supervised pool with ".($numIndep-count($independents))." independent students.</b>";
         }
-            
+		
+        $independentAssignment = $this->getReviewAssignment($independents, $this->numReviews);
+        $supervisedAssignment = $this->getReviewAssignment($supervised, $this->numReviews + $this->numCovertCalibrations);
+		
+		$covertAssignment = array();
 		for($j = 0; $j < $this->numCovertCalibrations; $j++)
 		{
 			foreach($independents as $independent => $_)
 			{
-				$tracker .= $independent;
 				$newSubmissionID = $currentAssignment->getNewCalibrationSubmissionForUser(new UserID($independent));
 				if($newSubmissionID)
 				{
-					if(!array_key_exists($newSubmissionID->id, $reviewerAssignment))
-						$reviewerAssignment[$newSubmissionID->id] = array();
-					$reviewerAssignment[$newSubmissionID->id][] = $independent;
+					$submission = $currentAssignment->getSubmission($newSubmissionID);
+					$authorID = $submission->authorID;
+					if(!array_key_exists($authorID->id, $covertAssignment))
+						$covertAssignment[$authorID->id] = array();
+					$covertAssignment[$authorID->id][] = $independent;
 				}
 				else
 				{
-					throw new Exception("Some independent student has exhausted all calibration reviews and thus cannot be assigned a covert peer review.");
-					//if($this->exhaustedCondition == 'peerreview')			
+					if($this->exhaustedCondition == 'peerreview')
+					{
+						$reviewersForEach = array_map(function($item){ return sizeof($item); }, $independentAssignment);
+						$minimum_reviewers = min($reviewersForEach);
+						$candidates = array_filter($independentAssignment, function($x) use ($minimum_reviewers){return (sizeof($x) == $minimum_reviewers); });
+						$candidates = array_keys($candidates);
+						shuffle($candidates);
+						if(!in_array($independent, $independentAssignment[$candidates[0]]))
+							$independentAssignment[$candidates[0]][] = $independent;
+					}
+					else
+						throw new Exception("Some independent student(s) has exhausted all calibration reviews and thus cannot be assigned a covert peer review.");
 				}
 			}
 		}
 		
-        $independentAssignment = $this->getReviewAssignment($independents, true);
-        $supervisedAssignment = $this->getReviewAssignment($supervised);
-
         //Build the HTML for this
+
         $html .= "<h2>Independent</h2>\n";
         $html .= $this->getTableForAssignment($independentAssignment, $independents);
         $html .= "<h2>Supervised</h2>\n";
         $html .= $this->getTableForAssignment($supervisedAssignment, $supervised);
 
+        foreach($covertAssignment as $author => $reviewers)
+            $reviewerAssignment[$authors[$author]->id] = $reviewers;
         foreach($independentAssignment as $author => $reviewers)
             $reviewerAssignment[$authors[$author]->id] = $reviewers;	
         foreach($supervisedAssignment as $author => $reviewers)
             $reviewerAssignment[$authors[$author]->id] = $reviewers;
 		
         $currentAssignment->saveReviewerAssignment($reviewerAssignment);
+		
+		if($this->numCovertCalibrations > 0)
+		{
+        	$studentToCovertReviewsMap = $currentAssignment->getStudentToCovertReviewsMap();
+			
+	        $html .= "<h2>Covert Reviews</h2>";
+			$html .= "<table>";
+			foreach($studentToCovertReviewsMap as $reviewer => $covertReviews)
+			{
+	        	$html .= "<tr><td>".$userNameMap[$reviewer]."</td><td><ul style='list-style-type: none;'>";
+				foreach($covertReviews as $covertMatch)
+				{
+					$submission = $currentAssignment->getSubmission(new MatchID ($covertMatch));
+					$html .= "<li>".$userNameMap[$submission->authorID->id]."</li>";
+				}
+				$html .= "</ul></td></tr>";
+			}
+			$html .= "</table>";
+		}
 		
         return $html;
     }
@@ -167,14 +202,14 @@ class AssignReviewsPeerReviewScript extends Script
         return $html;
     }
 
-    private function getReviewAssignment($students, $withCovertCalibrations=false)
+    private function getReviewAssignment($students, $numReviews)
     {
         mt_srand($this->seed);
         #print_r($students);
         for($i = 0; $i < $this->maxAttempts; $i++)
         {
             try {
-                $res = $this->_getReviewAssignment($students, $withCovertCalibrations);
+                $res = $this->_getReviewAssignment($students, $numReviews);
                 return $res;
             }catch(Exception $e){
                 //They didn't get it
@@ -183,16 +218,15 @@ class AssignReviewsPeerReviewScript extends Script
         throw new Exception("Could not get a reviewer assignment - try increasing the number of attempts or the score noise. If that fails, play with your seeds and hope for the best.");
     }
 
-    private function _getReviewAssignment($students, $withCovertCalibrations)
+    private function _getReviewAssignment($students, $numReviews)
     {
         //First, we need to build up our array of student/scores, such that we get a total ordering
         $reviewers = array();
         $randMax = mt_getrandmax();
-		$peerReviews = ($withCovertCalibrations) ? $this->numReviews : ($this->numReviews + $this->numCovertCalibrations);
 		
         foreach($students as $student => $score)
         {
-            for($i = 0; $i < $peerReviews; $i++)
+            for($i = 0; $i < $numReviews; $i++)
             {
                 $obj = new stdClass;
                 $obj->student = $student;
@@ -218,7 +252,7 @@ class AssignReviewsPeerReviewScript extends Script
         shuffle_assoc($assignment);
 
         //Now start putting stuff in
-        for($i = 0; $i < $peerReviews; $i++)
+        for($i = 0; $i < $numReviews; $i++)
         {
             foreach($assignment as $student => &$assigned)
             {

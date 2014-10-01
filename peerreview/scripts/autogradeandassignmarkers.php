@@ -103,7 +103,6 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $html = "";
         foreach($submissions as $authorID => $submissionID)
         {
-        	$emptyReviews = array();
             //TODO: This should probably output something useful...
             $authorID = new UserID($authorID);
 
@@ -190,6 +189,16 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 				}
 			}
         }
+
+		//Autograde covert calibrations by taking covert reviews from students
+		$studentToCovertReviewsMap = $assignment->getStudentToCovertReviewsMap();
+		foreach($studentToCovertReviewsMap as $reviewer => $covertReviews)
+		{
+			foreach($covertReviews as $covertMatch)
+			{
+				$assignment->saveReviewMark(new ReviewMark($assignment->maxReviewScore, null, true), new MatchID($covertMatch));
+			}
+		}
 
 		//Shuffle independent submissions and spot check proportionally with their weights;
 		mt_shuffle($independentSubs);

@@ -469,14 +469,14 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             {
                 if($numUsers == 0)
                 {
-                    $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? && instructorForced=0 && calibrationState = 'none';");
+                    $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? && instructorForced=0 && (calibrationState = 'none' || calibrationState = 'covert');");
                 }
                 else
                 {
                     $paramStr = "";
                     for($i=0; $i < $numUsers-1;$i++) { $paramStr.="?,";}
                     $paramStr.="?";
-                    $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? && reviewerID NOT IN ($paramStr) && instructorForced=0 && calibrationState = 'none';");
+                    $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? && reviewerID NOT IN ($paramStr) && instructorForced=0 && (calibrationState = 'none' || calibrationState = 'covert');");
                 }
             }
             return $map[$numUsers];
@@ -484,9 +484,9 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
         
         $authors_ = $this->getAuthorSubmissionMap_($assignment);
-		$stuff = $this->getAuthorSubmissionMap($assignment);
-		$stuff2 = shuffle_assoc2($stuff);
-        foreach($stuff2 as $authorID => $submissionID)
+		$authors = $this->getAuthorSubmissionMap($assignment);
+		$authors = shuffle_assoc2($authors);
+        foreach($authors as $authorID => $submissionID)
         {
             //See if this match exists
             if(array_key_exists($submissionID->id, $reviewerAssignment))
@@ -507,8 +507,12 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 				else
 				{
 					foreach($reviewers as $reviewerID)
-	                {	
-						$insertCovertMatch->execute(array($submissionID, $reviewerID));
+	                {
+	                	$checkForMatch->execute(array($submissionID, $reviewerID));
+	                    if(!$res = $checkForMatch->fetch())
+	                    {	
+							$insertCovertMatch->execute(array($submissionID, $reviewerID));
+						}
 					}
 				}
             }
@@ -1717,9 +1721,9 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		return $res[0];
 	}
 
-	function getStudentToCovertCalibrationReviewsMap(PeerReviewAssignment $assignment)
+	function getStudentToCovertReviewsMap(PeerReviewAssignment $assignment)
 	{
-		$sh = $this->prepareQuery("getStudentToCovertCalibrationReviewsMap", "SELECT reviewerID, matchID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID WHERE calibrationState = 'covert' && subs.assignmentID = ? ORDER BY reviewerID, matchID"); 
+		$sh = $this->prepareQuery("getStudentToCovertReviewsMap", "SELECT reviewerID, matchID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID WHERE calibrationState = 'covert' && subs.assignmentID = ? ORDER BY reviewerID, matchID"); 
 		$sh->execute(array($assignment->assignmentID));
 		$covertCalibrations = array();
 		while($res = $sh->fetch())

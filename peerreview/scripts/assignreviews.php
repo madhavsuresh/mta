@@ -136,7 +136,7 @@ class AssignReviewsPeerReviewScript extends Script
 						$candidates = array_filter($independentAssignment, function($x) use ($minimum_reviewers){return (sizeof($x) == $minimum_reviewers); });
 						$candidates = array_keys($candidates);
 						shuffle($candidates);
-						if(!in_array($independent, $independentAssignment[$candidates[0]]))
+						if(!in_array($independent, $independentAssignment[$candidates[0]] && $candidates[0] != $independent))
 							$independentAssignment[$candidates[0]][] = $independent;
 					}
 					else

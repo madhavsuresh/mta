@@ -92,6 +92,18 @@ function shuffle_assoc( $array )
     return array_merge( array_flip( $keys ) , $array );
 }
 
+function shuffle_assoc2($list) { 
+  if (!is_array($list)) return $list; 
+
+  $keys = array_keys($list); 
+  shuffle($keys); 
+  $random = array(); 
+  foreach ($keys as $key) { 
+    $random[$key] = $list[$key]; 
+  }
+  return $random; 
+} 
+
 function mt_shuffle(&$items) {
     for ($i = count($items) - 1; $i > 0; $i--){
         $j = mt_rand(0, $i);

@@ -162,7 +162,7 @@ class ImportFromCalibrationPoolPeerReviewScript extends Script
 					
 					$oldToNewReviewerIDMap[$authorID][$review->reviewerID->id] = $newReviewerID->id;
 					
-					$newmatchID = $assignment->createMatch($copiedSubmissionID, $newReviewerID, true, 1); //new match made with newly implemented flag '1' to indicate calibrationKey
+					$newmatchID = $assignment->createMatch($copiedSubmissionID, $newReviewerID, true, 'key');
 					 
 					$copiedReview = new Review($assignment);
 					$copiedReview->submissionID = $copiedSubmissionID;

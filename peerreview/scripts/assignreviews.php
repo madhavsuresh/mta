@@ -131,13 +131,20 @@ class AssignReviewsPeerReviewScript extends Script
 				{
 					if($this->exhaustedCondition == 'peerreview')
 					{
+						//TODO: Fix this algorithm. Doesn't work for case where the candidate(s) with the fewest reviewers are already reviewed by the current independent. Although unlikely
 						$reviewersForEach = array_map(function($item){ return sizeof($item); }, $independentAssignment);
 						$minimum_reviewers = min($reviewersForEach);
 						$candidates = array_filter($independentAssignment, function($x) use ($minimum_reviewers){return (sizeof($x) == $minimum_reviewers); });
 						$candidates = array_keys($candidates);
 						shuffle($candidates);
-						if(!in_array($independent, $independentAssignment[$candidates[0]] && $candidates[0] != $independent))
-							$independentAssignment[$candidates[0]][] = $independent;
+						foreach($candidates as $candidate)
+						{
+							if(!in_array($independent, $independentAssignment[$candidate]) && $candidate != $independent)
+							{
+								$independentAssignment[$candidate][] = $independent;
+								break;
+							}
+						}
 					}
 					else
 						throw new Exception("Some independent student(s) has exhausted all calibration reviews and thus cannot be assigned a covert peer review.");

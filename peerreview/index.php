@@ -45,12 +45,12 @@ try
     $stats = $assignment->getAssignmentStatistics();
     $userStats = $assignment->getAssignmentStatisticsForUser($USERID);
     $displayMap = $dataMgr->getUserDisplayMap();
-
+	
     //Start making the big table
     $content .= "<h1>Submissions (".$stats->numSubmissions."/".$stats->numPossibleSubmissions.") and Reviews (".$stats->numStudentReviews."/".$stats->numPossibleStudentReviews.")</h1>";
     $content .= "There are ".$stats->numUnmarkedSubmissions." unmarked submissions, ".$stats->numUnmarkedReviews." unmarked reviews, ".$stats->numPendingAppeals." pending appeals and ".$stats->numPendingSpotChecks." pending spot checks<br>\n";
     $content .= "You have ".$userStats->numUnmarkedSubmissions." unmarked submissions, ".$userStats->numUnmarkedReviews." unmarked reviews and ".$userStats->numPendingSpotChecks." pending spot checks<br>\n";
-
+	
     if($hideBlank) {
         $content .= "<a href='".get_redirect_url("?assignmentid=$assignment->assignmentID&hideblank=0&hideedit=$hideEdit")."'>Show Blank Submissions</a>\n";
     }else{
@@ -61,6 +61,8 @@ try
     }else{
         $content .= "<a href='".get_redirect_url("?assignmentid=$assignment->assignmentID&hideblank=$hideBlank&hideedit=1")."'>Hide All Edit Buttons</a>\n";
     }
+	//$content .= $USERID." ".$authMgr->getCurrentUsername()." + ".$dataMgr->courseID." - ".$authMgr->getCurrentUsername();
+	//$content .= print_r($assignment, true);
     $content .= "<a title='New' target='_blank' href='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID&authorid=".$assignment->getUserIDForAnonymousSubmission($USERID, $authMgr->getCurrentUsername())."&close=1")."'>Create Instructor Submission</a>\n";
 
     $unansweredAppeals = 0; $unassignedAppeals = 0; $unansweredUnassignedAppeals = 0;

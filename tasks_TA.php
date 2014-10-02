@@ -17,10 +17,6 @@ foreach($assignments as $assignment)
 	$spotChecks = $assignment->getSpotChecksForMarker($USERID);
 	$reviewMap = $assignment->getReviewMap();
 	
-	$color = '';
-	if($NOW >= $assignment->markPostDate)
-		$color = 'red';
-	
 	//For each of the marker's assigned reviews
 	foreach($reviews as $reviewObj)
 	{
@@ -61,6 +57,7 @@ foreach($assignments as $assignment)
 				
 			$reviewTask = new stdClass();
 			$reviewTask->endDate = $assignment->markPostDate;
+			$color = ($NOW >= $reviewTask->endDate) ? "red" : "";
 			$reviewTask->html = 
 			"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 			<td class='column2'>Review</td>
@@ -91,6 +88,7 @@ foreach($assignments as $assignment)
 			
             $reviewTask = new stdClass();
 			$reviewTask->endDate = $assignment->markPostDate;
+			$color = ($NOW >= $reviewTask->endDate) ? "red" : "";
 			$reviewTask->html = 
 			"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 			<td class='column2'>Spot Check</td>
@@ -111,23 +109,25 @@ foreach($assignments as $assignment)
 			foreach($reviewAppeals as $matchID => $needsResponse)
 			{
 				$reviewTask = new stdClass();
-				$reviewTask->endDate = $assignment->markPostDate;
+				$reviewTask->endDate = $assignment->appealStopDate;
+				$color = ($NOW >= $reviewTask->endDate) ? "red" : "";
 				$reviewTask->html = 
 				"<table width='100%'></tr><td class='column1'><h4>$assignment->name</h4></td>
 				<td class='column2'>Review Appeal</td>
 				<td class='column3'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$matchID&appealtype=review")."'><button>Answer</button></a></td>
-				<td class='column4'><span style='color:$color'>".phpDate($assignment->markPostDate)."</span></td></tr></table>\n";
+				<td class='column4'><span style='color:$color'>".phpDate($assignment->appealStopDate)."</span></td></tr></table>\n";
 				insert($reviewTask, $reviewTasks);	
 			}
 			foreach($reviewMarkAppeals as $matchID => $needsResponse)
 			{
 				$reviewTask = new stdClass();
-				$reviewTask->endDate = $assignment->markPostDate;
+				$reviewTask->endDate = $assignment->appealStopDate;
+				$color = ($NOW >= $reviewTask->endDate) ? "red" : "";
 				$reviewTask->html = 
 				"<table width='100%'></tr><td class='column1'><h4>$assignment->name</h4></td>
 				<td class='column2'>Review Mark Appeal</td>
 				<td class='column3'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$matchID&appealtype=reviewmark")."'><button>Answer</button></a></td>
-				<td class='column4'><span style='color:$color'>".phpDate($assignment->markPostDate)."</span></td></tr></table>\n";
+				<td class='column4'><span style='color:$color'>".phpDate($assignment->appealStopDate)."</span></td></tr></table>\n";
 				insert($reviewTask, $reviewTasks);	
 			}
 		}

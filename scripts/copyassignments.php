@@ -207,7 +207,7 @@ class CopyAssignmentsScript extends Script
 							
 							$newReviewerID = $copiedAssignment->getUserIDForCopyingReview($review->reviewerID, $dataMgr->getUsername($review->reviewerID), $copiedSubmission->submissionID);
 							
-							$newMatchID = $copiedAssignment->createMatch($copiedSubmission->submissionID, $newReviewerID, true, 1);
+							$newMatchID = $copiedAssignment->createMatch($copiedSubmission->submissionID, $newReviewerID, true, 'key');
 							 
 							$copiedReview = new Review($copiedAssignment);
 							$copiedReview->submissionID = $copiedSubmission->submissionID;

@@ -9,10 +9,13 @@ try
 	
 	$submission = $assignment->getSubmission(new SubmissionID (require_from_get("submissionid")));
 	
-	$markerMatches = $assignment->getInstructorMatchesForSubmission($submission->submissionID);//Is this the right function here??? Also takes anonymous reviews
+	$markerMatches = $assignment->getInstructorMatchesForSubmission($submission->submissionID);//TODO: Is this the right function here??? Also takes anonymous reviews
+	$markerMatches = array_filter($markerMatches, function($matchID) use ($assignment){$review = $assignment->getReview(new MatchID($matchID)); return $review->answers;});
+	
 	$content = "";
 	
 	$keyMatches = $assignment->getCalibrationKeyMatchesForSubmission($submission->submissionID);
+	$keyMatches = array_filter($keyMatches, function($matchID) use ($assignment){$review = $assignment->getReview(new MatchID($matchID)); return $review->answers;});
 	
 	$errors = array();
 	

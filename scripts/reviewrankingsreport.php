@@ -40,7 +40,7 @@ class ReviewRankingsReportScript extends Script
 			$student->reviewScore = precisionFloat(compute_peer_review_score_for_assignments(new UserID($user), $assignments))*100;
 			$student->orderable = max($student->calibrationScore*10, $student->reviewScore);
 			$student->other = min($student->reviewScore, $student->calibrationScore*10);
-			insertr($student, $students);
+			insert_sort_tiebreak($student, $students);
         }
         
         $html = "";
@@ -75,6 +75,41 @@ class ReviewRankingsReportScript extends Script
 
 		return $html;
     }
+}
+
+function insert_sort_tiebreak($object, &$array)
+{
+	$length = sizeof($array);
+	if($length == 0)
+	{
+		$array[0] = $object;
+		return;
+	}
+	for($i = 0; $i < $length; $i++)
+	{
+		if($object->orderable == $array[$i]->orderable)
+		{
+			if($object->other > $array[$i]->other)
+			{
+				for($j = $length; $j > $i; $j--)
+				{
+					$array[$j] = $array[$j-1];
+				}
+				$array[$i] = $object;
+				return;
+			}	
+		}
+		elseif($object->orderable > $array[$i]->orderable)
+		{
+			for($j = $length; $j > $i; $j--)
+			{
+				$array[$j] = $array[$j-1];
+			}
+			$array[$i] = $object;
+			return;
+		}
+	}
+	$array[$length] = $object;
 }
 
 ?>

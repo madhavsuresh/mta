@@ -37,6 +37,7 @@ try
         $deniedUsers = $assignment->getDeniedUsers();
         $independentUsers = $assignment->getIndependentUsers();
 
+		$independentMap = array();
         $currentRowType = 0;
         foreach($dataMgr->getUserDisplayMap() as $user => $name ){
             if(!$dataMgr->isStudent(new UserID($user)))
@@ -47,15 +48,37 @@ try
             if(array_key_exists($user, $deniedUsers))
                 $deniedChecked = 'checked';
             if(array_key_exists($user, $independentUsers))
+			{
                 $independentChecked = 'checked';
-
-            $content .= "<tr class='rowType$currentRowType'><td>$name</td><td><input type='checkbox' name='denied[]' value='$user' $deniedChecked /> Denied </td><td><input type='checkbox' name='independent[]' value='$user' $independentChecked /> Independent </td></tr>\n";
+				$independentMap[$user] = 1;
+			}
+			else
+				$independentMap[$user] = 0;
+            $content .= "<tr class='rowType$currentRowType'><td>$name</td><td><input type='checkbox' name='denied[]' value='$user' $deniedChecked /> Denied </td><td><input type='checkbox' name='independent[]' class='independent' value='$user' $independentChecked /> Independent </td></tr>\n";
             $currentRowType = ($currentRowType+1)%2;
         }
         $content .= "<tr><td>&nbsp;</td><td>\n";
+		$content .= "<tr><td></td><td></td><td><input type='checkbox' name='allIndependent' id='allIndependent'/>All</td></tr>";
         $content .= "</table>\n";
         $content .= "<br><input type='submit' value='Save' />\n";
         $content .= "</form>\n";
+
+		$content .= "<script type='text/javascript'>";
+		$content .= "var independent = new Array();";
+		foreach($independentMap as $user => $isIndependent)
+			$content .= "independent[$user] = $isIndependent;";
+		$content .= "</script>";
+	
+		$content .= "<script type='text/javascript'>		
+        $('#allIndependent').change(function(){
+			if(this.checked){
+				$('.independent').prop('checked', true);
+			}else{
+				$('.independent').prop('checked', false);
+			}
+        });
+        $('#courseSelect').change();
+        </script>\n";
 
         render_page();
     }

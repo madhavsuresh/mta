@@ -196,7 +196,13 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 		{
 			foreach($covertReviews as $covertMatch)
 			{
-				$assignment->saveReviewMark(new ReviewMark($assignment->maxReviewScore, null, true), new MatchID($covertMatch));
+				$submissionID = $assignment->getSubmissionID(new MatchID($covertMatch));
+				$keyReview = $assignment->getSingleCalibrationKeyReviewForSubmission($submissionID);
+				$review = $assignment->getReview(new MatchID($covertMatch));
+				$mark = generateAutoMark($assignment, $keyReview, $review);
+				//Just like a calibration EXCEPT review score is auto-graded to max like regular independent peer reviews 
+				$mark->score = $assignment->maxReviewScore;
+				$assignment->saveReviewMark($mark, new MatchID($covertMatch));
 			}
 		}
 

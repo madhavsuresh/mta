@@ -1735,6 +1735,33 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		return $covertCalibrations;
 	}
 
+	function numSupervisedSubmissions(PeerReviewAssignment $assignment)
+	{
+		global $dataMgr;
+		$sh = $this->prepareQuery("numSupervisedSubmissions", "SELECT COUNT(submissionID) FROM peer_review_assignment_submissions LEFT JOIN peer_review_assignment_denied ON peer_review_assignment_submissions.authorID = peer_review_assignment_denied.userID && peer_review_assignment_submissions.assignmentID = peer_review_assignment_denied.assignmentID WHERE peer_review_assignment_denied.userID IS NULL && peer_review_assignment_submissions.assignmentID = :assignmentID && peer_review_assignment_submissions.authorID IN (SELECT userID FROM users WHERE userType = 'student') && peer_review_assignment_submissions.authorID NOT IN (SELECT userID FROM peer_review_assignment_independent WHERE assignmentID = :assignmentID);");
+		$sh->execute(array("assignmentID"=>$assignment->assignmentID));
+		$res = $sh->fetch(PDO::FETCH_NUM);
+		return $res[0];
+	}
+	
+	function numIndependentSubmissions(PeerReviewAssignment $assignment)
+	{
+		global $dataMgr;
+		$sh = $this->prepareQuery("numIndependentSubmissions", "SELECT COUNT(submissionID) FROM peer_review_assignment_submissions LEFT JOIN peer_review_assignment_denied ON peer_review_assignment_submissions.authorID = peer_review_assignment_denied.userID && peer_review_assignment_submissions.assignmentID = peer_review_assignment_denied.assignmentID WHERE peer_review_assignment_denied.userID IS NULL && peer_review_assignment_submissions.assignmentID = :assignmentID && peer_review_assignment_submissions.authorID IN (SELECT userID FROM users WHERE userType = 'student') && peer_review_assignment_submissions.authorID IN (SELECT userID FROM peer_review_assignment_independent WHERE assignmentID = :assignmentID);");
+		$sh->execute(array("assignmentID"=>$assignment->assignmentID));
+		$res = $sh->fetch(PDO::FETCH_NUM);
+		return $res[0];
+	}
+	
+	/*function numIndependentSubmissions(PeerReviewAssignment $assignment)
+	{
+		global $dataMgr;
+		$sh = $this->prepareQuery("numIndependentSubmissions", "SELECT  FROM (SELECT submissionID FROM peer_review_assignment_submissions LEFT JOIN peer_review_assignment_denied ON peer_review_assignment_submissions.authorID = peer_review_assignment_denied.userID && peer_review_assignment_submissions.assignmentID = peer_review_assignment_denied.assignmentID WHERE peer_review_assignment_denied.userID IS NULL && peer_review_assignment_submissions.assignmentID = :assignmentID && peer_review_assignment_submissions.authorID IN (SELECT userID FROM users WHERE userType = 'student') && peer_review_assignment_submissions.authorID IN (SELECT userID FROM peer_review_assignment_independent WHERE assignmentID = :assignmentID) ;");
+		$sh->execute(array("assignmentID"=>$assignment->assignmentID));
+		$res = $sh->fetch(PDO::FETCH_NUM);
+		return $res[0];
+	}*/
+	
     //Because PHP doesn't do multiple inheritance, we have to define this method all over the place
     private function prepareQuery($name, $query)
     {

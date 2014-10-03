@@ -23,8 +23,8 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $html .= "<input type='text' name='minReviews' value='3' size='10'/></td></tr>\n";
         $html .= "<tr><td>Auto Spot Check Grade</td><td>";
         $html .= "<input type='text' name='spotCheckThreshold' value='80' size='10'/>%</td></tr>\n";
-        $html .= "<tr><td>Auto Spot Check Probability</td><td>";
-        $html .= "<input type='text' name='spotCheckProb' value='0.25' size='10'/></td></tr>\n";
+        $html .= "<tr><td>Auto Spot Check Probability</td><td>"; ;
+        $html .= "<input type='text' name='spotCheckProb' id='spotCheckProb' value='0.25' size='10'/></td></tr>\n";
 		$html .= "<tr><td>High Mark Bias</td><td>";
 		$html .= "<input type='text' name='highMarkBias' value='2' size='10'/></td></tr>\n";
 		$html .= "<tr><td>Low Calibration Threshold</td><td>";
@@ -35,12 +35,50 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $html .= "<input type='text' name='seed' value='$assignment->submissionStartDate' size='30'/></td></tr>\n";
         $html .= "<tr><td>&nbsp</td></tr>\n";
 
+		$i = 0;
         foreach($dataMgr->getMarkers() as $markerID)
         {
             $html .= "<tr><td>".$dataMgr->getUserDisplayName(new UserID($markerID))."'s Load</td><td>";
-            $html .= "<input type='text' name='load$markerID' value='".$dataMgr->getMarkingLoad(new UserID($markerID))."' size='30'/></td></tr>\n";
+            $html .= "<input class='load' id='load$i' type='text' name='load$markerID' value='".$dataMgr->getMarkingLoad(new UserID($markerID))."' size='30'/></td><td><div id='reviewestimate$i'></div></td><td><div id='spotcheckestimate$i'></div></td></tr>\n";
+			$i++;
         }
         $html .= "</table>\n";
+		$html .= "<div id='spotcheckestimate'></div>";
+		//$html .= "The number of supervised submissions is ".$assignment->numSupervisedSubmissions();
+		//$html .= "The number of independent submissions is ".$assignment->numIndependentSubmissions();
+		$html .= "<script type='text/javascript'> 
+			var numSupervisedSubmissions = ".$assignment->numSupervisedSubmissions().";
+			var numIndependentSubmissions = ".$assignment->numIndependentSubmissions().";
+            $('#spotCheckProb').on('input', function() { 
+			    $('#spotcheckestimate').html(Math.ceil(numIndependentSubmissions*this.value));
+			});
+			</script>\n";
+		//Some crazy distribution predictor I set aside because ended being too much work for its worth
+		/*$html .= "	var totalLoad = 0;
+			for(i = 0; i < $i; i++)
+			{
+				totalLoad += Number($('#load'+i).val());
+			}
+			for(i = 0; i < $i; i++)
+			{
+				var reviewestimate = Math.ceil( ($('#load'+i).val()/totalLoad) * numSupervisedSubmissions );
+				$('#reviewestimate'+i).html(reviewestimate);
+			}
+			$('.load').on('input', function() {
+				//Recalculate total load
+				totalLoad = 0;
+				for(j = 0; j < $i; j++)
+				{
+					totalLoad += Number($('#load'+j).val());
+				}
+				for(i = 0; i < $i; i++)
+				{
+					var reviewestimate = Math.ceil( ($('#load'+i).val()/totalLoad) * numSupervisedSubmissions );
+					$('#reviewestimate'+i).html(reviewestimate);
+				}
+			});
+			</script>\n";*/
+	
         return $html;
     }
     function executeAndGetResult()

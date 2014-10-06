@@ -20,11 +20,11 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $assignment = get_peerreview_assignment();
         $html  = "<table width='100%'>\n";
         $html .= "<tr><td width='200'>Min Reviews for Auto-Grade</td><td>";
-        $html .= "<input type='text' name='minReviews' value='3' size='10'/></td></tr>\n";
-        $html .= "<tr><td>Auto Spot Check Grade</td><td>";
-        $html .= "<input type='text' name='spotCheckThreshold' value='80' size='10'/>%</td></tr>\n";
+        $html .= "<input type='text' name='minReviews' id='minReviews' value='3' size='10'/></td></tr>\n";
         $html .= "<tr><td>Auto Spot Check Probability</td><td>"; ;
-        $html .= "<input type='text' name='spotCheckProb' id='spotCheckProb' value='0.25' size='10'/></td></tr>\n";
+        $html .= "<input type='text' name='spotCheckProb' id='spotCheckProb' value='0.25' size='10'/>(should be between 0 and 1)</td></tr>\n";
+		$html .= "<tr><td>High Mark Threshold</td><td>";
+        $html .= "<input type='text' name='spotCheckThreshold' value='80' size='10'/>%</td></tr>\n";
 		$html .= "<tr><td>High Mark Bias</td><td>";
 		$html .= "<input type='text' name='highMarkBias' value='2' size='10'/></td></tr>\n";
 		$html .= "<tr><td>Low Calibration Threshold</td><td>";
@@ -39,22 +39,66 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         foreach($dataMgr->getMarkers() as $markerID)
         {
             $html .= "<tr><td>".$dataMgr->getUserDisplayName(new UserID($markerID))."'s Load</td><td>";
-            $html .= "<input class='load' id='load$i' type='text' name='load$markerID' value='".$dataMgr->getMarkingLoad(new UserID($markerID))."' size='30'/></td><td><div id='reviewestimate$i'></div></td><td><div id='spotcheckestimate$i'></div></td></tr>\n";
+            $html .= "<input class='load' id='load$i' type='text' name='load$markerID' value='".$dataMgr->getMarkingLoad(new UserID($markerID))."' size='30'/></td></tr>\n";
 			$i++;
         }
         $html .= "</table>\n";
-		$html .= "<div id='spotcheckestimate'></div>";
-		//$html .= "The number of supervised submissions is ".$assignment->numSupervisedSubmissions();
-		//$html .= "The number of independent submissions is ".$assignment->numIndependentSubmissions();
-		$html .= "<script type='text/javascript'> 
-			var numSupervisedSubmissions = ".$assignment->numSupervisedSubmissions().";
-			var numIndependentSubmissions = ".$assignment->numIndependentSubmissions().";
+		$supervisedSubmissions = $assignment->supervisedSubmissions();
+		$independentSubmissions = $assignment->independentSubmissions();
+		$html .= "<h1>Estimates</h1>";
+		$html .= "<table>";
+		$html .= "<tr><td>Number of submissions to mark</td><td><div id='submissionstomarkestimate'></div></td></tr>\n";
+		$html .= "<tr><td>Number of reviews to mark</td><td><div id='reviewstomarkestimate'></div></td></tr>\n";
+		$html .= "<tr><td>Number of spot checks will be</td><td><div id='spotcheckestimate'></div></td></tr>";
+		$html .= "</table>";
+		$html .= "<script type='text/javascript'>
+			var independentSubsToReviewsMap = {";
+			$i = 0;
+			foreach($independentSubmissions as $independentSubmission => $numReviews)
+			{
+				if($i != 0) $html .= ", ";
+				$html .= $independentSubmission." : ".$numReviews;
+				$i++;
+			}
+		$html .= "};
+			var independentReviewsToMark = 0;
+			var independentSubsToMark = 0;
+			$.each( independentSubsToReviewsMap, function( index, value ){
+				if(value < $('#minReviews').val())
+				{
+					independentReviewsToMark += value;
+					independentSubsToMark++;
+				}
+			});
+			var numSupervisedSubmissions = ".sizeof($supervisedSubmissions).";
+			var numIndependentSubmissions = ".sizeof($independentSubmissions).";
+			var numSupervisedReviews = ".array_reduce($supervisedSubmissions, function($res, $item){return $res+$item;}).";
+			
+			$('#submissionstomarkestimate').html(numSupervisedSubmissions+independentSubsToMark);
+			
+			$('#reviewstomarkestimate').html(numSupervisedReviews+independentReviewsToMark);
+			$('#minReviews').on('input', function() {
+				var independentReviewsToMark_local = 0;
+				var independentSubsToMark_local = 0;
+				$.each( independentSubsToReviewsMap, function( index, value ){
+					if(value < $('#minReviews').val())
+					{
+						independentReviewsToMark_local += value;
+						independentSubsToMark_local++;
+					}
+				});
+			    $('#reviewstomarkestimate').html(numSupervisedReviews + independentReviewsToMark_local);
+			    $('#submissionstomarkestimate').html(numSupervisedSubmissions + independentSubsToMark_local);
+			});
+			$('#spotcheckestimate').html(Math.ceil(numIndependentSubmissions*$('#spotCheckProb').val()));
             $('#spotCheckProb').on('input', function() { 
 			    $('#spotcheckestimate').html(Math.ceil(numIndependentSubmissions*this.value));
-			});
-			</script>\n";
+			});";
+		$html .= "</script>\n";
 		//Some crazy distribution predictor I set aside because ended being too much work for its worth
-		/*$html .= "	var totalLoad = 0;
+		/*$html .= "	
+		  	var numSupervisedSubmissions = ".sizeof($supervisedSubmissions).";
+		 	var totalLoad = 0;
 			for(i = 0; i < $i; i++)
 			{
 				totalLoad += Number($('#load'+i).val());

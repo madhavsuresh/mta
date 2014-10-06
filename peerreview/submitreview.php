@@ -45,7 +45,6 @@ try
     $afterReviewStop   = $assignment->reviewStopDate < $NOW;
 	$beforeCalibrationStart = $NOW < $assignment->calibrationStartDate;
 	$afterCalibrationStop   = $assignment->calibrationStopDate < $NOW;
-	$isCovert = false;
 
     if(array_key_exists("review", $_GET) || array_key_exists("calibration", $_GET)){
         #We're in student mode
@@ -61,11 +60,7 @@ try
 
         #Try and extract who the author is - if we have an invalid index, return to main
         if(!isset($reviewAssignments[$id]))
-            throw new Exception("No review assignment with id $id");
-		$studentToCovertReviewsMap = $assignmentWithSubmission->getStudentToCovertReviewsMap();
-		if(in_array($id, $studentToCovertReviewsMap[$reviewer]))
-			$isCovert = true;
-			
+            throw new Exception("No review assignment with id $id");	
 
         #Set the match id
         $matchID = $reviewAssignments[$id];
@@ -158,7 +153,6 @@ try
         $content .= "<h1>Review</h1>\n";
         if($action == "save"){
             if(!$isCalibration){
-            	//if($isCovert);
                 $content .= $assignmentWithSubmission->getReview($matchID)->getShortHTML();
             }else{
                 //Do the auto grade

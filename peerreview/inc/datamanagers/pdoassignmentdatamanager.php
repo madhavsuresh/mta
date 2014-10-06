@@ -1734,9 +1734,35 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		}
 		return $covertCalibrations;
 	}
+	
+	function supervisedSubmissions(PeerReviewAssignment $assignment)
+	{
+		global $dataMgr;
+		$sh = $this->prepareQuery("supervisedSubmissions", "SELECT subs.submissionID, COUNT(DISTINCT answers.matchID) as numReviews FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_denied denied ON subs.authorID = denied.userID && subs.assignmentID = denied.assignmentID JOIN peer_review_assignment_matches matches ON matches.submissionID = subs.submissionID LEFT JOIN peer_review_assignment_review_answers answers ON matches.matchID = answers.matchID WHERE denied.userID IS NULL && subs.assignmentID = :assignmentID && subs.authorID IN (SELECT userID FROM users WHERE userType = 'student') && subs.authorID NOT IN (SELECT userID FROM peer_review_assignment_independent WHERE assignmentID = :assignmentID) GROUP BY subs.submissionID;");
+		$sh->execute(array("assignmentID"=>$assignment->assignmentID));
+		$result = array();
+		while($res = $sh->fetch())
+        {
+			$result[$res->submissionID] = $res->numReviews;
+		}
+		return $result;
+	}
 
+	function independentSubmissions(PeerReviewAssignment $assignment)
+	{
+		global $dataMgr;
+		$sh = $this->prepareQuery("independentSubmissions", "SELECT subs.submissionID, COUNT(DISTINCT answers.matchID) as numReviews FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_denied denied ON subs.authorID = denied.userID && subs.assignmentID = denied.assignmentID JOIN peer_review_assignment_matches matches ON matches.submissionID = subs.submissionID LEFT JOIN peer_review_assignment_review_answers answers ON matches.matchID = answers.matchID WHERE denied.userID IS NULL && subs.assignmentID = :assignmentID && subs.authorID IN (SELECT userID FROM users WHERE userType = 'student') && subs.authorID IN (SELECT userID FROM peer_review_assignment_independent WHERE assignmentID = :assignmentID) GROUP BY subs.submissionID;");
+		$sh->execute(array("assignmentID"=>$assignment->assignmentID));
+		$result = array();
+		while($res = $sh->fetch())
+        {
+			$result[$res->submissionID] = $res->numReviews;
+		}
+		return $result;
+	}
+	
     //Because PHP doesn't do multiple inheritance, we have to define this method all over the place
-    private function prepareQuery($name, $query)
+	private function prepareQuery($name, $query)
     {
         if(!isset($this->$name)) {
             $this->$name = $this->db->prepare($query);

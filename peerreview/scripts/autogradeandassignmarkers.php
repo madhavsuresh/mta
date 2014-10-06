@@ -51,8 +51,10 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 		$html .= "<tr><td>Number of reviews to mark</td><td><div id='reviewstomarkestimate'></div></td></tr>\n";
 		$html .= "<tr><td>Number of spot checks will be</td><td><div id='spotcheckestimate'></div></td></tr>";
 		$html .= "</table>";
-		$html .= "<script type='text/javascript'>
-			var independentSubsToReviewsMap = {";
+		$html .= "<script type='text/javascript'>";
+		if($independentSubmissions)
+		{
+		$html .= "var independentSubsToReviewsMap = {";
 			$i = 0;
 			foreach($independentSubmissions as $independentSubmission => $numReviews)
 			{
@@ -60,7 +62,13 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 				$html .= $independentSubmission." : ".$numReviews;
 				$i++;
 			}
-		$html .= "};
+		$html .= "};";
+		}
+		else 
+		{
+		$html .= "var independentSubsToReviewsMap = new Array();";
+		}
+		$html .= "
 			var independentReviewsToMark = 0;
 			var independentSubsToMark = 0;
 			$.each( independentSubsToReviewsMap, function( index, value ){
@@ -71,8 +79,9 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 				}
 			});
 			var numSupervisedSubmissions = ".sizeof($supervisedSubmissions).";
-			var numIndependentSubmissions = ".sizeof($independentSubmissions).";
-			var numSupervisedReviews = ".array_reduce($supervisedSubmissions, function($res, $item){return $res+$item;}).";
+			var numIndependentSubmissions = ".sizeof($independentSubmissions).";";
+		$supervisedReviews = $supervisedSubmissions ? array_reduce($supervisedSubmissions, function($res, $item){return $res+$item;}) : 0;
+		$html .= "var numSupervisedReviews = ".$supervisedReviews.";
 			
 			$('#submissionstomarkestimate').html(numSupervisedSubmissions+independentSubsToMark);
 			

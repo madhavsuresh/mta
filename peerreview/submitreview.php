@@ -114,8 +114,8 @@ try
         #We can just override the data on this assignment so that we can force a write
         $beforeReviewStart = false;
         $afterReviewStop   = false;
-		$beforeCalibrationStart = false;
-		$afterCalibrationStop   = false;
+		$beforeCalibrationStart = false; //Not necessary but for completion
+		$afterCalibrationStop   = false; //Not necessary but for completion
     }
 
     if($isCalibration ? $beforeCalibrationStart : $beforeReviewStart) 

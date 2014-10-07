@@ -1700,7 +1700,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		$calibrationSubmissionIDs = array();		
 		while($res = $sh->fetch())
         {
-			$calibrationSubmissionIDs[] = $res->submissionID;
+			$calibrationSubmissionIDs[$res->submissionID] = $res->submissionID;
         }
         return $calibrationSubmissionIDs;
 	}

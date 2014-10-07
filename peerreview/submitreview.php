@@ -46,7 +46,7 @@ try
 	$beforeCalibrationStart = $NOW < $assignment->calibrationStartDate;
 	$afterCalibrationStop   = $assignment->calibrationStopDate < $NOW;
 
-    if(array_key_exists("review", $_GET) || array_key_exists("calibration", $_GET)){
+   	if(array_key_exists("review", $_GET) || array_key_exists("calibration", $_GET)){
         #We're in student mode
         $reviewerID = $USERID;
         if(array_key_exists("review", $_GET)){
@@ -55,7 +55,6 @@ try
         }else{
             $id = $_GET["calibration"];
             $reviewAssignments = $assignment->getAssignedCalibrationReviews($reviewerID);
-            $isCalibration = true;
         }
 
         #Try and extract who the author is - if we have an invalid index, return to main
@@ -142,6 +141,9 @@ try
 
             if(!$isCalibration)
                 $content .= "Review saved - check to make sure that it looks right below. You may edit your review by returning to the home page.\n";
+			$author = $assignmentWithSubmission->getSubmission($review->submissionID)->authorID;
+			if(($dataMgr->isInstructor($review->reviewerID) || $dataMgr->isMarker($review->reviewerID)) && $dataMgr->isStudent($author))
+				$assignmentWithSubmission->saveSubmissionMark(new Mark($review->getScore(), ""), $review->submissionID);
         }
         else
         {

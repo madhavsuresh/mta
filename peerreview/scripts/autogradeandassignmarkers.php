@@ -187,9 +187,27 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $reviewMap = $assignment->getReviewMap();
         $scoreMap = $assignment->getMatchScoreMap();
         $submissions = $assignment->getAuthorSubmissionMap_();
+		$studentToCovertReviewsMap = $assignment->getStudentToCovertReviewsMap();
 
         $reviewedScores = array();
 		$independentSubs = array();
+		
+		//Autograde covert calibrations by taking covert reviews from students
+		foreach($studentToCovertReviewsMap as $reviewer => $covertReviews)
+		{
+			foreach($covertReviews as $covertMatch)
+			{
+				$submissionID = $assignment->getSubmissionID(new MatchID($covertMatch));
+				$keyReview = $assignment->getSingleCalibrationKeyReviewForSubmission($submissionID);
+				$review = $assignment->getReview(new MatchID($covertMatch));
+				$mark = generateAutoMark($assignment, $keyReview, $review);
+				//Just like a calibration EXCEPT review score is auto-graded to max like regular independent peer reviews 
+				$mark->score = $assignment->maxReviewScore;
+				$assignment->saveReviewMark($mark, new MatchID($covertMatch));
+			}
+		}
+		
+		$studentToCovertScoresMap = $assignment->studentToCovertScoresMap();
 		
         $html = "";
         foreach($submissions as $authorID => $submissionID)
@@ -234,6 +252,10 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 				{
 					if(getWeightedAverage($review->reviewerID, $assignment) < $calibThreshold)
 						$independentSub->weight *= $calibBias;
+					$sum = array_reduce($studentToCovertScoresMap[$review->reviewerID], function($res, $item){return $res + $item;});
+					$covertaverage = $sum / sizeof($studentToCovertScoresMap[$review->reviewerID]);
+					if($covertaverage < $calibThreshold)
+						$independentSub->weight *= (1 + ($calibThreshold - $covertaverage));
 				}
 				
 				$independentSubs[] = $independentSub;
@@ -280,22 +302,6 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 				}
 			}
         }
-
-		//Autograde covert calibrations by taking covert reviews from students
-		$studentToCovertReviewsMap = $assignment->getStudentToCovertReviewsMap();
-		foreach($studentToCovertReviewsMap as $reviewer => $covertReviews)
-		{
-			foreach($covertReviews as $covertMatch)
-			{
-				$submissionID = $assignment->getSubmissionID(new MatchID($covertMatch));
-				$keyReview = $assignment->getSingleCalibrationKeyReviewForSubmission($submissionID);
-				$review = $assignment->getReview(new MatchID($covertMatch));
-				$mark = generateAutoMark($assignment, $keyReview, $review);
-				//Just like a calibration EXCEPT review score is auto-graded to max like regular independent peer reviews 
-				$mark->score = $assignment->maxReviewScore;
-				$assignment->saveReviewMark($mark, new MatchID($covertMatch));
-			}
-		}
 
 		//Shuffle independent submissions and spot check proportionally with their weights;
 		mt_shuffle($independentSubs);

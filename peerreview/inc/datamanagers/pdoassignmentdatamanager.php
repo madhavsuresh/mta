@@ -1735,6 +1735,20 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		return $covertCalibrations;
 	}
 	
+	function getStudentToCovertScoresMap(PeerReviewAssignment $assignment)
+	{
+		$sh = $this->prepareQuery("getStudentToCovertScoresMap", "SELECT reviewerID, reviewPoints FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID JOIN peer_review_assignment_review_marks marks ON marks.matchID = matches.matchID WHERE calibrationState = 'covert' && subs.assignmentID = ? ORDER BY reviewerID, matchID"); 
+		$sh->execute(array($assignment->assignmentID));
+		$covertScores = array();
+		while($res = $sh->fetch())
+		{
+			if(!array_key_exists($res->reviewerID, $covertScores))
+				$covertScores[$res->reviewerID] = array();
+			$covertScores[$res->reviewerID][] = $res->reviewPoints;		
+		}
+		return $covertScores;
+	}
+	
 	function supervisedSubmissions(PeerReviewAssignment $assignment)
 	{
 		global $dataMgr;

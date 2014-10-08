@@ -1723,7 +1723,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
 	function getStudentToCovertReviewsMap(PeerReviewAssignment $assignment)
 	{
-		$sh = $this->prepareQuery("getStudentToCovertReviewsMap", "SELECT reviewerID, matchID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID WHERE calibrationState = 'covert' && subs.assignmentID = ? ORDER BY reviewerID, matchID"); 
+		$sh = $this->prepareQuery("getStudentToCovertReviewsMap", "SELECT reviewerID, matchID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID WHERE calibrationState = 'covert' && subs.assignmentID = ? ORDER BY reviewerID, matchID;"); 
 		$sh->execute(array($assignment->assignmentID));
 		$covertCalibrations = array();
 		while($res = $sh->fetch())
@@ -1737,14 +1737,14 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	
 	function getStudentToCovertScoresMap(PeerReviewAssignment $assignment)
 	{
-		$sh = $this->prepareQuery("getStudentToCovertScoresMap", "SELECT reviewerID, reviewPoints FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID JOIN peer_review_assignment_review_marks marks ON marks.matchID = matches.matchID WHERE calibrationState = 'covert' && subs.assignmentID = ? ORDER BY reviewerID, matchID"); 
+		$sh = $this->prepareQuery("getStudentToCovertScoresMap", "SELECT reviewerID, reviewPoints FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID LEFT JOIN peer_review_assignment_review_marks marks ON marks.matchID = matches.matchID WHERE calibrationState = 'covert' && subs.assignmentID = ? ORDER BY reviewerID, matches.matchID;"); 
 		$sh->execute(array($assignment->assignmentID));
 		$covertScores = array();
 		while($res = $sh->fetch())
 		{
 			if(!array_key_exists($res->reviewerID, $covertScores))
 				$covertScores[$res->reviewerID] = array();
-			$covertScores[$res->reviewerID][] = $res->reviewPoints;		
+			$covertScores[$res->reviewerID][] = $res->reviewPoints;	//could be NULL if covert review not done
 		}
 		return $covertScores;
 	}

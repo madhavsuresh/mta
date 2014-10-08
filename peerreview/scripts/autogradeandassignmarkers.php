@@ -192,6 +192,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $reviewedScores = array();
 		$independentSubs = array();
 		
+		$output = print_r($studentToCovertReviewsMap, true);
 		//Autograde covert calibrations by taking covert reviews from students
 		foreach($studentToCovertReviewsMap as $reviewer => $covertReviews)
 		{
@@ -200,6 +201,8 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 				$submissionID = $assignment->getSubmissionID(new MatchID($covertMatch));
 				$keyReview = $assignment->getSingleCalibrationKeyReviewForSubmission($submissionID);
 				$review = $assignment->getReview(new MatchID($covertMatch));
+				if(sizeof($review->answers) < 1)
+					continue;
 				$mark = generateAutoMark($assignment, $keyReview, $review);
 				//Just like a calibration EXCEPT review score is auto-graded to max like regular independent peer reviews 
 				$mark->score = $assignment->maxReviewScore;
@@ -207,7 +210,15 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 			}
 		}
 		
-		$studentToCovertScoresMap = $assignment->studentToCovertScoresMap();
+		$studentToCovertScoresMap = $assignment->getStudentToCovertScoresMap();
+		
+		//$output .= print_r($studentToCovertScoresMap, true);
+		
+		$output .= "<h3>High Mark Threshold: $highSpotCheckThreshold</h3>";
+		$output .= "<h3>Calibration Threshold: $calibThreshold</h3>";
+		$output .= "<h3>High Mark Bias: $highMarkBias</h3>";
+		$output .= "<h3>Calibration Bias: $calibBias</h3>";
+		$output .= "<table><tr><td>Name</td><td>Initial Weight</td><td>Median Score</td><td>Calibration Averages</td><td>Covert Scores</td><td>Final Weight</td><tr>";
 		
         $html = "";
         foreach($submissions as $authorID => $submissionID)
@@ -246,18 +257,44 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 				$independentSub->submissionID = $submissionID->id;
                 $independentSub->authorID = $authorID->id;
 				$independentSub->weight = sizeof($reviews);
+				$output .= "<tr><td>".$dataMgr->getUserDisplayName($authorID)."</td><td>".sizeof($reviews)."</td>";
 				if(1.0*$medScore/$assignment->maxSubmissionScore >= $highSpotCheckThreshold)
+				{
 					$independentSub->weight *= $highMarkBias;
+					$finalweight .= "*".$highMarkBias;
+					$output .= "<td><span style='color:red'>".(1.0*$medScore/$assignment->maxSubmissionScore)."</span></td><td><ul>";
+				}
+				else
+					$output .= "<td>".(1.0*$medScore/$assignment->maxSubmissionScore)."</td><td><ul>";
 				foreach($reviews as $review)
 				{
-					if(getWeightedAverage($review->reviewerID, $assignment) < $calibThreshold)
+					if(getWeightedAverage($review->reviewerID, $assignment) < $calibThreshold || getWeightedAverage($review->reviewerID, $assignment) == "--")
+					{
 						$independentSub->weight *= $calibBias;
-					$sum = array_reduce($studentToCovertScoresMap[$review->reviewerID], function($res, $item){return $res + $item;});
-					$covertaverage = $sum / sizeof($studentToCovertScoresMap[$review->reviewerID]);
+						$finalweight .= "*".$calibBias;
+						$output .= "<li>".$dataMgr->getUserDisplayName($review->reviewerID)." - <span style='color:red'>".getWeightedAverage($review->reviewerID, $assignment)."</span></li>";
+					}
+					else
+						$output .= "<li>".$dataMgr->getUserDisplayName($review->reviewerID)." - ".getWeightedAverage($review->reviewerID, $assignment)."</li>";
+				}
+				$output .= "</ul></td><td><ul>";
+				foreach($reviews as $review)
+				{
+					$sum = array_reduce($studentToCovertScoresMap[$review->reviewerID->id], function($res, $item) use ($assignment){if(!$item) return $res + 0; return $res + convertTo10pointScale($item, $assignment);});
+					$covertaverage = $sum / sizeof($studentToCovertScoresMap[$review->reviewerID->id]);
 					if($covertaverage < $calibThreshold)
-						$independentSub->weight *= (1 + ($calibThreshold - $covertaverage));
+					{
+						$covertBias = (1 + ($calibThreshold - $covertaverage));
+						$independentSub->weight *= $covertBias;
+						$finalweight .= "*".$covertBias;
+						$output .= "<li>".$dataMgr->getUserDisplayName($review->reviewerID)." - <span style='color:red'>".$covertaverage."</span></li>";
+					}
+					else
+						$output .= "<li>".$dataMgr->getUserDisplayName($review->reviewerID)." - ".$covertaverage."</li>";
 				}
 				
+				$finalweight .= " = ".$independentSub->weight;
+				$output .= "</ul></td><td>$finalweight</td>";
 				$independentSubs[] = $independentSub;
 				
 				//OLD spot checking method
@@ -289,7 +326,8 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
                 $pendingSubmissions[] = $obj;
             }
 			
-			//Autograde to 0 reviews that have not been done after the review stop date
+			
+			//Autograde to 0 the reviews that have not been done after the review stop date
 			global $NOW;
 			if($NOW > $assignment->reviewStopDate)
 			{
@@ -436,7 +474,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         }
         $html .= "</table>";
 
-        return $html;
+        return $output.$html;
     }
 
 }

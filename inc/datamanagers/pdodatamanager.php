@@ -86,7 +86,7 @@ class PDODataManager extends DataManager
         
 		$this->getMarkingLoadQuery = $this->db->prepare("SELECT markingLoad FROM users WHERE userID=?");
 		
-		$this->getAllRecentAssignmentsQuery = $this->db->prepare("SELECT FROM peer_review_assignment WHERE reviewEndDate < FROM_UNIXTIME(?)");
+		$this->getRecentPeerReviewAssignmentsQuery = $this->db->prepare("SELECT assignmentID FROM peer_review_assignment WHERE reviewStopDate > FROM_UNIXTIME(?) && reviewStopDate < FROM_UNIXTIME(?);");
         //Now we can set up all the assignment data managers
         parent::__construct();
     }
@@ -589,15 +589,15 @@ class PDODataManager extends DataManager
 			return NULL;
 	}
 	
-	function getAllAssignments()
+	function getRecentPeerReviewAssignments()
 	{
 		global $NOW;
-		$this->getAllRecentAssignmentsQuery->execute(array($NOW));
-        /*$assignments = array();
-        while($res = $this->getAllAssignmentHeadersQuery->fetch())
+		$this->getRecentPeerReviewAssignmentsQuery->execute(array($NOW - (10*60), $NOW));
+        $assignments = array();
+        while($res = $this->getRecentPeerReviewAssignmentsQuery->fetch())
         {
-            $assignments[] = $this->getAssignment(new AssignmentID($res->assignmentID), $res->assignmentType);
+            $assignments[] = new AssignmentID($res->assignmentID);
         }
-        return $assignments;*/
+        return $assignments;
 	}
 }

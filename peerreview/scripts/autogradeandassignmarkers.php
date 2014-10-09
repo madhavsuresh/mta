@@ -98,10 +98,13 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 				});
 			    $('#reviewstomarkestimate').html(numSupervisedReviews + independentReviewsToMark_local);
 			    $('#submissionstomarkestimate').html(numSupervisedSubmissions + independentSubsToMark_local);
+			    $('#spotcheckestimate').html(Math.ceil((numIndependentSubmissions-independentSubsToMark_local)*$('#spotCheckProb').val()));
+			    independentSubsToMark = independentSubsToMark_local;
+			    independentReviewsToMark = independentReviewsToMark_local;
 			});
-			$('#spotcheckestimate').html(Math.ceil(numIndependentSubmissions*$('#spotCheckProb').val()));
+			$('#spotcheckestimate').html(Math.ceil((numIndependentSubmissions-independentSubsToMark)*$('#spotCheckProb').val()));
             $('#spotCheckProb').on('input', function() { 
-			    $('#spotcheckestimate').html(Math.ceil(numIndependentSubmissions*this.value));
+			    $('#spotcheckestimate').html(Math.ceil((numIndependentSubmissions-independentSubsToMark)*this.value));
 			});";
 		$html .= "</script>\n";
 		//Some crazy distribution predictor I set aside because ended being too much work for its worth
@@ -187,9 +190,39 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $reviewMap = $assignment->getReviewMap();
         $scoreMap = $assignment->getMatchScoreMap();
         $submissions = $assignment->getAuthorSubmissionMap_();
+		$studentToCovertReviewsMap = $assignment->getStudentToCovertReviewsMap();
 
         $reviewedScores = array();
 		$independentSubs = array();
+		
+		//Autograde covert calibrations by taking covert reviews from students
+		foreach($studentToCovertReviewsMap as $reviewer => $covertReviews)
+		{
+			foreach($covertReviews as $covertMatch)
+			{
+				$submissionID = $assignment->getSubmissionID(new MatchID($covertMatch));
+				$keyReview = $assignment->getSingleCalibrationKeyReviewForSubmission($submissionID);
+				$review = $assignment->getReview(new MatchID($covertMatch));
+				//If review not done give a reviewPoints of -1
+				if(sizeof($review->answers) < 1)
+					$mark = new ReviewMark(0, "Review not done - Autograded", false, -1);
+				else
+				{
+					//Just like a calibration EXCEPT review score is auto-graded to max like regular independent peer reviews
+					$mark = generateAutoMark($assignment, $keyReview, $review);
+					$mark->score = $assignment->maxReviewScore;
+				}
+				$assignment->saveReviewMark($mark, new MatchID($covertMatch));
+			}
+		}
+		
+		$studentToCovertScoresMap = $assignment->getStudentToCovertScoresMap();
+		
+		$output .= "<h3>High Mark Threshold: $highSpotCheckThreshold</h3>";
+		$output .= "<h3>Calibration Threshold: $calibThreshold</h3>";
+		$output .= "<h3>High Mark Bias: $highMarkBias</h3>";
+		$output .= "<h3>Calibration Bias: $calibBias</h3>";
+		$output .= "<table><tr><td>Name</td><td>Initial Weight</td><td>Median Score</td><td>Calibration Averages</td><td>Covert Scores</td><td>Final Weight</td><tr>";
 		
         $html = "";
         foreach($submissions as $authorID => $submissionID)
@@ -228,14 +261,45 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 				$independentSub->submissionID = $submissionID->id;
                 $independentSub->authorID = $authorID->id;
 				$independentSub->weight = sizeof($reviews);
+				$finalweight = sizeof($reviews);
+				$output .= "<tr><td>".$dataMgr->getUserDisplayName($authorID)."</td><td>".sizeof($reviews)."</td>";
 				if(1.0*$medScore/$assignment->maxSubmissionScore >= $highSpotCheckThreshold)
+				{
 					$independentSub->weight *= $highMarkBias;
+					$finalweight .= "*".$highMarkBias;
+					$output .= "<td><span style='color:red'>".(1.0*$medScore/$assignment->maxSubmissionScore)."</span></td><td><ul>";
+				}
+				else
+					$output .= "<td>".(1.0*$medScore/$assignment->maxSubmissionScore)."</td><td><ul>";
 				foreach($reviews as $review)
 				{
-					if(getWeightedAverage($review->reviewerID, $assignment) < $calibThreshold)
+					if(getWeightedAverage($review->reviewerID, $assignment) < $calibThreshold || getWeightedAverage($review->reviewerID, $assignment) == "--")
+					{
 						$independentSub->weight *= $calibBias;
+						$finalweight .= "*".$calibBias;
+						$output .= "<li>".$dataMgr->getUserDisplayName($review->reviewerID)." - <span style='color:red'>".getWeightedAverage($review->reviewerID, $assignment)."</span></li>";
+					}
+					else
+						$output .= "<li>".$dataMgr->getUserDisplayName($review->reviewerID)." - ".getWeightedAverage($review->reviewerID, $assignment)."</li>";
+				}
+				$output .= "</ul></td><td><ul>";
+				foreach($reviews as $review)
+				{
+					$sum = array_reduce($studentToCovertScoresMap[$review->reviewerID->id], function($res, $item) use ($assignment){if($item < 0) return $res + 0; return $res + convertTo10pointScale($item, $assignment);});
+					$covertaverage = $sum / sizeof($studentToCovertScoresMap[$review->reviewerID->id]);
+					if($covertaverage < $calibThreshold)
+					{
+						$covertBias = (1 + ($calibThreshold - $covertaverage));
+						$independentSub->weight *= $covertBias;
+						$finalweight .= "*".$covertBias;
+						$output .= "<li>".$dataMgr->getUserDisplayName($review->reviewerID)." - <span style='color:red'>".$covertaverage."</span></li>";
+					}
+					else
+						$output .= "<li>".$dataMgr->getUserDisplayName($review->reviewerID)." - ".$covertaverage."</li>";
 				}
 				
+				$finalweight .= " = ".$independentSub->weight;
+				$output .= "</ul></td><td>$finalweight</td>";
 				$independentSubs[] = $independentSub;
 				
 				//OLD spot checking method
@@ -267,12 +331,16 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
                 $pendingSubmissions[] = $obj;
             }
 			
-			//Autograde to 0 reviews that have not been done after the review stop date
+			
+			//Autograde to 0 the reviews that have not been done after the review stop date
 			global $NOW;
 			if($NOW > $assignment->reviewStopDate)
 			{
 				foreach($emptyReviews as $emptyReview)
 				{
+					//If the empty review is a covert review just leave it alone because it already has a mark
+					if($assignment->getReviewMark(new MatchID($emptyReview->matchID))->reviewPoints < 0)
+						continue;
 					$mark = new ReviewMark();
 					$mark->score = 0;
 					$mark->comments = "Review not done - Autograded";
@@ -280,22 +348,6 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 				}
 			}
         }
-
-		//Autograde covert calibrations by taking covert reviews from students
-		$studentToCovertReviewsMap = $assignment->getStudentToCovertReviewsMap();
-		foreach($studentToCovertReviewsMap as $reviewer => $covertReviews)
-		{
-			foreach($covertReviews as $covertMatch)
-			{
-				$submissionID = $assignment->getSubmissionID(new MatchID($covertMatch));
-				$keyReview = $assignment->getSingleCalibrationKeyReviewForSubmission($submissionID);
-				$review = $assignment->getReview(new MatchID($covertMatch));
-				$mark = generateAutoMark($assignment, $keyReview, $review);
-				//Just like a calibration EXCEPT review score is auto-graded to max like regular independent peer reviews 
-				$mark->score = $assignment->maxReviewScore;
-				$assignment->saveReviewMark($mark, new MatchID($covertMatch));
-			}
-		}
 
 		//Shuffle independent submissions and spot check proportionally with their weights;
 		mt_shuffle($independentSubs);

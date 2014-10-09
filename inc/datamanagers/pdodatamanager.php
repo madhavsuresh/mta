@@ -128,7 +128,7 @@ class PDODataManager extends DataManager
 
     function addUser($username, $firstName, $lastName, $studentID, $type='student', $markingLoad=0)
     {
-        $sh = $this->db->prepare("INSERT INTO users (courseID, username, firstName, lastName, studentID, userType, markingLoad) VALUES (?, ?, ?, ?, ?, ?);");
+        $sh = $this->db->prepare("INSERT INTO users (courseID, username, firstName, lastName, studentID, userType, markingLoad) VALUES (?, ?, ?, ?, ?, ?, ?);");
         $sh->execute(array($this->courseID, $username, $firstName, $lastName, $studentID, $type, $markingLoad));
         return new UserID($this->db->lastInsertID());
     }

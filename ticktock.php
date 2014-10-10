@@ -1,5 +1,6 @@
 <?php
 require_once("inc/common.php");
+
 try
 {
 	global $MTA_DATAMANAGER_PDO_CONFIG;
@@ -13,6 +14,7 @@ try
                 array(PDO::ATTR_PERSISTENT => true));
 		
 	require_once(MTA_ROOTPATH.'autogradeandassignmarkers.php');
+	
 }catch(Exception $e) {
     render_exception_page($e);
 }

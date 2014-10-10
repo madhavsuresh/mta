@@ -16,7 +16,7 @@ try
     $authorID = $USERID;
 
     $beforeSubmissionStart = $NOW < $assignment->submissionStartDate;
-    $afterSubmissionStop   = $assignment->submissionStopDate < $NOW;
+    $afterSubmissionStop   = grace($assignment->submissionStopDate) < $NOW;
     #Have we been given an $author override?
     $authorInGet='';
     if(array_key_exists("authorid", $_GET)){

@@ -1,5 +1,4 @@
 <?php
-require_once("inc/common.php");
 require_once("peerreview/inc/appealstaskmanager.php");
 
 global $assignments;
@@ -33,7 +32,7 @@ foreach($assignments as $assignment)
 			{
 				if($assignment->getReviewMark($studentReview->matchID)->isValid)
 					$numMarkedStudentReviews++;
-				elseif(!$studentReview->answers && $NOW > $assignment->reviewStopDate)
+				elseif(!$studentReview->answers && grace($assignment->reviewStopDate) < $NOW)
 				{
 					//Trigger auto mark for reviews not done after review stop date
 					$mark = new ReviewMark();
@@ -63,7 +62,7 @@ foreach($assignments as $assignment)
 			<td class='column2'>Review</td>
 			<td class='column3'><table><td>Your Review: $markerReviewStatus<br>$numMarkedStudentReviews of $numStudentReviews reviews are marked </td><td><a target='_blank' title='Edit' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid=$reviewObj->submissionID&matchid=$reviewObj->matchID&close=1&showall=1")."'><button>Grade</button></a></td></table></td>
 			<td class='column4'><span style='color:$color'>".phpDate($assignment->markPostDate)."</span></td></tr></table>\n";
-			insert($reviewTask, $reviewTasks);
+			insertTask($reviewTask, $reviewTasks);
 		}
 		
 	}
@@ -94,7 +93,7 @@ foreach($assignments as $assignment)
 			<td class='column2'>Spot Check</td>
             <td><a target='_blank' href='peerreview/viewer.php?assignmentid=$assignment->assignmentID&$args&type$i=spotcheck&submissionid$i=$spotCheck->submissionID'><button>Confirm</button><br></a></td>
             <td class='column4'><span style='color:$color'>".phpDate($assignment->markPostDate)."</span></td></tr></table>\n";
-			insert($reviewTask, $reviewTasks);
+			insertTask($reviewTask, $reviewTasks);
         }
 	}
 
@@ -116,7 +115,7 @@ foreach($assignments as $assignment)
 				<td class='column2'>Review Appeal</td>
 				<td class='column3'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$matchID&appealtype=review")."'><button>Answer</button></a></td>
 				<td class='column4'><span style='color:$color'>".phpDate($assignment->appealStopDate)."</span></td></tr></table>\n";
-				insert($reviewTask, $reviewTasks);	
+				insertTask($reviewTask, $reviewTasks);	
 			}
 			foreach($reviewMarkAppeals as $matchID => $needsResponse)
 			{
@@ -128,7 +127,7 @@ foreach($assignments as $assignment)
 				<td class='column2'>Review Mark Appeal</td>
 				<td class='column3'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$matchID&appealtype=reviewmark")."'><button>Answer</button></a></td>
 				<td class='column4'><span style='color:$color'>".phpDate($assignment->appealStopDate)."</span></td></tr></table>\n";
-				insert($reviewTask, $reviewTasks);	
+				insertTask($reviewTask, $reviewTasks);	
 			}
 		}
 	}

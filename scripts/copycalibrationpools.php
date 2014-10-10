@@ -71,6 +71,8 @@ class CopyCalibrationPoolsScript extends Script
 
 	function executeAndGetResult()
 	{
+		return "Sorry, this script has still not been tested after many changes to the system";	
+			
 		global $dataMgr;
 		
 		global $USERID;

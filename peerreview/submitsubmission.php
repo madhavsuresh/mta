@@ -38,7 +38,7 @@ try
     $authorID = $USERID;
 
     $beforeSubmissionStart = $NOW < $assignment->submissionStartDate;
-    $afterSubmissionStop   = $assignment->submissionStopDate < $NOW;
+    $afterSubmissionStop   = grace($assignment->submissionStopDate) < $NOW;
 
     if(array_key_exists("authorid", $_GET)){
         #We better be an instructor

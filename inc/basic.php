@@ -230,7 +230,7 @@ function isset_bool($x)
     return 0;
 }
 
-function insert($object, &$array)
+function insertTask($object, &$array)
 {
 	$length = sizeof($array);
 	if($length == 0)
@@ -258,3 +258,7 @@ function phpDate($seconds)
 	return date('M jS Y, H:i', $seconds);
 }
 
+function grace($seconds)
+{
+	return $seconds + (15 * 60); //15 minute grace period
+}

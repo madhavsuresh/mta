@@ -1670,7 +1670,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         //First, we need the counts of actuall reviews
         $sh = $this->prepareQuery("getNumberOfTimesReviewedByUserMapQuery", "SELECT submissions.authorID as authorID, count(distinct(matches.matchID)) as c FROM peer_review_assignment_review_answers answers JOIN peer_review_assignment_matches matches ON answers.matchID = matches.matchID JOIN peer_review_assignment_submissions submissions ON matches.submissionID = submissions.submissionID JOIN peer_review_assignment assignments ON submissions.assignmentID = assignments.assignmentID WHERE matches.reviewerID = ? && assignments.reviewStopDate < FROM_UNIXTIME(?) GROUP BY matches.matchID;");
 
-        $sh->execute(array($reviewerID, $assignment->reviewStopDate));
+        $sh->execute(array($reviewerID, grace($assignment->reviewStopDate)));
 
         $map = array();
         while($res = $sh->fetch())
@@ -1681,7 +1681,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         //Now, we need the counts of spot checks
         $sh = $this->prepareQuery("getNumberOfTimesSpotCheckedByUserMapQuery", "SELECT submissions.authorID as authorID, count(submissions.submissionID) as c FROM peer_review_assignment_spot_checks  checks JOIN peer_review_assignment_submissions submissions ON checks.submissionID = submissions.submissionID JOIN peer_review_assignment assignments ON submissions.assignmentID = assignments.assignmentID WHERE checks.checkerID = ? && assignments.reviewStopDate < FROM_UNIXTIME(?) GROUP BY submissions.authorID;");
 
-        $sh->execute(array($reviewerID, $assignment->reviewStopDate));
+        $sh->execute(array($reviewerID, grace($assignment->reviewStopDate)));
 
         while($res = $sh->fetch())
         {

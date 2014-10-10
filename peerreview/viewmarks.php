@@ -101,7 +101,7 @@ try
                         }
                         $html .= "<br><br><a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$assignedReviewIndex&appealtype=reviewmark")."'>View/Respond to Review Mark Appeal $tmp</a><br>";
                     }
-                    else if($NOW < $assignment->appealStopDate)
+                    else if($NOW < grace($assignment->appealStopDate))
                     {
                         //Show them a link to launching an appeal
                         $html .= "<br><br><a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$assignedReviewIndex&appealtype=reviewmark")."'>Appeal Review Mark </a><br>";
@@ -151,7 +151,7 @@ try
                                 }
                                 $html .= "<a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$reviewIndex&appealtype=review")."'>View/Respond to Appeal $tmp</a><br>";
                             }
-                            else if($NOW < $assignment->appealStopDate)
+                            else if($NOW < grace($assignment->appealStopDate))
                             {
                                 //Show them a link to launching an appeal
                                 $html .= "<a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$reviewIndex&appealtype=review")."'>Appeal Review</a><br>";

@@ -16,9 +16,9 @@ try
     $assignmentWithSubmission = $assignment;
 
     $beforeReviewStart = $NOW < $assignment->reviewStartDate;
-    $afterReviewStop   = $assignment->reviewStopDate < $NOW;
+    $afterReviewStop   = grace($assignment->reviewStopDate) < $NOW;
 	$beforeCalibrationStart = $NOW < $assignment->calibrationStartDate;
-	$afterCalibrationStop   = $assignment->calibrationStopDate < $NOW;
+	$afterCalibrationStop   = grace($assignment->calibrationStopDate) < $NOW;
 	
     $isCalibration = false;
 

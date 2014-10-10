@@ -42,9 +42,9 @@ try
 
     $isCalibration = false;
     $beforeReviewStart = $NOW < $assignment->reviewStartDate;
-    $afterReviewStop   = $assignment->reviewStopDate < $NOW;
+    $afterReviewStop   = grace($assignment->reviewStopDate) < $NOW;
 	$beforeCalibrationStart = $NOW < $assignment->calibrationStartDate;
-	$afterCalibrationStop   = $assignment->calibrationStopDate < $NOW;
+	$afterCalibrationStop   = grace($assignment->calibrationStopDate) < $NOW;
 
    	if(array_key_exists("review", $_GET) || array_key_exists("calibration", $_GET)){
         #We're in student mode
@@ -55,6 +55,7 @@ try
         }else{
             $id = $_GET["calibration"];
             $reviewAssignments = $assignment->getAssignedCalibrationReviews($reviewerID);
+			$isCalibration = true;
         }
 
         #Try and extract who the author is - if we have an invalid index, return to main

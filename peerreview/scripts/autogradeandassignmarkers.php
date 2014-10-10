@@ -334,7 +334,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 			
 			//Autograde to 0 the reviews that have not been done after the review stop date
 			global $NOW;
-			if($NOW > $assignment->reviewStopDate)
+			if(grace($assignment->reviewStopDate) < $NOW)
 			{
 				foreach($emptyReviews as $emptyReview)
 				{

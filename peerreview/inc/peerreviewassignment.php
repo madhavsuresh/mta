@@ -159,7 +159,7 @@ class PeerReviewAssignment extends Assignment
                 }
                 
                 $html .= "<tr><td width=30%>\n";
-                if($this->submissionStopDate < $NOW)
+                if(grace($this->submissionStopDate) < $NOW)
                 {
                     $html .= "Submissions closed\n";
                     if($this->dataMgr->submissionExists($this, $user))
@@ -182,7 +182,7 @@ class PeerReviewAssignment extends Assignment
                 {
                     $html .= "&nbsp;";
                 }
-                else if($this->reviewStopDate < $NOW)
+                else if(grace($this->reviewStopDate) < $NOW)
                 {
                     $html .= "Review submissions closed";
                 }

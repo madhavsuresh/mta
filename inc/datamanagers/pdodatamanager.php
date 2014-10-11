@@ -87,6 +87,7 @@ class PDODataManager extends DataManager
 		$this->getMarkingLoadQuery = $this->db->prepare("SELECT markingLoad FROM users WHERE userID=?");
 		
 		$this->getRecentPeerReviewAssignmentsQuery = $this->db->prepare("SELECT assignmentID FROM peer_review_assignment WHERE reviewStopDate > FROM_UNIXTIME(?) && reviewStopDate < FROM_UNIXTIME(?);");
+		
         //Now we can set up all the assignment data managers
         parent::__construct();
     }
@@ -600,4 +601,5 @@ class PDODataManager extends DataManager
         }
         return $assignments;
 	}
+
 }

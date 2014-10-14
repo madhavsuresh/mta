@@ -2,24 +2,22 @@
 require_once("peerreview/inc/common.php");
 require_once("peerreview/inc/calibrationutils.php");
 
-global $db;
-
-$recentPeerReviewAssignments = $dataMgr->getRecentPeerReviewAssignments();
+$globalDataMgr = new GlobalPDODataManager();
 
 $html = "";
 
-foreach($recentPeerReviewAssignments as $assignment)
-{
-//$minReviews = intval(require_from_post("minReviews"));
-$minReviews = 3;
-//$highSpotCheckThreshold = floatval(require_from_post("spotCheckThreshold"))*0.01;
-$highSpotCheckThreshold = 80;
-//mt_srand(require_from_post("seed"));
-mt_srand($assignment->submissionStartDate);
-//$randomSpotCheckProb = floatval(require_from_post("spotCheckProb"));
-$randomSpotCheckProb = 0.25;
+$recentPeerReviewAssignments = $globalDataMgr->getRecentPeerReviewAssignments();
 
-$html .= "Assignment No. ".$assignment."<br>";
+foreach($recentPeerReviewAssignments as $assignmentID)
+{
+$assignment = $globalDataMgr->getAssignment($assignmentID);
+
+$minReviews = 3;//$minReviews = intval(require_from_post("minReviews"));
+$highSpotCheckThreshold = 80;//$highSpotCheckThreshold = floatval(require_from_post("spotCheckThreshold"))*0.01;
+mt_srand($assignment->submissionStartDate);//mt_srand(require_from_post("seed"));
+$randomSpotCheckProb = 0.25;//$randomSpotCheckProb = floatval(require_from_post("spotCheckProb"));
+
+$html .= "Assignment No. ".$assignmentID."<br>";
 
 /*$userNameMap = $dataMgr->getUserDisplayMap();
 $independents = $assignment->getIndependentUsers();
@@ -348,8 +346,8 @@ $html .= "</table>";
 
 return $html;
 */
-}
 
 print_r($html);
+}
 
 ?>

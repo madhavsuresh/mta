@@ -1,11 +1,16 @@
 <?php
 
-class GlobalDataManager
+require_once("inc/common.php");
+
+class GlobalPDODataManager extends PDODataManager
 {
-    private $assignmentDataManagers = array();
-    protected $authMgrType;
-    protected $registrationType;
-    private $assignmentNameTypeMap = array();
+    function prepareQuery($name, $query)
+    {
+        if(!isset($this->$name)) {
+            $this->$name = $this->db->prepare($query);
+        }
+        return $this->$name;
+    }
 
     function __construct()
     {
@@ -23,11 +28,7 @@ class GlobalDataManager
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
         $this->db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
         $this->db->exec("SET NAMES 'utf8';");
-		
-		
-		$this->getAssignmentHeaderQuery = $this->db->prepare("SELECT name, assignmentType, displayPriority FROM assignments WHERE assignmentID = ?;");
-		$this->getRecentPeerReviewAssignmentsQuery = $this->db->prepare("SELECT assignmentID FROM peer_review_assignment WHERE reviewStopDate > FROM_UNIXTIME(?) && reviewStopDate < FROM_UNIXTIME(?);");
-        
+		 
         //Now we can set up all the assignment data managers
         global $MTA_ASSIGNMENTS, $MTA_DATAMANAGER;
         #Go through all the assignments we have, and load up the datamanager if we can
@@ -43,7 +44,16 @@ class GlobalDataManager
 
             $tempAssignment = new $assignmentClass(NULL, NULL, $this->assignmentDataManagers[$assignmentType]);
             $this->assignmentNameTypeMap[$assignmentType] = $tempAssignment->getAssignmentTypeDisplayName();
-        }
+		}
+		
+        $this->getAssignmentHeaderQuery = $this->db->prepare("SELECT name, assignmentType, displayPriority FROM assignments WHERE assignmentID = ?;");
+		$this->getRecentPeerReviewAssignmentsQuery = $this->db->prepare("SELECT assignmentID FROM peer_review_assignment WHERE reviewStopDate > FROM_UNIXTIME(?) && reviewStopDate < FROM_UNIXTIME(?);");
+		$this->assignmentFieldsQuery = $this->db->prepare("SELECT password, passwordMessage, visibleToStudents FROM assignments WHERE assignmentID=?;");
+    }
+
+	function getDatabase()
+    {
+        return $this->db;
     }
 
     /*function getAssignmentTypeToNameMap()
@@ -54,28 +64,6 @@ class GlobalDataManager
     // Creates a new assignment of the given type with the appropriate data manager
      // Optional argument "type", allows you to speed it up a bit
      //
-    function getAssignment(AssignmentID $assignmentID)
-    {
-        if(func_num_args() == 1)
-        {
-            $type = $this->getAssignmentHeader($assignmentID)->assignmentType;
-        }
-        else if (func_num_args() == 2)
-        {
-            $type = func_get_arg(1);
-            //TODO Make sure that we actually have this assignment in the course
-        }
-        if(!array_key_exists($type, $this->assignmentDataManagers))
-            throw new Exception("Crazy assignment type '$type' is unknown");
-
-        #Get the data manager for this type of assignment
-        require_once(MTA_ROOTPATH .$type."/inc/".$type."assignment.php");
-        $assignmentType = $type . "Assignment";
-        $assignment = $this->assignmentDataManagers[$type]->loadAssignment($assignmentID);
-        $this->populateGeneralAssignmentFields($assignment);
-
-        return $assignment;
-    }
 
     function getAssignmentDataManager($type)
     {
@@ -159,5 +147,17 @@ class GlobalDataManager
         }
         return new AssignmentHeader($id, $res->name, $res->assignmentType, $res->displayPriority);
     }*/
+    
+    function getRecentPeerReviewAssignments()
+	{
+		global $NOW;
+		$this->getRecentPeerReviewAssignmentsQuery->execute(array($NOW - (10*60), $NOW));
+        $assignments = array();
+        while($res = $this->getRecentPeerReviewAssignmentsQuery->fetch())
+        {
+            $assignments[] = new AssignmentID($res->assignmentID);
+        }
+        return $assignments;
+	}
 };
 

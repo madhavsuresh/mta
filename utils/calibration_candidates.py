@@ -107,10 +107,10 @@ def print_scores(assignID_or_name, courseID=3, use_centroid=True):
         raise ValueError("assignID_or_name must be int or str, not %s" % type(assignID_or_name))
     s = sorted(submission_scores(assignID), key=lambda s: mse(s, use_centroid))
     print "Assignment %d -- %s" % (assignID, name)
-    print "#  sub   mse score"
+    print "#   mse score  sub"
     for sub in s:
         if 'instructorScore' in sub:
-            print "  %d %.3f %5.1f \t%s" % (sub['subID'], mse(sub), sum(sub['instructorScore'].values()), sub['author'])
+            print "  %.3f %5.1f %d \t%s \t(w/ins)" % (mse(sub), sum(sub['instructorScore'].values()), sub['subID'], sub['author'])
         elif use_centroid:
-            print "  %d %.3f %5.1f \t%s" % (sub['subID'], mse(sub), sum(centroid(sub).values()), sub['author'])
+            print "  %.3f %5.1f %d \t%s" % (mse(sub), sum(centroid(sub).values()), sub['subID'], sub['author'])
             

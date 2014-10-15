@@ -187,8 +187,8 @@ $content .= "<h2>Minimum Calibrations Required: ".$minimumReviews."</h2>\n";
 			
 foreach($assignments as $assignment)
 {
-	$availableCalibrationSubmissionIDs = $assignment->getCalibrationSubmissionIDs();
-	if($availableCalibrationSubmissionIDs)
+	$calibrationSubmissionIDs = $assignment->getCalibrationSubmissionIDs();
+	if(sizeof(calibrationSubmissionIDs) > 0)
 	{
 		$doneCalibrations = array();
 		$unfinishedCalibrations = array();

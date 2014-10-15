@@ -82,8 +82,6 @@ class PDODataManager extends DataManager
        	
        	$this->latestAssignmentWithFlaggedIndependentsQuery = $this->db->prepare("SELECT peer_review_assignment.assignmentID FROM peer_review_assignment, peer_review_assignment_independent WHERE peer_review_assignment.assignmentID = peer_review_assignment_independent.assignmentID ORDER BY peer_review_assignment.calibrationStopDate DESC LIMIT 10");
         
-       	$this->isInSameCourseQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE courseID = ? && assignmentID = ?");
-        
 		$this->getMarkingLoadQuery = $this->db->prepare("SELECT markingLoad FROM users WHERE userID=?");
 		
 		$this->getRecentPeerReviewAssignmentsQuery = $this->db->prepare("SELECT assignmentID FROM peer_review_assignment WHERE reviewStopDate > FROM_UNIXTIME(?) && reviewStopDate < FROM_UNIXTIME(?);");
@@ -500,6 +498,18 @@ class PDODataManager extends DataManager
         return $headers;
     }
 	
+	//NO LONGER USED
+	function getCalibrationAssignments()
+    {
+        $calibrationAssignments = array();
+        foreach($this->getCalibrationAssignmentHeaders() as $header)
+        {
+            $calibrationAssignments[] = $this->getAssignment($header->assignmentID, $header->assignmentType);
+        }
+        return $calibrationAssignments;
+    }
+	
+	//NO LONGER USED
 	function getCalibrationAssignmentHeaders()
     {
         $this->getCalibrationAssignmentHeadersQuery->execute(array($this->courseID));
@@ -600,6 +610,38 @@ class PDODataManager extends DataManager
             $assignments[] = new AssignmentID($res->assignmentID);
         }
         return $assignments;
+	}
+	
+	function getMarkersByAssignment(AssignmentID $assignmentID)
+    {
+        $sh = $this->prepareQuery("getMarkersByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE (userType='instructor' || userType='marker') && assignmentID=?;");
+        $sh->execute(array($assignmentID));
+        $instructors = array();
+        while($res = $sh->fetch())
+            $instructors[] = $res->userID;
+        return $instructors;
+    }
+	
+	function getUserDisplayMapByAssignment(AssignmentID $assignmentID)
+    {
+    	$sh = $this->prepareQuery("getUserDisplayMapByAssignmentQuery", "SELECT userID, firstName, lastName FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE assignmentID=? ORDER BY lastName, firstName;");
+        $sh->execute(array($assignmentID));
+
+        $users = array();
+        while($res = $sh->fetch())
+        {
+            $users[$res->userID] = $res->firstName." ".$res->lastName;
+        }
+        return $users;
+    }
+	
+	//Complicated query basically asking if all non-calibrated submissions have been autograded or assigned to a marker
+	function isAutogradedAndAssigned(AssignmentID $assignmentID) 
+	{
+		$sh = $this->prepareQuery("isAutogradedAndAssignedQuery", "SELECT subs.submissionID FROM peer_review_assignment_submissions subs WHERE (NOT EXISTS (SELECT * FROM peer_review_assignment_matches matches WHERE subs.submissionID = matches.submissionID && matches.reviewerID IN (SELECT userID FROM users WHERE (userType='instructor' || userType='marker'))) && subs.submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_submission_marks)) && subs.submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_matches WHERE calibrationState = 'key') && subs.assignmentID = ?;");
+        $sh->execute(array($assignmentID));
+		$res = $sh->fetch();
+		return $res == NULL;
 	}
 
 }

@@ -340,7 +340,7 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 	}
 	$html .= "</table>";
 	
-	
+	$globalDataMgr->createNotification($assignmentID, 'autogradeandassign', 1, $html);
 }
 
 ?>

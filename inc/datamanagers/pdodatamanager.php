@@ -656,7 +656,26 @@ class PDODataManager extends DataManager
 	function createNotification(AssignmentID $assignmentID, $job, $success, $summary)
 	{
 		global $NOW;
-		$sh = $this->prepareQuery("createNotificationQuery", "INSERT INTO job_notifications (courseID, assignmentID, job, dateRan, success, read, summary) VALUES ((SELECT courseID FROM assignments WHERE assignmentID = :assignmentID), :assignmentID, :job, FROM_UNIXTIME(?), ?, ?, ?);");
-		$sh->execute(array("assignmentID"=>$assignmentID, "job"=>$job, "dateRan"=>$NOW, "success"=>$success, "read"=>0, "summary"=>$summary));	
+		$sh = $this->prepareQuery("createNotificationQuery", "INSERT INTO job_notifications (courseID, assignmentID, job, dateRan, success, summary) VALUES ((SELECT courseID FROM assignments WHERE assignmentID = :assignmentID), :assignmentID, :job, FROM_UNIXTIME(:dateRan), :success, :summary);");
+		$sh->execute(array("assignmentID"=>$assignmentID, "job"=>$job, "dateRan"=>$NOW, "success"=>$success, "summary"=>$summary));	
+	}
+	
+	function getNotifications()
+	{
+		$sh = $this->prepareQuery("getNotificationsQuery", "SELECT assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, read, summary FROM job_notifications WHERE courseID = ? && read = 0 ORDER BY dateRan DESC;");
+		$sh->execute(array($this->courseID));
+		$notifications = array();
+		while($res = $sh->fetch())
+        {
+        	$notification = new stdClass();
+        	$notification->assignmentID = $res->assignmentID;
+			$notification->job = $res->job;
+			$notification->dateRan = $res->dateRan;
+			$notification->success = $res->success;
+			$notification->read = $res->read;
+			$notification->summary = $res->summary;
+            $notifications[] = $notification;
+        }
+        return $notifications;
 	}
 }

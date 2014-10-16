@@ -1,7 +1,6 @@
 <?php
-require_once(MTA_ROOTPATH."peerreview/inc/common.php");
-require_once(MTA_ROOTPATH."peerreview/inc/calibrationutils.php");
-require_once(MTA_ROOTPATH."peerreview/inc/spotcheckutils.php");
+require_once("peerreview/inc/calibrationutils.php");
+require_once("peerreview/inc/spotcheckutils.php");
 
 $html = "";
 
@@ -17,9 +16,7 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 	$highSpotCheckThreshold = 80;//$highSpotCheckThreshold = floatval(require_from_post("spotCheckThreshold"))*0.01;
 	mt_srand($assignment->submissionStartDate);//mt_srand(require_from_post("seed"));
 	$randomSpotCheckProb = 0.25;//$randomSpotCheckProb = floatval(require_from_post("spotCheckProb"));
-	
-	$html .= "Assignment No. ".$assignmentID."<br>";
-	
+
 	$userNameMap = $globalDataMgr->getUserDisplayMapByAssignment($assignmentID);
 	$independents = $assignment->getIndependentUsers();
 	$highMarkBias = 2;//$highMarkBias = floatval(require_from_post("highMarkBias"));
@@ -343,8 +340,7 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 	}
 	$html .= "</table>";
 	
-	print_r($html);
-
+	
 }
 
 ?>

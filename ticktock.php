@@ -7,7 +7,7 @@ try
 	$globalDataMgr = new PDODataManager();	
 	require_once(MTA_ROOTPATH.'autogradeandassignmarkers.php');
 }catch(Exception $e) {
-    render_exception_page($e);
+	die("Ticktock did not run smoothly"); 
 }
 
 ?>

@@ -603,7 +603,7 @@ class PDODataManager extends DataManager
 	function getRecentPeerReviewAssignments()
 	{
 		global $NOW;
-		$this->getRecentPeerReviewAssignmentsQuery->execute(array($NOW - (10*60), $NOW));
+		$this->getRecentPeerReviewAssignmentsQuery->execute(array($NOW - (20*60), $NOW));
         $assignments = array();
         while($res = $this->getRecentPeerReviewAssignmentsQuery->fetch())
         {
@@ -635,13 +635,28 @@ class PDODataManager extends DataManager
         return $users;
     }
 	
+	//NO LONGER USED
 	//Complicated query basically asking if all non-calibrated submissions have been autograded or assigned to a marker
-	function isAutogradedAndAssigned(AssignmentID $assignmentID) 
+	/*function isAutogradedAndAssigned(AssignmentID $assignmentID) 
 	{
 		$sh = $this->prepareQuery("isAutogradedAndAssignedQuery", "SELECT subs.submissionID FROM peer_review_assignment_submissions subs WHERE (NOT EXISTS (SELECT * FROM peer_review_assignment_matches matches WHERE subs.submissionID = matches.submissionID && matches.reviewerID IN (SELECT userID FROM users WHERE (userType='instructor' || userType='marker'))) && subs.submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_submission_marks)) && subs.submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_matches WHERE calibrationState = 'key') && subs.assignmentID = ?;");
         $sh->execute(array($assignmentID));
 		$res = $sh->fetch();
 		return $res == NULL;
+	}*/
+	
+	function isAutogradedAndAssigned(AssignmentID $assignmentID) 
+	{
+		$sh = $this->prepareQuery("isAutogradedAndAssignedQuery", "SELECT notificationID FROM job_notifications WHERE job = 'autogradeandassign' && success = 1 && assignmentID = ?;");
+		$sh->execute(array($assignmentID));
+		$res = $sh->fetch();
+		return $res != NULL;
 	}
-
+	
+	function createNotification(AssignmentID $assignmentID, $job, $success, $summary)
+	{
+		global $NOW;
+		$sh = $this->prepareQuery("createNotificationQuery", "INSERT INTO job_notifications (courseID, assignmentID, job, dateRan, success, read, summary) VALUES ((SELECT courseID FROM assignments WHERE assignmentID = :assignmentID), :assignmentID, :job, FROM_UNIXTIME(?), ?, ?, ?);");
+		$sh->execute(array("assignmentID"=>$assignmentID, "job"=>$job, "dateRan"=>$NOW, "success"=>$success, "read"=>0, "summary"=>$summary));	
+	}
 }

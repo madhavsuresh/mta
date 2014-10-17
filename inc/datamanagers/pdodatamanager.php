@@ -662,7 +662,7 @@ class PDODataManager extends DataManager
 	
 	function getNotifications()
 	{
-		$sh = $this->prepareQuery("getNotificationsQuery", "SELECT assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, read, summary FROM job_notifications WHERE courseID = ? && read = 0 ORDER BY dateRan DESC;");
+		$sh = $this->prepareQuery("getNotificationsQuery", "SELECT assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary FROM job_notifications WHERE courseID = ? && seen = 0 ORDER BY dateRan DESC;");
 		$sh->execute(array($this->courseID));
 		$notifications = array();
 		while($res = $sh->fetch())
@@ -672,7 +672,7 @@ class PDODataManager extends DataManager
 			$notification->job = $res->job;
 			$notification->dateRan = $res->dateRan;
 			$notification->success = $res->success;
-			$notification->read = $res->read;
+			$notification->seen = $res->seen;
 			$notification->summary = $res->summary;
             $notifications[] = $notification;
         }

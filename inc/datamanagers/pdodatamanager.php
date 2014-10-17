@@ -653,21 +653,22 @@ class PDODataManager extends DataManager
 		return $res != NULL;
 	}
 	
-	function createNotification(AssignmentID $assignmentID, $job, $success, $summary)
+	function createNotification(AssignmentID $assignmentID, $job, $success, $summary, $details)
 	{
 		global $NOW;
-		$sh = $this->prepareQuery("createNotificationQuery", "INSERT INTO job_notifications (courseID, assignmentID, job, dateRan, success, summary) VALUES ((SELECT courseID FROM assignments WHERE assignmentID = :assignmentID), :assignmentID, :job, FROM_UNIXTIME(:dateRan), :success, :summary);");
-		$sh->execute(array("assignmentID"=>$assignmentID, "job"=>$job, "dateRan"=>$NOW, "success"=>$success, "summary"=>$summary));	
+		$sh = $this->prepareQuery("createNotificationQuery", "INSERT INTO job_notifications (courseID, assignmentID, job, dateRan, success, summary, details) VALUES ((SELECT courseID FROM assignments WHERE assignmentID = :assignmentID), :assignmentID, :job, FROM_UNIXTIME(:dateRan), :success, :summary, :details);");
+		$sh->execute(array("assignmentID"=>$assignmentID, "job"=>$job, "dateRan"=>$NOW, "success"=>$success, "summary"=>$summary, "details"=>$details));	
 	}
 	
 	function getNotifications()
 	{
-		$sh = $this->prepareQuery("getNotificationsQuery", "SELECT assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary FROM job_notifications WHERE courseID = ? && seen = 0 ORDER BY dateRan DESC;");
+		$sh = $this->prepareQuery("getNotificationsQuery", "SELECT notificationID, assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary FROM job_notifications WHERE courseID = ? && seen = 0 ORDER BY dateRan DESC;");
 		$sh->execute(array($this->courseID));
 		$notifications = array();
 		while($res = $sh->fetch())
         {
         	$notification = new stdClass();
+			$notification->notificationID = $res->notificationID;
         	$notification->assignmentID = $res->assignmentID;
 			$notification->job = $res->job;
 			$notification->dateRan = $res->dateRan;
@@ -677,5 +678,33 @@ class PDODataManager extends DataManager
             $notifications[] = $notification;
         }
         return $notifications;
+	}
+	
+	function getNotification(/*NotificationID*/ $notificationID)
+	{
+		$sh = $this->prepareQuery("getNotificationQuery", "SELECT assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary, details FROM job_notifications WHERE notificationID = ?");
+		$sh->execute(array($notificationID));
+		if(!$res = $sh->fetch())
+        {
+            throw new Exception("Invalid notification id '$notificationID'");
+        }
+    	$notification = new stdClass();
+    	$notification->assignmentID = $res->assignmentID;
+		$notification->job = $res->job;
+		$notification->dateRan = $res->dateRan;
+		$notification->success = $res->success;
+		$notification->seen = $res->seen;
+		$notification->summary = $res->summary;
+		$notification->details = $res->details;
+        $notifications[] = $notification;
+        return $notification;
+	}
+	
+	function dismissNotification(/*NotificationID*/ $notificationID)
+	{
+		//$sh = $this->prepareQuery("assertNotificationQuery", "SELECT * FROM job_notifications WHERE notification = ?;");
+		
+		$sh = $this->prepareQuery("dismissNotificationQuery", "UPDATE job_notifications SET seen = 1 WHERE notificationID = ?;");
+		$sh->execute(array($notificationID));
 	}
 }

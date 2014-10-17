@@ -65,10 +65,11 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 	
 	$reviewedScores = array();
 	$independentSubs = array();
-	
+	$autogradedSubmissions = 0; $autogradedReviews = 0;
 	//Autograde covert calibrations by taking covert reviews from students
 	foreach($studentToCovertReviewsMap as $reviewer => $covertReviews)
 	{
+		$autogradedReviews += sizeof($covertReviews);
 		foreach($covertReviews as $covertMatch)
 		{
 			$submissionID = $assignment->getSubmissionID(new MatchID($covertMatch));
@@ -125,6 +126,7 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 	        $medScore = median($scores);
 	
 	        $assignment->saveSubmissionMark(new Mark($medScore, null, true), $submissionID);
+			$autogradedSubmissions++;
 	
 			//Package all independent submissions with their calculated weights
 			$independentSub = new stdClass();
@@ -177,7 +179,7 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 	        {
 	            $revMark = $assignment->getReviewMark($review->matchID);
 	            if(!$revMark->isValid || $revMark->isAutomatic)
-	                $assignment->saveReviewMark(new ReviewMark($assignment->maxReviewScore, null, true), $review->matchID);
+					$assignment->saveReviewMark(new ReviewMark($assignment->maxReviewScore, null, true), $review->matchID);
 	        }
 	    }
 	    else
@@ -195,6 +197,7 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 		global $NOW;
 		if(grace($assignment->reviewStopDate) < $NOW)
 		{
+			$autogradedReviews += sizeof($emptyReviews);
 			foreach($emptyReviews as $emptyReview)
 			{
 				//If the empty review is a covert review just leave it alone because it already has a mark
@@ -210,6 +213,9 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 	//Shuffle independent submissions and spot check proportionally with their weights;
 	mt_shuffle($independentSubs);
 	$pendingSpotChecks = pickSpotChecks($independentSubs, $randomSpotCheckProb);
+	
+	$submissionsAssigned = sizeof($pendingSubmissions);
+	$spotChecksAssigned = sizeof($pendingSpotChecks);
 	
 	//asort($submissionScores, SORT_NUMERIC);
 	if ($targetLoadSum == 0)
@@ -340,7 +346,11 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 	}
 	$html .= "</table>";
 	
-	$globalDataMgr->createNotification($assignmentID, 'autogradeandassign', 1, $html);
+	$spotChecksAssigned = sizeof($pendingSpotChecks);
+	
+	$summary = "Autograded submissions: $autogradedSubmissions Autograded reviews: $autogradedReviews<br> Submissions assigned: $submissionsAssigned Spotchecks assigned: $spotChecksAssigned";
+	
+	$globalDataMgr->createNotification($assignmentID, 'autogradeandassign', 1, $summary, $html);
 }
 
 ?>

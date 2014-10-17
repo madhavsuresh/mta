@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS `job_notifications` (
   `dateRan` datetime NOT NULL,
   `success` tinyint(1) NOT NULL DEFAULT 0,
   `seen` tinyint(1) NOT NULL DEFAULT 0,
-  `summary` long NOT NULL,
+  `summary` text NOT NULL,
+  `details` longtext NOT NULL,
   PRIMARY KEY (`notificationID`),
   KEY `courseID` (`courseID`, `assignmentID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;

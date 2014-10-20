@@ -25,6 +25,11 @@ try
         #Figure out what courses are availible, and display them to the user (showing what roles they have)
         $assignments = $dataMgr->getAssignments();
 		
+		if($dataMgr->isInstructor($USERID))
+        {
+			require_once("notifications.php");
+		}
+		
 		#TO-DO Section and Calibration Section processing
 		if($dataMgr->isStudent($USERID))
 		{		

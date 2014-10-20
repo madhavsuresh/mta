@@ -134,7 +134,7 @@ foreach($assignments as $assignment)
                 	$item->html = 
                 	"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
                 	<td class='column2'>Calibration Review $completionStatus</td>
-                	<td class='column3'><table wdith='100%'><td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
+                	<td class='column3'><table width='100%'><td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
                 	<td><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>Request Calibration Review</button></a></td></table></td>
                 	<td class='column4'>".phpDate($assignment->reviewStartDate)."</td></tr></table>\n";
 					insertTask($item, $items);
@@ -187,8 +187,8 @@ $content .= "<h2>Minimum Calibrations Required: ".$minimumReviews."</h2>\n";
 			
 foreach($assignments as $assignment)
 {
-	$availableCalibrationSubmissionIDs = $assignment->getCalibrationSubmissionIDs();
-	if($availableCalibrationSubmissionIDs)
+	$calibrationSubmissionIDs = $assignment->getCalibrationSubmissionIDs();
+	if(sizeof(calibrationSubmissionIDs) > 0)
 	{
 		$doneCalibrations = array();
 		$unfinishedCalibrations = array();

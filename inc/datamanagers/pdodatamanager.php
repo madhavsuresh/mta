@@ -82,9 +82,10 @@ class PDODataManager extends DataManager
        	
        	$this->latestAssignmentWithFlaggedIndependentsQuery = $this->db->prepare("SELECT peer_review_assignment.assignmentID FROM peer_review_assignment, peer_review_assignment_independent WHERE peer_review_assignment.assignmentID = peer_review_assignment_independent.assignmentID ORDER BY peer_review_assignment.calibrationStopDate DESC LIMIT 10");
         
-       	$this->isInSameCourseQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE courseID = ? && assignmentID = ?");
-        
 		$this->getMarkingLoadQuery = $this->db->prepare("SELECT markingLoad FROM users WHERE userID=?");
+		
+		$this->getRecentPeerReviewAssignmentsQuery = $this->db->prepare("SELECT assignmentID FROM peer_review_assignment WHERE reviewStopDate > FROM_UNIXTIME(?) && reviewStopDate < FROM_UNIXTIME(?);");
+		
         //Now we can set up all the assignment data managers
         parent::__construct();
     }
@@ -497,6 +498,18 @@ class PDODataManager extends DataManager
         return $headers;
     }
 	
+	//NO LONGER USED
+	function getCalibrationAssignments()
+    {
+        $calibrationAssignments = array();
+        foreach($this->getCalibrationAssignmentHeaders() as $header)
+        {
+            $calibrationAssignments[] = $this->getAssignment($header->assignmentID, $header->assignmentType);
+        }
+        return $calibrationAssignments;
+    }
+	
+	//NO LONGER USED
 	function getCalibrationAssignmentHeaders()
     {
         $this->getCalibrationAssignmentHeadersQuery->execute(array($this->courseID));
@@ -585,5 +598,113 @@ class PDODataManager extends DataManager
 		}
 		else 
 			return NULL;
+	}
+	
+	function getRecentPeerReviewAssignments()
+	{
+		global $NOW;
+		$this->getRecentPeerReviewAssignmentsQuery->execute(array($NOW - (20*60), $NOW));
+        $assignments = array();
+        while($res = $this->getRecentPeerReviewAssignmentsQuery->fetch())
+        {
+            $assignments[] = new AssignmentID($res->assignmentID);
+        }
+        return $assignments;
+	}
+	
+	function getMarkersByAssignment(AssignmentID $assignmentID)
+    {
+        $sh = $this->prepareQuery("getMarkersByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE (userType='instructor' || userType='marker') && assignmentID=?;");
+        $sh->execute(array($assignmentID));
+        $instructors = array();
+        while($res = $sh->fetch())
+            $instructors[] = $res->userID;
+        return $instructors;
+    }
+	
+	function getUserDisplayMapByAssignment(AssignmentID $assignmentID)
+    {
+    	$sh = $this->prepareQuery("getUserDisplayMapByAssignmentQuery", "SELECT userID, firstName, lastName FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE assignmentID=? ORDER BY lastName, firstName;");
+        $sh->execute(array($assignmentID));
+
+        $users = array();
+        while($res = $sh->fetch())
+        {
+            $users[$res->userID] = $res->firstName." ".$res->lastName;
+        }
+        return $users;
+    }
+	
+	//NO LONGER USED
+	//Complicated query basically asking if all non-calibrated submissions have been autograded or assigned to a marker
+	/*function isAutogradedAndAssigned(AssignmentID $assignmentID) 
+	{
+		$sh = $this->prepareQuery("isAutogradedAndAssignedQuery", "SELECT subs.submissionID FROM peer_review_assignment_submissions subs WHERE (NOT EXISTS (SELECT * FROM peer_review_assignment_matches matches WHERE subs.submissionID = matches.submissionID && matches.reviewerID IN (SELECT userID FROM users WHERE (userType='instructor' || userType='marker'))) && subs.submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_submission_marks)) && subs.submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_matches WHERE calibrationState = 'key') && subs.assignmentID = ?;");
+        $sh->execute(array($assignmentID));
+		$res = $sh->fetch();
+		return $res == NULL;
+	}*/
+	
+	function isAutogradedAndAssigned(AssignmentID $assignmentID) 
+	{
+		$sh = $this->prepareQuery("isAutogradedAndAssignedQuery", "SELECT notificationID FROM job_notifications WHERE job = 'autogradeandassign' && success = 1 && assignmentID = ?;");
+		$sh->execute(array($assignmentID));
+		$res = $sh->fetch();
+		return $res != NULL;
+	}
+	
+	function createNotification(AssignmentID $assignmentID, $job, $success, $summary, $details)
+	{
+		global $NOW;
+		$sh = $this->prepareQuery("createNotificationQuery", "INSERT INTO job_notifications (courseID, assignmentID, job, dateRan, success, summary, details) VALUES ((SELECT courseID FROM assignments WHERE assignmentID = :assignmentID), :assignmentID, :job, FROM_UNIXTIME(:dateRan), :success, :summary, :details);");
+		$sh->execute(array("assignmentID"=>$assignmentID, "job"=>$job, "dateRan"=>$NOW, "success"=>$success, "summary"=>$summary, "details"=>$details));	
+	}
+	
+	function getNotifications()
+	{
+		$sh = $this->prepareQuery("getNotificationsQuery", "SELECT notificationID, assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary FROM job_notifications WHERE courseID = ? && seen = 0 ORDER BY dateRan DESC;");
+		$sh->execute(array($this->courseID));
+		$notifications = array();
+		while($res = $sh->fetch())
+        {
+        	$notification = new stdClass();
+			$notification->notificationID = $res->notificationID;
+        	$notification->assignmentID = $res->assignmentID;
+			$notification->job = $res->job;
+			$notification->dateRan = $res->dateRan;
+			$notification->success = $res->success;
+			$notification->seen = $res->seen;
+			$notification->summary = $res->summary;
+            $notifications[] = $notification;
+        }
+        return $notifications;
+	}
+	
+	function getNotification(/*NotificationID*/ $notificationID)
+	{
+		$sh = $this->prepareQuery("getNotificationQuery", "SELECT assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary, details FROM job_notifications WHERE notificationID = ?");
+		$sh->execute(array($notificationID));
+		if(!$res = $sh->fetch())
+        {
+            throw new Exception("Invalid notification id '$notificationID'");
+        }
+    	$notification = new stdClass();
+    	$notification->assignmentID = $res->assignmentID;
+		$notification->job = $res->job;
+		$notification->dateRan = $res->dateRan;
+		$notification->success = $res->success;
+		$notification->seen = $res->seen;
+		$notification->summary = $res->summary;
+		$notification->details = $res->details;
+        $notifications[] = $notification;
+        return $notification;
+	}
+	
+	function dismissNotification(/*NotificationID*/ $notificationID)
+	{
+		//$sh = $this->prepareQuery("assertNotificationQuery", "SELECT * FROM job_notifications WHERE notification = ?;");
+		
+		$sh = $this->prepareQuery("dismissNotificationQuery", "UPDATE job_notifications SET seen = 1 WHERE notificationID = ?;");
+		$sh->execute(array($notificationID));
 	}
 }

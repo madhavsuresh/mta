@@ -7,7 +7,10 @@ try
     if(array_key_exists("notificationID", $_GET))
     {
 		$notification = $dataMgr->getNotification($_GET["notificationID"]);
-		$content .= $notification->details;
+		if($notification->details)
+			$content .= $notification->details;
+		else
+			$content .= "There are no further details to report from this notification."; 
 	}
     render_page();
 }catch(Exception $e){

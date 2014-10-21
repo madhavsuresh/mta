@@ -612,6 +612,17 @@ class PDODataManager extends DataManager
         return $assignments;
 	}
 	
+	#Global Data Manager stuff
+	function getStudentsByAssignment(AssignmentID $assignmentID)
+    {
+        $sh = $this->prepareQuery("getStudentsByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE userType = 'student' && assignmentID = ? ORDER BY lastName, firstName;");
+        $sh->execute(array($assignmentID));
+        $students = array();
+        while($res = $sh->fetch())
+            $students[] = new UserID($res->userID);
+        return $students;
+    }
+	
 	function getMarkersByAssignment(AssignmentID $assignmentID)
     {
         $sh = $this->prepareQuery("getMarkersByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE (userType='instructor' || userType='marker') && assignmentID=?;");
@@ -649,6 +660,14 @@ class PDODataManager extends DataManager
 	{
 		$sh = $this->prepareQuery("isAutogradedAndAssignedQuery", "SELECT notificationID FROM job_notifications WHERE job = 'autogradeandassign' && success = 1 && assignmentID = ?;");
 		$sh->execute(array($assignmentID));
+		$res = $sh->fetch();
+		return $res != NULL;
+	}
+	
+	function isJobDone(AssignmentID $assignmentID, $job) 
+	{
+		$sh = $this->prepareQuery("independentsCopiedQuery", "SELECT notificationID FROM job_notifications WHERE success = 1 && assignmentID = ? && job = ?;");
+		$sh->execute(array($assignmentID, $job));
 		$res = $sh->fetch();
 		return $res != NULL;
 	}

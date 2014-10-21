@@ -6,7 +6,8 @@ try
 {
 	$globalDataMgr = new PDODataManager();
 	$recentPeerReviewAssignments = $globalDataMgr->getRecentPeerReviewAssignments();
-	require_once(MTA_ROOTPATH.'cronjobs/autogradeandassignmarkers.php');
+	require_once(MTA_ROOTPATH.'cronjobs/copyindependentsfromprevious.php');
+	require_once(MTA_ROOTPATH.'cronjobs/computeindependentsfromscores.php');
 }catch(Exception $e) {
 	
 }

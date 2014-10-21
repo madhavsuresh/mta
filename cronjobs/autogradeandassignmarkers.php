@@ -2,13 +2,10 @@
 require_once("peerreview/inc/calibrationutils.php");
 require_once("peerreview/inc/spotcheckutils.php");
 
-$html = "";
-
-$recentPeerReviewAssignments = $globalDataMgr->getRecentPeerReviewAssignments();
-
 foreach($recentPeerReviewAssignments as $assignmentID)
 {
 	try{
+		$html = "";
 		if($globalDataMgr->isAutogradedAndAssigned($assignmentID))
 			continue;
 		$assignment = $globalDataMgr->getAssignment($assignmentID);

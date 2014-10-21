@@ -560,6 +560,24 @@ class PDODataManager extends DataManager
         return $res[0];
 	}
 	
+	//copied from peerreview/inc/calibrationutils.php to accomodate cron job computindependentsfromscalibrations.php
+	function getWeightedAverage(UserID $userid, Assignment $assignment=NULL)
+	{	
+		$scores = $this->getCalibrationScores($userid);
+		
+		require_once("peerreview/inc/calibrationutils.php");
+		
+		if($scores)
+			$average = computeWeightedAverage($scores);
+		else 
+			$average = "--";
+	
+		if($assignment!=NULL)
+			$average = convertTo10pointScale($average, $assignment);
+	
+		return $average;
+	}
+	
 	function latestAssignmentWithFlaggedIndependents()
 	{
 		$this->latestAssignmentWithFlaggedIndependentsQuery->execute();
@@ -688,7 +706,7 @@ class PDODataManager extends DataManager
         {
         	$notification = new stdClass();
 			$notification->notificationID = $res->notificationID;
-        	$notification->assignmentID = $res->assignmentID;
+        	$notification->assignmentID = new AssignmentID($res->assignmentID);
 			$notification->job = $res->job;
 			$notification->dateRan = $res->dateRan;
 			$notification->success = $res->success;
@@ -708,7 +726,7 @@ class PDODataManager extends DataManager
             throw new Exception("Invalid notification id '$notificationID'");
         }
     	$notification = new stdClass();
-    	$notification->assignmentID = $res->assignmentID;
+    	$notification->assignmentID = new AssignmentID($res->assignmentID);
 		$notification->job = $res->job;
 		$notification->dateRan = $res->dateRan;
 		$notification->success = $res->success;

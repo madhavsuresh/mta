@@ -6,8 +6,11 @@ try
 {
 	$globalDataMgr = new PDODataManager();
 	$recentPeerReviewAssignments = $globalDataMgr->getRecentPeerReviewAssignments();
-	require_once(MTA_ROOTPATH.'cronjobs/copyindependentsfromprevious.php');
+	/*require_once(MTA_ROOTPATH.'cronjobs/copyindependentsfromprevious.php');
 	require_once(MTA_ROOTPATH.'cronjobs/computeindependentsfromscores.php');
+	require_once(MTA_ROOTPATH.'cronjobs/computeindependentsfromcalibrations.php');
+	require_once(MTA_ROOTPATH.'cronjobs/disqualifyindependentsfromscores.php');*/
+	require_once(MTA_ROOTPATH.'cronjobs/assignreviews.php');
 }catch(Exception $e) {
 	
 }

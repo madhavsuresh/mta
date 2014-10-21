@@ -4,7 +4,7 @@ require_once("peerreview/inc/common.php");
 foreach($recentPeerReviewAssignments as $assignmentID)
 {
 	try{
-		if($globalDataMgr->isJobDone($assignmentID, 'copyindependents'))
+		if($globalDataMgr->isJobDone($assignmentID, 'copyindependentsfromprevious'))
 			continue;
 		$html = "";
 		//Get all the assignments
@@ -23,7 +23,7 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 		$previousIndependents = $assignments[0]->getIndependentUsers();
 		$independents = array();
 		
-		$mode = "copy";
+		$mode = "copy";//maybe set in course configurations
 		
 		$html = "<table width='100%'>\n";
 		$html .= "<tr><td><h2>Student</h2></td><td><h2>Status</h2></td></tr>\n";
@@ -83,9 +83,9 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 		
 		$summary = "Ran in $mode mode: $addedIndependents independents added and $removedIndependents independents removed";
 
-		$globalDataMgr->createNotification($assignmentID, 'copyindependents', 1, $summary, $html);
+		$globalDataMgr->createNotification($assignmentID, 'copyindependentsfromprevious', 1, $summary, $html);
 	}catch(Exception $exception){
-		$globalDataMgr->createNotification($assignmentID, 'copyindependents', 0, cleanString($exception->getMessage()), "");
+		$globalDataMgr->createNotification($assignmentID, 'copyindependentsfromprevious', 0, cleanString($exception->getMessage()), "");
 	}
 }
 ?>

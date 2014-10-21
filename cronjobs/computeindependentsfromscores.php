@@ -13,7 +13,7 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 		
 		$windowSize = 4;//$windowSize = require_from_post("windowsize");
 		$independentThreshold = 70;//$independentThreshold = require_from_post("threshold");
-		$keep = true;//set in course configurations
+		$keep = true;//maybe set in course configurations
 		
 		$assignments = $currentAssignment->getAssignmentsBefore($windowSize);
 		$userNameMap = $globalDataMgr->getUserDisplayMapByAssignment($assignmentID);

@@ -17,11 +17,11 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 class AssignReviewsPeerReviewCronScript
 {
     function executeAndGetResult(AssignmentID $assignmentID, PDODataManager $globalDataMgr)
-    {
+    {	
         $currentAssignment = $globalDataMgr->getAssignment($assignmentID);
 
         $windowSize = 4;//$windowSize = require_from_post("windowsize");
-        $this->numReviews = 1;//$this->numReviews = require_from_post("numreviews");
+        $this->numReviews = 2;//$this->numReviews = require_from_post("numreviews");
         $this->scoreNoise = 0.01;//$this->scoreNoise = require_from_post("scorenoise");
         $this->maxAttempts = 20;//$this->maxAttempts = require_from_post("maxattempts");
         $this->seed = $currentAssignment->submissionStartDate;//$this->seed = require_from_post("seed");

@@ -83,9 +83,6 @@ class PDODataManager extends DataManager
        	$this->latestAssignmentWithFlaggedIndependentsQuery = $this->db->prepare("SELECT peer_review_assignment.assignmentID FROM peer_review_assignment, peer_review_assignment_independent WHERE peer_review_assignment.assignmentID = peer_review_assignment_independent.assignmentID ORDER BY peer_review_assignment.calibrationStopDate DESC LIMIT 10");
         
 		$this->getMarkingLoadQuery = $this->db->prepare("SELECT markingLoad FROM users WHERE userID=?");
-		
-		$this->getRecentPeerReviewAssignmentsQuery = $this->db->prepare("SELECT assignmentID FROM peer_review_assignment WHERE reviewStopDate > FROM_UNIXTIME(?) && reviewStopDate < FROM_UNIXTIME(?);");
-		
         //Now we can set up all the assignment data managers
         parent::__construct();
     }
@@ -618,12 +615,26 @@ class PDODataManager extends DataManager
 			return NULL;
 	}
 	
-	function getRecentPeerReviewAssignments()
+	function getReviewStoppedAssignments()
 	{
 		global $NOW;
-		$this->getRecentPeerReviewAssignmentsQuery->execute(array($NOW - (20*60), $NOW));
+		$sh = $this->prepareQuery("getReviewStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE reviewStopDate > FROM_UNIXTIME(?) && reviewStopDate < FROM_UNIXTIME(?);");
+        $sh->execute(array($NOW - (20*60), $NOW));
         $assignments = array();
-        while($res = $this->getRecentPeerReviewAssignmentsQuery->fetch())
+        while($res = $sh->fetch())
+        {
+            $assignments[] = new AssignmentID($res->assignmentID);
+        }
+        return $assignments;
+	}
+	
+	function getSubmissionStoppedAssignments()
+	{
+		global $NOW;
+		$sh = $this->prepareQuery("getSubmissionStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE submissionStopDate > FROM_UNIXTIME(?) && submissionStopDate < FROM_UNIXTIME(?);");
+        $sh->execute(array($NOW - (20*60), $NOW));
+        $assignments = array();
+        while($res = $sh->fetch())
         {
             $assignments[] = new AssignmentID($res->assignmentID);
         }

@@ -83,9 +83,6 @@ class PDODataManager extends DataManager
        	$this->latestAssignmentWithFlaggedIndependentsQuery = $this->db->prepare("SELECT peer_review_assignment.assignmentID FROM peer_review_assignment, peer_review_assignment_independent WHERE peer_review_assignment.assignmentID = peer_review_assignment_independent.assignmentID ORDER BY peer_review_assignment.calibrationStopDate DESC LIMIT 10");
         
 		$this->getMarkingLoadQuery = $this->db->prepare("SELECT markingLoad FROM users WHERE userID=?");
-		
-		$this->getRecentPeerReviewAssignmentsQuery = $this->db->prepare("SELECT assignmentID FROM peer_review_assignment WHERE reviewStopDate > FROM_UNIXTIME(?) && reviewStopDate < FROM_UNIXTIME(?);");
-		
         //Now we can set up all the assignment data managers
         parent::__construct();
     }
@@ -560,6 +557,24 @@ class PDODataManager extends DataManager
         return $res[0];
 	}
 	
+	//copied from peerreview/inc/calibrationutils.php to accomodate cron job computindependentsfromscalibrations.php
+	function getWeightedAverage(UserID $userid, Assignment $assignment=NULL)
+	{	
+		$scores = $this->getCalibrationScores($userid);
+		
+		require_once("peerreview/inc/calibrationutils.php");
+		
+		if($scores)
+			$average = computeWeightedAverage($scores);
+		else 
+			$average = "--";
+	
+		if($assignment!=NULL)
+			$average = convertTo10pointScale($average, $assignment);
+	
+		return $average;
+	}
+	
 	function latestAssignmentWithFlaggedIndependents()
 	{
 		$this->latestAssignmentWithFlaggedIndependentsQuery->execute();
@@ -600,17 +615,42 @@ class PDODataManager extends DataManager
 			return NULL;
 	}
 	
-	function getRecentPeerReviewAssignments()
+	function getReviewStoppedAssignments()
 	{
 		global $NOW;
-		$this->getRecentPeerReviewAssignmentsQuery->execute(array($NOW - (20*60), $NOW));
+		$sh = $this->prepareQuery("getReviewStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE reviewStopDate > FROM_UNIXTIME(?) && reviewStopDate < FROM_UNIXTIME(?);");
+        $sh->execute(array($NOW - (20*60), $NOW));
         $assignments = array();
-        while($res = $this->getRecentPeerReviewAssignmentsQuery->fetch())
+        while($res = $sh->fetch())
         {
             $assignments[] = new AssignmentID($res->assignmentID);
         }
         return $assignments;
 	}
+	
+	function getSubmissionStoppedAssignments()
+	{
+		global $NOW;
+		$sh = $this->prepareQuery("getSubmissionStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE submissionStopDate > FROM_UNIXTIME(?) && submissionStopDate < FROM_UNIXTIME(?);");
+        $sh->execute(array($NOW - (20*60), $NOW));
+        $assignments = array();
+        while($res = $sh->fetch())
+        {
+            $assignments[] = new AssignmentID($res->assignmentID);
+        }
+        return $assignments;
+	}
+	
+	#Global Data Manager stuff
+	function getStudentsByAssignment(AssignmentID $assignmentID)
+    {
+        $sh = $this->prepareQuery("getStudentsByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE userType = 'student' && assignmentID = ? ORDER BY lastName, firstName;");
+        $sh->execute(array($assignmentID));
+        $students = array();
+        while($res = $sh->fetch())
+            $students[] = new UserID($res->userID);
+        return $students;
+    }
 	
 	function getMarkersByAssignment(AssignmentID $assignmentID)
     {
@@ -653,6 +693,14 @@ class PDODataManager extends DataManager
 		return $res != NULL;
 	}
 	
+	function isJobDone(AssignmentID $assignmentID, $job) 
+	{
+		$sh = $this->prepareQuery("independentsCopiedQuery", "SELECT notificationID FROM job_notifications WHERE success = 1 && assignmentID = ? && job = ?;");
+		$sh->execute(array($assignmentID, $job));
+		$res = $sh->fetch();
+		return $res != NULL;
+	}
+	
 	function createNotification(AssignmentID $assignmentID, $job, $success, $summary, $details)
 	{
 		global $NOW;
@@ -669,7 +717,7 @@ class PDODataManager extends DataManager
         {
         	$notification = new stdClass();
 			$notification->notificationID = $res->notificationID;
-        	$notification->assignmentID = $res->assignmentID;
+        	$notification->assignmentID = new AssignmentID($res->assignmentID);
 			$notification->job = $res->job;
 			$notification->dateRan = $res->dateRan;
 			$notification->success = $res->success;
@@ -689,7 +737,7 @@ class PDODataManager extends DataManager
             throw new Exception("Invalid notification id '$notificationID'");
         }
     	$notification = new stdClass();
-    	$notification->assignmentID = $res->assignmentID;
+    	$notification->assignmentID = new AssignmentID($res->assignmentID);
 		$notification->job = $res->job;
 		$notification->dateRan = $res->dateRan;
 		$notification->success = $res->success;

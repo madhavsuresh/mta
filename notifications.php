@@ -1,19 +1,19 @@
 <?php
 
-$notifications = $dataMgr->getNotifications();
+$notifications = $dataMgr->getNewNotifications();
 
 $jobnames = array("autogradeandassign"=>"Autograde and Assign", "copyindependentsfromprevious"=>"Copy independents from previous", "computeindependentsfromscores"=>"Compute independents from scores", "computeindependentsfromcalibrations"=>"Compute independents from calibrations", "disqualifyindependentsfromscores"=>"Disqualify independents from scores", "assignreviews"=>"Assign reviews");
 
+$content .= "<a target='_blank' href='".get_redirect_url("peerreview/oldnotifications.php")."'>Old Notifications</a>";
+
 foreach($notifications as $notification)
 {
-	if($notification->seen)
-		continue;
 	$bg = ($notification->success) ? '#ABFFB5' : '#F6CED8';
 	$age = ($NOW - $notification->dateRan);
 	$unit = "second";
 	if($age > 82800)
 	{
-		$age = round($age/82800);
+		$age = round($age/86400);
 		$unit = "day";	
 	}
 	elseif($age > 6000)

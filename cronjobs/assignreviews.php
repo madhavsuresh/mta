@@ -34,7 +34,10 @@ class AssignReviewsPeerReviewCronScript
 		$authors = $currentAssignment->getAuthorSubmissionMap();
         $authors_ = $currentAssignment->getAuthorSubmissionMap_();
         $assignmentIndependent = $currentAssignment->getIndependentUsers();
-        
+        	
+		if($this->numCoverCalibrations >= sizeof($currentAssignment->getCalibrationSubmissionIDs()))//Check that there are at least as many calibration submissions as covert reviews to be assigned
+			throw new Exception("There are more covert calibrations requested for each independent student than there are available calibration submissions");
+
         //First delete old covert calibration reviews
 		foreach($currentAssignment->getStudentToCovertReviewsMap() as $student => $covertReviews)
 		{
@@ -63,7 +66,7 @@ class AssignReviewsPeerReviewCronScript
         # If the independent pool is too small, we move all of its users into the supervised pool.
         # If the supervised pool is too small, then we move just enough independent users into the supervised pool.
         if((count($independents) <= $this->numReviews && count($independents) > 0) ||
-           (count($supervised) <= $this->numReviews && count($supervised) > 0))
+           (count($supervised) <= ($this->numReviews + $this->numCovertCalibrations) && count($supervised) > 0))
         {
           $numIndep = count($independents);
           $keys = array_keys($independents);
@@ -75,7 +78,7 @@ class AssignReviewsPeerReviewCronScript
             unset($independents[$author]);
 
             if((count($independents) == 0 || count($independents) > $this->numReviews) &&
-               (count($supervised) == 0 || count($supervised) > $this->numReviews)) {
+               (count($supervised) == 0 || count($supervised) > ($this->numReviews + $this->numCovertCalibrations))) {
               break;
             }
           }
@@ -85,10 +88,18 @@ class AssignReviewsPeerReviewCronScript
         $independentAssignment = $this->getReviewAssignment($independents, $this->numReviews);
         $supervisedAssignment = $this->getReviewAssignment($supervised, $this->numReviews + $this->numCovertCalibrations);
 		
+		//For reporting which how many independents got x covert reviews
+		$covertReviewsHistogram = array();
+		//For reporting which how many independents got x extra peer reviews
+		$extraPeerReviewsHistogram = array();
+		
 		$covertAssignment = array();
-		for($j = 0; $j < $this->numCovertCalibrations; $j++)
+		foreach($independents as $independent => $_)
 		{
-			foreach($independents as $independent => $_)
+			$j = 0;
+			$cr = 0;
+			$epr = 0;
+			while($j < $this->numCovertCalibrations)
 			{
 				$newSubmissionID = $currentAssignment->getNewCalibrationSubmissionForUser(new UserID($independent));
 				if($newSubmissionID)
@@ -98,6 +109,7 @@ class AssignReviewsPeerReviewCronScript
 					if(!array_key_exists($authorID->id, $covertAssignment))
 						$covertAssignment[$authorID->id] = array();
 					$covertAssignment[$authorID->id][] = $independent;
+					$cr++;
 				}
 				else
 				{
@@ -114,6 +126,7 @@ class AssignReviewsPeerReviewCronScript
 							if(!in_array($independent, $independentAssignment[$candidate]) && $candidate != $independent)
 							{
 								$independentAssignment[$candidate][] = $independent;
+								$epr++;
 								break;
 							}
 						}
@@ -121,7 +134,10 @@ class AssignReviewsPeerReviewCronScript
 					else
 						throw new Exception("Some independent student(s) has exhausted all calibration reviews and thus cannot be assigned a covert peer review.");
 				}
+				$j++;
 			}
+			$covertReviewsHistogram[$cr]++;
+			$extraPeerReviewsHistogram[$epr]++;
 		}
 		
         //Build the HTML for this
@@ -140,7 +156,7 @@ class AssignReviewsPeerReviewCronScript
 		
         $currentAssignment->saveReviewerAssignment($reviewerAssignment);
 		
-		if($this->numCovertCalibrations > 0)
+		if($this->numCovertCalibrations > 0 && sizeof($independents) > 0)
 		{
         	$studentToCovertReviewsMap = $currentAssignment->getStudentToCovertReviewsMap();
 			
@@ -159,10 +175,34 @@ class AssignReviewsPeerReviewCronScript
 			$html .= "</table>";
 		}
 		
-		$summary = "test"; //report topped up situations too
-        		
+		//For summary
+		$summary = "For ".sizeof($independents)." independents: ".sizeof($independents)." have ".$this->numReviews." peer reviews, ";	
+		if($this->numCovertCalibrations > 0 && sizeof($independents) > 0)
+		{	
+			$k = 0;
+			while($k <= $this->numCovertCalibrations)
+			{
+				if($covertReviewsHistogram[$k] > 0)
+				{
+					$summary .= $covertReviewsHistogram[$k] . " have $k covert reviews, ";
+				}
+				$k++;
+			}
+			$k = 0;
+			while($k <= $this->numCovertCalibrations)
+			{
+				if($extraPeerReviewsHistogram[$k] > 0)
+					$summary .= $extraPeerReviewsHistogram[$k] . " have $k extra peer reviews, ";
+				$k++;
+			}
+		}
+		$summary .= "<br>For " . sizeof($supervised) . " supervised: " . sizeof($supervised) . " have " . ($this->numReviews + $this->numCovertCalibrations) . " peer reviews";
+		
+		print_r($summary);
+		
 		$globalDataMgr->createNotification($assignmentID, 'assignreviews', 1, $summary, $html);
     }
+
 
     private function getTableForAssignment($assignment, $scoreMap)
     {

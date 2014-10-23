@@ -1,19 +1,19 @@
 <?php
 
-$notifications = $dataMgr->getNotifications();
+$notifications = $dataMgr->getNewNotifications();
 
 $jobnames = array("autogradeandassign"=>"Autograde and Assign", "copyindependentsfromprevious"=>"Copy independents from previous", "computeindependentsfromscores"=>"Compute independents from scores", "computeindependentsfromcalibrations"=>"Compute independents from calibrations", "disqualifyindependentsfromscores"=>"Disqualify independents from scores", "assignreviews"=>"Assign reviews");
 
+$content .= "<a target='_blank' href='".get_redirect_url("oldnotifications.php")."'>Old Notifications</a>";
+
 foreach($notifications as $notification)
 {
-	if($notification->seen)
-		continue;
 	$bg = ($notification->success) ? '#ABFFB5' : '#F6CED8';
 	$age = ($NOW - $notification->dateRan);
 	$unit = "second";
 	if($age > 82800)
 	{
-		$age = round($age/82800);
+		$age = round($age/86400);
 		$unit = "day";	
 	}
 	elseif($age > 6000)
@@ -33,7 +33,7 @@ foreach($notifications as $notification)
     	<td class='column3'><table width='100%'><td>".$notification->summary."</td> 
     	<td><a target='_blank' href='".get_redirect_url("notificationdetails.php?notificationID=$notification->notificationID")."'><button>Details</button></a></td></table></td>
     	<td class='column4'> $age $unit$s ago</td></tr></table>\n";
-    	$content .= "<form class='dismissform' action='dismissnotification.php' method='post'><input type='hidden' name='notificationID' value='$notification->notificationID'></input><input type='submit' value='Dismiss'></input></form>";
+    	$content .= "<form class='dismissform' action='dismissnotification.php' method='post'><input type='hidden' name='notificationID' value='$notification->notificationID'><input type='hidden' name='dismiss' value='dismiss'></input><input type='submit' value='Dismiss'></input></form>";
 	$content .= "</div>";
 }
 $content .= "<script type='text/javascript'>

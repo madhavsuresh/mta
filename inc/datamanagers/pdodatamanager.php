@@ -708,9 +708,29 @@ class PDODataManager extends DataManager
 		$sh->execute(array("assignmentID"=>$assignmentID, "job"=>$job, "dateRan"=>$NOW, "success"=>$success, "summary"=>$summary, "details"=>$details));	
 	}
 	
-	function getNotifications()
+	function getNewNotifications()
 	{
-		$sh = $this->prepareQuery("getNotificationsQuery", "SELECT notificationID, assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary FROM job_notifications WHERE courseID = ? && seen = 0 ORDER BY dateRan DESC;");
+		$sh = $this->prepareQuery("getNewNotificationsQuery", "SELECT notificationID, assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary FROM job_notifications WHERE courseID = ? && seen = 0 ORDER BY dateRan DESC;");
+		$sh->execute(array($this->courseID));
+		$notifications = array();
+		while($res = $sh->fetch())
+        {
+        	$notification = new stdClass();
+			$notification->notificationID = $res->notificationID;
+        	$notification->assignmentID = new AssignmentID($res->assignmentID);
+			$notification->job = $res->job;
+			$notification->dateRan = $res->dateRan;
+			$notification->success = $res->success;
+			$notification->seen = $res->seen;
+			$notification->summary = $res->summary;
+            $notifications[] = $notification;
+        }
+        return $notifications;
+	}
+	
+	function getAllNotifications()
+	{
+		$sh = $this->prepareQuery("getAllNotificationsQuery", "SELECT notificationID, assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary FROM job_notifications WHERE courseID = ? ORDER BY dateRan DESC;");
 		$sh->execute(array($this->courseID));
 		$notifications = array();
 		while($res = $sh->fetch())
@@ -753,6 +773,14 @@ class PDODataManager extends DataManager
 		//$sh = $this->prepareQuery("assertNotificationQuery", "SELECT * FROM job_notifications WHERE notification = ?;");
 		
 		$sh = $this->prepareQuery("dismissNotificationQuery", "UPDATE job_notifications SET seen = 1 WHERE notificationID = ?;");
+		$sh->execute(array($notificationID));
+	}
+	
+	function renewNotification(/*NotificationID*/ $notificationID)
+	{
+		//$sh = $this->prepareQuery("assertNotificationQuery", "SELECT * FROM job_notifications WHERE notification = ?;");
+		
+		$sh = $this->prepareQuery("dismissNotificationQuery", "UPDATE job_notifications SET seen = 0 WHERE notificationID = ?;");
 		$sh->execute(array($notificationID));
 	}
 }

@@ -775,4 +775,12 @@ class PDODataManager extends DataManager
 		$sh = $this->prepareQuery("dismissNotificationQuery", "UPDATE job_notifications SET seen = 1 WHERE notificationID = ?;");
 		$sh->execute(array($notificationID));
 	}
+	
+	function renewNotification(/*NotificationID*/ $notificationID)
+	{
+		//$sh = $this->prepareQuery("assertNotificationQuery", "SELECT * FROM job_notifications WHERE notification = ?;");
+		
+		$sh = $this->prepareQuery("dismissNotificationQuery", "UPDATE job_notifications SET seen = 0 WHERE notificationID = ?;");
+		$sh->execute(array($notificationID));
+	}
 }

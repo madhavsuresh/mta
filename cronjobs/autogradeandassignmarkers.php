@@ -11,15 +11,15 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 		$assignment = $globalDataMgr->getAssignment($assignmentID);
 		
 		$minReviews = 1;//$minReviews = intval(require_from_post("minReviews"));
-		$highSpotCheckThreshold = 80;//$highSpotCheckThreshold = floatval(require_from_post("spotCheckThreshold"))*0.01;
+		$highMarkThreshold = 80;//$highMarkThreshold = floatval(require_from_post("highMarkThreshold"))*0.01;
 		mt_srand($assignment->submissionStartDate);//mt_srand(require_from_post("seed"));
 		$randomSpotCheckProb = 0.25;//$randomSpotCheckProb = floatval(require_from_post("spotCheckProb"));
 	
 		$userNameMap = $globalDataMgr->getUserDisplayMapByAssignment($assignmentID);
 		$independents = $assignment->getIndependentUsers();
 		$highMarkBias = 2;//$highMarkBias = floatval(require_from_post("highMarkBias"));
-		$calibThreshold = 0.7;//$calibThreshold = floatval(require_from_post("calibThreshold"));
-		$calibBias = 1.5;//floatval(require_from_post("calibBias"));
+		$calibrationThreshold = 0.7;//$calibrationThreshold = floatval(require_from_post("calibrationThreshold"));
+		$calibrationBias = 1.5;//$calibrationBias = floatval(require_from_post("calibrationBias"));
 		
 		$markers = $globalDataMgr->getMarkersByAssignment($assignmentID);
 		mt_shuffle($markers);
@@ -89,9 +89,9 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 		$studentToCovertScoresMap = $assignment->getStudentToCovertScoresMap();
 		
 		$output .= "<h3>High Mark Threshold: $highSpotCheckThreshold</h3>";
-		$output .= "<h3>Calibration Threshold: $calibThreshold</h3>";
+		$output .= "<h3>Calibration Threshold: $calibrationThreshold</h3>";
 		$output .= "<h3>High Mark Bias: $highMarkBias</h3>";
-		$output .= "<h3>Calibration Bias: $calibBias</h3>";
+		$output .= "<h3>Calibration Bias: $calibrationBias</h3>";
 		$output .= "<table><tr><td>Name</td><td>Initial Weight</td><td>Median Score</td><td>Calibration Averages</td><td>Covert Scores</td><td>Final Weight</td><tr>";
 		
 		foreach($submissions as $authorID => $submissionID)
@@ -143,10 +143,10 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 					$output .= "<td>".(1.0*$medScore/$assignment->maxSubmissionScore)."</td><td><ul>";
 				foreach($reviews as $review)
 				{
-					if(getWeightedAverage($review->reviewerID, $assignment) < $calibThreshold || getWeightedAverage($review->reviewerID, $assignment) == "--")
+					if(getWeightedAverage($review->reviewerID, $assignment) < $calibrationThreshold || getWeightedAverage($review->reviewerID, $assignment) == "--")
 					{
-						$independentSub->weight *= $calibBias;
-						$finalweight .= "*".$calibBias;
+						$independentSub->weight *= $calibrationBias;
+						$finalweight .= "*".$calibrationBias;
 						$output .= "<li>".$globalDataMgr->getUserDisplayName($review->reviewerID)." - <span style='color:red'>".getWeightedAverage($review->reviewerID, $assignment)."</span></li>";
 					}
 					else
@@ -157,9 +157,9 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 				{
 					$sum = array_reduce($studentToCovertScoresMap[$review->reviewerID->id], function($res, $item) use ($assignment){if($item < 0) return $res + 0; return $res + convertTo10pointScale($item, $assignment);});
 					$covertaverage = $sum / sizeof($studentToCovertScoresMap[$review->reviewerID->id]);
-					if($covertaverage < $calibThreshold)
+					if($covertaverage < $calibrationThreshold)
 					{
-						$covertBias = (1 + ($calibThreshold - $covertaverage));
+						$covertBias = (1 + ($calibrationThreshold - $covertaverage));
 						$independentSub->weight *= $covertBias;
 						$finalweight .= "*".$covertBias;
 						$output .= "<li>".$globalDataMgr->getUserDisplayName($review->reviewerID)." - <span style='color:red'>".$covertaverage."</span></li>";

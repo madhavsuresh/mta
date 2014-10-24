@@ -8,10 +8,12 @@ CREATE TABLE IF NOT EXISTS `course_configuration` (
   `exhaustedCondition` enum('extrapeerreview','error') NOT NULL,
   `minReviews` int(11) NOT NULL, 
   `spotCheckProb` float NOT NULL, 
-  `spotCheckThreshold` float NOT NULL, 
+  `highMarkThreshold` float NOT NULL, 
   `highMarkBias` float NOT NULL, 
-  `calibThreshold` float NOT NULL, 
-  `calibBias` float NOT NULL,
+  `calibrationThreshold` float NOT NULL, 
+  `calibrationBias` float NOT NULL,
+  `disqualifyWindowSize` int(11) NOT NULL,
+  `disqualifyThreshold` float NOT NULL,
   PRIMARY KEY (`courseID`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
 

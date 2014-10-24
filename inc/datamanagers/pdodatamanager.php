@@ -617,9 +617,9 @@ class PDODataManager extends DataManager
 	
 	function saveCourseConfiguration(CourseConfiguration $configuration) 
 	{
-		$sh = $this->prepareQuery("saveCourseConfigurationQuery", "INSERT INTO course_configuration (courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, spotCheckThreshold, highMarkBias, calibThreshold, calibBias) 
-																							VALUES (:courseID, :windowSize, :numReviews, :scoreNoise, :maxAttempts, :numCovertCalibrations, :exhaustedCondition, :minReviews, :spotCheckProb, :spotCheckThreshold, :highMarkBias, :calibThreshold, :calibBias) 
-																		   ON DUPLICATE KEY UPDATE courseID=:courseID , windowSize=:windowSize , numReviews=:numReviews , scoreNoise=:scoreNoise , maxAttempts=:maxAttempts , numCovertCalibrations=:numCovertCalibrations , exhaustedCondition=:exhaustedCondition, minReviews=:minReviews, spotCheckProb=:spotCheckProb, spotCheckThreshold=:spotCheckThreshold, highMarkBias=:highMarkBias, calibThreshold=:calibThreshold, calibBias=:calibBias;");
+		$sh = $this->prepareQuery("saveCourseConfigurationQuery", "INSERT INTO course_configuration (courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, highMarkThreshold, highMarkBias, calibrationThreshold, calibrationBias, disqualifyWindowSize, disqualifyThreshold) 
+																							VALUES (:courseID, :windowSize, :numReviews, :scoreNoise, :maxAttempts, :numCovertCalibrations, :exhaustedCondition, :minReviews, :spotCheckProb, :highMarkThreshold, :highMarkBias, :calibrationThreshold, :calibrationBias, :disqualifyWindowSize, :disqualifyThreshold) 
+																		   ON DUPLICATE KEY UPDATE courseID=:courseID , windowSize=:windowSize , numReviews=:numReviews , scoreNoise=:scoreNoise , maxAttempts=:maxAttempts , numCovertCalibrations=:numCovertCalibrations , exhaustedCondition=:exhaustedCondition, minReviews=:minReviews, spotCheckProb=:spotCheckProb, highMarkThreshold=:highMarkThreshold, highMarkBias=:highMarkBias, calibrationThreshold=:calibrationThreshold, calibrationBias=:calibrationBias, disqualifyWindowSize=:disqualifyWindowSize, disqualifyThreshold=:disqualifyThreshold;");
 		$array = array(
 			"courseID"=>$this->courseID, 
 			"windowSize"=>$configuration->windowSize, 
@@ -630,21 +630,33 @@ class PDODataManager extends DataManager
 			"exhaustedCondition"=>$configuration->exhaustedCondition,
 			"minReviews"=>$configuration->minReviews, 
 			"spotCheckProb"=>$configuration->spotCheckProb, 
-			"spotCheckThreshold"=>$configuration->spotCheckThreshold, 
+			"highMarkThreshold"=>$configuration->highMarkThreshold, 
 			"highMarkBias"=>$configuration->highMarkBias, 
-			"calibThreshold"=>$configuration->calibThreshold, 
-			"calibBias"=>$configuration->calibBias
-		);
+			"calibrationThreshold"=>$configuration->calibrationThreshold, 
+			"calibrationBias"=>$configuration->calibrationBias,
+			"disqualifyWindowSize"=>$configuration->disqualifyWindowSize,
+			"disqualifyThreshold"=>$configuration->disqualifyThreshold
+			);
 		$sh->execute($array);
 	}
 	
-	function getCourseConfiguration(AssignmentID $assignmentID) 
+	function getCourseConfiguration(AssignmentID $assignmentID=NULL) 
 	{
-		$sh = $this->prepareQuery("getCourseConfigurationQuery", "SELECT courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, spotCheckThreshold, highMarkBias, calibThreshold, calibBias from course_configuration WHERE courseID = (SELECT courseID FROM assignments WHERE assignmentID = ?);");
-		$sh->execute(array($assignmentID));
-		$res = $sh->fetch();
+		if($assignmentID)
+		{
+			$sh = $this->prepareQuery("getCourseConfigurationQuery", "SELECT courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, highMarkThreshold, highMarkBias, calibrationThreshold, calibrationBias, disqualifyWindowSize, disqualifyThreshold from course_configuration WHERE courseID = (SELECT courseID FROM assignments WHERE assignmentID = ?);");
+			$sh->execute(array($assignmentID));
+		}
+		else
+		{
+			$sh = $this->prepareQuery("getCourseConfigurationQuery", "SELECT courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, highMarkThreshold, highMarkBias, calibrationThreshold, calibrationBias, disqualifyWindowSize, disqualifyThreshold from course_configuration WHERE courseID = ?;");
+			$sh->execute(array($this->courseID));
+		}
 		$configuration = new CourseConfiguration();
-		
+		$res = $sh->fetch();
+		if(!$res)
+			throw new Exception('The course of assignment $assignmentID has no course configuration set');
+
 		$configuration->windowSize = $res->windowSize;
 		$configuration->numReviews = $res->numReviews;
 		$configuration->scoreNoise = $res->scoreNoise;
@@ -654,13 +666,17 @@ class PDODataManager extends DataManager
 		
 		$configuration->minReviews = $res->minReviews;
 		$configuration->spotCheckProb = $res->spotCheckProb;
-		$configuration->spotCheckThreshold = $res->spotCheckThreshold;
+		$configuration->highMarkThreshold = $res->highMarkThreshold;
 		$configuration->highMarkBias = $res->highMarkBias;
-		$configuration->calibThreshold = $res->calibThreshold;
-		$configuration->calibBias = $res->calibBias;
+		$configuration->calibrationThreshold = $res->calibrationThreshold;
+		$configuration->calibrationBias = $res->calibrationBias;
+		
+		$configuration->disqualifyWindowSize = $res->disqualifyWindowSize;
+		$configuration->disqualifyThreshold = $res->disqualifyThreshold;
 		
 		return $configuration;
 	}
+
 	/*
 	 * Global Data Manager stuff for cronjobs
 	 * 						    			*/

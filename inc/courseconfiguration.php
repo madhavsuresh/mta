@@ -11,27 +11,33 @@ class CourseConfiguration
 	
 	public $minReviews;
 	public $spotCheckProb;
-	public $spotCheckThreshold;
+	public $highMarkThreshold;
 	public $highMarkBias;
-	public $calibThreshold;
-	public $calibBias;
+	public $calibrationThreshold;
+	public $calibrationBias;
+	
+	public $disqualifyWindowSize;
+	public $disqualifyThreshold;
 	
 	function __construct()
     {
-    	$courseID = $dataMgr->courseID;
-		$windowSize = 0;
-		$numReviews = 0;
-		$scoreNoise = 0;
-		$maxAttempts = 0;
-		$numCovertCalibrations = 0;
-		$exhaustedCondition = "";
+		$this->courseID = $dataMgr->courseID;
+		$this->windowSize = 4;
+		$this->numReviews = 3;
+		$this->scoreNoise = 0.01;
+		$this->maxAttempts = 20;
+		$this->numCovertCalibrations = 0;
+		$this->exhaustedCondition = "extrapeerreview";
 		
-		$minReviews= 0;
-		$spotCheckProb= 0;
-		$spotCheckThreshold= 0;
-		$highMarkBias= 0;
-		$calibThreshold= 0;
-		$calibBias= 0;
+		$this->minReviews = 3;
+		$this->spotCheckProb = 0.25;
+		$this->highMarkThreshold = 80;
+		$this->highMarkBias = 2;
+		$this->calibrationThreshold = 75;
+		$this->calibrationBias = 1.5;
+		
+		$this->disqualifyWindowSize = 4;
+		$this->disqualifyThreshold = 80;
 	}
 }
 

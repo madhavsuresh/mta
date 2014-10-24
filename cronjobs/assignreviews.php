@@ -19,18 +19,21 @@ class AssignReviewsPeerReviewCronScript
     function executeAndGetResult(AssignmentID $assignmentID, PDODataManager $globalDataMgr)
     {	
         $currentAssignment = $globalDataMgr->getAssignment($assignmentID);
-		$configuration = $globalDataMgr->getCourseConfiguration($assignmentID);
+		
+		try{
+			$configuration = $globalDataMgr->getCourseConfiguration($assignmentID);
+		} catch(Exception $e){
+			return;	
+		}
 		
         $windowSize = $configuration->windowSize;//$windowSize = require_from_post("windowsize");
         if($configuration->numReviews < 0)
 		{
 			$this->numReviews = $currentAssignment->defaultNumberOfReviews;
-			print_r("THIS NUM REVIEWS IS ".$this->numReviews);
 		}
 		else
 		{
         	$this->numReviews = $configuration->numReviews;//$this->numReviews = require_from_post("numreviews");
-        	print_r("THIS NUMMMM REVIEWS IS ".$this->numReviews);
 		}
         $this->scoreNoise = $configuration->scoreNoise;//$this->scoreNoise = require_from_post("scorenoise");
         $this->maxAttempts = $configuration->maxAttempts;//$this->maxAttempts = require_from_post("maxattempts");
@@ -98,9 +101,9 @@ class AssignReviewsPeerReviewCronScript
         $independentAssignment = $this->getReviewAssignment($independents, $this->numReviews);
         $supervisedAssignment = $this->getReviewAssignment($supervised, $this->numReviews + $this->numCovertCalibrations);
 		
-		//For reporting which how many independents got x covert reviews
+		//For reporting how many independents got x covert reviews
 		$covertReviewsHistogram = array();
-		//For reporting which how many independents got x extra peer reviews
+		//For reporting how many independents got x extra peer reviews
 		$extraPeerReviewsHistogram = array();
 		
 		$covertAssignment = array();

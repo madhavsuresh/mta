@@ -11,8 +11,9 @@ foreach($recentPeerReviewAssignments as $assignmentID)
 		$assignmentHeaders = $globalDataMgr->getAssignmentHeaders();
 		
 		$currentAssignment = $globalDataMgr->getAssignment($assignmentID);
+		$configuration = $globalDataMgr->getAssignment($assignmentID);
 		
-		$windowSize = 4;//$windowSize = require_from_post("windowsize");
+		$windowSize = $configuration->disqualifyWindowSize;//$windowSize = require_from_post("windowsize");
 		$independentThreshold = 70;//$independentThreshold = floatval(require_from_post("threshold"));
 		
 		$assignments = $currentAssignment->getAssignmentsBefore($windowSize);

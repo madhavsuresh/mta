@@ -17,6 +17,7 @@ require_once(MTA_ROOTPATH.'inc/ids.php');
 require_once(MTA_ROOTPATH.'inc/authmanager.php');
 require_once(MTA_ROOTPATH.'inc/datamanager.php');
 require_once(MTA_ROOTPATH.'inc/htmlpurifier/HTMLPurifier.auto.php');
+require_once(MTA_ROOTPATH.'inc/courseconfiguration.php');
 
 //Load the config
 require_once(MTA_ROOTPATH.'config.php');

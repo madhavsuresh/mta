@@ -4,7 +4,7 @@ $notifications = $dataMgr->getNewNotifications();
 
 $jobnames = array("autogradeandassign"=>"Autograde and Assign", "copyindependentsfromprevious"=>"Copy independents from previous", "computeindependentsfromscores"=>"Compute independents from scores", "computeindependentsfromcalibrations"=>"Compute independents from calibrations", "disqualifyindependentsfromscores"=>"Disqualify independents from scores", "assignreviews"=>"Assign reviews");
 
-$content .= "<a target='_blank' href='".get_redirect_url("oldnotifications.php")."'>Old Notifications</a>";
+$content .= "<a target='_blank' href='".get_redirect_url("allnotifications.php")."'>All Notifications</a>";
 
 foreach($notifications as $notification)
 {

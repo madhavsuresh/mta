@@ -615,6 +615,56 @@ class PDODataManager extends DataManager
 			return NULL;
 	}
 	
+	function saveCourseConfiguration(CourseConfiguration $configuration) 
+	{
+		$sh = $this->prepareQuery("saveCourseConfigurationQuery", "INSERT INTO course_configuration (courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, spotCheckThreshold, highMarkBias, calibThreshold, calibBias) 
+																							VALUES (:courseID, :windowSize, :numReviews, :scoreNoise, :maxAttempts, :numCovertCalibrations, :exhaustedCondition, :minReviews, :spotCheckProb, :spotCheckThreshold, :highMarkBias, :calibThreshold, :calibBias) 
+																		   ON DUPLICATE KEY UPDATE courseID=:courseID , windowSize=:windowSize , numReviews=:numReviews , scoreNoise=:scoreNoise , maxAttempts=:maxAttempts , numCovertCalibrations=:numCovertCalibrations , exhaustedCondition=:exhaustedCondition, minReviews=:minReviews, spotCheckProb=:spotCheckProb, spotCheckThreshold=:spotCheckThreshold, highMarkBias=:highMarkBias, calibThreshold=:calibThreshold, calibBias=:calibBias;");
+		$array = array(
+			"courseID"=>$this->courseID, 
+			"windowSize"=>$configuration->windowSize, 
+			"numReviews"=>$configuration->numReviews, 
+			"scoreNoise"=>$configuration->scoreNoise, 
+			"maxAttempts"=>$configuration->maxAttempts, 
+			"numCovertCalibrations"=>$configuration->numCovertCalibrations, 
+			"exhaustedCondition"=>$configuration->exhaustedCondition,
+			"minReviews"=>$configuration->minReviews, 
+			"spotCheckProb"=>$configuration->spotCheckProb, 
+			"spotCheckThreshold"=>$configuration->spotCheckThreshold, 
+			"highMarkBias"=>$configuration->highMarkBias, 
+			"calibThreshold"=>$configuration->calibThreshold, 
+			"calibBias"=>$configuration->calibBias
+		);
+		$sh->execute($array);
+	}
+	
+	function getCourseConfiguration(AssignmentID $assignmentID) 
+	{
+		$sh = $this->prepareQuery("getCourseConfigurationQuery", "SELECT courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, spotCheckThreshold, highMarkBias, calibThreshold, calibBias from course_configuration WHERE courseID = (SELECT courseID FROM assignments WHERE assignmentID = ?);");
+		$sh->execute(array($assignmentID));
+		$res = $sh->fetch();
+		$configuration = new CourseConfiguration();
+		
+		$configuration->windowSize = $res->windowSize;
+		$configuration->numReviews = $res->numReviews;
+		$configuration->scoreNoise = $res->scoreNoise;
+		$configuration->maxAttempts = $res->maxAttempts;
+		$configuration->numCovertCalibrations = $res->numCovertCalibrations;
+		$configuration->exhaustedCondition = $res->exhaustedCondition;
+		
+		$configuration->minReviews = $res->minReviews;
+		$configuration->spotCheckProb = $res->spotCheckProb;
+		$configuration->spotCheckThreshold = $res->spotCheckThreshold;
+		$configuration->highMarkBias = $res->highMarkBias;
+		$configuration->calibThreshold = $res->calibThreshold;
+		$configuration->calibBias = $res->calibBias;
+		
+		return $configuration;
+	}
+	/*
+	 * Global Data Manager stuff for cronjobs
+	 * 						    			*/
+	
 	function getReviewStoppedAssignments()
 	{
 		global $NOW;
@@ -641,7 +691,6 @@ class PDODataManager extends DataManager
         return $assignments;
 	}
 	
-	#Global Data Manager stuff
 	function getStudentsByAssignment(AssignmentID $assignmentID)
     {
         $sh = $this->prepareQuery("getStudentsByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE userType = 'student' && assignmentID = ? ORDER BY lastName, firstName;");
@@ -675,16 +724,6 @@ class PDODataManager extends DataManager
         return $users;
     }
 	
-	//NO LONGER USED
-	//Complicated query basically asking if all non-calibrated submissions have been autograded or assigned to a marker
-	/*function isAutogradedAndAssigned(AssignmentID $assignmentID) 
-	{
-		$sh = $this->prepareQuery("isAutogradedAndAssignedQuery", "SELECT subs.submissionID FROM peer_review_assignment_submissions subs WHERE (NOT EXISTS (SELECT * FROM peer_review_assignment_matches matches WHERE subs.submissionID = matches.submissionID && matches.reviewerID IN (SELECT userID FROM users WHERE (userType='instructor' || userType='marker'))) && subs.submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_submission_marks)) && subs.submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_matches WHERE calibrationState = 'key') && subs.assignmentID = ?;");
-        $sh->execute(array($assignmentID));
-		$res = $sh->fetch();
-		return $res == NULL;
-	}*/
-	
 	function isAutogradedAndAssigned(AssignmentID $assignmentID) 
 	{
 		$sh = $this->prepareQuery("isAutogradedAndAssignedQuery", "SELECT notificationID FROM job_notifications WHERE job = 'autogradeandassign' && success = 1 && assignmentID = ?;");
@@ -705,7 +744,12 @@ class PDODataManager extends DataManager
 	{
 		global $NOW;
 		$sh = $this->prepareQuery("createNotificationQuery", "INSERT INTO job_notifications (courseID, assignmentID, job, dateRan, success, summary, details) VALUES ((SELECT courseID FROM assignments WHERE assignmentID = :assignmentID), :assignmentID, :job, FROM_UNIXTIME(:dateRan), :success, :summary, :details);");
-		$sh->execute(array("assignmentID"=>$assignmentID, "job"=>$job, "dateRan"=>$NOW, "success"=>$success, "summary"=>$summary, "details"=>$details));	
+		$sh->execute(array("assignmentID"=>$assignmentID,
+					  "job"=>$job, 
+					  "dateRan"=>$NOW,
+				      "success"=>$success,
+					  "summary"=>$summary,
+					  "details"=>$details));
 	}
 	
 	function getNewNotifications()

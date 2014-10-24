@@ -2,10 +2,11 @@
 require_once("inc/common.php");
 try
 {
+	$title .= " | All Notifications";
     $dataMgr->requireCourse();
     $authMgr->enforceLoggedIn();
 	
-	$content = "<h1>Old Notifications</h1>";
+	$content = "<h1>All Notifications</h1>";
 
 	$notifications = $dataMgr->getAllNotifications();
 	

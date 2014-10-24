@@ -19,14 +19,24 @@ class AssignReviewsPeerReviewCronScript
     function executeAndGetResult(AssignmentID $assignmentID, PDODataManager $globalDataMgr)
     {	
         $currentAssignment = $globalDataMgr->getAssignment($assignmentID);
-
-        $windowSize = 4;//$windowSize = require_from_post("windowsize");
-        $this->numReviews = 2;//$this->numReviews = require_from_post("numreviews");
-        $this->scoreNoise = 0.01;//$this->scoreNoise = require_from_post("scorenoise");
-        $this->maxAttempts = 20;//$this->maxAttempts = require_from_post("maxattempts");
+		$configuration = $globalDataMgr->getCourseConfiguration($assignmentID);
+		
+        $windowSize = $configuration->windowSize;//$windowSize = require_from_post("windowsize");
+        if($configuration->numReviews < 0)
+		{
+			$this->numReviews = $currentAssignment->defaultNumberOfReviews;
+			print_r("THIS NUM REVIEWS IS ".$this->numReviews);
+		}
+		else
+		{
+        	$this->numReviews = $configuration->numReviews;//$this->numReviews = require_from_post("numreviews");
+        	print_r("THIS NUMMMM REVIEWS IS ".$this->numReviews);
+		}
+        $this->scoreNoise = $configuration->scoreNoise;//$this->scoreNoise = require_from_post("scorenoise");
+        $this->maxAttempts = $configuration->maxAttempts;//$this->maxAttempts = require_from_post("maxattempts");
         $this->seed = $currentAssignment->submissionStartDate;//$this->seed = require_from_post("seed");
-        $this->numCovertCalibrations = 1;//$this->numCovertCalibrations = require_from_post("numCovertCalibrations");
-        $this->exhaustedCondition = "peerreview";//set in course configuration
+        $this->numCovertCalibrations = $configuration->numCovertCalibrations;//$this->numCovertCalibrations = require_from_post("numCovertCalibrations");
+        $this->exhaustedCondition = $configuration->exhaustedCondition;//set in course configuration
         $this->scoreMap = array();
 
         $assignments = $currentAssignment->getAssignmentsBefore($windowSize);
@@ -113,7 +123,7 @@ class AssignReviewsPeerReviewCronScript
 				}
 				else
 				{
-					if($this->exhaustedCondition == 'peerreview')
+					if($this->exhaustedCondition == 'extrapeerreview')
 					{
 						//TODO: Fix this algorithm. Doesn't work for case where the candidate(s) with the fewest reviewers are already reviewed by the current independent. Although unlikely
 						$reviewersForEach = array_map(function($item){ return sizeof($item); }, $independentAssignment);
@@ -176,29 +186,32 @@ class AssignReviewsPeerReviewCronScript
 		}
 		
 		//For summary
-		$summary = "For ".sizeof($independents)." independents: ".sizeof($independents)." have ".$this->numReviews." peer reviews, ";	
-		if($this->numCovertCalibrations > 0 && sizeof($independents) > 0)
-		{	
-			$k = 0;
-			while($k <= $this->numCovertCalibrations)
-			{
-				if($covertReviewsHistogram[$k] > 0)
+		$summary = "";
+		if(sizeof($independents)>0)
+		{
+			$summary .= "For ".sizeof($independents)." independents: ".sizeof($independents)." have ".$this->numReviews." peer reviews, ";
+			if($this->numCovertCalibrations > 0 && sizeof($independents) > 0)
+			{	
+				$k = 0;
+				while($k <= $this->numCovertCalibrations)
 				{
-					$summary .= $covertReviewsHistogram[$k] . " have $k covert reviews, ";
+					if($covertReviewsHistogram[$k] > 0)
+					{
+						$summary .= $covertReviewsHistogram[$k] . " have $k covert reviews, ";
+					}
+					$k++;
 				}
-				$k++;
-			}
-			$k = 0;
-			while($k <= $this->numCovertCalibrations)
-			{
-				if($extraPeerReviewsHistogram[$k] > 0)
-					$summary .= $extraPeerReviewsHistogram[$k] . " have $k extra peer reviews, ";
-				$k++;
+				$k = 0;
+				while($k <= $this->numCovertCalibrations)
+				{
+					if($extraPeerReviewsHistogram[$k] > 0)
+						$summary .= $extraPeerReviewsHistogram[$k] . " have $k extra peer reviews, ";
+					$k++;
+				}
 			}
 		}
-		$summary .= "<br>For " . sizeof($supervised) . " supervised: " . sizeof($supervised) . " have " . ($this->numReviews + $this->numCovertCalibrations) . " peer reviews";
-		
-		print_r($summary);
+		if(sizeof($supervised)>0)
+			$summary .= "<br>For " . sizeof($supervised) . " supervised: " . sizeof($supervised) . " have " . ($this->numReviews + $this->numCovertCalibrations) . " peer reviews";
 		
 		$globalDataMgr->createNotification($assignmentID, 'assignreviews', 1, $summary, $html);
     }

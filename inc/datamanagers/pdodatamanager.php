@@ -592,6 +592,14 @@ class PDODataManager extends DataManager
 		return $res->markingLoad;
 	}
 	
+	function setMarkingLoad(UserID $markerID, $load)
+	{
+		//$sh = $this->prepareQuery("assertUserQuery", "SELECT userID FROM users WHERE userID = ?");
+		$sh = $this->prepareQuery("setMarkingLoadQuery", "UPDATE users SET markingLoad = ? WHERE userID = ?");
+		$sh->execute(array($load, $userID->id));
+		print_r("$markerID has load $load");
+	}
+	
 	function demote(UserID $userID, $demotionThreshold)
 	{
 		global $NOW;

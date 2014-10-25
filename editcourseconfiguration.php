@@ -35,10 +35,19 @@ try
 		
        	$dataMgr->saveCourseConfiguration($configuration);
 		
-		$content .= "<span style='color:green'>Course configuration saved</span>";
+		foreach($dataMgr->getMarkers() as $markerID)
+		{
+			$dataMgr->setMarkingLoad(new UserID($markerID), require_from_post("load$markerID"));
+		}
+		
+		$content .= "<span style='color:green'>Course configuration saved.</span>";
 	}
 	
-	$configuration = $dataMgr->getCourseConfiguration();
+	try{
+		$configuration = $dataMgr->getCourseConfiguration();
+	}catch(Exception $e){
+		$content .= "<span style='color:red'>You have not set a course configuration yet.</span>";
+	}
 	
 	$content .= "<h3>Workflow</h3>";
 	$content .= "<h4>Copy independents from previous</h4>";
@@ -114,6 +123,15 @@ try
 	$content .= "<tr><td>&nbsp</td></tr>\n";
 	$content .= "</table>\n";
 	
+	$content .= "<h3>Marking Loads</h3>";
+	$content .= "<table width='100%'>\n";
+    foreach($dataMgr->getMarkers() as $markerID)
+    {
+        $content .= "<tr><td>".$dataMgr->getUserDisplayName(new UserID($markerID))."'s Load</td><td>";
+        $content .= "<input type='text' name='load$markerID' value='".$dataMgr->getMarkingLoad(new UserID($markerID))."' size='30'/></td></tr>\n";
+    }
+	$content .= "</table>\n";
+
 	$content .= "<input type='submit' value='Save'>";
 	$content .= "</form>";
 	

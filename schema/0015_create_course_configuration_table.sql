@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS `course_configuration` (
   `highMarkBias` float NOT NULL, 
   `calibrationThreshold` float NOT NULL, 
   `calibrationBias` float NOT NULL,
+  `scoreWindowSize` int(11) NOT NULL,
+  `scoreThreshold` float NOT NULL,
   `disqualifyWindowSize` int(11) NOT NULL,
   `disqualifyThreshold` float NOT NULL,
   PRIMARY KEY (`courseID`)

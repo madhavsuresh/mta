@@ -16,6 +16,9 @@ class CourseConfiguration
 	public $calibrationThreshold;
 	public $calibrationBias;
 	
+	public $scoreWindowSize;
+	public $scoreThreshold;
+	
 	public $disqualifyWindowSize;
 	public $disqualifyThreshold;
 	
@@ -35,6 +38,9 @@ class CourseConfiguration
 		$this->highMarkBias = 2;
 		$this->calibrationThreshold = 75;
 		$this->calibrationBias = 1.5;
+	
+		$this->scoreWindowSize = 4;
+		$this->scoreThreshold = 80;
 		
 		$this->disqualifyWindowSize = 4;
 		$this->disqualifyThreshold = 80;

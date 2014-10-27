@@ -16,22 +16,27 @@ try
 		if(array_key_exists("assignmentdefaultnumreviews", $_POST))
 			$configuration->numReviews = -1;
 		else
-			$configuration->numReviews = require_from_post("numreviews");
-        $configuration->scoreNoise = require_from_post("scorenoise");
-        $configuration->maxAttempts = require_from_post("maxattempts");
-		$configuration->numCovertCalibrations = require_from_post("numCovertCalibrations");
+			$configuration->numReviews = intval(require_from_post("numreviews"));
+        $configuration->scoreNoise = floatval(require_from_post("scorenoise"));
+        $configuration->maxAttempts = intval(require_from_post("maxattempts"));
+		$configuration->numCovertCalibrations = intval(require_from_post("numCovertCalibrations"));
        	$configuration->exhaustedCondition = require_from_post("exhaustedCondition");
 		
 		//Autograde and assign markers
-        $configuration->minReviews = require_from_post("minReviews");
-		$configuration->spotCheckProb = require_from_post("spotCheckProb");
-        $configuration->highMarkThreshold = require_from_post("highMarkThreshold");
-        $configuration->highMarkBias = require_from_post("highMarkBias");
-		$configuration->calibrationThreshold = require_from_post("calibrationThreshold");
-       	$configuration->calibrationBias = require_from_post("calibrationBias");
+        $configuration->minReviews = intval(require_from_post("minReviews"));
+		$configuration->spotCheckProb = floatval(require_from_post("spotCheckProb"));
+        $configuration->highMarkThreshold = floatval(require_from_post("highMarkThreshold"));
+        $configuration->highMarkBias = $highMarkBias = floatval(require_from_post("highMarkBias"));
+		$configuration->calibrationThreshold = floatval(require_from_post("calibrationThreshold"));
+       	$configuration->calibrationBias = floatval(require_from_post("calibrationBias"));
 		
-		$configuration->disqualifyWindowSize = require_from_post("disqualifywindowsize");
-		$configuration->disqualifyThreshold = require_from_post("disqualifythreshold");
+		//Comput independents from scores
+		$configuration->scoreWindowSize = intval(require_from_post("scorewindowsize"));
+		$configuration->scoreThreshold = floatval(require_from_post("scorethreshold"));
+		
+		//Disqualify independents
+		$configuration->disqualifyWindowSize = intval(require_from_post("disqualifywindowsize"));
+		$configuration->disqualifyThreshold = floatval(require_from_post("disqualifythreshold"));
 		
        	$dataMgr->saveCourseConfiguration($configuration);
 		
@@ -47,6 +52,7 @@ try
 		$configuration = $dataMgr->getCourseConfiguration();
 	}catch(Exception $e){
 		$content .= "<span style='color:red'>You have not set a course configuration yet.</span>";
+		$configuration = new CourseConfiguration();
 	}
 	
 	$content .= "<h3>Workflow</h3>";
@@ -58,6 +64,15 @@ try
 	$content .= "<h4>Autograde and Assign</h4>";
 	
 	$content .= "<form action='?save=1' method='post'>";
+	
+	$content .= "<h3>Compute Independents From Scores</h3>";
+    
+    $content .= "<table width='100%'>\n";
+    $content .= "<tr><td width='200'>Assignment Window Size</td><td>";
+    $content .= "<input type='text' name='scorewindowsize' id='scorewindowsize' value='$configuration->scoreWindowSize' size='10'/></td></tr>\n";
+    $content .= "<tr><td>Review Score Threshold</td><td>";
+    $content .= "<input type='text' name='scorethreshold' id='scorethreshold' value='$configuration->scoreThreshold' size='10'/>%</td></tr>";
+    $content .= "</table>\n";
 	
 	$content .= "<h3>Disqualify Independents</h3>";
 	

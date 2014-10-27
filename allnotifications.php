@@ -12,6 +12,11 @@ try
 	
 	$jobnames = array("autogradeandassign"=>"Autograde and Assign", "copyindependentsfromprevious"=>"Copy independents from previous", "computeindependentsfromscores"=>"Compute independents from scores", "computeindependentsfromcalibrations"=>"Compute independents from calibrations", "disqualifyindependentsfromscores"=>"Disqualify independents from scores", "assignreviews"=>"Assign reviews");
 	
+	if(!$notifications)
+	{
+		$content .= "There are currently no notifications for this course.";
+	}
+	
 	foreach($notifications as $notification)
 	{
 		$bg = ($notification->success) ? '#ABFFB5' : '#F6CED8';

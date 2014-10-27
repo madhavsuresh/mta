@@ -22,7 +22,7 @@ class TickTockScript extends Script
     }
     function executeAndGetResult()
     {
-		require_once(MTA_ROOTPATH."ticktock_tuesday.php");
+		require_once(MTA_ROOTPATH."ticktock.php");
 	}
 }
 ?>

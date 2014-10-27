@@ -592,6 +592,13 @@ class PDODataManager extends DataManager
 		return $res->markingLoad;
 	}
 	
+	function setMarkingLoad(UserID $markerID, $load)
+	{
+		//$sh = $this->prepareQuery("assertUserQuery", "SELECT userID FROM users WHERE userID = ?");
+		$sh = $this->prepareQuery("setMarkingLoadQuery", "UPDATE users SET markingLoad = ? WHERE userID = ?");
+		$sh->execute(array($load, $markerID->id));
+	}
+	
 	function demote(UserID $userID, $demotionThreshold)
 	{
 		global $NOW;
@@ -614,6 +621,77 @@ class PDODataManager extends DataManager
 		else 
 			return NULL;
 	}
+	
+	function saveCourseConfiguration(CourseConfiguration $configuration) 
+	{
+		$sh = $this->prepareQuery("saveCourseConfigurationQuery", "INSERT INTO course_configuration (courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, highMarkThreshold, highMarkBias, calibrationThreshold, calibrationBias, scoreWindowSize, scoreThreshold, disqualifyWindowSize, disqualifyThreshold) 
+																							VALUES (:courseID, :windowSize, :numReviews, :scoreNoise, :maxAttempts, :numCovertCalibrations, :exhaustedCondition, :minReviews, :spotCheckProb, :highMarkThreshold, :highMarkBias, :calibrationThreshold, :calibrationBias, :scoreWindowSize, :scoreThreshold, :disqualifyWindowSize, :disqualifyThreshold) 
+																		   ON DUPLICATE KEY UPDATE courseID=:courseID , windowSize=:windowSize , numReviews=:numReviews , scoreNoise=:scoreNoise , maxAttempts=:maxAttempts , numCovertCalibrations=:numCovertCalibrations , exhaustedCondition=:exhaustedCondition, minReviews=:minReviews, spotCheckProb=:spotCheckProb, highMarkThreshold=:highMarkThreshold, highMarkBias=:highMarkBias, calibrationThreshold=:calibrationThreshold, calibrationBias=:calibrationBias, scoreWindowSize=:scoreWindowSize, scoreThreshold=:scoreThreshold, disqualifyWindowSize=:disqualifyWindowSize, disqualifyThreshold=:disqualifyThreshold;");
+		$array = array(
+			"courseID"=>$this->courseID, 
+			"windowSize"=>$configuration->windowSize, 
+			"numReviews"=>$configuration->numReviews, 
+			"scoreNoise"=>$configuration->scoreNoise, 
+			"maxAttempts"=>$configuration->maxAttempts, 
+			"numCovertCalibrations"=>$configuration->numCovertCalibrations, 
+			"exhaustedCondition"=>$configuration->exhaustedCondition,
+			"minReviews"=>$configuration->minReviews, 
+			"spotCheckProb"=>$configuration->spotCheckProb, 
+			"highMarkThreshold"=>$configuration->highMarkThreshold, 
+			"highMarkBias"=>$configuration->highMarkBias, 
+			"calibrationThreshold"=>$configuration->calibrationThreshold, 
+			"calibrationBias"=>$configuration->calibrationBias,
+			"scoreWindowSize"=>$configuration->scoreWindowSize,
+			"scoreThreshold"=>$configuration->scoreThreshold,
+			"disqualifyWindowSize"=>$configuration->disqualifyWindowSize,
+			"disqualifyThreshold"=>$configuration->disqualifyThreshold
+			);
+		$sh->execute($array);
+	}
+	
+	function getCourseConfiguration(AssignmentID $assignmentID=NULL) 
+	{
+		if($assignmentID)
+		{
+			$sh = $this->prepareQuery("getCourseConfigurationQuery", "SELECT courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, highMarkThreshold, highMarkBias, calibrationThreshold, calibrationBias, scoreWindowSize, scoreThreshold, disqualifyWindowSize, disqualifyThreshold from course_configuration WHERE courseID = (SELECT courseID FROM assignments WHERE assignmentID = ?);");
+			$sh->execute(array($assignmentID));
+		}
+		else
+		{
+			$sh = $this->prepareQuery("getCourseConfigurationQuery", "SELECT courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, highMarkThreshold, highMarkBias, calibrationThreshold, calibrationBias, scoreWindowSize, scoreThreshold, disqualifyWindowSize, disqualifyThreshold from course_configuration WHERE courseID = ?;");
+			$sh->execute(array($this->courseID));
+		}
+		$configuration = new CourseConfiguration();
+		$res = $sh->fetch();
+		if(!$res)
+			throw new Exception('The course of assignment $assignmentID has no course configuration set');
+
+		$configuration->windowSize = $res->windowSize;
+		$configuration->numReviews = $res->numReviews;
+		$configuration->scoreNoise = $res->scoreNoise;
+		$configuration->maxAttempts = $res->maxAttempts;
+		$configuration->numCovertCalibrations = $res->numCovertCalibrations;
+		$configuration->exhaustedCondition = $res->exhaustedCondition;
+		
+		$configuration->minReviews = $res->minReviews;
+		$configuration->spotCheckProb = $res->spotCheckProb;
+		$configuration->highMarkThreshold = $res->highMarkThreshold;
+		$configuration->highMarkBias = $res->highMarkBias;
+		$configuration->calibrationThreshold = $res->calibrationThreshold;
+		$configuration->calibrationBias = $res->calibrationBias;
+		
+		$configuration->scoreWindowSize = $res->scoreWindowSize;
+		$configuration->scoreThreshold = $res->scoreThreshold;
+		
+		$configuration->disqualifyWindowSize = $res->disqualifyWindowSize;
+		$configuration->disqualifyThreshold = $res->disqualifyThreshold;
+		
+		return $configuration;
+	}
+
+	/*
+	 * Global Data Manager stuff for cronjobs
+	 * 						    			*/
 	
 	function getReviewStoppedAssignments()
 	{
@@ -641,7 +719,6 @@ class PDODataManager extends DataManager
         return $assignments;
 	}
 	
-	#Global Data Manager stuff
 	function getStudentsByAssignment(AssignmentID $assignmentID)
     {
         $sh = $this->prepareQuery("getStudentsByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE userType = 'student' && assignmentID = ? ORDER BY lastName, firstName;");
@@ -675,24 +752,6 @@ class PDODataManager extends DataManager
         return $users;
     }
 	
-	//NO LONGER USED
-	//Complicated query basically asking if all non-calibrated submissions have been autograded or assigned to a marker
-	/*function isAutogradedAndAssigned(AssignmentID $assignmentID) 
-	{
-		$sh = $this->prepareQuery("isAutogradedAndAssignedQuery", "SELECT subs.submissionID FROM peer_review_assignment_submissions subs WHERE (NOT EXISTS (SELECT * FROM peer_review_assignment_matches matches WHERE subs.submissionID = matches.submissionID && matches.reviewerID IN (SELECT userID FROM users WHERE (userType='instructor' || userType='marker'))) && subs.submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_submission_marks)) && subs.submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_matches WHERE calibrationState = 'key') && subs.assignmentID = ?;");
-        $sh->execute(array($assignmentID));
-		$res = $sh->fetch();
-		return $res == NULL;
-	}*/
-	
-	function isAutogradedAndAssigned(AssignmentID $assignmentID) 
-	{
-		$sh = $this->prepareQuery("isAutogradedAndAssignedQuery", "SELECT notificationID FROM job_notifications WHERE job = 'autogradeandassign' && success = 1 && assignmentID = ?;");
-		$sh->execute(array($assignmentID));
-		$res = $sh->fetch();
-		return $res != NULL;
-	}
-	
 	function isJobDone(AssignmentID $assignmentID, $job) 
 	{
 		$sh = $this->prepareQuery("independentsCopiedQuery", "SELECT notificationID FROM job_notifications WHERE success = 1 && assignmentID = ? && job = ?;");
@@ -705,7 +764,12 @@ class PDODataManager extends DataManager
 	{
 		global $NOW;
 		$sh = $this->prepareQuery("createNotificationQuery", "INSERT INTO job_notifications (courseID, assignmentID, job, dateRan, success, summary, details) VALUES ((SELECT courseID FROM assignments WHERE assignmentID = :assignmentID), :assignmentID, :job, FROM_UNIXTIME(:dateRan), :success, :summary, :details);");
-		$sh->execute(array("assignmentID"=>$assignmentID, "job"=>$job, "dateRan"=>$NOW, "success"=>$success, "summary"=>$summary, "details"=>$details));	
+		$sh->execute(array("assignmentID"=>$assignmentID,
+					  "job"=>$job, 
+					  "dateRan"=>$NOW,
+				      "success"=>$success,
+					  "summary"=>$summary,
+					  "details"=>$details));
 	}
 	
 	function getNewNotifications()

@@ -24,13 +24,13 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $html .= "<tr><td>Auto Spot Check Probability</td><td>"; ;
         $html .= "<input type='text' name='spotCheckProb' id='spotCheckProb' value='0.25' size='10'/>(should be between 0 and 1)</td></tr>\n";
 		$html .= "<tr><td>High Mark Threshold</td><td>";
-        $html .= "<input type='text' name='spotCheckThreshold' value='80' size='10'/>%</td></tr>\n";
+        $html .= "<input type='text' name='highMarkThreshold' value='80' size='10'/>%</td></tr>\n";
 		$html .= "<tr><td>High Mark Bias</td><td>";
 		$html .= "<input type='text' name='highMarkBias' value='2' size='10'/></td></tr>\n";
 		$html .= "<tr><td>Low Calibration Threshold</td><td>";
-		$html .= "<input type='text' name='calibThreshold' value='8.5' size='10'/></td></tr>\n";
+		$html .= "<input type='text' name='calibrationThreshold' value='8.5' size='10'/></td></tr>\n";
 		$html .= "<tr><td>Calibration Bias</td><td>";
-		$html .= "<input type='text' name='calibBias' value='1.5' size='10'/></td></tr>\n";
+		$html .= "<input type='text' name='calibrationBias' value='1.5' size='10'/></td></tr>\n";
 		$html .= "<tr><td>Seed</td><td>";
         $html .= "<input type='text' name='seed' value='$assignment->submissionStartDate' size='30'/></td></tr>\n";
         $html .= "<tr><td>&nbsp</td></tr>\n";
@@ -143,14 +143,14 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $assignment = get_peerreview_assignment();
 
         $minReviews = intval(require_from_post("minReviews"));
-        $highSpotCheckThreshold = floatval(require_from_post("spotCheckThreshold"))*0.01;
+        $highMarkThreshold = floatval(require_from_post("highMarkThreshold"))*0.01;
         mt_srand(require_from_post("seed"));
         $randomSpotCheckProb = floatval(require_from_post("spotCheckProb"));
         $userNameMap = $dataMgr->getUserDisplayMap();
         $independents = $assignment->getIndependentUsers();
 		$highMarkBias = floatval(require_from_post("highMarkBias"));
-		$calibThreshold = floatval(require_from_post("calibThreshold"));
-		$calibBias = floatval(require_from_post("calibBias"));
+		$calibrationThreshold = floatval(require_from_post("calibrationThreshold"));
+		$calibrationBias = floatval(require_from_post("calibrationBias"));
 
         $markers = $dataMgr->getMarkers();
         mt_shuffle($markers);
@@ -218,10 +218,10 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 		
 		$studentToCovertScoresMap = $assignment->getStudentToCovertScoresMap();
 		
-		$output .= "<h3>High Mark Threshold: $highSpotCheckThreshold</h3>";
-		$output .= "<h3>Calibration Threshold: $calibThreshold</h3>";
+		$output .= "<h3>High Mark Threshold: $highMarkThreshold</h3>";
+		$output .= "<h3>Calibration Threshold: $calibrationThreshold</h3>";
 		$output .= "<h3>High Mark Bias: $highMarkBias</h3>";
-		$output .= "<h3>Calibration Bias: $calibBias</h3>";
+		$output .= "<h3>Calibration Bias: $calibrationBias</h3>";
 		$output .= "<table><tr><td>Name</td><td>Initial Weight</td><td>Median Score</td><td>Calibration Averages</td><td>Covert Scores</td><td>Final Weight</td><tr>";
 		
         $html = "";
@@ -263,7 +263,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 				$independentSub->weight = sizeof($reviews);
 				$finalweight = sizeof($reviews);
 				$output .= "<tr><td>".$dataMgr->getUserDisplayName($authorID)."</td><td>".sizeof($reviews)."</td>";
-				if(1.0*$medScore/$assignment->maxSubmissionScore >= $highSpotCheckThreshold)
+				if(1.0*$medScore/$assignment->maxSubmissionScore >= $highMarkThreshold)
 				{
 					$independentSub->weight *= $highMarkBias;
 					$finalweight .= "*".$highMarkBias;
@@ -273,10 +273,10 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 					$output .= "<td>".(1.0*$medScore/$assignment->maxSubmissionScore)."</td><td><ul>";
 				foreach($reviews as $review)
 				{
-					if(getWeightedAverage($review->reviewerID, $assignment) < $calibThreshold || getWeightedAverage($review->reviewerID, $assignment) == "--")
+					if(getWeightedAverage($review->reviewerID, $assignment) < $calibrationThreshold || getWeightedAverage($review->reviewerID, $assignment) == "--")
 					{
-						$independentSub->weight *= $calibBias;
-						$finalweight .= "*".$calibBias;
+						$independentSub->weight *= $calibrationBias;
+						$finalweight .= "*".$calibrationBias;
 						$output .= "<li>".$dataMgr->getUserDisplayName($review->reviewerID)." - <span style='color:red'>".getWeightedAverage($review->reviewerID, $assignment)."</span></li>";
 					}
 					else
@@ -287,9 +287,9 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 				{
 					$sum = array_reduce($studentToCovertScoresMap[$review->reviewerID->id], function($res, $item) use ($assignment){if($item < 0) return $res + 0; return $res + convertTo10pointScale($item, $assignment);});
 					$covertaverage = $sum / sizeof($studentToCovertScoresMap[$review->reviewerID->id]);
-					if($covertaverage < $calibThreshold)
+					if($covertaverage < $calibrationThreshold)
 					{
-						$covertBias = (1 + ($calibThreshold - $covertaverage));
+						$covertBias = (1 + ($calibrationThreshold - $covertaverage));
 						$independentSub->weight *= $covertBias;
 						$finalweight .= "*".$covertBias;
 						$output .= "<li>".$dataMgr->getUserDisplayName($review->reviewerID)." - <span style='color:red'>".$covertaverage."</span></li>";

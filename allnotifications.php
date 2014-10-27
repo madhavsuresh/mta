@@ -2,14 +2,20 @@
 require_once("inc/common.php");
 try
 {
+	$title .= " | All Notifications";
     $dataMgr->requireCourse();
     $authMgr->enforceLoggedIn();
 	
-	$content = "<h1>Old Notifications</h1>";
+	$content = "<h1>All Notifications</h1>";
 
 	$notifications = $dataMgr->getAllNotifications();
 	
 	$jobnames = array("autogradeandassign"=>"Autograde and Assign", "copyindependentsfromprevious"=>"Copy independents from previous", "computeindependentsfromscores"=>"Compute independents from scores", "computeindependentsfromcalibrations"=>"Compute independents from calibrations", "disqualifyindependentsfromscores"=>"Disqualify independents from scores", "assignreviews"=>"Assign reviews");
+	
+	if(!$notifications)
+	{
+		$content .= "There are currently no notifications for this course.";
+	}
 	
 	foreach($notifications as $notification)
 	{

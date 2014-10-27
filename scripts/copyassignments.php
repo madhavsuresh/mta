@@ -14,10 +14,11 @@ class CopyAssignmentsScript extends Script
     function getFormHTML()
     {
     	global $dataMgr;
+		global $NOW;
 		
     	$html = "";
 		
-		$html .= "<div style='margin-bottom: 20px'>";
+		/*$html .= "<div style='margin-bottom: 20px'>";
 		
 		$html .= "Copy assignments from: ";
 		
@@ -28,11 +29,13 @@ class CopyAssignmentsScript extends Script
 		}
 		$html .= "</select>\n";
 		
-		$html .= "</div>\n";
+		$html .= "</div>\n";*/
+		
+		$html = "Select assignments:";
 		
 		$html .= "<div id='assignmentSelect' style='margin-bottom: 20px; border-width: 1px; border-style: solid; border-color: black; padding:10px'>";
 		
-		foreach($dataMgr->getAllAssignmentHeaders() as $assignmentObj){
+		foreach($dataMgr->getAssignmentHeaders() as $assignmentObj){
 			$html .= "<div class='$assignmentObj->courseID'>";
 			$html .= "<input style='margin: 4px' type='checkbox' name='assignment-$assignmentObj->assignmentID'>$assignmentObj->name<br>";
 			$html .= "</div>\n";
@@ -49,21 +52,21 @@ class CopyAssignmentsScript extends Script
 		   
 		$html .= "<script type='text/javascript'> $('#anchorDate').datetimepicker({minDateTime: new Date(), defaultDate: new Date()}); </script>";
 		
-        $html .= set_element_to_date("anchorDate", round(microtime(time())));
+        $html .= set_element_to_date("anchorDate", $NOW);
 		
-		//Maybe revise the trigger to convert anchorDate to anchorDateSeconds
+		//Maybe revise the trigger to convert anchorDate to anchorDateSeconds when form is submitted
 		$html .= "<script type='text/javascript'> $('form').submit(function() {
 			$('#anchorDateSeconds').val(moment($('#anchorDate').val(), 'MM/DD/YYYY HH:mm').unix());
 			})</script>\n";	
 		
-		$html .= "<script type='text/javascript'>
+		/*$html .= "<script type='text/javascript'>
         $('#courseSelect').change(function(){
 			$(':checkbox').prop('checked', false);
         	$('#assignmentSelect').children().hide();
             $('.' + this.value).show();
         });
         $('#courseSelect').change();
-        </script>\n";
+        </script>\n";*/
 		
         return $html;
     }

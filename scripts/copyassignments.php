@@ -36,7 +36,7 @@ class CopyAssignmentsScript extends Script
 		
 		$html .= "<div id='assignmentSelect' style='margin-bottom: 20px; border-width: 1px; border-style: solid; border-color: black; padding:10px'>";
 		
-		foreach($dataMgr->getAllAssignmentHeaders() as $assignmentObj){
+		foreach($dataMgr->getInstructedAssignmentHeaders($USERID) as $assignmentObj){
 			$html .= "<div class='$assignmentObj->courseID'>";
 			$html .= "<input style='margin: 4px' type='checkbox' name='assignment-$assignmentObj->assignmentID'>$assignmentObj->name<br>";
 			$html .= "</div>\n";

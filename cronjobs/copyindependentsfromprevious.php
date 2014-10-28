@@ -16,8 +16,6 @@ class CopyIndependentsFromPreviousCronJob
 			$currentAssignment = $globalDataMgr->getAssignment($assignmentID);
 			$assignments = $globalDataMgr->getAssignmentsBefore($assignmentID, 1);
 			
-			print_r(sizeof($assignments));
-			
 			if(sizeof($assignments) != 1){
 			    throw new Exception("Could not find exactly one previous assignment!");
 			}

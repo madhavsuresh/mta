@@ -10,7 +10,7 @@ class ComputeIndependentsFromScoresCronJob
 			if($globalDataMgr->isJobDone($assignmentID, 'computeindependentsfromscores'))
 				return;
 			//Get all the assignments
-			$assignmentHeaders = $globalDataMgr->getAssignmentHeaders();
+			$assignmentHeaders = $globalDataMgr->getAssignmentHeadersByAssignment($assignmentID);
 			
 			$currentAssignment = $globalDataMgr->getAssignment($assignmentID);
 			
@@ -19,7 +19,7 @@ class ComputeIndependentsFromScoresCronJob
 			
 			$keep = true;//hard-coded in 
 			
-			$assignments = $currentAssignment->getAssignmentsBefore($windowSize);
+			$assignments = $globalDataMgr->getAssignmentsBefore($assignmentID, $windowSize);
 			$userNameMap = $globalDataMgr->getUserDisplayMapByAssignment($assignmentID);
 			$students = $globalDataMgr->getStudentsByAssignment($assignmentID);
 			if($keep){

@@ -10,12 +10,13 @@ class CopyIndependentsFromPreviousCronJob
 	    	if($globalDataMgr->isJobDone($assignmentID, 'assignreviews'))
 				return;
 			
-			$html = "";
 			//Get all the assignments
-			$assignmentHeaders = $globalDataMgr->getAssignmentHeaders();
+			$assignmentHeaders = $globalDataMgr->getAssignmentHeadersByAssignment($assignmentID);
 			
 			$currentAssignment = $globalDataMgr->getAssignment($assignmentID);
-			$assignments = $currentAssignment->getAssignmentsBefore(1);
+			$assignments = $globalDataMgr->getAssignmentsBefore($assignmentID, 1);
+			
+			print_r(sizeof($assignments));
 			
 			if(sizeof($assignments) != 1){
 			    throw new Exception("Could not find exactly one previous assignment!");
@@ -29,7 +30,8 @@ class CopyIndependentsFromPreviousCronJob
 			
 			$mode = "copy";//hard-coded in 
 			
-			$html = "<table width='100%'>\n";
+			$html = "";
+			$html .= "<table width='100%'>\n";
 			$html .= "<tr><td><h2>Student</h2></td><td><h2>Status</h2></td></tr>\n";
 			$currentRowType = 0;
 			$addedIndependents = 0;

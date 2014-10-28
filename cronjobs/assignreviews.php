@@ -179,7 +179,7 @@ class AssignReviewsPeerReviewCronJob
 			$summary = "";
 			if(sizeof($independents)>0)
 			{
-				$summary .= "For ".sizeof($independents)." independents: ".sizeof($independents)." have ".$this->numReviews." peer reviews, ";
+				$summary .= "For ".sizeof($independents)." in the independents group: ".sizeof($independents)." have ".$this->numReviews." peer reviews, ";
 				if($this->numCovertCalibrations > 0 && sizeof($independents) > 0)
 				{	
 					$k = 0;
@@ -201,8 +201,8 @@ class AssignReviewsPeerReviewCronJob
 				}
 			}
 			if(sizeof($supervised)>0)
-				$summary .= "<br>For " . sizeof($supervised) . " supervised: " . sizeof($supervised) . " have " . ($this->numReviews + $this->numCovertCalibrations) . " peer reviews";
-			//end of summary
+				$summary .= "<br>For " . sizeof($supervised) . " in the supervised group: " . sizeof($supervised) . " have " . ($this->numReviews + $this->numCovertCalibrations) . " peer reviews";
+			//End of summary
 			
 			$globalDataMgr->createNotification($assignmentID, 'assignreviews', 1, $summary, $html);
 		}catch(Exception $exception){

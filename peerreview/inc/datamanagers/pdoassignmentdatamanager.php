@@ -1745,7 +1745,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		{
 			if(!array_key_exists($res->reviewerID, $covertScores))
 				$covertScores[$res->reviewerID] = array();
-			$covertScores[$res->reviewerID][] = $res->reviewPoints;	//could be NULL if covert review not done
+			$covertScores[$res->reviewerID][] = ($res->reviewPoints) ? $res->reviewPoints : -1;	//could be NULL if covert review not done
 		}
 		return $covertScores;
 	}

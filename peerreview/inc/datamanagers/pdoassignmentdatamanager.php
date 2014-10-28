@@ -464,7 +464,6 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         //Make a dictionary for the clean query
   		$cleanQueries = array();
 
-		print_r("EHERE");
         $authors_ = $this->getAuthorSubmissionMap_($assignment);
 		$authors = $this->getAuthorSubmissionMap($assignment);
 		$authors = shuffle_assoc2($authors);

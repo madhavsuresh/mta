@@ -13,14 +13,14 @@ class DisqualifyIndependentsFromScoresCronJob
 			$configuration = $globalDataMgr->getCourseConfiguration($assignmentID);
 			
 			//Get all the assignments
-			$assignmentHeaders = $globalDataMgr->getAssignmentHeaders();
+			$assignmentHeaders = $globalDataMgr->getAssignmentHeadersByAssignment($assignmentID);
 			
 			$currentAssignment = $globalDataMgr->getAssignment($assignmentID);
 			
 			$windowSize = $configuration->disqualifyWindowSize;//$windowSize = require_from_post("windowsize");
 			$independentThreshold = 70;//$independentThreshold = floatval(require_from_post("threshold"));
 			
-			$assignments = $currentAssignment->getAssignmentsBefore($windowSize);
+			$assignments = $globalDataMgr->getAssignmentsBefore($assignmentID, $windowSize);
 			$userNameMap = $globalDataMgr->getUserDisplayMapByAssignment($assignmentID);
 			$students = $globalDataMgr->getStudentsByAssignment($assignmentID);
 			$independents = $currentAssignment->getIndependentUsers();

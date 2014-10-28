@@ -689,6 +689,14 @@ class PDODataManager extends DataManager
 		return $configuration;
 	}
 
+	function getCoursesInstructedByUser(UserID $instructorID)
+	{
+		$username = $this->getUserName($instructorID);
+		$sh = $this->prepareQuery("getCoursesInstructedByUser", "SELECT name, displayName, courseID, browsable FROM course where courseID IN (SELECT courseID FROM users WHERE username = ?);");
+		$sh->execute(array($username));
+		return $sh->fetchall();
+	}
+
 	/*
 	 * Global Data Manager stuff for cronjobs
 	 * 						    			*/
@@ -750,6 +758,44 @@ class PDODataManager extends DataManager
             $users[$res->userID] = $res->firstName." ".$res->lastName;
         }
         return $users;
+    }
+	
+	function getAssignmentsBefore(AssignmentID $assignmentID, $maxAssignments = 4)
+    {
+        //Get all the assignments
+        $sh = $this->prepareQuery("getAssignmentsBeforeQuery", "SELECT assignmentID, name, assignmentType, displayPriority FROM assignments WHERE courseID = (SELECT courseID FROM assignments WHERE assignmentID = ?) ORDER BY displayPriority DESC;");
+		$sh->execute(array($assignmentID));
+		$assignments = array();
+		$foundCurrent = false;  
+	   	while($res = $sh->fetch())
+        {
+        	if($foundCurrent && $res->assignmentType == "peerreview") {
+        		$blah = $this->getAssignment(new AssignmentID($res->assignmentID), "peerreview");
+                $assignments[] = $blah;
+            } else if ($res->assignmentID == $assignmentID->id) {
+                $foundCurrent = true;
+            }
+        }
+
+        //Sort the assignments based on their date
+        //usort($assignments, function($a, $b) { return $a->reviewStopDate < $b->reviewStopDate; } );
+
+        if($maxAssignments < 0)
+            return $assignments;
+
+        return array_splice($assignments, 0, $maxAssignments);
+    }
+
+	function getAssignmentHeadersByAssignment(AssignmentID $assignmentID)
+    {
+    	$sh = $this->prepareQuery("getAssignmentHeadersByAssignmentQuery", "SELECT assignmentID, name, assignmentType, displayPriority FROM assignments WHERE courseID = (SELECT courseID FROM assignments WHERE assignmentID = ?) ORDER BY displayPriority DESC;");
+        $sh->execute(array($assignmentID->id));
+        $headers = array();
+        while($res = $sh->fetch())
+        {
+            $headers[] = new AssignmentHeader(new AssignmentID($res->assignmentID), $res->name, $res->assignmentType, $res->displayPriority);
+        }
+        return $headers;
     }
 	
 	function isJobDone(AssignmentID $assignmentID, $job) 
@@ -847,42 +893,4 @@ class PDODataManager extends DataManager
 		$sh = $this->prepareQuery("dismissNotificationQuery", "UPDATE job_notifications SET seen = 0 WHERE notificationID = ?;");
 		$sh->execute(array($notificationID));
 	}
-	
-	function getAssignmentsBefore(AssignmentID $assignmentID, $maxAssignments = 4)
-    {
-        //Get all the assignments
-        $sh = $this->prepareQuery("getAssignmentsBeforeQuery", "SELECT assignmentID, name, assignmentType, displayPriority FROM assignments WHERE courseID = (SELECT courseID FROM assignments WHERE assignmentID = ?) ORDER BY displayPriority DESC;");
-		$sh->execute(array($assignmentID));
-		$assignments = array();
-		$foundCurrent = false;  
-	   	while($res = $sh->fetch())
-        {
-        	if($foundCurrent && $res->assignmentType == "peerreview") {
-        		$blah = $this->getAssignment(new AssignmentID($res->assignmentID), "peerreview");
-                $assignments[] = $blah;
-            } else if ($res->assignmentID == $assignmentID->id) {
-                $foundCurrent = true;
-            }
-        }
-
-        //Sort the assignments based on their date
-        //usort($assignments, function($a, $b) { return $a->reviewStopDate < $b->reviewStopDate; } );
-
-        if($maxAssignments < 0)
-            return $assignments;
-
-        return array_splice($assignments, 0, $maxAssignments);
-    }
-
-	function getAssignmentHeadersByAssignment(AssignmentID $assignmentID)
-    {
-    	$sh = $this->prepareQuery("getAssignmentHeadersByAssignmentQuery", "SELECT assignmentID, name, assignmentType, displayPriority FROM assignments WHERE courseID = (SELECT courseID FROM assignments WHERE assignmentID = ?) ORDER BY displayPriority DESC;");
-        $sh->execute(array($assignmentID->id));
-        $headers = array();
-        while($res = $sh->fetch())
-        {
-            $headers[] = new AssignmentHeader(new AssignmentID($res->assignmentID), $res->name, $res->assignmentType, $res->displayPriority);
-        }
-        return $headers;
-    }
 }

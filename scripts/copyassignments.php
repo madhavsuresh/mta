@@ -15,27 +15,28 @@ class CopyAssignmentsScript extends Script
     {
     	global $dataMgr;
 		global $NOW;
+		global $USERID;
 		
     	$html = "";
 		
-		/*$html .= "<div style='margin-bottom: 20px'>";
+		$html .= "<div style='margin-bottom: 20px'>";
 		
 		$html .= "Copy assignments from: ";
 		
 		$html .= "<select name='courseSelect' id='courseSelect'>";
 		
-		foreach($dataMgr->getCourses() as $courseObj){
+		foreach($dataMgr->getCoursesInstructedByUser($USERID) as $courseObj){
 			$html .= "<option value='$courseObj->courseID'>$courseObj->name - $courseObj->displayName</option>\n";
 		}
 		$html .= "</select>\n";
 		
-		$html .= "</div>\n";*/
+		$html .= "</div>\n";
 		
-		$html = "Select assignments:";
+		$html .= "Please select assignments from $dataMgr->courseName - $dataMgr->courseDisplayName below:";
 		
 		$html .= "<div id='assignmentSelect' style='margin-bottom: 20px; border-width: 1px; border-style: solid; border-color: black; padding:10px'>";
 		
-		foreach($dataMgr->getAssignmentHeaders() as $assignmentObj){
+		foreach($dataMgr->getAllAssignmentHeaders() as $assignmentObj){
 			$html .= "<div class='$assignmentObj->courseID'>";
 			$html .= "<input style='margin: 4px' type='checkbox' name='assignment-$assignmentObj->assignmentID'>$assignmentObj->name<br>";
 			$html .= "</div>\n";
@@ -59,14 +60,14 @@ class CopyAssignmentsScript extends Script
 			$('#anchorDateSeconds').val(moment($('#anchorDate').val(), 'MM/DD/YYYY HH:mm').unix());
 			})</script>\n";	
 		
-		/*$html .= "<script type='text/javascript'>
+		$html .= "<script type='text/javascript'>
         $('#courseSelect').change(function(){
 			$(':checkbox').prop('checked', false);
         	$('#assignmentSelect').children().hide();
             $('.' + this.value).show();
         });
         $('#courseSelect').change();
-        </script>\n";*/
+        </script>\n";
 		
         return $html;
     }

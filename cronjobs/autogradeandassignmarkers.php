@@ -94,7 +94,7 @@ class AutogradeAndAssignMarkersCronJob
 			
 			$studentToCovertScoresMap = $assignment->getStudentToCovertScoresMap();
 			
-			$output .= "<h3>High Mark Threshold: $highSpotCheckThreshold</h3>";
+			$output .= "<h3>High Mark Threshold: $highMarkThreshold</h3>";
 			$output .= "<h3>Calibration Threshold: $calibrationThreshold</h3>";
 			$output .= "<h3>High Mark Bias: $highMarkBias</h3>";
 			$output .= "<h3>Calibration Bias: $calibrationBias</h3>";
@@ -139,7 +139,7 @@ class AutogradeAndAssignMarkersCronJob
 					$independentSub->weight = sizeof($reviews);
 					$finalweight = sizeof($reviews);
 					$output .= "<tr><td>".$globalDataMgr->getUserDisplayName($authorID)."</td><td>".sizeof($reviews)."</td>";
-					if(1.0*$medScore/$assignment->maxSubmissionScore >= $highSpotCheckThreshold)
+					if(1.0*$medScore/$assignment->maxSubmissionScore >= $highMarkThreshold)
 					{
 						$independentSub->weight *= $highMarkBias;
 						$finalweight .= "*".$highMarkBias;
@@ -216,7 +216,7 @@ class AutogradeAndAssignMarkersCronJob
 			}
 			//Shuffle independent submissions and spot check proportionally with their weights;
 			mt_shuffle($independentSubs);
-			$pendingSpotChecks = pickSpotChecks($independentSubs, $randomSpotCheckProb);
+			$pendingSpotChecks = pickSpotChecks($independentSubs, $randomSpotCheckProb, $output);
 			
 			$submissionsAssigned = sizeof($pendingSubmissions);
 			$spotChecksAssigned = sizeof($pendingSpotChecks);
@@ -341,7 +341,14 @@ class AutogradeAndAssignMarkersCronJob
 			    $assignedJobs++;
 			}
 	
-			$html = "";	
+			$html = "";
+			$html .= "Minimum reviews set as: ".$minReviews."<br>";
+			$html .= "High Mark Threshold used: ".$configuration->highMarkThreshold."<br>";
+			$html .= "Random spotcheck probability used: ".$randomSpotCheckProb."<br>";
+			$html .= "High Mark Bias used: ".$highMarkBias."<br>";
+			$html .= "Low Calibration Threshold used: ".$calibrationThreshold."<br>";
+			$html .= "Calibration Bias used: ".$calibrationBias."<br>";
+			
 			$html .= "<table width='100%'>\n";
 			$html .= "<tr><td><h2>Marker</h2></td><td><h2>Submissions to Mark</h2></td><td><h2>SpotChecks</h2></td></tr>\n";
 			foreach($globalDataMgr->getMarkersByAssignment($assignmentID) as $markerID)

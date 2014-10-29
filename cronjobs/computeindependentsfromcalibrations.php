@@ -25,6 +25,8 @@ class ComputeIndependentsFromCalibrationsCronJob
 			}
 			
 			$html = "";
+			$html .= "Calibration Threshold Score Used: ".$currentAssignment->calibrationThresholdScore."<br>";
+			$html .= "Minimum Effective Calibration Reviews Needed: ".$currentAssignment->calibrationMinCount;
 			$html .= "<table width='100%'>\n";
 			$html .= "<tr><td><h2>Student</h2></td><td><h2>Weighted Average Score</h2></td><td><h2>Effective Calibration Reviews Done</h2></td><td><h2>Status</h2></td></tr>\n";
 			$currentRowType = 0;

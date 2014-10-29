@@ -11,7 +11,7 @@ try
     $assignment = get_peerreview_assignment();
 
 	$beforeCalibrationStart = $NOW < $assignment->calibrationStartDate;
-	$afterCalibrationStop   = $assignment->calibrationStopDate < $NOW;
+	$afterCalibrationStop   = grace($assignment->calibrationStopDate) < $NOW;
 
     if(array_key_exists("calibration", $_GET)){
         #We're in student mode

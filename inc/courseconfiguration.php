@@ -24,6 +24,7 @@ class CourseConfiguration
 	
 	function __construct()
     {
+    	global $dataMgr;
 		$this->courseID = $dataMgr->courseID;
 		$this->windowSize = 4;
 		$this->numReviews = 3;
@@ -36,7 +37,7 @@ class CourseConfiguration
 		$this->spotCheckProb = 0.25;
 		$this->highMarkThreshold = 80;
 		$this->highMarkBias = 2;
-		$this->calibrationThreshold = 75;
+		$this->calibrationThreshold = 7.5;
 		$this->calibrationBias = 1.5;
 	
 		$this->scoreWindowSize = 4;

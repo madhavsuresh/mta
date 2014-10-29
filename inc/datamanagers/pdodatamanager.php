@@ -704,8 +704,8 @@ class PDODataManager extends DataManager
 	
 	function getReviewStoppedAssignments()
 	{
-		global $NOW;
-		$sh = $this->prepareQuery("getReviewStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE reviewStopDate > FROM_UNIXTIME(?) && reviewStopDate < FROM_UNIXTIME(?);");
+		global $NOW; global $GRACETIME;
+		$sh = $this->prepareQuery("getReviewStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE (reviewStopDate + INTERVAL $GRACETIME SECOND) > FROM_UNIXTIME(?) && (reviewStopDate + INTERVAL $GRACETIME SECOND) < FROM_UNIXTIME(?);");
         $sh->execute(array($NOW - (20*60), $NOW));
         $assignments = array();
         while($res = $sh->fetch())
@@ -717,8 +717,8 @@ class PDODataManager extends DataManager
 	
 	function getSubmissionStoppedAssignments()
 	{
-		global $NOW;
-		$sh = $this->prepareQuery("getSubmissionStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE submissionStopDate > FROM_UNIXTIME(?) && submissionStopDate < FROM_UNIXTIME(?);");
+		global $NOW; global $GRACETIME;
+		$sh = $this->prepareQuery("getSubmissionStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE (submissionStopDate + INTERVAL $GRACETIME SECOND) > FROM_UNIXTIME(?) && (submissionStopDate + INTERVAL $GRACETIME SECOND) < FROM_UNIXTIME(?);");
         $sh->execute(array($NOW - (20*60), $NOW));
         $assignments = array();
         while($res = $sh->fetch())

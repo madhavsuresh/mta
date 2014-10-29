@@ -34,7 +34,7 @@ try
 	$reviewStoppedAssignments = $globalDataMgr->getReviewStoppedAssignments();
 
 	$autogradeAndAssignMarkersJob = new AutogradeAndAssignMarkersCronJob();
-
+	
 	foreach($reviewStoppedAssignments as $assignmentID)
 	{
 		$autogradeAndAssignMarkersJob->executeAndGetResult($assignmentID, $globalDataMgr);

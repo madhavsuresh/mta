@@ -199,19 +199,16 @@ class AutogradeAndAssignMarkersCronJob
 				
 				//Autograde to 0 the reviews that have not been done after the review stop date
 				global $NOW;
-				if(grace($assignment->reviewStopDate) < $NOW)
+				$autogradedReviews += sizeof($emptyReviews);
+				foreach($emptyReviews as $emptyReview)
 				{
-					$autogradedReviews += sizeof($emptyReviews);
-					foreach($emptyReviews as $emptyReview)
-					{
-						//If the empty review is a covert review just leave it alone because it already has a mark
-						if($assignment->getReviewMark(new MatchID($emptyReview->matchID))->reviewPoints < 0)
-							continue;
-						$mark = new ReviewMark();
-						$mark->score = 0;
-						$mark->comments = "Review not done - Autograded";
-						$assignment->saveReviewMark($mark, $assignment->getMatchID($submissionID, $emptyReview->reviewerID));
-					}
+					//If the empty review is a covert review just leave it alone because it already has a mark
+					if($assignment->getReviewMark(new MatchID($emptyReview->matchID))->reviewPoints < 0)
+						continue;
+					$mark = new ReviewMark();
+					$mark->score = 0;
+					$mark->comments = "Review not done - Autograded";
+					$assignment->saveReviewMark($mark, $assignment->getMatchID($submissionID, $emptyReview->reviewerID));
 				}
 			}
 			//Shuffle independent submissions and spot check proportionally with their weights;

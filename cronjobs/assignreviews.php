@@ -62,7 +62,10 @@ class AssignReviewsPeerReviewCronJob
 	        }
 	
 	        $html = "";
-	        $reviewerAssignment = array();
+			$html .= "Score noise used: ".$this->scoreNoise."<br>";
+	        $html .= "Max attempts used: ".$this->maxAttempts."<br>";
+	        $html .= "Number of covert calibrations assigned: ".$this->numCovertCalibrations."<br>";
+	        $html .= "Condition for exhausted condition used: ".$this->exhaustedCondition."<br>";
 	        
 	        # If the independent pool is too small, we move all of its users into the supervised pool.
 	        # If the supervised pool is too small, then we move just enough independent users into the supervised pool.

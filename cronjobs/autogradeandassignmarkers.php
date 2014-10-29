@@ -341,7 +341,14 @@ class AutogradeAndAssignMarkersCronJob
 			    $assignedJobs++;
 			}
 	
-			$html = "";	
+			$html = "";
+			$html .= "Minimum reviews set as: ".$minReviews."<br>";
+			$html .= "High Mark Threshold used: ".$configuration->highMarkThreshold."<br>";
+			$html .= "Random spotcheck probability used: ".$randomSpotCheckProb."<br>";
+			$html .= "High Mark Bias used: ".$highMarkBias."<br>";
+			$html .= "Low Calibration Threshold used: ".$calibrationThreshold."<br>";
+			$html .= "Calibration Bias used: ".$calibrationBias."<br>";
+			
 			$html .= "<table width='100%'>\n";
 			$html .= "<tr><td><h2>Marker</h2></td><td><h2>Submissions to Mark</h2></td><td><h2>SpotChecks</h2></td></tr>\n";
 			foreach($globalDataMgr->getMarkersByAssignment($assignmentID) as $markerID)

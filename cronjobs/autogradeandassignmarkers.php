@@ -94,7 +94,7 @@ class AutogradeAndAssignMarkersCronJob
 			
 			$studentToCovertScoresMap = $assignment->getStudentToCovertScoresMap();
 			
-			$output .= "<h3>High Mark Threshold: $highSpotCheckThreshold</h3>";
+			$output .= "<h3>High Mark Threshold: $highMarkThreshold</h3>";
 			$output .= "<h3>Calibration Threshold: $calibrationThreshold</h3>";
 			$output .= "<h3>High Mark Bias: $highMarkBias</h3>";
 			$output .= "<h3>Calibration Bias: $calibrationBias</h3>";
@@ -139,7 +139,7 @@ class AutogradeAndAssignMarkersCronJob
 					$independentSub->weight = sizeof($reviews);
 					$finalweight = sizeof($reviews);
 					$output .= "<tr><td>".$globalDataMgr->getUserDisplayName($authorID)."</td><td>".sizeof($reviews)."</td>";
-					if(1.0*$medScore/$assignment->maxSubmissionScore >= $highSpotCheckThreshold)
+					if(1.0*$medScore/$assignment->maxSubmissionScore >= $highMarkThreshold)
 					{
 						$independentSub->weight *= $highMarkBias;
 						$finalweight .= "*".$highMarkBias;

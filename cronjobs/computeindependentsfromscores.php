@@ -9,13 +9,16 @@ class ComputeIndependentsFromScoresCronJob
 	    	//First check if the job has already been done
 			if($globalDataMgr->isJobDone($assignmentID, 'computeindependentsfromscores'))
 				return;
+			
+			$configuration = $globalDataMgr->getCourseConfiguration($assignmentID);
+			
 			//Get all the assignments
 			$assignmentHeaders = $globalDataMgr->getAssignmentHeadersByAssignment($assignmentID);
 			
 			$currentAssignment = $globalDataMgr->getAssignment($assignmentID);
 			
-			$windowSize = 4;//$windowSize = require_from_post("windowsize");
-			$independentThreshold = 70;//$independentThreshold = require_from_post("threshold");
+			$windowSize = $configuration->scoreWindowSize;//$windowSize = require_from_post("windowsize");
+			$independentThreshold = $configuration->scoreThreshold;//$independentThreshold = require_from_post("threshold");
 			
 			$keep = true;//hard-coded in 
 			
@@ -29,7 +32,11 @@ class ComputeIndependentsFromScoresCronJob
 			}
 			$addedIndependents = 0;
 			
-			$html = "<h2>Used Assignments</h2>";
+			$html = "";
+			
+			$html .= "Score Threshold used for promotion: ".$independentThreshold;
+			
+			$html .= "<h2>Used Assignments</h2>";
 			foreach($assignments as $asn){
 			    $html .= $asn->name . "<br>";
 			}

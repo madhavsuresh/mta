@@ -482,7 +482,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         }
         $html .= "</table>";
 
-        return $html;
+        return $output.$html;
     }
 
 }

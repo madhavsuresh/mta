@@ -216,7 +216,7 @@ class AutogradeAndAssignMarkersCronJob
 			}
 			//Shuffle independent submissions and spot check proportionally with their weights;
 			mt_shuffle($independentSubs);
-			$pendingSpotChecks = pickSpotChecks($independentSubs, $randomSpotCheckProb);
+			$pendingSpotChecks = pickSpotChecks($independentSubs, $randomSpotCheckProb, $output);
 			
 			$submissionsAssigned = sizeof($pendingSubmissions);
 			$spotChecksAssigned = sizeof($pendingSpotChecks);

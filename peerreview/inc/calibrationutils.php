@@ -90,7 +90,7 @@ function convertTo10pointScale($weightedaveragescore, Assignment $assignment)
 	$thresholdMSE = $assignment->calibrationThresholdMSE;
 	$thresholdScore = $assignment->calibrationThresholdScore;
 	
-	return max(0, precisionFloat( -( ($maxScore - $thresholdScore) / $thresholdMSE) * $weightedaveragescore + $maxScore));
+	return max(0, precisionFloat( (($thresholdScore-$maxScore) / $thresholdMSE) * $weightedaveragescore + $maxScore));
 }
 
 function topicHash(UserID $userID, $topics)

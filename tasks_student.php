@@ -178,7 +178,7 @@ if($latestCalibrationAssignment)
 	if($status == "Independent")
 		$content .= "<h4 style='color:green'>All calibration reviews are now for practice</h4>\n";
 	if($status == "Supervised" && $demotion != NULL)
-		$content .= "<h4 style='color:red'>You have been placed back into the supervised pool because the average TA grades for your reviews is lower than $demotion->demotionThreshold%</h4>\n";
+		$content .= "<h4 style='color:red'>You have been placed back into the supervised pool on ".phpDate($demotion->demotionDate)." because the average TA grades for your peer reviews was lower than $demotion->demotionThreshold%</h4>\n";
 }
 $content .= "<h2>Current Weighted Average : ".$reviewerAverage."</h2>\n";
 $content .= "<h2>Threshold: ".$threshold."</h2>\n";

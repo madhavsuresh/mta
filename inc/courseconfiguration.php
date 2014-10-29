@@ -24,6 +24,7 @@ class CourseConfiguration
 	
 	function __construct()
     {
+    	global $dataMgr;
 		$this->courseID = $dataMgr->courseID;
 		$this->windowSize = 4;
 		$this->numReviews = 3;

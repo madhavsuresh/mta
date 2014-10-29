@@ -18,7 +18,7 @@ class DisqualifyIndependentsFromScoresCronJob
 			$currentAssignment = $globalDataMgr->getAssignment($assignmentID);
 			
 			$windowSize = $configuration->disqualifyWindowSize;//$windowSize = require_from_post("windowsize");
-			$independentThreshold = 70;//$independentThreshold = floatval(require_from_post("threshold"));
+			$independentThreshold = $configuration->disqualifyThreshold;//$independentThreshold = floatval(require_from_post("threshold"));
 			
 			$assignments = $globalDataMgr->getAssignmentsBefore($assignmentID, $windowSize);
 			$userNameMap = $globalDataMgr->getUserDisplayMapByAssignment($assignmentID);
@@ -28,10 +28,11 @@ class DisqualifyIndependentsFromScoresCronJob
 			$numIndependents = sizeof($independents);
 			
 			$html = "";
+			$html .= "Score Threshold used for disqualification: ".$independentThreshold;
 			$html .= "<h2>Used Assignments</h2>";
 			foreach($assignments as $asn){
 			    $html .= $asn->name . "<br>";
-			}
+			} 
 			
 			$html .= "<table width='100%'>\n";
 			$html .= "<tr><td><h2>Student</h2></td><td><h2>Review Avg</h2></td><td><h2>Status</h2></td></tr>\n";

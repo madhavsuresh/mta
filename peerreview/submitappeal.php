@@ -109,6 +109,9 @@ try
     $appealMessage->loadFromPost($_POST);
     $assignment->saveAppealMessage($appealMessage);
 
+	$submission = $assignment->getSubmission($matchID);
+	$assignment->assignAppeal($appealMessage, $submission);
+
     $content .= "<h1>Appeal Submitted</h1>\n";
     $appeal = $assignment->getAppeal($review->matchID, $appealType);
     $content .= $appeal->getHTML();

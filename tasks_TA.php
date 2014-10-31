@@ -97,7 +97,7 @@ foreach($assignments as $assignment)
         }
 	}
 
-	$appealsTaskMap = getAppealsTaskMap($assignment);
+	/*$appealsTaskMap = getAppealsTaskMap($assignment);
 
 	if(isset($appealsTaskMap[$USERID->id]))
 	{
@@ -130,7 +130,7 @@ foreach($assignments as $assignment)
 				insertTask($reviewTask, $reviewTasks);	
 			}
 		}
-	}
+	}*/
 }
 
 $content .= "<div style='margin-bottom:20px'>";

@@ -35,8 +35,6 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
 
         //$minimumCalibrationReviews = require_from_post("minimumReviews");
         //$independentThreshold = require_from_post("threshold");
-
-        //$assignments = $dataMgr->getCalibrationAssignments();
         $userNameMap = $dataMgr->getUserDisplayMap();
         $students = $dataMgr->getStudents();
         if(array_key_exists("keep", $_POST)){
@@ -64,7 +62,7 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
 			$numReviews = $dataMgr->numCalibrationReviews($student);
 			$html .= "<td>".$numReviews."</td>";
             $html .= "</td><td>\n";
-            if($average >= $currentAssignment->calibrationThresholdScore && $numReviews >= $currentAssignment->calibrationMinCount && !in_array($student->id, $independents))
+            if($weightedAverage >= $currentAssignment->calibrationThresholdScore && $numReviews >= $currentAssignment->calibrationMinCount && !array_key_exists($student->id, $independents))
             {
                 $independents[] = $student;
                 $html .= "Independent";

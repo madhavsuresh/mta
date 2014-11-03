@@ -17,6 +17,7 @@ require_once(MTA_ROOTPATH.'inc/ids.php');
 require_once(MTA_ROOTPATH.'inc/authmanager.php');
 require_once(MTA_ROOTPATH.'inc/datamanager.php');
 require_once(MTA_ROOTPATH.'inc/htmlpurifier/HTMLPurifier.auto.php');
+require_once(MTA_ROOTPATH.'inc/courseconfiguration.php');
 
 //Load the config
 require_once(MTA_ROOTPATH.'config.php');
@@ -73,6 +74,7 @@ try
     $HTML_PURIFIER = NULL;
     $PRETTYURLS = isset($_GET["prettyurls"]);
     $NOW = time();
+    $GRACETIME = 15*60;//15 minutes
 
     /** Stuff that's needed by the template */
     $content="";

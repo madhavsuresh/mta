@@ -302,5 +302,12 @@ a.editmarklink:active  {
 	float: bottom;	
 }
 
+.notification{
+	padding-left: 10px;
+	width: 99%;
+	margin: 0 auto;
+	float: bottom;
+}
+
 
 

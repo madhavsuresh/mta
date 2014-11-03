@@ -65,7 +65,7 @@ class PDODataManager extends DataManager
         //$this->getConfigPropertyQuery = $this->db->prepare("SELECT *;");
         //$this->assignmentSwapDisplayOrderQuery = $this->db->prepare("UPDATE assignments SET
 
- 		$this->getAllAssignmentHeadersQuery = $this->db->prepare("SELECT assignmentID, name, courseID, assignmentType, displayPriority FROM assignments WHERE assignmentType = 'peerreview' ORDER BY displayPriority ASC;");
+ 		$this->getInstructedAssignmentHeadersQuery = $this->db->prepare("SELECT assignmentID, name, courseID, assignmentType, displayPriority FROM assignments WHERE assignmentType = 'peerreview' && courseID IN (SELECT courseID FROM users WHERE username = ?) ORDER BY displayPriority ASC;");
 		//$this->getAllCalibrationPoolsQuery = $this->db->prepare("SELECT assignmentID, a.name, a.courseID, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_submissions ps, users u WHERE ps.assignmentID = a.assignmentID AND ps.authorID = u.a AND u.userType = 'anonymous' ORDER BY displayPriority ASC;");
 		$this->getAllCalibrationPoolsQuery = $this->db->prepare("SELECT a.assignmentID, a.name, a.courseID, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_calibration_pools pcp WHERE a.assignmentID = pcp.poolAssignmentID ORDER BY displayPriority ASC;");
         
@@ -81,8 +81,6 @@ class PDODataManager extends DataManager
        	$this->numCalibrationReviewsAfterDateQuery = $this->db->prepare("SELECT COUNT(DISTINCT pram.matchID) FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 'attempt' AND pram.reviewerID = ? AND prara.reviewTimestamp > FROM_UNIXTIME(?) AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;");
        	
        	$this->latestAssignmentWithFlaggedIndependentsQuery = $this->db->prepare("SELECT peer_review_assignment.assignmentID FROM peer_review_assignment, peer_review_assignment_independent WHERE peer_review_assignment.assignmentID = peer_review_assignment_independent.assignmentID ORDER BY peer_review_assignment.calibrationStopDate DESC LIMIT 10");
-        
-       	$this->isInSameCourseQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE courseID = ? && assignmentID = ?");
         
 		$this->getMarkingLoadQuery = $this->db->prepare("SELECT markingLoad FROM users WHERE userID=?");
         //Now we can set up all the assignment data managers
@@ -475,11 +473,12 @@ class PDODataManager extends DataManager
         $sh->execute(array($name, $displayName, $authType, $regType, $browsable));
     }
 	
-	function getAllAssignmentHeaders()
+	function getInstructedAssignmentHeaders(UserID $instructorID)
     {
-        $this->getAllAssignmentHeadersQuery->execute();
+    	$username = $this->getUserName($instructorID);
+        $this->getInstructedAssignmentHeadersQuery->execute(array($username));
         $headers = array();
-        while($res = $this->getAllAssignmentHeadersQuery->fetch())
+        while($res = $this->getInstructedAssignmentHeadersQuery->fetch())
         {
             $headers[] = new GlobalAssignmentHeader(new AssignmentID($res->assignmentID), $res->name, new CourseID($res->courseID) , $res->assignmentType, $res->displayPriority);
         }
@@ -497,6 +496,18 @@ class PDODataManager extends DataManager
         return $headers;
     }
 	
+	//NO LONGER USED
+	function getCalibrationAssignments()
+    {
+        $calibrationAssignments = array();
+        foreach($this->getCalibrationAssignmentHeaders() as $header)
+        {
+            $calibrationAssignments[] = $this->getAssignment($header->assignmentID, $header->assignmentType);
+        }
+        return $calibrationAssignments;
+    }
+	
+	//NO LONGER USED
 	function getCalibrationAssignmentHeaders()
     {
         $this->getCalibrationAssignmentHeadersQuery->execute(array($this->courseID));
@@ -547,6 +558,24 @@ class PDODataManager extends DataManager
         return $res[0];
 	}
 	
+	//copied from peerreview/inc/calibrationutils.php to accomodate cron job computindependentsfromscalibrations.php
+	function getWeightedAverage(UserID $userid, Assignment $assignment=NULL)
+	{	
+		$scores = $this->getCalibrationScores($userid);
+		
+		require_once("peerreview/inc/calibrationutils.php");
+		
+		if($scores)
+			$average = computeWeightedAverage($scores);
+		else 
+			$average = "--";
+	
+		if($assignment!=NULL)
+			$average = convertTo10pointScale($average, $assignment);
+	
+		return $average;
+	}
+	
 	function latestAssignmentWithFlaggedIndependents()
 	{
 		$this->latestAssignmentWithFlaggedIndependentsQuery->execute();
@@ -562,6 +591,13 @@ class PDODataManager extends DataManager
 		$this->getMarkingLoadQuery->execute(array($markerID));
 		$res = $this->getMarkingLoadQuery->fetch();
 		return $res->markingLoad;
+	}
+	
+	function setMarkingLoad(UserID $markerID, $load)
+	{
+		//$sh = $this->prepareQuery("assertUserQuery", "SELECT userID FROM users WHERE userID = ?");
+		$sh = $this->prepareQuery("setMarkingLoadQuery", "UPDATE users SET markingLoad = ? WHERE userID = ?");
+		$sh->execute(array($load, $markerID->id));
 	}
 	
 	function demote(UserID $userID, $demotionThreshold)
@@ -585,5 +621,277 @@ class PDODataManager extends DataManager
 		}
 		else 
 			return NULL;
+	}
+	
+	function saveCourseConfiguration(CourseConfiguration $configuration) 
+	{
+		$sh = $this->prepareQuery("saveCourseConfigurationQuery", "INSERT INTO course_configuration (courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, highMarkThreshold, highMarkBias, calibrationThreshold, calibrationBias, scoreWindowSize, scoreThreshold, disqualifyWindowSize, disqualifyThreshold) 
+																							VALUES (:courseID, :windowSize, :numReviews, :scoreNoise, :maxAttempts, :numCovertCalibrations, :exhaustedCondition, :minReviews, :spotCheckProb, :highMarkThreshold, :highMarkBias, :calibrationThreshold, :calibrationBias, :scoreWindowSize, :scoreThreshold, :disqualifyWindowSize, :disqualifyThreshold) 
+																		   ON DUPLICATE KEY UPDATE courseID=:courseID , windowSize=:windowSize , numReviews=:numReviews , scoreNoise=:scoreNoise , maxAttempts=:maxAttempts , numCovertCalibrations=:numCovertCalibrations , exhaustedCondition=:exhaustedCondition, minReviews=:minReviews, spotCheckProb=:spotCheckProb, highMarkThreshold=:highMarkThreshold, highMarkBias=:highMarkBias, calibrationThreshold=:calibrationThreshold, calibrationBias=:calibrationBias, scoreWindowSize=:scoreWindowSize, scoreThreshold=:scoreThreshold, disqualifyWindowSize=:disqualifyWindowSize, disqualifyThreshold=:disqualifyThreshold;");
+		$array = array(
+			"courseID"=>$this->courseID, 
+			"windowSize"=>$configuration->windowSize, 
+			"numReviews"=>$configuration->numReviews, 
+			"scoreNoise"=>$configuration->scoreNoise, 
+			"maxAttempts"=>$configuration->maxAttempts, 
+			"numCovertCalibrations"=>$configuration->numCovertCalibrations, 
+			"exhaustedCondition"=>$configuration->exhaustedCondition,
+			"minReviews"=>$configuration->minReviews, 
+			"spotCheckProb"=>$configuration->spotCheckProb, 
+			"highMarkThreshold"=>$configuration->highMarkThreshold, 
+			"highMarkBias"=>$configuration->highMarkBias, 
+			"calibrationThreshold"=>$configuration->calibrationThreshold, 
+			"calibrationBias"=>$configuration->calibrationBias,
+			"scoreWindowSize"=>$configuration->scoreWindowSize,
+			"scoreThreshold"=>$configuration->scoreThreshold,
+			"disqualifyWindowSize"=>$configuration->disqualifyWindowSize,
+			"disqualifyThreshold"=>$configuration->disqualifyThreshold
+			);
+		$sh->execute($array);
+	}
+	
+	function getCourseConfiguration(AssignmentID $assignmentID=NULL) 
+	{
+		if($assignmentID)
+		{
+			$sh = $this->prepareQuery("getCourseConfigurationQuery", "SELECT courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, highMarkThreshold, highMarkBias, calibrationThreshold, calibrationBias, scoreWindowSize, scoreThreshold, disqualifyWindowSize, disqualifyThreshold from course_configuration WHERE courseID = (SELECT courseID FROM assignments WHERE assignmentID = ?);");
+			$sh->execute(array($assignmentID));
+		}
+		else
+		{
+			$sh = $this->prepareQuery("getCourseConfigurationQuery", "SELECT courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, highMarkThreshold, highMarkBias, calibrationThreshold, calibrationBias, scoreWindowSize, scoreThreshold, disqualifyWindowSize, disqualifyThreshold from course_configuration WHERE courseID = ?;");
+			$sh->execute(array($this->courseID));
+		}
+		$configuration = new CourseConfiguration();
+		$res = $sh->fetch();
+		if(!$res)
+			throw new Exception('The course of assignment $assignmentID has no course configuration set');
+
+		$configuration->windowSize = $res->windowSize;
+		$configuration->numReviews = $res->numReviews;
+		$configuration->scoreNoise = $res->scoreNoise;
+		$configuration->maxAttempts = $res->maxAttempts;
+		$configuration->numCovertCalibrations = $res->numCovertCalibrations;
+		$configuration->exhaustedCondition = $res->exhaustedCondition;
+		
+		$configuration->minReviews = $res->minReviews;
+		$configuration->spotCheckProb = $res->spotCheckProb;
+		$configuration->highMarkThreshold = $res->highMarkThreshold;
+		$configuration->highMarkBias = $res->highMarkBias;
+		$configuration->calibrationThreshold = $res->calibrationThreshold;
+		$configuration->calibrationBias = $res->calibrationBias;
+		
+		$configuration->scoreWindowSize = $res->scoreWindowSize;
+		$configuration->scoreThreshold = $res->scoreThreshold;
+		
+		$configuration->disqualifyWindowSize = $res->disqualifyWindowSize;
+		$configuration->disqualifyThreshold = $res->disqualifyThreshold;
+		
+		return $configuration;
+	}
+
+	function getCoursesInstructedByUser(UserID $instructorID)
+	{
+		$username = $this->getUserName($instructorID);
+		$sh = $this->prepareQuery("getCoursesInstructedByUser", "SELECT name, displayName, courseID, browsable FROM course where courseID IN (SELECT courseID FROM users WHERE username = ?);");
+		$sh->execute(array($username));
+		return $sh->fetchall();
+	}
+
+	/*
+	 * Global Data Manager stuff for cronjobs
+	 * 						    			*/
+	
+	function getReviewStoppedAssignments()
+	{
+		global $NOW; global $GRACETIME;
+		$sh = $this->prepareQuery("getReviewStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE (reviewStopDate + INTERVAL $GRACETIME SECOND) > FROM_UNIXTIME(?) && (reviewStopDate + INTERVAL $GRACETIME SECOND) < FROM_UNIXTIME(?);");
+        $sh->execute(array($NOW - (20*60), $NOW));
+        $assignments = array();
+        while($res = $sh->fetch())
+        {
+            $assignments[] = new AssignmentID($res->assignmentID);
+        }
+        return $assignments;
+	}
+	
+	function getSubmissionStoppedAssignments()
+	{
+		global $NOW; global $GRACETIME;
+		$sh = $this->prepareQuery("getSubmissionStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE (submissionStopDate + INTERVAL $GRACETIME SECOND) > FROM_UNIXTIME(?) && (submissionStopDate + INTERVAL $GRACETIME SECOND) < FROM_UNIXTIME(?);");
+        $sh->execute(array($NOW - (20*60), $NOW));
+        $assignments = array();
+        while($res = $sh->fetch())
+        {
+            $assignments[] = new AssignmentID($res->assignmentID);
+        }
+        return $assignments;
+	}
+	
+	function getStudentsByAssignment(AssignmentID $assignmentID)
+    {
+        $sh = $this->prepareQuery("getStudentsByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE userType = 'student' && assignmentID = ? ORDER BY lastName, firstName;");
+        $sh->execute(array($assignmentID));
+        $students = array();
+        while($res = $sh->fetch())
+            $students[] = new UserID($res->userID);
+        return $students;
+    }
+	
+	function getMarkersByAssignment(AssignmentID $assignmentID)
+    {
+        $sh = $this->prepareQuery("getMarkersByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE (userType='instructor' || userType='marker') && assignmentID=?;");
+        $sh->execute(array($assignmentID));
+        $instructors = array();
+        while($res = $sh->fetch())
+            $instructors[] = $res->userID;
+        return $instructors;
+    }
+	
+	function getUserDisplayMapByAssignment(AssignmentID $assignmentID)
+    {
+    	$sh = $this->prepareQuery("getUserDisplayMapByAssignmentQuery", "SELECT userID, firstName, lastName FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE assignmentID=? ORDER BY lastName, firstName;");
+        $sh->execute(array($assignmentID));
+
+        $users = array();
+        while($res = $sh->fetch())
+        {
+            $users[$res->userID] = $res->firstName." ".$res->lastName;
+        }
+        return $users;
+    }
+	
+	function getAssignmentsBefore(AssignmentID $assignmentID, $maxAssignments = 4)
+    {
+        //Get all the assignments
+        $sh = $this->prepareQuery("getAssignmentsBeforeQuery", "SELECT assignmentID, name, assignmentType, displayPriority FROM assignments WHERE courseID = (SELECT courseID FROM assignments WHERE assignmentID = ?) ORDER BY displayPriority DESC;");
+		$sh->execute(array($assignmentID));
+		$assignments = array();
+		$foundCurrent = false;  
+	   	while($res = $sh->fetch())
+        {
+        	if($foundCurrent && $res->assignmentType == "peerreview") {
+        		$blah = $this->getAssignment(new AssignmentID($res->assignmentID), "peerreview");
+                $assignments[] = $blah;
+            } else if ($res->assignmentID == $assignmentID->id) {
+                $foundCurrent = true;
+            }
+        }
+
+        //Sort the assignments based on their date
+        //usort($assignments, function($a, $b) { return $a->reviewStopDate < $b->reviewStopDate; } );
+
+        if($maxAssignments < 0)
+            return $assignments;
+
+        return array_splice($assignments, 0, $maxAssignments);
+    }
+
+	function getAssignmentHeadersByAssignment(AssignmentID $assignmentID)
+    {
+    	$sh = $this->prepareQuery("getAssignmentHeadersByAssignmentQuery", "SELECT assignmentID, name, assignmentType, displayPriority FROM assignments WHERE courseID = (SELECT courseID FROM assignments WHERE assignmentID = ?) ORDER BY displayPriority DESC;");
+        $sh->execute(array($assignmentID->id));
+        $headers = array();
+        while($res = $sh->fetch())
+        {
+            $headers[] = new AssignmentHeader(new AssignmentID($res->assignmentID), $res->name, $res->assignmentType, $res->displayPriority);
+        }
+        return $headers;
+    }
+	
+	function isJobDone(AssignmentID $assignmentID, $job) 
+	{
+		$sh = $this->prepareQuery("independentsCopiedQuery", "SELECT notificationID FROM job_notifications WHERE success = 1 && assignmentID = ? && job = ?;");
+		$sh->execute(array($assignmentID, $job));
+		$res = $sh->fetch();
+		return $res != NULL;
+	}
+	
+	function createNotification(AssignmentID $assignmentID, $job, $success, $summary, $details)
+	{
+		global $NOW;
+		$sh = $this->prepareQuery("createNotificationQuery", "INSERT INTO job_notifications (courseID, assignmentID, job, dateRan, success, summary, details) VALUES ((SELECT courseID FROM assignments WHERE assignmentID = :assignmentID), :assignmentID, :job, FROM_UNIXTIME(:dateRan), :success, :summary, :details);");
+		$sh->execute(array("assignmentID"=>$assignmentID,
+					  "job"=>$job, 
+					  "dateRan"=>$NOW,
+				      "success"=>$success,
+					  "summary"=>$summary,
+					  "details"=>$details));
+	}
+	
+	function getNewNotifications()
+	{
+		$sh = $this->prepareQuery("getNewNotificationsQuery", "SELECT notificationID, assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary FROM job_notifications WHERE courseID = ? && seen = 0 ORDER BY dateRan DESC;");
+		$sh->execute(array($this->courseID));
+		$notifications = array();
+		while($res = $sh->fetch())
+        {
+        	$notification = new stdClass();
+			$notification->notificationID = $res->notificationID;
+        	$notification->assignmentID = new AssignmentID($res->assignmentID);
+			$notification->job = $res->job;
+			$notification->dateRan = $res->dateRan;
+			$notification->success = $res->success;
+			$notification->seen = $res->seen;
+			$notification->summary = $res->summary;
+            $notifications[] = $notification;
+        }
+        return $notifications;
+	}
+	
+	function getAllNotifications()
+	{
+		$sh = $this->prepareQuery("getAllNotificationsQuery", "SELECT notificationID, assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary FROM job_notifications WHERE courseID = ? ORDER BY dateRan DESC;");
+		$sh->execute(array($this->courseID));
+		$notifications = array();
+		while($res = $sh->fetch())
+        {
+        	$notification = new stdClass();
+			$notification->notificationID = $res->notificationID;
+        	$notification->assignmentID = new AssignmentID($res->assignmentID);
+			$notification->job = $res->job;
+			$notification->dateRan = $res->dateRan;
+			$notification->success = $res->success;
+			$notification->seen = $res->seen;
+			$notification->summary = $res->summary;
+            $notifications[] = $notification;
+        }
+        return $notifications;
+	}
+	
+	function getNotification(/*NotificationID*/ $notificationID)
+	{
+		$sh = $this->prepareQuery("getNotificationQuery", "SELECT assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary, details FROM job_notifications WHERE notificationID = ?");
+		$sh->execute(array($notificationID));
+		if(!$res = $sh->fetch())
+        {
+            throw new Exception("Invalid notification id '$notificationID'");
+        }
+    	$notification = new stdClass();
+    	$notification->assignmentID = new AssignmentID($res->assignmentID);
+		$notification->job = $res->job;
+		$notification->dateRan = $res->dateRan;
+		$notification->success = $res->success;
+		$notification->seen = $res->seen;
+		$notification->summary = $res->summary;
+		$notification->details = $res->details;
+        $notifications[] = $notification;
+        return $notification;
+	}
+	
+	function dismissNotification(/*NotificationID*/ $notificationID)
+	{
+		//$sh = $this->prepareQuery("assertNotificationQuery", "SELECT * FROM job_notifications WHERE notification = ?;");
+		
+		$sh = $this->prepareQuery("dismissNotificationQuery", "UPDATE job_notifications SET seen = 1 WHERE notificationID = ?;");
+		$sh->execute(array($notificationID));
+	}
+	
+	function renewNotification(/*NotificationID*/ $notificationID)
+	{
+		//$sh = $this->prepareQuery("assertNotificationQuery", "SELECT * FROM job_notifications WHERE notification = ?;");
+		
+		$sh = $this->prepareQuery("dismissNotificationQuery", "UPDATE job_notifications SET seen = 0 WHERE notificationID = ?;");
+		$sh->execute(array($notificationID));
 	}
 }

@@ -25,6 +25,11 @@ try
         #Figure out what courses are availible, and display them to the user (showing what roles they have)
         $assignments = $dataMgr->getAssignments();
 		
+		if($dataMgr->isInstructor($USERID))
+        {
+			require_once("notifications.php");
+		}
+		
 		#TO-DO Section and Calibration Section processing
 		if($dataMgr->isStudent($USERID))
 		{		
@@ -43,6 +48,7 @@ try
             $content .= "<td><a title='Create new Assignment' href='".get_redirect_url("editassignment.php?action=new")."'><div class='icon new'></div></a</td>\n";
             $content .= "<td><a title='Run Scripts' href='".get_redirect_url("runscript.php")."'><div class='icon script'></div></a></td>\n";
             $content .= "<td><a title='User Manager' href='".get_redirect_url("usermanager.php")."'><div class='icon userManager'></div></a></td>\n";
+			$content .= "<td><a title='Course Configuration' href='".get_redirect_url("editcourseconfiguration.php")."'>Course Configuration</a></td>\n";
             $content .= "</tr></table><br>\n";
         }
 		

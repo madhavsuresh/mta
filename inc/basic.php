@@ -260,5 +260,6 @@ function phpDate($seconds)
 
 function grace($seconds)
 {
-	return $seconds + (15 * 60); //15 minute grace period
+	global $GRACETIME;
+	return $seconds + $GRACETIME; //15 minute grace period
 }

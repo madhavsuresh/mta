@@ -1,6 +1,6 @@
 <?php
 
-function pickSpotChecks(/*StdClass*/ $submissions, $fraction)
+function pickSpotChecks(/*StdClass[]*/ $submissions, $fraction)
 {
 	if($fraction > 1)
 		throw new Exception('Spot check fraction is greater than 1');

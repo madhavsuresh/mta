@@ -83,11 +83,14 @@ function convertTo10pointScale($weightedaveragescore, Assignment $assignment)
 	if(!is_numeric($weightedaveragescore))
 		//throw new Exception('Non-numeric argument past as weighted average score');
 		return "--";
+	elseif($weightedaveragescore < 0)
+		return 0;
+	
 	$maxScore = $assignment->calibrationMaxScore;
 	$thresholdMSE = $assignment->calibrationThresholdMSE;
 	$thresholdScore = $assignment->calibrationThresholdScore;
 	
-	return max(0, precisionFloat( -( ($maxScore - $thresholdScore) / $thresholdMSE) * $weightedaveragescore + $maxScore));
+	return max(0, precisionFloat( (($thresholdScore-$maxScore) / $thresholdMSE) * $weightedaveragescore + $maxScore));
 }
 
 function topicHash(UserID $userID, $topics)

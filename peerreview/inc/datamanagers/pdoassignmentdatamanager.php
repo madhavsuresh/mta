@@ -463,26 +463,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
         //Make a dictionary for the clean query
   		$cleanQueries = array();
-        function prepareCleanQuery(&$map, $db, $numUsers)
-        {
-            if(!array_key_exists($numUsers, $map))
-            {
-                if($numUsers == 0)
-                {
-                    $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? && instructorForced=0 && (calibrationState = 'none' || calibrationState = 'covert');");
-                }
-                else
-                {
-                    $paramStr = "";
-                    for($i=0; $i < $numUsers-1;$i++) { $paramStr.="?,";}
-                    $paramStr.="?";
-                    $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? && reviewerID NOT IN ($paramStr) && instructorForced=0 && (calibrationState = 'none' || calibrationState = 'covert');");
-                }
-            }
-            return $map[$numUsers];
-        }
 
-        
         $authors_ = $this->getAuthorSubmissionMap_($assignment);
 		$authors = $this->getAuthorSubmissionMap($assignment);
 		$authors = shuffle_assoc2($authors);
@@ -521,13 +502,33 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
                 $reviewers = array();
             }
             //Clean up any extra reviews that are not insructor forced
-            $sh = prepareCleanQuery($cleanQueries, $this->db, sizeof($reviewers));
+            $sh = $this->prepareCleanQuery($cleanQueries, $this->db, sizeof($reviewers));
             //We need to put the submission ID in this array
             array_unshift($reviewers, $submissionID);
             $sh->execute($reviewers);
         }
 
         $this->db->commit();
+    }
+
+	//Strictly a helper function for main function saveReviewerAssignment
+    function prepareCleanQuery(&$map, $db, $numUsers)
+    {
+        if(!array_key_exists($numUsers, $map))
+        {
+            if($numUsers == 0)
+            {
+                $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? && instructorForced=0 && (calibrationState = 'none' || calibrationState = 'covert');");
+            }
+            else
+            {
+                $paramStr = "";
+                for($i=0; $i < $numUsers-1;$i++) { $paramStr.="?,";}
+                $paramStr.="?";
+                $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? && reviewerID NOT IN ($paramStr) && instructorForced=0 && (calibrationState = 'none' || calibrationState = 'covert');");
+            }
+        }
+        return $map[$numUsers];
     }
 
     function getAssignedReviews(PeerReviewAssignment $assignment, UserID $reviewerID)
@@ -1744,7 +1745,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		{
 			if(!array_key_exists($res->reviewerID, $covertScores))
 				$covertScores[$res->reviewerID] = array();
-			$covertScores[$res->reviewerID][] = $res->reviewPoints;	//could be NULL if covert review not done
+			$covertScores[$res->reviewerID][] = (!is_null($res->reviewPoints)) ? $res->reviewPoints : -1; //could be NULL if covert review not done
 		}
 		return $covertScores;
 	}

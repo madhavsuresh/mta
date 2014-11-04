@@ -66,16 +66,12 @@ try
     $content .= "<a title='New' target='_blank' href='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID&authorid=".$assignment->getUserIDForAnonymousSubmission($USERID, $authMgr->getCurrentUsername())."&close=1")."'>Create Instructor Submission</a>\n";
 
     $appealMatchToMarkerMap = $assignment->getAppealMatchToMarkerMap();	
-	print_r($appealMatchToMarkerMap);
-	$unansweredAppeals = array_merge(array_filter($appealMap, function($item){return $item;}), array_filter($markAppealMap, function($item){ return $item;}));
+	$unansweredAppeals = array_filter($appealMap, function($item){return $item;}) + array_filter($markAppealMap, function($item){return $item;});
 	$numUnansweredAppeals = sizeof($unansweredAppeals);
-	//$numUnansweredAppeals = sizeof(array_filter($appealMap, function($item){ return $item;})) + sizeof(array_filter($markAppealMap, function($item){ return $item;}));
 	$appeals = array_merge(array_keys($appealMap), array_keys($markAppealMap));
-	$unassignedAppeals = array_filter($appeals, function($item) use ($appealMatchToMarkerMap){return !array_key_exists($item, $appealMatchToMarkerMap);
-	//$unansweredUnassignedAppeals = array_filter($unassignedAppeals, function($item) use ($unansweredAppeals){return !array_key_exists($item, $appealMatchToMarkerMap);
+	$unassignedAppeals = array_filter($appeals, function($item) use ($appealMatchToMarkerMap){return !array_key_exists($item, $appealMatchToMarkerMap);});
 	$numUnassignedAppeals = sizeof($unassignedAppeals);
-	//$numUnassignedAppeals = sizeof(array_filter($appeals, function($item) use ($appealMatchToMarkerMap){return !array_key_exists($item, $appealMatchToMarkerMap);}));
-	$numUnansweredUnassignedAppeals = 1; 
+	$numUnansweredUnassignedAppeals = sizeof( array_filter($unassignedAppeals, function($item) use ($unansweredAppeals){return array_key_exists($item, $unansweredAppeals);}) );
     $content .= "<table width='35%'>\n";
     $content .= "<tr><td>Unanswered Appeals</td><td>$numUnansweredAppeals</td></tr>";
 	$content .= "<tr><td>Unassigned Appeals</td><td>$numUnassignedAppeals</td></tr>";

@@ -108,6 +108,8 @@ try
     $appealMessage = new AppealMessage($appealID, $appealType, $review->matchID, $appealAuthor);
     $appealMessage->loadFromPost($_POST);
     $assignment->saveAppealMessage($appealMessage);
+	if($dataMgr->isStudent($appealAuthor))
+		$assignment->assignAppeal($appealMessage->matchID);
 
     $content .= "<h1>Appeal Submitted</h1>\n";
     $appeal = $assignment->getAppeal($review->matchID, $appealType);

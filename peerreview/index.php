@@ -67,11 +67,19 @@ try
 
     $appealMatchToMarkerMap = $assignment->getAppealMatchToMarkerMap();	
 	print_r($appealMatchToMarkerMap);
-	
+	$unansweredAppeals = array_merge(array_filter($appealMap, function($item){return $item;}), array_filter($markAppealMap, function($item){ return $item;}));
+	$numUnansweredAppeals = sizeof($unansweredAppeals);
+	//$numUnansweredAppeals = sizeof(array_filter($appealMap, function($item){ return $item;})) + sizeof(array_filter($markAppealMap, function($item){ return $item;}));
+	$appeals = array_merge(array_keys($appealMap), array_keys($markAppealMap));
+	$unassignedAppeals = array_filter($appeals, function($item) use ($appealMatchToMarkerMap){return !array_key_exists($item, $appealMatchToMarkerMap);
+	//$unansweredUnassignedAppeals = array_filter($unassignedAppeals, function($item) use ($unansweredAppeals){return !array_key_exists($item, $appealMatchToMarkerMap);
+	$numUnassignedAppeals = sizeof($unassignedAppeals);
+	//$numUnassignedAppeals = sizeof(array_filter($appeals, function($item) use ($appealMatchToMarkerMap){return !array_key_exists($item, $appealMatchToMarkerMap);}));
+	$numUnansweredUnassignedAppeals = 1; 
     $content .= "<table width='35%'>\n";
-    $content .= "<tr><td>Unanswered Appeals</td><td>$unansweredAppeals</td></tr>";
-	$content .= "<tr><td>Unassigned Appeals</td><td>$unassignedAppeals</td></tr>";
-	$content .= "<tr><td>Unanswered and Unassigned Appeals</td><td>$unansweredUnassignedAppeals</td></tr>";
+    $content .= "<tr><td>Unanswered Appeals</td><td>$numUnansweredAppeals</td></tr>";
+	$content .= "<tr><td>Unassigned Appeals</td><td>$numUnassignedAppeals</td></tr>";
+	$content .= "<tr><td>Unanswered and Unassigned Appeals</td><td>$numUnansweredUnassignedAppeals</td></tr>";
     $content .= "</table>\n";
 	
     #Now start going through stuff by user names
@@ -168,8 +176,11 @@ try
                     }else{
                         $content .= "<td width='20'>&nbsp;</td>\n";
                     }
-					if(isset($appealMatchToMarkerMap[$reviewObj->matchID->id]))
+
+					$assigned = "";
+					if(array_key_exists($reviewObj->matchID->id, $appealMatchToMarkerMap))
 						$assigned = " assigned to ".$displayMap[$appealMatchToMarkerMap[$reviewObj->matchID->id]];
+
                     //Is there an appeal for this review?
                     if(array_key_exists($reviewObj->matchID->id, $appealMap))
                     {

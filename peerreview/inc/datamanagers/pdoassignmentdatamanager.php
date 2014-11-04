@@ -1668,7 +1668,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getMarkerToAppealedSubmissionsMap(PeerReviewAssignment $assignment)
     {
-    	$sh = $this->prepareQuery("getReviewAppealMapBySubmission_Query", "SELECT DISTINCT(submissionID), markerID FROM appeal_assignment WHERE submissionID IN (SELECT submissionID FROM peer_review_assignment_submissions WHERE assignmentID = ?);");
+    	$sh = $this->prepareQuery("getMarkerToAppealedSubmissionsMapQuery", "SELECT submissionID, markerID FROM appeal_assignment WHERE submissionID IN (SELECT submissionID FROM peer_review_assignment_submissions WHERE assignmentID = ?);");
     	$sh->execute(array($assignment->assignmentID));
     	
     	$map = array();
@@ -1685,7 +1685,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	
 	function getAppealMatchToMarkerMap(PeerReviewAssignment $assignment)
     {
-    	$sh = $this->prepareQuery("getAppealMatchToMarkerMapQuery", "SELECT peer_review_assignment_appeal_messages.matchID, markerID FROM appeal_assignment JOIN peer_review_assignment_appeal_messages ON appeal_assignment.appealmessageID = peer_review_assignment_appeal_messages.appealmessageID WHERE submissionID IN (SELECT submissionID FROM peer_review_assignment_submissions WHERE assignmentID = ?);");
+    	$sh = $this->prepareQuery("getAppealMatchToMarkerMapQuery", "SELECT matches.matchID, markerID FROM appeal_assignment JOIN peer_review_assignment_matches matches ON appeal_assignment.submissionID = matches.submissionID WHERE appeal_assignment.submissionID IN (SELECT submissionID FROM peer_review_assignment_submissions WHERE assignmentID = ?);");
     	$sh->execute(array($assignment->assignmentID));
     	
     	$map = array();
@@ -1698,7 +1698,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	
 	function getUnansweredAppealsForMarker(PeerReviewAssignment $assignment, UserID $markerID)
     {
-    	$sh = $this->prepareQuery("getUnansweredAppealsForMarkerQuery", "SELECT matches.matchID, messages.appealType FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID && messages.matchID = messages2.matchID && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID JOIN appeal_assignment ON appeal_assignment.appealMessageID = messages.appealMessageID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && users.userType='student' && appeal_assignment.markerID = ?;");
+    	$sh = $this->prepareQuery("getUnansweredAppealsForMarkerQuery", "SELECT matches.matchID, messages.appealType FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID && messages.matchID = messages2.matchID && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID JOIN appeal_assignment ON appeal_assignment.submissionID = matches.submissionID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && users.userType='student' && appeal_assignment.markerID = ?;");
     	$sh->execute(array($assignment->assignmentID, $markerID));
     	
     	$unansweredAppeals = array();
@@ -1712,13 +1712,13 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     	return $unansweredAppeals;
   	}
 	
-	function assignAppeal(PeerReviewAssignment $assignment, AppealMessage $appealmessage)
+	function assignAppeal(PeerReviewAssignment $assignment, MatchID $matchID)
 	{
 		global $dataMgr;
 			
 		$markerToAppealedSubmissionsMap = $assignment->getMarkerToAppealedSubmissionsMap();
 		
-		$submissionID = $assignment->getSubmissionID($appealmessage->matchID);
+		$submissionID = $assignment->getSubmissionID($matchID);
 		
 		$markers = $dataMgr->getMarkers();
 		
@@ -1749,62 +1749,42 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		$targetLoads = array();
 		foreach($markers as $markerID)
 			$targetLoads[$markerID] = precisionFloat($markingLoadMap[$markerID]/$sumLoad);
-		
-		$markerID = NULL;
-		$submissionAlreadyHasAnAppeal = false;
-		foreach($markerToAppealedSubmissionsMap as $marker_ID => $submissions)
+
+		//If appealmessage is already under a submission already in a marker's appeal assignment just exit this function
+		if(array_reduce($markerToAppealedSubmissionsMap, function($res, $item) use ($submissionID){return array_key_exists($submissionID->id, $item) || $res;}))
+			return;
+
+		//Create load defecit array to best select which marker is farthest from his target load and hence should be assigned this appeal
+		$loadDefecits = array();
+		$totalSubs = array_reduce($markerTasks, function($res, $item){return sizeof($item) + $res;});
+		foreach($markers as $markerID)
 		{
-			if(array_key_exists($submissionID->id, $submissions))
-			{
-				$submissionAlreadyHasAnAppeal = true;
-				$markerID = $marker_ID;
-			}
-		}			
-		
-		print_r("THIS SUBMISSION ID IS ".$submissionID->id);
-		print_r($spotCheckMap);
-		
-		if(!$submissionAlreadyHasAnAppeal)
-		{	
-			//Create load defecit array to best select which marker is farthest from his target load and hence should be assigned this appeal
-			$loadDefecits = array();
-			$totalSubs = array_reduce($markerTasks, function($res, $item){return sizeof($item) + $res;});
-			foreach($markers as $markerID)
-			{
-				if($targetLoads[$markerID] == 0) continue; //under no circumstances should marker with 0 be assigned an appeal even if there is no other non-conflicting marker
-				$loadDefecits[$markerID] = $targetLoads[$markerID] - (1.0*sizeof($markerTasks[$markerID]))/$totalSubs;
-			}
-			print_r(" / ");
-			print_r($loadDefecits);
-			//Pick the marker to assign the appeal
-			while(1)
-			{
-				if(sizeof($loadDefecits) < 1)
-				{	
-					$markerTasks[0][$submissionID->id] = $appeals;
-					//PITSTOP: SET MARKERID TO 0
-					break;
-				}
-				$res = array_keys($loadDefecits, max($loadDefecits));
-				$markerID = $res[0];
-				print_r("THE SPOT CHECKER IS ".$spotCheckMap[$submissionID->id]->checkerID->id);
-				print_r("THIS MARKER ID IS ".$markerID);
-				if(array_key_exists($submissionID->id, $markerToSubmissionsMap[$markerID]))
-				{
-					unset($loadDefecits[$markerID]);
-					continue;
-				}
-				if((isset($spotCheckMap[$submissionID->id])) ? ($spotCheckMap[$submissionID->id]->checkerID->id == $markerID) : false)
-				{
-					unset($loadDefecits[$markerID]);
-					continue;
-				}
-				
-				break;
-			}
+			if($targetLoads[$markerID] == 0) continue; //under no circumstances should marker with 0 be assigned an appeal even if there is no other non-conflicting marker
+			$loadDefecits[$markerID] = $targetLoads[$markerID] - (1.0*sizeof($markerTasks[$markerID]))/$totalSubs;
 		}
-		$sh = $this->prepareQuery("assignAppealQuery", "INSERT INTO appeal_assignment (appealmessageID, markerID, submissionID) VALUES (:appealMessageID, :markerID, (SELECT submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_appeal_messages appeals ON matches.matchID = appeals.matchID WHERE appealmessageID=:appealMessageID));");
-		$sh->execute(array("appealMessageID"=>$appealmessage->appealMessageID, "markerID"=>$markerID));	
+		//Pick the marker to assign the appeal
+		while(1)
+		{
+			if(sizeof($loadDefecits) < 1)
+				return;
+			$res = array_keys($loadDefecits, max($loadDefecits));
+			$markerID = $res[0];
+			//Ensure that the marker to assign the appeal is not the marker of the submission
+			if(array_key_exists($submissionID->id, $markerToSubmissionsMap[$markerID]))
+			{
+				unset($loadDefecits[$markerID]);
+				continue;
+			}
+			//Ensure that the marker to assign the appeal is not the spotchecker of the submission
+			if(isset($spotCheckMap[$submissionID->id]) ? ($spotCheckMap[$submissionID->id]->checkerID->id == $markerID) : false)
+			{
+				unset($loadDefecits[$markerID]);
+				continue;
+			}
+			break;
+		}
+		$sh = $this->prepareQuery("assignAppealQuery", "INSERT INTO appeal_assignment (markerID, submissionID) VALUES (:markerID, (SELECT submissionID FROM peer_review_assignment_matches WHERE matchID=:matchID));");
+		$sh->execute(array("matchID"=>$matchID->id, "markerID"=>$markerID));	
 	}
 	
     function getNumberOfTimesReviewedByUserMap(PeerReviewAssignment $assignment, UserID $reviewerID)

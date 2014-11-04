@@ -1783,8 +1783,8 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 			}
 			break;
 		}
-		$sh = $this->prepareQuery("assignAppealQuery", "INSERT INTO appeal_assignment (markerID, submissionID) VALUES (:markerID, (SELECT submissionID FROM peer_review_assignment_matches WHERE matchID=:matchID));");
-		$sh->execute(array("matchID"=>$matchID->id, "markerID"=>$markerID));	
+		$sh = $this->prepareQuery("assignAppealQuery", "INSERT INTO appeal_assignment (markerID, submissionID) VALUES (:markerID, :submissionID);");
+		$sh->execute(array("submissionID"=>$submissionID->id, "markerID"=>$markerID));	
 	}
 	
     function getNumberOfTimesReviewedByUserMap(PeerReviewAssignment $assignment, UserID $reviewerID)

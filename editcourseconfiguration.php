@@ -4,7 +4,7 @@ try
 {
 	$title .= " | Edit Course Configuration";
     $dataMgr->requireCourse();
-    $authMgr->enforceLoggedIn();
+    $authMgr->enforceInstructor();
 	
 	$content = "<h1>Edit Course Configuration</h1>";
 	

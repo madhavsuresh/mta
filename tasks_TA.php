@@ -1,13 +1,10 @@
 <?php
-require_once("peerreview/inc/appealstaskmanager.php");
-
 global $assignments;
 global $dataMgr;
 global $USERID;
 global $content;
 
 //$content .= "<h1>HELLO THERE TA</h1>";
-
 $reviewTasks = array();
 
 foreach($assignments as $assignment)
@@ -97,39 +94,29 @@ foreach($assignments as $assignment)
         }
 	}
 
-	$appealsTaskMap = getAppealsTaskMap($assignment);
+	$unansweredAppeals = $assignment->getUnansweredAppealsForMarker($USERID);
 
-	if(isset($appealsTaskMap[$USERID->id]))
+	foreach($unansweredAppeals as $appealObj)
 	{
-		foreach($appealsTaskMap[$USERID->id] as $submissions)
+		if($appealObj->appealType == "review")
 		{
-			$reviewAppeals = array_filter($submissions->review, function($v){return $v;});
-			$reviewMarkAppeals = array_filter($submissions->reviewmark, function($v){return $v;});
-			foreach($reviewAppeals as $matchID => $needsResponse)
-			{
-				$reviewTask = new stdClass();
-				$reviewTask->endDate = $assignment->appealStopDate;
-				$color = ($NOW >= $reviewTask->endDate) ? "red" : "";
-				$reviewTask->html = 
-				"<table width='100%'></tr><td class='column1'><h4>$assignment->name</h4></td>
-				<td class='column2'>Review Appeal</td>
-				<td class='column3'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$matchID&appealtype=review")."'><button>Answer</button></a></td>
-				<td class='column4'><span style='color:$color'>".phpDate($assignment->appealStopDate)."</span></td></tr></table>\n";
-				insertTask($reviewTask, $reviewTasks);	
-			}
-			foreach($reviewMarkAppeals as $matchID => $needsResponse)
-			{
-				$reviewTask = new stdClass();
-				$reviewTask->endDate = $assignment->appealStopDate;
-				$color = ($NOW >= $reviewTask->endDate) ? "red" : "";
-				$reviewTask->html = 
-				"<table width='100%'></tr><td class='column1'><h4>$assignment->name</h4></td>
-				<td class='column2'>Review Mark Appeal</td>
-				<td class='column3'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$matchID&appealtype=reviewmark")."'><button>Answer</button></a></td>
-				<td class='column4'><span style='color:$color'>".phpDate($assignment->appealStopDate)."</span></td></tr></table>\n";
-				insertTask($reviewTask, $reviewTasks);	
-			}
+			$task = "Review Appeal";
+			$appealtype = "review";
 		}
+		elseif($appealObj->appealType == "reviewMark")
+		{
+			$task = "Review Mark Appeal";
+			$appealtype = "reviewmark";
+		}
+		$reviewTask = new stdClass();
+		$reviewTask->endDate = $assignment->appealStopDate;
+		$color = ($NOW >= $reviewTask->endDate) ? "red" : "";
+		$reviewTask->html = 
+		"<table width='100%'></tr><td class='column1'><h4>$assignment->name</h4></td>
+		<td class='column2'>$task</td>
+		<td class='column3'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$appealObj->matchID&appealtype=$appealtype")."'><button>Answer</button></a></td>
+		<td class='column4'><span style='color:$color'>".phpDate($assignment->appealStopDate)."</span></td></tr></table>\n";
+		insertTask($reviewTask, $reviewTasks);
 	}
 }
 

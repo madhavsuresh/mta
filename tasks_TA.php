@@ -1,6 +1,4 @@
 <?php
-require_once("peerreview/inc/appealstaskmanager.php");
-
 global $assignments;
 global $dataMgr;
 global $USERID;

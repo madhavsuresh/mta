@@ -96,22 +96,26 @@ class AssignUnansweredAppealsScript extends Script
 				}
 			}
 		}
-		$html = "<h1>Unanswered Appeals found from submissions:</h1>";
+		$userDisplayMap = $dataMgr->getUserDisplayMap();
+
+		$html = "<h1>Unanswered Appeals found from submissions by:</h1>";
 		if(empty($unansweredappeals)) $html .= "None.";
 		foreach($unansweredappeals as $assignmentID => $submissions)
 		{
-			$html .= "<h4>Assignment: ".$dataMgr->getAssignmentHeader(new AssignmentID($assignmentID))->name."</h4><ul>";
-			foreach($submissions as $submissionID => $submission_ID)
-				$html .= "<li>$submissionID</li>";
+			$assignment = $dataMgr->getAssignment(new AssignmentID($assignmentID));
+			$html .= "<h4>Assignment: ".$assignment->name."</h4><ul>";
+			foreach($submissions as $submissionID)
+				$html .= "<li>".$userDisplayMap[$assignment->getSubmission($submissionID)->authorID->id]."</li>";
 			$html .= "</ul>";
 		}
 		$html .= "<h1>... and the submissions that could not be assigned</h1>";
 		if(empty($unassignedappeals)) $html .= "None.";
 		foreach($unassignedappeals as $assignmentID => $submissions)
 		{
-			$html .= "<h3>Assignment: ".$dataMgr->getAssignmentHeader(new AssignmentID($assignmentID))->name."</h3><ul>";
-			foreach($submissions as $submissionID => $submission_ID)
-				$html .= "<li>$submissionID</li>";
+			$assignment = $dataMgr->getAssignment(new AssignmentID($assignmentID));
+			$html .= "<h3>Assignment: ".$assignment->name."</h3><ul>";
+			foreach($submissions as $submissionID)
+				$html .= "<li>".$userDisplayMap[$assignment->getSubmission($submissionID)->authorID->id]."</li>";
 			$html .= "</ul>";
 		}
 		

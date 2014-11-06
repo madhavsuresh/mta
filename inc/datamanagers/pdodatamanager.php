@@ -861,7 +861,7 @@ class PDODataManager extends DataManager
 	
 	function getNotification(/*NotificationID*/ $notificationID)
 	{
-		$sh = $this->prepareQuery("getNotificationQuery", "SELECT assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary, details FROM job_notifications WHERE notificationID = ?");
+		$sh = $this->prepareQuery("getNotificationQuery", "SELECT assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary, details FROM job_notifications WHERE notificationID = ?;");
 		$sh->execute(array($notificationID));
 		if(!$res = $sh->fetch())
         {

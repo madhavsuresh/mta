@@ -63,6 +63,9 @@ class AssignReviewsPeerReviewScript extends Script
         $authors_ = $currentAssignment->getAuthorSubmissionMap_();
         $assignmentIndependent = $currentAssignment->getIndependentUsers();
         
+		if($this->numCoverCalibrations > sizeof($currentAssignment->getCalibrationSubmissionIDs()))//Check that there are at least as many calibration submissions as covert reviews to be assigned
+				throw new Exception("There are more covert calibrations requested for each independent student than there are available calibration submissions");
+		
         //First delete old covert calibration reviews
 		foreach($currentAssignment->getStudentToCovertReviewsMap() as $student => $covertReviews)
 		{
@@ -91,7 +94,7 @@ class AssignReviewsPeerReviewScript extends Script
         # If the independent pool is too small, we move all of its users into the supervised pool.
         # If the supervised pool is too small, then we move just enough independent users into the supervised pool.
         if((count($independents) <= $this->numReviews && count($independents) > 0) ||
-           (count($supervised) <= $this->numReviews && count($supervised) > 0))
+           (count($supervised) <= ($this->numReviews + $this->numCovertCalibrations) && count($supervised) > 0))
         {
           $numIndep = count($independents);
           $keys = array_keys($independents);
@@ -103,7 +106,7 @@ class AssignReviewsPeerReviewScript extends Script
             unset($independents[$author]);
 
             if((count($independents) == 0 || count($independents) > $this->numReviews) &&
-               (count($supervised) == 0 || count($supervised) > $this->numReviews)) {
+               (count($supervised) == 0 || count($supervised) > ($this->numReviews + $this->numCovertCalibrations))) {
               break;
             }
           }

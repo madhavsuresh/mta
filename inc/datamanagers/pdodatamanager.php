@@ -861,7 +861,7 @@ class PDODataManager extends DataManager
 	
 	function getNotification(/*NotificationID*/ $notificationID)
 	{
-		$sh = $this->prepareQuery("getNotificationQuery", "SELECT assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary, details FROM job_notifications WHERE notificationID = ?");
+		$sh = $this->prepareQuery("getNotificationQuery", "SELECT assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary, details FROM job_notifications WHERE notificationID = ?;");
 		$sh->execute(array($notificationID));
 		if(!$res = $sh->fetch())
         {
@@ -893,5 +893,34 @@ class PDODataManager extends DataManager
 		
 		$sh = $this->prepareQuery("dismissNotificationQuery", "UPDATE job_notifications SET seen = 0 WHERE notificationID = ?;");
 		$sh->execute(array($notificationID));
+	}
+	
+	//Just for re-assigning old unanswered appeals from previous appeal assignment  
+	function assignOldUnansweredAppeals()
+	{
+		$sh = $this->prepareQuery("assignOldUnansweredAppealsQuery", "SELECT submissions.submissionID, submissions.assignmentID
+		FROM peer_review_assignment_appeal_messages messages 
+		LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID && messages.matchID = messages2.matchID && messages.appealType = messages2.appealType 
+		JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID 
+		JOIN users ON messages.authorID = users.userID 
+		JOIN assignments ON assignments.assignmentID = submissions.assignmentID
+		WHERE messages2.appealMessageID IS NULL && users.userType = 'student' && submissions.submissionID NOT IN (SELECT submissionID FROM appeal_assignment) && assignments.courseID = 1
+		ORDER BY submissions.assignmentID;");
+		$sh->execute(array($dataMgr->courseID));
+		$unansweredappeals = array();
+		while($res = $sh->fetch())
+		{
+			if(!array_key_exists($res->assignmentID, $unansweredappeals))
+				$unansweredappeals[$res->assignmentID] = array(); 
+			$unansweredappeals[$res->assignmentID][$res->submissionID] = new SubmissionID($res->submissionID);
+		}
+		return $unansweredappeals;
+	}
+	
+	//Just for re-assigning old unanswered appeals from previous appeal assignment 
+	function assignAppeal(SubmissionID $submissionID, UserID $markerID)
+	{
+		$sh = $this->prepareQuery("assignAppealQuery", "INSERT INTO appeal_assignment (markerID, submissionID) VALUES (?, ?);");
+		$sh->execute(array($markerID, $submissionID));
 	}
 }

@@ -6,6 +6,8 @@ $jobnames = array("autogradeandassign"=>"Autograde and Assign", "copyindependent
 try
 {
 	$title .= " | Job Details";
+	$dataMgr->requireCourse();
+    $authMgr->enforceInstructor();
 	
 	$content = "";
 	

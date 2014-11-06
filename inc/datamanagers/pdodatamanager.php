@@ -904,7 +904,7 @@ class PDODataManager extends DataManager
 		JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID 
 		JOIN users ON messages.authorID = users.userID 
 		JOIN assignments ON assignments.assignmentID = submissions.assignmentID
-		WHERE messages2.appealMessageID IS NULL && users.userType = 'student' && submissions.submissionID NOT IN (SELECT submissionID FROM appeal_assignment) && assignments.courseID = 1
+		WHERE messages2.appealMessageID IS NULL && users.userType = 'student' && submissions.submissionID NOT IN (SELECT submissionID FROM appeal_assignment) && assignments.courseID = ?
 		ORDER BY submissions.assignmentID;");
 		$sh->execute(array($dataMgr->courseID));
 		$unansweredappeals = array();

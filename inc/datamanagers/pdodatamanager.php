@@ -906,7 +906,7 @@ class PDODataManager extends DataManager
 		JOIN assignments ON assignments.assignmentID = submissions.assignmentID
 		WHERE messages2.appealMessageID IS NULL && users.userType = 'student' && submissions.submissionID NOT IN (SELECT submissionID FROM appeal_assignment) && assignments.courseID = ?
 		ORDER BY submissions.assignmentID;");
-		$sh->execute(array($dataMgr->courseID));
+		$sh->execute(array($this->courseID));
 		$unansweredappeals = array();
 		while($res = $sh->fetch())
 		{

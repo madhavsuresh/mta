@@ -70,7 +70,7 @@ try
 	$appeals = array_merge(array_keys($appealMap), array_keys($markAppealMap));
 	$unassignedAppeals = array_filter($appeals, function($item) use ($appealMatchToMarkerMap){return !array_key_exists($item, $appealMatchToMarkerMap);});
 	$numUnassignedAppeals = sizeof($unassignedAppeals);
-	$numUnansweredUnassignedAppeals = sizeof( array_filter($unassignedAppeals, function($item) use ($unansweredAppeals){return array_key_exists($item, $unansweredAppeals);}) );
+	$numUnansweredUnassignedAppeals = sizeof( array_filter(array_keys($unansweredAppeals), function($item) use ($appealMatchToMarkerMap){return ! array_key_exists($item, $appealMatchToMarkerMap);}) );
     $content .= "<table width='35%'>\n";
     $content .= "<tr><td>Unanswered Appeals</td><td>$numUnansweredAppeals</td></tr>";
 	$content .= "<tr><td>Unassigned Appeals</td><td>$numUnassignedAppeals</td></tr>";

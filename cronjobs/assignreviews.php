@@ -36,7 +36,7 @@ class AssignReviewsPeerReviewCronJob
 	        $authors_ = $currentAssignment->getAuthorSubmissionMap_();
 	        $assignmentIndependent = $currentAssignment->getIndependentUsers();
 	        	
-			if($this->numCoverCalibrations >= sizeof($currentAssignment->getCalibrationSubmissionIDs()))//Check that there are at least as many calibration submissions as covert reviews to be assigned
+			if($this->numCoverCalibrations > sizeof($currentAssignment->getCalibrationSubmissionIDs()))//Check that there are at least as many calibration submissions as covert reviews to be assigned
 				throw new Exception("There are more covert calibrations requested for each independent student than there are available calibration submissions");
 	
 	        //First delete old covert calibration reviews

@@ -20,15 +20,7 @@ try
 	foreach($markers as $markerID)
 		$targetLoads[$markerID] = precisionFloat($markingLoadMap[$markerID]/$sumLoad);
 	
-	print_r("Target Loads is ");
-	print_r($targetLoads);
-	print_r("<br>");
-	
 	$unansweredappeals = $dataMgr->assignOldUnansweredAppeals();
-	
-	print_r("Unanswered appeals are ");
-	print_r($unansweredappeals);
-	print_r("<br>");
 	
 	$markerJobs = array();
 	foreach($markers as $markerID)
@@ -37,20 +29,8 @@ try
 	}
 	$totalJobs = 0;
 	
-	assignAppeals($unansweredappeals);
+	$unassignedappeals = array();
 	
-	print_r($unansweredappeals);
-
-	$content = "";
-
-	render_page();
-}catch(Exception $e) {
-	render_exception_page($e);
-}
-
-function assignAppeals(&$unansweredappeals)
-{
-	global $dataMgr;
 	foreach($unansweredappeals as $assignmentID => $submissions)
 	{
 		$assignment = $dataMgr->getAssignment(new AssignmentID($assignmentID));
@@ -62,15 +42,20 @@ function assignAppeals(&$unansweredappeals)
 		{
 			//Create load defecit array to best select which marker is farthest from his target load and hence should be assigned this appeal
 			$loadDefecits = array();
-			$totalJobs = array_reduce($markerTasks, function($res, $item){return sizeof($item) + $res;});
 			foreach($markers as $key => $markerID)
 			{
 				if($targetLoads[$markerID] == 0) continue; //under no circumstances should marker with 0 be assigned an appeal even if there is no other non-conflicting marker
-				$loadDefecits[$markerID] = $targetLoads[$markerID] - (1.0*sizeof($markerJobs[$markerID]))/($totalJobs+1);
+				$loadDefecits[$markerID] = $targetLoads[$markerID] - (1.0*$markerJobs[$markerID])/($totalJobs+1);
 			}
-			
-			while(sizeof($loadDefecits) < 1)
-			{	
+			while(1)
+			{
+				if(sizeof($loadDefecits) < 1)
+				{
+					if(!array_key_exists($assignmentID, $unassignedappeals))
+						$unassignedappeals[$assignmentID] = array();
+					$unassignedappeals[$assignmentID][] = $submissionID; 	
+					break;
+				}	
 				$res = array_keys($loadDefecits, max($loadDefecits));
 				$markerID = $res[0];
 				//Ensure that the marker to assign the appeal is not the marker of the submission
@@ -85,13 +70,35 @@ function assignAppeals(&$unansweredappeals)
 					unset($loadDefecits[$markerID]);
 					continue;
 				}
-				$dataMgr->assignAppealQuery2 = $dataMgr->db->prepare("assignAppealQuery", "INSERT INTO appeal_assignment (markerID, submissionID) VALUES (:markerID, :submissionID);");
-				$dataMgr->assignAppealQuery2->execute(array("submissionID"=>$submissionID->id, "markerID"=>$markerID));
-				unset($unansweredappeals[$assignmentID][$key]);
+				$markerJobs[$markerID]++;
+				$totalJobs++;
+				$dataMgr->assignAppeal($submissionID, new UserID($markerID));
 				break;
 			}
 		}
 	}
+	$content = "<h1>Unanswered Appeals found from submissions:</h1>";
+	if(empty($unansweredappeals)) $content .= "None.";
+	foreach($unansweredappeals as $assignmentID => $submissions)
+	{
+		$content .= "<h4>Assignment: ".$dataMgr->getAssignmentHeader(new AssignmentID($assignmentID))->name."</h4><ul>";
+		foreach($submissions as $submissionID => $submission_ID)
+			$content .= "<li>$submissionID</li>";
+		$content .= "</ul>";
+	}
+	$content .= "<h1>... and the submissions that could not assigned</h1>";
+	if(empty($unassignedappeals)) $content .= "None.";
+	foreach($unassignedappeals as $assignmentID => $submissions)
+	{
+		$content .= "<h3>Assignment: ".$dataMgr->getAssignmentHeader(new AssignmentID($assignmentID))->name."</h3><ul>";
+		foreach($submissions as $submissionID => $submission_ID)
+			$content .= "<li>$submissionID</li>";
+		$content .= "</ul>";
+	}
+	
+	render_page();
+}catch(Exception $e) {
+	render_exception_page($e);
 }
 ?>
 

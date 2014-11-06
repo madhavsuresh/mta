@@ -895,6 +895,7 @@ class PDODataManager extends DataManager
 		$sh->execute(array($notificationID));
 	}
 	
+	//Just for re-assigning old unanswered appeals from previous appeal assignment  
 	function assignOldUnansweredAppeals()
 	{
 		$sh = $this->prepareQuery("assignOldUnansweredAppealsQuery", "SELECT submissions.submissionID, submissions.assignmentID
@@ -914,5 +915,12 @@ class PDODataManager extends DataManager
 			$unansweredappeals[$res->assignmentID][$res->submissionID] = new SubmissionID($res->submissionID);
 		}
 		return $unansweredappeals;
+	}
+	
+	//Just for re-assigning old unanswered appeals from previous appeal assignment 
+	function assignAppeal(SubmissionID $submissionID, UserID $markerID)
+	{
+		$sh = $this->prepareQuery("assignAppealQuery", "INSERT INTO appeal_assignment (markerID, submissionID) VALUES (?, ?);");
+		$sh->execute(array($markerID, $submissionID));
 	}
 }

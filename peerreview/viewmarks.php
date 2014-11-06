@@ -138,7 +138,6 @@ try
                             }
                         }
 
-                        $reviewCount++;
                         if($showAppealLinks)
                         {
                             //Now we need to do the stuff for appeals
@@ -164,6 +163,7 @@ try
                             $html .= "<h2 class='altHeader'>Review $reviewCount Mark</h2>\n";
                             $html .= $assignment->getReviewMark($review->matchID)->getHTML($assignment->maxReviewScore);
                         }
+                        $reviewCount++;
                     }
                     $reviewIndex++;
                 }

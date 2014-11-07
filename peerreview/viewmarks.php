@@ -58,6 +58,7 @@ try
                 return $html;
             }
 
+			//print_r("It is ".$isCalibrated);
             //Print out the submission
             $html .= $submission->getHTML();
             if($showSubmissionMark)
@@ -110,7 +111,9 @@ try
                     break;
                 }
             }
-
+			
+			//Get the calibration reviewer if this is a calibration submission 
+			$calibrationReviewer = $dataMgr->getCalibrationReviewer($submissionID);
 			$numReviews = $assignment->defaultNumberOfReviews;
             //Show them the reviews that this submission
             if($showStudentReviews || $showInstructorReviews)
@@ -119,12 +122,16 @@ try
                 //Next, do all of the other reviews
                 foreach($reviews as $review)
                 {
-                	//if($reviewIndex >= $numReviews) break;
+                	//If this a covert review then only show the number of reviews as all the other student submissions
                     if($review->reviewerID->id != $USERID->id)
                     {
                         if(sizeof($review->answers) == 0)
                             continue;
-
+                        if($calibrationReviewer != NULL && $reviewCount > ($numReviews-1)) 
+                			break;
+						//Do not show the calibration key for covert reviews
+						if($review->reviewerID->id == $calibrationReviewer)
+                            continue;
                         if($dataMgr->isInstructor($review->reviewerID)) {
                             if(!$showInstructorReviews)
                                 continue;

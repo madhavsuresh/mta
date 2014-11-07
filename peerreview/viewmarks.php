@@ -111,6 +111,7 @@ try
                 }
             }
 
+			$numReviews = $assignment->defaultNumberOfReviews;
             //Show them the reviews that this submission
             if($showStudentReviews || $showInstructorReviews)
             {
@@ -118,6 +119,7 @@ try
                 //Next, do all of the other reviews
                 foreach($reviews as $review)
                 {
+                	//if($reviewIndex >= $numReviews) break;
                     if($review->reviewerID->id != $USERID->id)
                     {
                         if(sizeof($review->answers) == 0)

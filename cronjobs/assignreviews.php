@@ -270,6 +270,14 @@ class AssignReviewsPeerReviewCronJob
         }
         //Now, we need to sort these guys, so that good reviewers are at the top
         usort($reviewers, function($a, $b) { if( abs($a->score - $b->score) < 0.00001) { return $a->student < $b->student; } else { return $a->score < $b->score; } } );
+		
+		$neworder = array(); $i = 1; $k = -1;
+		foreach($reviewers as $index => $obj)
+		{
+			$obj->var = $i * pow(10, $k);
+			$neworder[] = $obj;
+			if($i == 9){$k--; $i = 1;} else $i++;
+		}
 
         //Assemble the empty assignment
         $assignment = array();
@@ -285,7 +293,7 @@ class AssignReviewsPeerReviewCronJob
         {
             foreach($assignment as $student => &$assigned)
             {
-                $assigned[] = $this->popNextReviewer($student, $assigned, $reviewers);
+                $assigned[] = $this->popNextReviewer($student, $assigned, $neworder);
             }
             //Reallocate the order of the assignment by the sum of reviewer scores
             uasort($assignment, array($this, "compareReviewerScores"));

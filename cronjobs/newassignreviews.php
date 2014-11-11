@@ -7,8 +7,8 @@ class AssignReviewsPeerReviewCronJob
     {
     	try{
 	    	//First check if the job has already been done
-			if($globalDataMgr->isJobDone($assignmentID, 'assignreviews'))
-				return;
+			//if($globalDataMgr->isJobDone($assignmentID, 'assignreviews'))
+				//return;
 			
 			$configuration = $globalDataMgr->getCourseConfiguration($assignmentID);
 				
@@ -48,18 +48,26 @@ class AssignReviewsPeerReviewCronJob
 				}
 			}
 			
-	        $independents = array();
+	        /*$independents = array();
 	        $supervised = array();
-	        foreach($authors_ as $author => $essayID)
-	        {
-	            $score = compute_peer_review_score_for_assignments(new UserID($author), $assignments);
-	
-	            if(array_key_exists($author, $assignmentIndependent))
-	                $independents[$author] = $score;
-	            else
-	                $supervised[$author] = $score;
-	            $this->scoreMap[$author] = $score;
-	        }
+			$numStudents = rand(50,100);
+			$students = array();
+			for($s = 0; $s < $numStudents; $s++)
+			{
+				$score = rand(500,1000)/1000;
+				if($score > 0.8)
+					$independents[$s] = $score;
+				else {
+					$chance = rand(0,10);
+					if($chance < 3)
+						$independents[$s] = $score;
+					else 
+						$supervised[$s] = $score;
+				}
+			}*/
+			
+			$supervised = array ( "3" => 0.515 , "14" => 0.768 , "19" => 0.705 , "26" => 0.527 , "30" => 0.681 , "34" => 0.632 , "37" => 0.555 , "40" => 0.725 , "49" => 0.602 ); 
+			$independents = array ( "1" => 0.573 , "12" => 0.774 , "16" => 0.7 , "19" => 0.574 , "21" => 0.739 , "23" => 0.601 , "25" => 0.546 , "27" => 0.775 , "28" => 0.624 , "30" => 0.657 , "34" => 0.769 , "36" => 0.699 , "37" => 0.75 , "38" => 0.515 , "41" => 0.564 , "42" => 0.784 , "44" => 0.712 , "53" => 0.55 , "59" => 0.666 ); 
 	
 	        $html = "";
 			$html .= "Score noise used: ".$this->scoreNoise."<br>";
@@ -157,7 +165,7 @@ class AssignReviewsPeerReviewCronJob
 	        foreach($supervisedAssignment as $author => $reviewers)
 	            $reviewerAssignment[$authors[$author]->id] = $reviewers;
 			
-	        $currentAssignment->saveReviewerAssignment($reviewerAssignment);
+	        /*$currentAssignment->saveReviewerAssignment($reviewerAssignment);
 			
 			if($this->numCovertCalibrations > 0 && sizeof($independents) > 0)
 			{
@@ -205,11 +213,16 @@ class AssignReviewsPeerReviewCronJob
 			}
 			if(sizeof($supervised)>0)
 				$summary .= "<br>For " . sizeof($supervised) . " in the supervised group: " . sizeof($supervised) . " have " . ($this->numReviews + $this->numCovertCalibrations) . " peer reviews";
-			//End of summary
-			
-			$globalDataMgr->createNotification($assignmentID, 'assignreviews', 1, $summary, $html);
+			//End of summary*/
+			$result = new stdClass;
+			$result->success = 1;
+			$result->details = $html;
+			return $result;
 		}catch(Exception $exception){
-			$globalDataMgr->createNotification($assignmentID, 'assignreviews', 0, cleanString($exception->getMessage()), "");
+			$result = new stdClass;
+			$result->success = 0;
+			$result->details = cleanString($exception->getMessage());
+			return $result;
 		}	
     }
 
@@ -241,9 +254,11 @@ class AssignReviewsPeerReviewCronJob
                 $res = $this->_getReviewAssignment($students, $numReviews);
                 return $res;
             }catch(Exception $e){
+            	
                 //They didn't get it
             }
         }
+		//print_r($students);
         throw new Exception("Could not get a reviewer assignment - try increasing the number of attempts or the score noise. If that fails, play with your seeds and hope for the best.");
     }
 
@@ -270,6 +285,25 @@ class AssignReviewsPeerReviewCronJob
         }
         //Now, we need to sort these guys, so that good reviewers are at the top
         usort($reviewers, function($a, $b) { if( abs($a->score - $b->score) < 0.00001) { return $a->student < $b->student; } else { return $a->score < $b->score; } } );
+
+		$neworder = array();
+		$vanderCorput = array(); $i = 0; $j = 0; $limit = 1; $k = 0;
+		for($a = 0; $a < sizeof($reviewers) + 1; $a++)
+		{
+			$vanderCorput[] = $i * pow(10, $k) + $j * pow(10, $k-1); 
+			$i++;
+			if($i == $limit){ $i = 0; $j++;} 
+			if($j == 10){ $i = 0; $limit *= 10; $j = 1; $k--;}
+		}
+		$i = 1;
+		foreach($reviewers as $index => $obj)
+		{
+			$obj->var = $vanderCorput[$i];  
+			$neworder[] = $obj;
+			$i++;
+		}
+
+		usort($neworder, function($a, $b) {if ($a->var == $b->var) return 0; return ($a->var < $b->var) ? -1 : 1;});
 
         //Assemble the empty assignment
         $assignment = array();

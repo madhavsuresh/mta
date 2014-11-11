@@ -7,8 +7,8 @@ class AssignReviewsPeerReviewCronJob
     {
     	try{
 	    	//First check if the job has already been done
-			if($globalDataMgr->isJobDone($assignmentID, 'assignreviews'))
-				return;
+			//if($globalDataMgr->isJobDone($assignmentID, 'assignreviews'))
+				//return;
 			
 			$configuration = $globalDataMgr->getCourseConfiguration($assignmentID);
 				
@@ -48,19 +48,27 @@ class AssignReviewsPeerReviewCronJob
 				}
 			}
 			
-	        $independents = array();
+	        /*$independents = array();
 	        $supervised = array();
-	        foreach($authors_ as $author => $essayID)
-	        {
-	            $score = compute_peer_review_score_for_assignments(new UserID($author), $assignments);
-	
-	            if(array_key_exists($author, $assignmentIndependent))
-	                $independents[$author] = $score;
-	            else
-	                $supervised[$author] = $score;
-	            $this->scoreMap[$author] = $score;
-	        }
-	
+			$numStudents = rand(50,100);
+			$students = array();
+			for($s = 0; $s < $numStudents; $s++)
+			{
+				$score = rand(500,1000)/1000;
+				if($score > 0.8)
+					$independents[$s] = $score;
+				else {
+					$chance = rand(0,10);
+					if($chance < 3)
+						$independents[$s] = $score;
+					else 
+						$supervised[$s] = $score;
+				}
+			}*/
+			
+			$independents = array ( "0" => 0.518 , "2" => 0.951 , "6" => 0.962 , "7" => 0.97 , "9" => 0.987 , "10" => 0.942 , "11" => 0.989 , "12" => 0.983 , "13" => 0.847 , "19" => 0.99 , "24" => 0.955 , "26" => 0.916 , "29" => 0.781 , "30" => 0.62 , "31" => 0.626 , "32" => 0.808 , "33" => 0.938 , "34" => 0.587 , "35" => 0.968 , "38" => 0.88 , "39" => 0.911 , "40" => 0.979 , "41" => 0.853 , "43" => 0.966 , "44" => 0.868 , "46" => 0.579 , "47" => 0.801 , "48" => 0.919 , "52" => 0.783 , "60" => 0.89 , "63" => 0.82 , "67" => 0.829 , "70" => 0.903 , "71" => 0.832 , "72" => 0.872 , "73" => 0.664 , "74" => 0.822 , "76" => 0.557 ); 
+			$supervised = array ( "1" => 0.869 , "3" => 0.959 , "5" => 0.897 , "9" => 0.994 , "11" => 0.841 , "12" => 0.802 , "14" => 0.792 , "16" => 0.824 , "17" => 0.966 , "19" => 0.582 , "22" => 0.91 , "23" => 0.801 , "24" => 0.929 , "25" => 0.807 , "26" => 0.909 , "27" => 0.653 , "29" => 0.835 , "31" => 0.807 , "32" => 0.921 , "38" => 0.824 , "45" => 0.886 , "46" => 0.82 , "48" => 0.901 , "49" => 0.634 , "50" => 0.821 , "51" => 0.832 , "53" => 0.82 , "54" => 0.615 , "55" => 0.518 , "57" => 0.868 , "58" => 0.891 , "60" => 0.541 );
+			
 	        $html = "";
 			$html .= "Score noise used: ".$this->scoreNoise."<br>";
 	        $html .= "Max attempts used: ".$this->maxAttempts."<br>";
@@ -157,60 +165,16 @@ class AssignReviewsPeerReviewCronJob
 	        foreach($supervisedAssignment as $author => $reviewers)
 	            $reviewerAssignment[$authors[$author]->id] = $reviewers;
 			
-	        $currentAssignment->saveReviewerAssignment($reviewerAssignment);
-			
-			if($this->numCovertCalibrations > 0 && sizeof($independents) > 0)
-			{
-	        	$studentToCovertReviewsMap = $currentAssignment->getStudentToCovertReviewsMap();
-				
-		        $html .= "<h2>Covert Reviews</h2>";
-				$html .= "<table>";
-				foreach($studentToCovertReviewsMap as $reviewer => $covertReviews)
-				{
-		        	$html .= "<tr><td>".$userNameMap[$reviewer]."</td><td><ul style='list-style-type: none;'>";
-					foreach($covertReviews as $covertMatch)
-					{
-						$submission = $currentAssignment->getSubmission(new MatchID ($covertMatch));
-						$html .= "<li>".$userNameMap[$submission->authorID->id]."</li>";
-					}
-					$html .= "</ul></td></tr>";
-				}
-				$html .= "</table>";
-			}
-			
-			//For summary
-			$summary = "";
-			if(sizeof($independents)>0)
-			{
-				$summary .= "For ".sizeof($independents)." in the independents group: ".sizeof($independents)." have ".$this->numReviews." peer reviews, ";
-				if($this->numCovertCalibrations > 0 && sizeof($independents) > 0)
-				{	
-					$k = 0;
-					while($k <= $this->numCovertCalibrations)
-					{
-						if($covertReviewsHistogram[$k] > 0)
-						{
-							$summary .= $covertReviewsHistogram[$k] . " have $k covert reviews, ";
-						}
-						$k++;
-					}
-					$k = 0;
-					while($k <= $this->numCovertCalibrations)
-					{
-						if($extraPeerReviewsHistogram[$k] > 0)
-							$summary .= $extraPeerReviewsHistogram[$k] . " have $k extra peer reviews, ";
-						$k++;
-					}
-				}
-			}
-			if(sizeof($supervised)>0)
-				$summary .= "<br>For " . sizeof($supervised) . " in the supervised group: " . sizeof($supervised) . " have " . ($this->numReviews + $this->numCovertCalibrations) . " peer reviews";
-			//End of summary
-			
-			$globalDataMgr->createNotification($assignmentID, 'assignreviews', 1, $summary, $html);
+			$result = new stdClass;
+			$result->success = 1;
+			$result->details = $html;
+			return $result;
 		}catch(Exception $exception){
-			$globalDataMgr->createNotification($assignmentID, 'assignreviews', 0, cleanString($exception->getMessage()), "");
-		}	
+			$result = new stdClass;
+			$result->success = 0;
+			$result->details = cleanString($exception->getMessage());
+			return $result;
+		}
     }
 
 
@@ -244,6 +208,7 @@ class AssignReviewsPeerReviewCronJob
                 //They didn't get it
             }
         }
+		//print_r($students);
         throw new Exception("Could not get a reviewer assignment - try increasing the number of attempts or the score noise. If that fails, play with your seeds and hope for the best.");
     }
 
@@ -285,7 +250,7 @@ class AssignReviewsPeerReviewCronJob
         {
             foreach($assignment as $student => &$assigned)
             {
-                $assigned[] = $this->popNextReviewer($student, $assigned, $neworder);
+                $assigned[] = $this->popNextReviewer($student, $assigned, $reviewers);
             }
             //Reallocate the order of the assignment by the sum of reviewer scores
             uasort($assignment, array($this, "compareReviewerScores"));

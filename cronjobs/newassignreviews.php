@@ -270,18 +270,11 @@ class AssignReviewsPeerReviewCronJob
 		
         foreach($students as $student => $score)
         {
-            for($i = 0; $i < $numReviews; $i++)
-            {
-                $obj = new stdClass;
-                $obj->student = $student;
-                $offset = 0;
-                if($i)
-                    $offset = pow(10, $i-1);
-                $noise = (mt_rand()*1.0/$randMax * 2 - 1)*$this->scoreNoise;
-
-                $obj->score = max(0, min(1, ($score + $noise))) * pow(10, $i) + $offset;
-                $reviewers[] = $obj;
-            }
+            $obj = new stdClass;
+            $obj->student = $student;
+            $noise = (mt_rand()*1.0/$randMax * 2 - 1)*$this->scoreNoise;
+            $obj->score = max(0, min(1, ($score + $noise)));
+            $reviewers[] = $obj;
         }
         //Now, we need to sort these guys, so that good reviewers are at the top
         usort($reviewers, function($a, $b) { if( abs($a->score - $b->score) < 0.00001) { return $a->student < $b->student; } else { return $a->score < $b->score; } } );
@@ -303,7 +296,7 @@ class AssignReviewsPeerReviewCronJob
 			$i++;
 		}
 
-		usort($neworder, function($a, $b) {if ($a->var == $b->var) return 0; return ($a->var < $b->var) ? -1 : 1;});
+		usort($neworder, function($a, $b) { if( abs($a->score - $b->score) < 0.00001) { return $a->student < $b->student; } else { return $a->score < $b->score; } } );
 
         //Assemble the empty assignment
         $assignment = array();
@@ -313,18 +306,17 @@ class AssignReviewsPeerReviewCronJob
             $assignment[$student] = array();
         }
         shuffle_assoc($assignment);
-
-        //Now start putting stuff in
-        for($i = 0; $i < $numReviews; $i++)
-        {
-            foreach($assignment as $student => &$assigned)
-            {
-                $assigned[] = $this->popNextReviewer($student, $assigned, $neworder);
-            }
-            //Reallocate the order of the assignment by the sum of reviewer scores
-            uasort($assignment, array($this, "compareReviewerScores"));
-		}
 		
+		$numStudents = sizeof($neworder);
+		foreach($neworder as $rank => $obj)
+		{
+			$assignment[$obj->student] = array();
+			for($i = 0; $i < $numReviews; $i++)
+			{
+				$assignment[$obj->student][] = $neworder[$i%$numStudents];
+			} 
+		}
+			
         return $assignment;
     }
 

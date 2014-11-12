@@ -27,8 +27,13 @@ try
 	$content = "<h1>Results</h1>";
 	
 	foreach($results as $result)
+	{
 		//$content .= $result->success." - ".$result->details."<br>";
-		$content .= $result->success."<br>";
+		$content .= $result->success;
+		if(!$result->success)
+			$content .= " - ".$result->details;
+		$content .= "<br>";
+	}
 	
 	render_page();
 }catch(Exception $e) {

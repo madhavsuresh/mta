@@ -38,7 +38,7 @@ class AssignReviewsPeerReviewCronJob
 	        	
 			if($this->numCoverCalibrations > sizeof($currentAssignment->getCalibrationSubmissionIDs()))//Check that there are at least as many calibration submissions as covert reviews to be assigned
 				throw new Exception("There are more covert calibrations requested for each independent student than there are available calibration submissions");
-	
+			
 	        //First delete old covert calibration reviews
 			foreach($currentAssignment->getStudentToCovertReviewsMap() as $student => $covertReviews)
 			{
@@ -48,9 +48,9 @@ class AssignReviewsPeerReviewCronJob
 				}
 			}
 			
-	        /*$independents = array();
+	        $independents = array();
 	        $supervised = array();
-			$numStudents = rand(50,100);
+			$numStudents = rand(3,50);
 			$students = array();
 			for($s = 0; $s < $numStudents; $s++)
 			{
@@ -64,10 +64,10 @@ class AssignReviewsPeerReviewCronJob
 					else 
 						$supervised[$s] = $score;
 				}
-			}*/
+			}
 			
-			$supervised = array ( "3" => 0.515 , "14" => 0.768 , "19" => 0.705 , "26" => 0.527 , "30" => 0.681 , "34" => 0.632 , "37" => 0.555 , "40" => 0.725 , "49" => 0.602 ); 
-			$independents = array ( "1" => 0.573 , "12" => 0.774 , "16" => 0.7 , "19" => 0.574 , "21" => 0.739 , "23" => 0.601 , "25" => 0.546 , "27" => 0.775 , "28" => 0.624 , "30" => 0.657 , "34" => 0.769 , "36" => 0.699 , "37" => 0.75 , "38" => 0.515 , "41" => 0.564 , "42" => 0.784 , "44" => 0.712 , "53" => 0.55 , "59" => 0.666 ); 
+			//$supervised = array ( "3" => 0.515 , "14" => 0.768 , "19" => 0.705 , "26" => 0.527 , "30" => 0.681 , "34" => 0.632 , "37" => 0.555 , "40" => 0.725 , "49" => 0.602 ); 
+			//$independents = array ( "1" => 0.573 , "12" => 0.774 , "16" => 0.7 , "19" => 0.574 , "21" => 0.739 , "23" => 0.601 , "25" => 0.546 , "27" => 0.775 , "28" => 0.624 , "30" => 0.657 , "34" => 0.769 , "36" => 0.699 , "37" => 0.75 , "38" => 0.515 , "41" => 0.564 , "42" => 0.784 , "44" => 0.712 , "53" => 0.55 , "59" => 0.666 ); 
 	
 	        $html = "";
 			$html .= "Score noise used: ".$this->scoreNoise."<br>";
@@ -96,6 +96,9 @@ class AssignReviewsPeerReviewCronJob
 	          }
 	          $html .= "<p><b style='color:red'>Warning: Topped up supervised pool with ".($numIndep-count($independents))." independent students.</b>";
 	        }
+			
+			if(count($supervised) <= ($this->numReviews + $this->numCovertCalibrations))
+				throw new Exception("There is not enough students for the number of reviews requested");
 			
 	        $independentAssignment = $this->getReviewAssignment($independents, $this->numReviews);
 	        $supervisedAssignment = $this->getReviewAssignment($supervised, $this->numReviews + $this->numCovertCalibrations);
@@ -165,7 +168,7 @@ class AssignReviewsPeerReviewCronJob
 	        foreach($supervisedAssignment as $author => $reviewers)
 	            $reviewerAssignment[$authors[$author]->id] = $reviewers;
 			
-	        /*$currentAssignment->saveReviewerAssignment($reviewerAssignment);
+	        //$currentAssignment->saveReviewerAssignment($reviewerAssignment);
 			
 			if($this->numCovertCalibrations > 0 && sizeof($independents) > 0)
 			{
@@ -213,7 +216,7 @@ class AssignReviewsPeerReviewCronJob
 			}
 			if(sizeof($supervised)>0)
 				$summary .= "<br>For " . sizeof($supervised) . " in the supervised group: " . sizeof($supervised) . " have " . ($this->numReviews + $this->numCovertCalibrations) . " peer reviews";
-			//End of summary*/
+			//End of summary
 			$result = new stdClass;
 			$result->success = 1;
 			$result->details = $html;
@@ -254,11 +257,9 @@ class AssignReviewsPeerReviewCronJob
                 $res = $this->_getReviewAssignment($students, $numReviews);
                 return $res;
             }catch(Exception $e){
-            	
                 //They didn't get it
             }
         }
-		//print_r($students);
         throw new Exception("Could not get a reviewer assignment - try increasing the number of attempts or the score noise. If that fails, play with your seeds and hope for the best.");
     }
 
@@ -280,13 +281,13 @@ class AssignReviewsPeerReviewCronJob
         usort($reviewers, function($a, $b) { if( abs($a->score - $b->score) < 0.00001) { return $a->student < $b->student; } else { return $a->score < $b->score; } } );
 
 		$neworder = array();
-		$vanderCorput = array(); $i = 0; $j = 0; $limit = 1; $k = 0;
+		$vanderCorput = array(); $base = 2; $i = 0; $j = 0; $limit = 1; $k = 0;
 		for($a = 0; $a < sizeof($reviewers) + 1; $a++)
 		{
-			$vanderCorput[] = $i * pow(10, $k) + $j * pow(10, $k-1); 
+			$vanderCorput[] = $i * pow($base, $k) + $j * pow($base, $k-1); 
 			$i++;
 			if($i == $limit){ $i = 0; $j++;} 
-			if($j == 10){ $i = 0; $limit *= 10; $j = 1; $k--;}
+			if($j == $base){ $i = 0; $limit *= $base; $j = 1; $k--;}
 		}
 		$i = 1;
 		foreach($reviewers as $index => $obj)
@@ -296,25 +297,35 @@ class AssignReviewsPeerReviewCronJob
 			$i++;
 		}
 
-		usort($neworder, function($a, $b) { if( abs($a->score - $b->score) < 0.00001) { return $a->student < $b->student; } else { return $a->score < $b->score; } } );
-
-        //Assemble the empty assignment
+		usort($neworder, function($a, $b) { return $a->var < $b->var; } );
+		
+		$output = "";
         $assignment = array();
-
-        foreach($students as $student => $score)
-        {
-            $assignment[$student] = array();
-        }
-        shuffle_assoc($assignment);
 		
 		$numStudents = sizeof($neworder);
 		foreach($neworder as $rank => $obj)
 		{
+			$output .= $obj->student." [ ";
 			$assignment[$obj->student] = array();
-			for($i = 0; $i < $numReviews; $i++)
+			for($i = $rank+1; $i < $rank+1+$numReviews; $i++)
 			{
-				$assignment[$obj->student][] = $neworder[$i%$numStudents];
-			} 
+				$output .= $neworder[$i%$numStudents]->student.", ";
+				$assignment[$obj->student][] = $neworder[$i%$numStudents]->student;
+			}
+			$output .= "]";
+		}
+		
+		foreach($assignment as $authorID => $array)
+		{
+			$hash = array();
+			foreach($array as $element)
+			{
+				if(isset($hash[$element]))
+					throw new Exception("Reviewer assigned to one submission more than once");
+				if($element == $authorID)
+					throw new Exception("Reviewer assigned to his own submission");
+				$hash[$element] = 1;
+			}
 		}
 			
         return $assignment;

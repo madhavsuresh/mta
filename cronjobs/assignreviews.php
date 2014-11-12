@@ -89,6 +89,9 @@ class AssignReviewsPeerReviewCronJob
 	          $html .= "<p><b style='color:red'>Warning: Topped up supervised pool with ".($numIndep-count($independents))." independent students.</b>";
 	        }
 			
+			if(count($supervised) <= ($this->numReviews + $this->numCovertCalibrations))
+				throw new Exception("There is not enough students for the number of reviews requested");
+			
 	        $independentAssignment = $this->getReviewAssignment($independents, $this->numReviews);
 	        $supervisedAssignment = $this->getReviewAssignment($supervised, $this->numReviews + $this->numCovertCalibrations);
 			
@@ -255,42 +258,63 @@ class AssignReviewsPeerReviewCronJob
 		
         foreach($students as $student => $score)
         {
-            for($i = 0; $i < $numReviews; $i++)
-            {
-                $obj = new stdClass;
-                $obj->student = $student;
-                $offset = 0;
-                if($i)
-                    $offset = pow(10, $i-1);
-                $noise = (mt_rand()*1.0/$randMax * 2 - 1)*$this->scoreNoise;
-
-                $obj->score = max(0, min(1, ($score + $noise))) * pow(10, $i) + $offset;
-                $reviewers[] = $obj;
-            }
+            $obj = new stdClass;
+            $obj->student = $student;
+            $noise = (mt_rand()*1.0/$randMax * 2 - 1)*$this->scoreNoise;
+            $obj->score = max(0, min(1, ($score + $noise)));
+            $reviewers[] = $obj;
         }
         //Now, we need to sort these guys, so that good reviewers are at the top
         usort($reviewers, function($a, $b) { if( abs($a->score - $b->score) < 0.00001) { return $a->student < $b->student; } else { return $a->score < $b->score; } } );
 
-        //Assemble the empty assignment
+		$neworder = array();
+		$vanderCorput = array(); $base = 2; $i = 0; $j = 0; $limit = 1; $k = 0;
+		for($a = 0; $a < sizeof($reviewers) + 1; $a++)
+		{
+			$vanderCorput[] = $i * pow($base, $k) + $j * pow($base, $k-1); 
+			$i++;
+			if($i == $limit){ $i = 0; $j++;} 
+			if($j == $base){ $i = 0; $limit *= $base; $j = 1; $k--;}
+		}
+		$i = 1;
+		foreach($reviewers as $index => $obj)
+		{
+			$obj->var = $vanderCorput[$i];  
+			$neworder[] = $obj;
+			$i++;
+		}
+
+		usort($neworder, function($a, $b) { return $a->var < $b->var; } );
+		
+		$output = "";
         $assignment = array();
-
-        foreach($students as $student => $score)
-        {
-            $assignment[$student] = array();
-        }
-        shuffle_assoc($assignment);
-
-        //Now start putting stuff in
-        for($i = 0; $i < $numReviews; $i++)
-        {
-            foreach($assignment as $student => &$assigned)
-            {
-                $assigned[] = $this->popNextReviewer($student, $assigned, $neworder);
-            }
-            //Reallocate the order of the assignment by the sum of reviewer scores
-            uasort($assignment, array($this, "compareReviewerScores"));
+		
+		$numStudents = sizeof($neworder);
+		foreach($neworder as $rank => $obj)
+		{
+			$output .= $obj->student." [ ";
+			$assignment[$obj->student] = array();
+			for($i = $rank+1; $i < $rank+1+$numReviews; $i++)
+			{
+				$output .= $neworder[$i%$numStudents]->student.", ";
+				$assignment[$obj->student][] = $neworder[$i%$numStudents]->student;
+			}
+			$output .= "]";
 		}
 		
+		foreach($assignment as $authorID => $array)
+		{
+			$hash = array();
+			foreach($array as $element)
+			{
+				if(isset($hash[$element]))
+					throw new Exception("Reviewer assigned to one submission more than once");
+				if($element == $authorID)
+					throw new Exception("Reviewer assigned to his own submission");
+				$hash[$element] = 1;
+			}
+		}
+			
         return $assignment;
     }
 
@@ -309,7 +333,8 @@ class AssignReviewsPeerReviewCronJob
         return $score;
     }
 
-    private function popNextReviewer($author, $assigned, &$reviewers)
+    //Not used anymore
+    /*private function popNextReviewer($author, $assigned, &$reviewers)
     {
         foreach($reviewers as $index => $obj)
         {
@@ -320,5 +345,5 @@ class AssignReviewsPeerReviewCronJob
             }
         }
         throw new Exception("Failed to find a valid author");
-    }
+    }*/
 }

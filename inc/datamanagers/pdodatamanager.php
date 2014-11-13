@@ -310,6 +310,12 @@ class PDODataManager extends DataManager
         return array_map(function($x) { return new UserID($x->userID); }, $this->getStudentsQuery->fetchAll());
     }
 
+	function getActiveStudents()
+    {
+        $sh = $this->prepareQuery("getActiveUsersQuery", "SELECT userID FROM users WHERE userType='student' && dropped=0 && courseID=?;");
+        return array_map(function($x) { return new UserID($x->userID); }, $sh->fetchAll());
+    }
+
     function getInstructors()
     {
         $sh = $this->prepareQuery("getInstructorsQuery", "SELECT userID FROM users WHERE userType='instructor' && courseID=?;");
@@ -929,5 +935,11 @@ class PDODataManager extends DataManager
 	{
 		$sh = $this->prepareQuery("assignAppealQuery", "INSERT INTO appeal_assignment (markerID, submissionID) VALUES (?, ?);");
 		$sh->execute(array($markerID, $submissionID));
+	}
+	
+	function dropUser(UserID $studentID) 
+	{
+		$sh = $this->prepareQuery("dropUserQuery", "UPDATE users SET dropped = 1 WHERE userID = ?;");
+		$sh->execute(array($studentID));
 	}
 }

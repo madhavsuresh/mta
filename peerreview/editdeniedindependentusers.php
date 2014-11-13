@@ -61,6 +61,7 @@ try
         }
         $content .= "<tr><td>&nbsp;</td><td>\n";
 		$content .= "<tr><td></td><td></td><td><input type='checkbox' name='allIndependent' id='allIndependent'/>Select All</td></tr>";
+		$content .= "<tr><td></td><td></td><td><input type='checkbox' name='allDependent' id='allDependent'/>Remove All</td></tr>";
         $content .= "</table>\n";
         $content .= "<br><input type='submit' value='Save' />\n";
         $content .= "</form>\n";
@@ -76,6 +77,7 @@ try
         $content .= "$('#allIndependent').change(function(){
 			if(this.checked){
 				$('.independents').prop('checked', true);
+				$('#allDependent').prop('checked', false);
 			}else{
 				for(i = 0, len = independent.length; i < len; i++)
 				{
@@ -86,9 +88,22 @@ try
 				}
 			}
         });
-        $('#courseSelect').change();
+		$('#allDependent').change(function(){
+			if(this.checked){
+				$('.independents').prop('checked', false);
+				$('#allIndependent').prop('checked', false);
+			}else{
+				for(i = 0, len = independent.length; i < len; i++)
+				{
+					if(independent[i]==1)
+						$('#independent' + i.toString()).prop('checked', true);
+					else
+						$('#independent' + i.toString()).prop('checked', false);	
+				}
+			}
+		});
         </script>\n";
-
+        
         render_page();
     }
 }catch(Exception $e){

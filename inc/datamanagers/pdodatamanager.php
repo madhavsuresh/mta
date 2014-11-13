@@ -895,6 +895,13 @@ class PDODataManager extends DataManager
 		$sh->execute(array($notificationID));
 	}
 	
+	function getCalibrationReviewer(SubmissionID $submissionID)
+	{
+		$sh = $this->prepareQuery("isCalibratedSubmissionQuery", "SELECT matches.reviewerID FROM peer_review_assignment_submissions submissions JOIN peer_review_assignment_matches matches ON submissions.submissionID = matches.submissionID WHERE submissions.submissionID = ? && matches.calibrationState = 'key';");
+		$sh->execute(array($submissionID));
+		return $sh->fetch()->reviewerID;
+	}
+	
 	//Just for re-assigning old unanswered appeals from previous appeal assignment  
 	function assignOldUnansweredAppeals()
 	{

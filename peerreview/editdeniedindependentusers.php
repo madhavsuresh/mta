@@ -40,7 +40,7 @@ try
 		$independentsRecord = array();
         $currentRowType = 0;
 		$i = 0;
-        foreach($dataMgr->getUserDisplayMap() as $user => $name ){
+        foreach($dataMgr->getActiveUserDisplayMap() as $user => $name ){
             if(!$dataMgr->isStudent(new UserID($user)))
                 continue;
 

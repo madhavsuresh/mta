@@ -286,6 +286,18 @@ class PDODataManager extends DataManager
         return $users;
     }
     
+	function getActiveUserDisplayMap()
+	{
+		$sh = $this->prepareQuery("getActiveUserDisplayMapQuery", "SELECT userID, firstName, lastName FROM users WHERE dropped = 0 && courseID=? ORDER BY lastName, firstName;");
+		$sh->execute(array($this->courseID));
+        $activeUsers = array();
+        while($res = $sh->fetch())
+        {
+            $activeUsers[$res->userID] = $res->firstName." ".$res->lastName;
+        }
+        return $activeUsers;
+	}
+	
     function getUserAliasMap()
     {
         $this->getUserAliasMapQuery->execute(array($this->courseID));
@@ -313,6 +325,7 @@ class PDODataManager extends DataManager
 	function getActiveStudents()
     {
         $sh = $this->prepareQuery("getActiveUsersQuery", "SELECT userID FROM users WHERE userType='student' && dropped=0 && courseID=?;");
+		$sh->execute(array($this->courseID));
         return array_map(function($x) { return new UserID($x->userID); }, $sh->fetchAll());
     }
 

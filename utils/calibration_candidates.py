@@ -1,3 +1,4 @@
+from numpy import nan
 import mysql.connector as my
 
 DBARGS = {'db':'mta_mining', 'user':'mta_miner', 'host':'localhost'}
@@ -94,7 +95,7 @@ def mse(submission, use_centroid=True):
     for r in submission['reviewScores']:
         devs += [(r[q]-ins[q])**2.0 for q in ins]
 
-    return sum(devs)/len(devs)
+    return sum(devs)/len(devs) if len(devs) > 0 else None
 
 def print_scores(assignID_or_name, courseID=3, use_centroid=True):
     if isinstance(assignID_or_name, int):
@@ -110,7 +111,7 @@ def print_scores(assignID_or_name, courseID=3, use_centroid=True):
     print "#   mse score  sub"
     for sub in s:
         if 'instructorScore' in sub:
-            print "  %.3f %5.1f %d \t%s \t(w/ins)" % (mse(sub), sum(sub['instructorScore'].values()), sub['subID'], sub['author'])
+            print "  %.3f %5.1f %d \t%s \t(w/ins)" % (mse(sub) if mse(sub) else nan, sum(sub['instructorScore'].values()), sub['subID'], sub['author'] if 'author' in sub else None)
         elif use_centroid:
             print "  %.3f %5.1f %d \t%s" % (mse(sub), sum(centroid(sub).values()), sub['subID'], sub['author'])
             

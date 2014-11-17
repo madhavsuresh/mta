@@ -23,6 +23,20 @@ class PDOAuthManager extends AuthManager
     function supportsGettingFirstAndLastNames() { return false; }
     function supportsGettingStudentID() { return false; }
 
+	function formAddQuery($keys, $table, $others)
+	{
+		print_r("INSERT OR IGNORE INTO $table (".implode(",", $keys+$others).") VALUES (".implode(",",arraymap(($keys+$others), function($item){return ":".$item;;}))."); UPDATE $table SET ".implode(",",array_map($others, function($item){return $item."=:".$item;}))." WHERE ".implode(",", arraymap(($keys), function($item){return $item."=:".$item;})).";");
+		switch($this->db->getAttribute(PDO::ATTR_DRIVER_NAME)){
+			case 'mysql': 
+				return $this->db->prepare("INSERT INTO $table (".implode(",", $keys+$others).") VALUES (".implode(",",arraymap(($keys+$others), function($item){return ":".$item;})).") ON DUPLICATE KEY UPDATE ".implode(",", arraymap($others, function($item){return $item."=:".$item;})).";" );
+				break;
+			case 'sqlite':
+				//return $this->db->prepare("INSERT OR IGNORE INTO $table (".implode(",", $keys+$others).") VALUES (".implode(",",arraymap(($keys+$others), function($item){return ":".$item;;}))."); UPDATE $table SET ".implode(",",array_map($others, function($item){return $item."=:".$item;}))." WHERE ".implode(",", arraymap(($keys), function($item){return $item."=:".$item;})).";");
+				return $this->db->prepare("INSERT OR IGNORE INTO user_passwords (username, passwordHash) VALUES (:username, :passwordHash); UPDATE user_passwords SET passwordHash = :passwordHash WHERE username = :username;");
+				break;
+		}
+	}
+
     function userNameExists($username)
     {
         $sh = $this->db->prepare("SELECT username FROM user_passwords WHERE username=?;");
@@ -42,8 +56,9 @@ class PDOAuthManager extends AuthManager
     {
         //TODO: Make this tied to username/courseID instead of just username
         $hash = $this->getHash($password);
-        $sh = $this->db->prepare("INSERT INTO user_passwords (username, passwordHash) VALUES (?, ?) ON DUPLICATE KEY UPDATE passwordHash = ?;");
-        return $sh->execute(array($username, $hash, $hash));
+       	//$sh = $this->db->prepare("INSERT INTO user_passwords (username, passwordHash) VALUES (?, ?) ON DUPLICATE KEY UPDATE passwordHash = ?;");
+       	$sh = $this->formAddQuery(array("username"), "user_passwords", array("passwordHash"));
+        return $sh->execute(array("username"=>$username, "passwordHash"=>$hash));
     }
 
     function removeUserAuthentication($username)

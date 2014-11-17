@@ -49,7 +49,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $this->db = $dataMgr->getDatabase();
 
         $this->submissionExistsByMatchQuery = $this->db->prepare("SELECT submissionID FROM peer_review_assignment_matches WHERE matchID=?;");
-        $this->submissionExistsByAuthorQuery = $this->db->prepare("SELECT submissionID FROM peer_review_assignment_submissions WHERE assignmentID=? && authorID=?;");
+        $this->submissionExistsByAuthorQuery = $this->db->prepare("SELECT submissionID FROM peer_review_assignment_submissions WHERE assignmentID=? AND authorID=?;");
         $this->submissionExistsQuery = $this->db->prepare("SELECT submissionID FROM peer_review_assignment_submissions WHERE submissionID=?;");
 
         $this->reviewQuestionsCache = array();
@@ -381,7 +381,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         $this->db->beginTransaction();
         $question = $this->getReviewQuestion($assignment, $id);
-        $sh = $this->db->prepare("SELECT questionID FROM peer_review_assignment_questions WHERE assignmentID = ? && displayPriority = ?;");
+        $sh = $this->db->prepare("SELECT questionID FROM peer_review_assignment_questions WHERE assignmentID = ? AND displayPriority = ?;");
         $sh->execute(array($assignment->assignmentID, $question->displayPriority+1));
         if(!$res = $sh->fetch())
             return;
@@ -394,7 +394,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         $this->db->beginTransaction();
         $question= $this->getReviewQuestion($assignment, $id);
-        $sh = $this->db->prepare("SELECT questionID FROM peer_review_assignment_questions WHERE assignmentID = ? && displayPriority = ?;");
+        $sh = $this->db->prepare("SELECT questionID FROM peer_review_assignment_questions WHERE assignmentID = ? AND displayPriority = ?;");
         $sh->execute(array($assignment->assignmentID, $question->displayPriority-1));
         if(!$res = $sh->fetch())
             return;
@@ -411,7 +411,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getAuthorSubmissionMap(PeerReviewAssignment $assignment)
     {
-        $sh = $this->db->prepare("SELECT authorID, submissionID FROM peer_review_assignment_submissions LEFT JOIN peer_review_assignment_denied ON peer_review_assignment_submissions.authorID = peer_review_assignment_denied.userID && peer_review_assignment_submissions.assignmentID = peer_review_assignment_denied.assignmentID WHERE peer_review_assignment_denied.userID IS NULL && peer_review_assignment_submissions.assignmentID = ?;");
+        $sh = $this->db->prepare("SELECT authorID, submissionID FROM peer_review_assignment_submissions LEFT JOIN peer_review_assignment_denied ON peer_review_assignment_submissions.authorID = peer_review_assignment_denied.userID AND peer_review_assignment_submissions.assignmentID = peer_review_assignment_denied.assignmentID WHERE peer_review_assignment_denied.userID IS NULL AND peer_review_assignment_submissions.assignmentID = ?;");
         $sh->execute(array($assignment->assignmentID));
 
         $map = array();
@@ -425,7 +425,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	//Modified original function to exclude submissions that are for calibration and have calibration reviews
     function getAuthorSubmissionMap_(PeerReviewAssignment $assignment)
     {
-        $sh = $this->db->prepare("SELECT authorID, submissionID FROM peer_review_assignment_submissions LEFT JOIN peer_review_assignment_denied ON peer_review_assignment_submissions.authorID = peer_review_assignment_denied.userID && peer_review_assignment_submissions.assignmentID = peer_review_assignment_denied.assignmentID WHERE peer_review_assignment_denied.userID IS NULL && submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_matches WHERE calibrationState = 'key' || calibrationState = 'attempt') && peer_review_assignment_submissions.assignmentID = ?;");
+        $sh = $this->db->prepare("SELECT authorID, submissionID FROM peer_review_assignment_submissions LEFT JOIN peer_review_assignment_denied ON peer_review_assignment_submissions.authorID = peer_review_assignment_denied.userID AND peer_review_assignment_submissions.assignmentID = peer_review_assignment_denied.assignmentID WHERE peer_review_assignment_denied.userID IS NULL AND submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_matches WHERE calibrationState = 'key' || calibrationState = 'attempt') AND peer_review_assignment_submissions.assignmentID = ?;");
         $sh->execute(array($assignment->assignmentID));
 
         $map = array();
@@ -439,7 +439,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getReviewerAssignment(PeerReviewAssignment $assignment)
     {
-        $sh = $this->db->prepare("SELECT peer_review_assignment_matches.submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE peer_review_assignment_submissions.assignmentID = ? && instructorForced = 0 ORDER BY matchID;");
+        $sh = $this->db->prepare("SELECT peer_review_assignment_matches.submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE peer_review_assignment_submissions.assignmentID = ? AND instructorForced = 0 ORDER BY matchID;");
         $sh->execute(array($assignment->assignmentID));
         $reviewerAssignment = array();
         while($res = $sh->fetch())
@@ -457,7 +457,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         $this->db->beginTransaction();
         //We need to create matches for everything in the list here
-        $checkForMatch = $this->db->prepare("SELECT matchID FROM peer_review_assignment_matches WHERE submissionID=? && reviewerID = ?;");
+        $checkForMatch = $this->db->prepare("SELECT matchID FROM peer_review_assignment_matches WHERE submissionID=? AND reviewerID = ?;");
         $insertMatch = $this->db->prepare("INSERT INTO peer_review_assignment_matches (submissionID, reviewerID, instructorForced) VALUES (?, ?, 0);");
        	$insertCovertMatch = $this->db->prepare("INSERT INTO peer_review_assignment_matches (submissionID, reviewerID, instructorForced, calibrationState) VALUES (?, ?, 0, 'covert');");
 
@@ -518,14 +518,14 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         {
             if($numUsers == 0)
             {
-                $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? && instructorForced=0 && (calibrationState = 'none' || calibrationState = 'covert');");
+                $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? AND instructorForced=0 AND (calibrationState = 'none' || calibrationState = 'covert');");
             }
             else
             {
                 $paramStr = "";
                 for($i=0; $i < $numUsers-1;$i++) { $paramStr.="?,";}
                 $paramStr.="?";
-                $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? && reviewerID NOT IN ($paramStr) && instructorForced=0 && (calibrationState = 'none' || calibrationState = 'covert');");
+                $map[$numUsers] = $db->prepare("DELETE FROM peer_review_assignment_matches WHERE submissionID = ? AND reviewerID NOT IN ($paramStr) AND instructorForced=0 AND (calibrationState = 'none' || calibrationState = 'covert');");
             }
         }
         return $map[$numUsers];
@@ -533,9 +533,9 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getAssignedReviews(PeerReviewAssignment $assignment, UserID $reviewerID)
     {
-        //$sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_calibration_matches calib ON matches.matchID = calib.matchID  WHERE subs.assignmentID = ? && reviewerID = ? && instructorForced = 0 && calib.matchID IS NULL ORDER BY matches.matchID;");
+        //$sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_calibration_matches calib ON matches.matchID = calib.matchID  WHERE subs.assignmentID = ? AND reviewerID = ? AND instructorForced = 0 AND calib.matchID IS NULL ORDER BY matches.matchID;");
         //$sh->execute(array($assignment->assignmentID, $reviewerID));
-        $sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? && reviewerID = ? && instructorForced = 0 && (matches.calibrationState = 'none' || matches.calibrationState = 'covert') ORDER BY matches.matchID;");
+        $sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? AND reviewerID = ? AND instructorForced = 0 AND (matches.calibrationState = 'none' || matches.calibrationState = 'covert') ORDER BY matches.matchID;");
         $sh->execute(array($assignment->assignmentID, $reviewerID));
         $assigned = array();
         while($res = $sh->fetch())
@@ -547,7 +547,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     
     function getMarkerToSubmissionsMap(PeerReviewAssignment $assignment)
     {
-        $sh = $this->db->prepare("SELECT matches.reviewerID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? && instructorForced = 1 && matches.calibrationState = 'none';");
+        $sh = $this->db->prepare("SELECT matches.reviewerID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? AND instructorForced = 1 AND matches.calibrationState = 'none';");
         $sh->execute(array($assignment->assignmentID));
         $map = array();
         while($res = $sh->fetch())
@@ -561,9 +561,9 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     
     function getAssignedCalibrationReviews(PeerReviewAssignment $assignment, UserID $reviewerID)
     {
-        //$sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_calibration_matches calib ON matches.matchID = calib.matchID  WHERE calib.assignmentID = ? && reviewerID = ? && instructorForced = 0 && calib.matchID IS NOT NULL ORDER BY matches.matchID;");
+        //$sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_calibration_matches calib ON matches.matchID = calib.matchID  WHERE calib.assignmentID = ? AND reviewerID = ? AND instructorForced = 0 AND calib.matchID IS NOT NULL ORDER BY matches.matchID;");
         //$sh->execute(array($assignment->assignmentID, $reviewerID));
-        $sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? && reviewerID = ? && instructorForced = 0 && matches.calibrationState = 'attempt' ORDER BY matches.matchID;");
+        $sh = $this->db->prepare("SELECT matches.matchID, matches.submissionID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? AND reviewerID = ? AND instructorForced = 0 AND matches.calibrationState = 'attempt' ORDER BY matches.matchID;");
         $sh->execute(array($assignment->assignmentID, $reviewerID));
         $assigned = array();
         while($res = $sh->fetch())
@@ -575,8 +575,8 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	
     function getNewCalibrationSubmissionForUser(PeerReviewAssignment $assignment, UserID $userid)
     {
-        //$sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT submissionID FROM `peer_review_assignment_submissions` subs LEFT JOIN peer_review_assignment_calibration_pools pools ON subs.assignmentID = pools.poolAssignmentID WHERE pools.assignmentID = ? && submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY RAND() LIMIT 1;");
-		$sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT subs.submissionID FROM `peer_review_assignment_submissions` subs JOIN peer_review_assignment_matches matches ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? && matches.calibrationState = 'key' && subs.submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY RAND() LIMIT 1;");
+        //$sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT submissionID FROM `peer_review_assignment_submissions` subs LEFT JOIN peer_review_assignment_calibration_pools pools ON subs.assignmentID = pools.poolAssignmentID WHERE pools.assignmentID = ? AND submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY RAND() LIMIT 1;");
+		$sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT subs.submissionID FROM `peer_review_assignment_submissions` subs JOIN peer_review_assignment_matches matches ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? AND matches.calibrationState = 'key' AND subs.submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY RAND() LIMIT 1;");
         
         $sh->execute(array($assignment->assignmentID, $userid));
 
@@ -588,7 +588,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     
     function getNewCalibrationSubmissionForUserRestricted(PeerReviewAssignment $assignment, UserID $userid, $topicIndex)
     {
-    	$sh = $this->prepareQuery("getNewCalibSubmissionForUserRestrictedQuery", "SELECT subs.submissionID FROM `peer_review_assignment_submissions` subs, peer_review_assignment_matches matches, peer_review_assignment_essays essays WHERE subs.submissionID = essays.submissionID && subs.submissionID = matches.submissionID && subs.assignmentID = ? && matches.calibrationState = 'key' && subs.submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) && essays.topicIndex <> ? ORDER BY RAND() LIMIT 1;");
+    	$sh = $this->prepareQuery("getNewCalibSubmissionForUserRestrictedQuery", "SELECT subs.submissionID FROM `peer_review_assignment_submissions` subs, peer_review_assignment_matches matches, peer_review_assignment_essays essays WHERE subs.submissionID = essays.submissionID AND subs.submissionID = matches.submissionID AND subs.assignmentID = ? AND matches.calibrationState = 'key' AND subs.submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) AND essays.topicIndex <> ? ORDER BY RAND() LIMIT 1;");
     	
     	$sh->execute(array($assignment->assignmentID, $userid, $topicIndex));
 
@@ -600,14 +600,14 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function deniedUser(PeerReviewAssignment $assignment, $userID)
     {
-        $sh = $this->prepareQuery("deniedUserQuery", "SELECT userID FROM peer_review_assignment_denied WHERE assignmentID=? && userID=?;");
+        $sh = $this->prepareQuery("deniedUserQuery", "SELECT userID FROM peer_review_assignment_denied WHERE assignmentID=? AND userID=?;");
         $sh->execute(array($assignment->assignmentID, $userID));
         return $sh->fetch() != null;
     }
 
     function independentUser(PeerReviewAssignment $assignment, $userID)
     {
-        $sh = $this->prepareQuery("independentUserQuery", "SELECT userID FROM peer_review_assignment_independent WHERE assignmentID=? && userID=?;");
+        $sh = $this->prepareQuery("independentUserQuery", "SELECT userID FROM peer_review_assignment_independent WHERE assignmentID=? AND userID=?;");
         $sh->execute(array($assignment->assignmentID, $userID));
         return $sh->fetch() != null;
     }
@@ -734,7 +734,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             break;
         case "UserID":
             //They want to get the submission by the author
-            $sh = $this->prepareQuery("getSubmissionByAuthorQuery", "SELECT submissionID, authorID, noPublicUse, UNIX_TIMESTAMP(submissionTimestamp) as submissionTimestamp FROM peer_review_assignment_submissions WHERE assignmentID=? && authorID=?;");
+            $sh = $this->prepareQuery("getSubmissionByAuthorQuery", "SELECT submissionID, authorID, noPublicUse, UNIX_TIMESTAMP(submissionTimestamp) as submissionTimestamp FROM peer_review_assignment_submissions WHERE assignmentID=? AND authorID=?;");
             $sh->execute(array($assignment->assignmentID, $id));
             $res = $sh->fetch();
             break;
@@ -781,7 +781,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         global $dataMgr;
         //Try and find an unused shadow id
-        $sh = $this->db->prepare("SELECT userID from users WHERE NOT EXISTS (SELECT * from peer_review_assignment_matches WHERE userID = reviewerID && submissionID = ?) && ((userType = 'shadowinstructor' && substr(username, 1, ?) = ?) || userID = ?) ORDER BY userID LIMIT 1;");
+        $sh = $this->db->prepare("SELECT userID from users WHERE NOT EXISTS (SELECT * from peer_review_assignment_matches WHERE userID = reviewerID AND submissionID = ?) AND ((userType = 'shadowinstructor' AND substr(username, 1, ?) = ?) || userID = ?) ORDER BY userID LIMIT 1;");
         $basename = $username."__shadow";
         $sh->execute(array(
             $submissionID,
@@ -798,7 +798,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         else
         {
             //We have to go and create a new shadow user
-            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'shadowinstructor' && substr(username, 1, ?) = ? && courseId = ?;");
+            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'shadowinstructor' AND substr(username, 1, ?) = ? AND courseId = ?;");
             $sh->execute(array(strlen($basename), $basename, $dataMgr->courseID));
             $nameInfo = $this->dataMgr->getUserFirstAndLastNames($baseID);
             $count = $sh->fetch()->count;
@@ -810,7 +810,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         global $dataMgr;
         //Try and find an unused anonymous id
-        $sh = $this->db->prepare("SELECT userID from users WHERE NOT EXISTS (SELECT * from peer_review_assignment_matches WHERE userID = reviewerID && submissionID = ?) && (userType = 'anonymous' && substr(username, 1, ?) = ?) ORDER BY userID LIMIT 1;");
+        $sh = $this->db->prepare("SELECT userID from users WHERE NOT EXISTS (SELECT * from peer_review_assignment_matches WHERE userID = reviewerID AND submissionID = ?) AND (userType = 'anonymous' AND substr(username, 1, ?) = ?) ORDER BY userID LIMIT 1;");
         $basename = $username."__anonymous";
         $sh->execute(array(
             $submissionID,
@@ -826,7 +826,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         else
         {
             //We have to go and create a new shadow user
-            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' && substr(username, 1, ?) = ? && courseId = ?;");
+            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' AND substr(username, 1, ?) = ? AND courseId = ?;");
             $sh->execute(array(strlen($basename), $basename, $dataMgr->courseID));
             $nameInfo = $this->dataMgr->getUserFirstAndLastNames($baseID);
             $count = $sh->fetch()->count;
@@ -859,7 +859,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		}
 		$basename = $username."__anonymous";	
         
-        $sh = $this->db->prepare("SELECT userID from users, assignments WHERE assignments.courseID = users.courseID && assignments.assignmentID = ? && NOT EXISTS (SELECT * from peer_review_assignment_matches WHERE userID = reviewerID && submissionID = ?) && (userType = 'anonymous' && substr(username, 1, ?) = ?) ORDER BY userID LIMIT 1;");
+        $sh = $this->db->prepare("SELECT userID from users, assignments WHERE assignments.courseID = users.courseID AND assignments.assignmentID = ? AND NOT EXISTS (SELECT * from peer_review_assignment_matches WHERE userID = reviewerID AND submissionID = ?) AND (userType = 'anonymous' AND substr(username, 1, ?) = ?) ORDER BY userID LIMIT 1;");
         $sh->execute(array(
         	$assignment->assignmentID,
             $submissionID,
@@ -875,7 +875,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         else
         {
             //We have to go and create a new shadow user
-            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' && substr(username, 1, ?) = ? && courseId = ?;");
+            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' AND substr(username, 1, ?) = ? AND courseId = ?;");
             $sh->execute(array(strlen($basename), $basename, $dataMgr->courseID));
             $nameInfo = $this->dataMgr->getUserFirstAndLastNames($baseID);
             $count = $sh->fetch()->count;
@@ -902,7 +902,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         global $dataMgr;
         //Try and find an unused anonymous id
-        $sh = $this->db->prepare("SELECT userID from users WHERE NOT EXISTS (SELECT * from peer_review_assignment_submissions WHERE userID = authorID && assignmentID= ?) && (userType = 'anonymous' && substr(username, 1, ?) = ? && courseID = ?) ORDER BY userID LIMIT 1;");
+        $sh = $this->db->prepare("SELECT userID from users WHERE NOT EXISTS (SELECT * from peer_review_assignment_submissions WHERE userID = authorID AND assignmentID= ?) AND (userType = 'anonymous' AND substr(username, 1, ?) = ? AND courseID = ?) ORDER BY userID LIMIT 1;");
         $basename = $username."__anonymous";
         $sh->execute(array(
             $assignment->assignmentID,
@@ -919,7 +919,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         else
         {
             //We have to go and create a new shadow user
-            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' && substr(username, 1, ?) = ? && courseId = ?;");
+            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' AND substr(username, 1, ?) = ? AND courseId = ?;");
             $sh->execute(array(strlen($basename), $basename, $dataMgr->courseID));
             $nameInfo = $this->dataMgr->getUserFirstAndLastNames($baseID);
             $count = $sh->fetch()->count;
@@ -957,7 +957,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		$basename = $username."__anonymous";	
 
         //Try and find an unused anonymous id
-        $sh = $this->db->prepare("SELECT userID from users WHERE NOT EXISTS (SELECT * from peer_review_assignment_submissions WHERE userID = authorID && assignmentID= ?) && (userType = 'anonymous' && substr(username, 1, ?) = ? && courseID = ?) ORDER BY userID LIMIT 1;");
+        $sh = $this->db->prepare("SELECT userID from users WHERE NOT EXISTS (SELECT * from peer_review_assignment_submissions WHERE userID = authorID AND assignmentID= ?) AND (userType = 'anonymous' AND substr(username, 1, ?) = ? AND courseID = ?) ORDER BY userID LIMIT 1;");
         $sh->execute(array(
             $assignment->assignmentID,
             strlen($basename),
@@ -973,7 +973,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         else
         {
             //We have to go and create a new shadow user
-            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' && substr(username, 1, ?) = ? && courseId = ?;");
+            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' AND substr(username, 1, ?) = ? AND courseId = ?;");
             $sh->execute(array(strlen($basename), $basename, $dataMgr->courseID));
             $nameInfo = $this->dataMgr->getUserFirstAndLastNames($baseID);
             $count = $sh->fetch()->count;
@@ -1029,7 +1029,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getInstructorMatchesForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
-        $sh = $this->db->prepare("SELECT matches.matchID as matchID FROM peer_review_assignment_matches matches JOIN users ON users.userID = matches.reviewerID WHERE userType in ('instructor', 'marker', 'shadowinstructor', 'shadowmarker') && submissionID = ?;");
+        $sh = $this->db->prepare("SELECT matches.matchID as matchID FROM peer_review_assignment_matches matches JOIN users ON users.userID = matches.reviewerID WHERE userType in ('instructor', 'marker', 'shadowinstructor', 'shadowmarker') AND submissionID = ?;");
         $sh->execute(array($submissionID));
         $ids = array();
         while($res = $sh->fetch()){
@@ -1049,7 +1049,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	
 	function getCalibrationKeyMatchesForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
-        $sh = $this->db->prepare("SELECT matches.matchID as matchID FROM peer_review_assignment_matches matches WHERE matches.calibrationState = 'key' && submissionID = ?;");
+        $sh = $this->db->prepare("SELECT matches.matchID as matchID FROM peer_review_assignment_matches matches WHERE matches.calibrationState = 'key' AND submissionID = ?;");
         $sh->execute(array($submissionID));
         $ids = array();
         while($res = $sh->fetch()){
@@ -1081,7 +1081,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             if(get_class($id) == "UserID")
             {
                 //Do the query
-                $sh = $this->prepareQuery("getMatchIDByAuthorReviewerPairQuery", "SELECT matchID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE assignmentID = ? && peer_review_assignment_submissions.authorID=? && reviewerID = ?;");
+                $sh = $this->prepareQuery("getMatchIDByAuthorReviewerPairQuery", "SELECT matchID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE assignmentID = ? AND peer_review_assignment_submissions.authorID=? AND reviewerID = ?;");
                 $sh->execute(array($assignment->assignmentID, $id, $reviewer));
                 $res = $sh->fetch();
                 return new MatchID($res->matchID);
@@ -1089,7 +1089,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             else if(get_class($id) == "SubmissionID")
             {
                 //We better have a match id
-                $sh = $this->prepareQuery("getMatchIDBySubmissionAndReviewerQuery", "SELECT matchID FROM peer_review_assignment_matches WHERE submissionID =? && reviewerID = ?;");
+                $sh = $this->prepareQuery("getMatchIDBySubmissionAndReviewerQuery", "SELECT matchID FROM peer_review_assignment_matches WHERE submissionID =? AND reviewerID = ?;");
                 $sh->execute(array($id, $reviewer));
                 $res = $sh->fetch();
                 return new MatchID($res->matchID);
@@ -1124,14 +1124,14 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             if(get_class($id) == "UserID")
             {
                 //Do the query
-                $sh = $this->prepareQuery("getReviewHeaderByAuthorReviewerPairQuery", "SELECT matchID, peer_review_assignment_matches.submissionID as submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE assignmentID = ? && peer_review_assignment_submissions.authorID=? && reviewerID = ?;");
+                $sh = $this->prepareQuery("getReviewHeaderByAuthorReviewerPairQuery", "SELECT matchID, peer_review_assignment_matches.submissionID as submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE assignmentID = ? AND peer_review_assignment_submissions.authorID=? AND reviewerID = ?;");
                 $sh->execute(array($assignment->assignmentID, $id, $reviewer));
                 $headerRes = $sh->fetch();
             }
             else if(get_class($id) == "SubmissionID")
             {
                 //We better have a match id
-                $sh = $this->prepareQuery("getReviewHeaderBySubmissionAndReviewerQuery", "SELECT matchID, peer_review_assignment_matches.submissionID as submissionID, reviewerID FROM peer_review_assignment_matches WHERE submissionID =? && reviewerID = ?;");
+                $sh = $this->prepareQuery("getReviewHeaderBySubmissionAndReviewerQuery", "SELECT matchID, peer_review_assignment_matches.submissionID as submissionID, reviewerID FROM peer_review_assignment_matches WHERE submissionID =? AND reviewerID = ?;");
                 $sh->execute(array($id, $reviewer));
                 $headerRes = $sh->fetch();
             }
@@ -1185,7 +1185,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             if(get_class($id) != "UserID")
                 throw new Exception("This call wanted a user id as the second arg, but got ".get_class($id));
             //Do the query
-            $sh = $this->prepareQuery("getReviewDraftHeaderByAuthorReviewerPairQuery", "SELECT matchID, peer_review_assignment_matches.submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE assignmentID = ? && peer_review_assignment_submissions.authorID=?, reviewerID = ?;");
+            $sh = $this->prepareQuery("getReviewDraftHeaderByAuthorReviewerPairQuery", "SELECT matchID, peer_review_assignment_matches.submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE assignmentID = ? AND peer_review_assignment_submissions.authorID=?, reviewerID = ?;");
             $sh->execute(array($assignment->assignmentID, $id, $reviewer));
             $headerRes = $sh->fetch();
         }
@@ -1235,9 +1235,9 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         {
             $answerText = NULL;
             $answerInt = NULL;
-            if(isset($answer->text) && !is_null($answer->text))
+            if(isset($answer->text) AND !is_null($answer->text))
                 $answerText = $answer->text;
-            if(isset($answer->int) && !is_null($answer->int))
+            if(isset($answer->int) AND !is_null($answer->int))
                 $answerInt = $answer->int;
             $sh->execute(array($review->matchID, $questionID, $answerInt, $answerText, $NOW));
         }
@@ -1253,9 +1253,9 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         {
             $answerText = NULL;
             $answerInt = NULL;
-            if(isset($answer->text) && !is_null($answer->text))
+            if(isset($answer->text) AND !is_null($answer->text))
                 $answerText = $answer->text;
-            if(isset($answer->int) && !is_null($answer->int))
+            if(isset($answer->int) AND !is_null($answer->int))
                 $answerInt = $answer->int;
             $sh->execute(array($review->matchID, $questionID, $answerInt, $answerText));
         }
@@ -1271,7 +1271,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         if($removeMatch)
         {
             if($onlyIfForced) {
-                $sh = $this->db->prepare("DELETE FROM peer_review_assignment_matches WHERE matchID = ? && instructorForced = 1;");
+                $sh = $this->db->prepare("DELETE FROM peer_review_assignment_matches WHERE matchID = ? AND instructorForced = 1;");
             } else {
                 $sh = $this->db->prepare("DELETE FROM peer_review_assignment_matches WHERE matchID = ?;");
             }
@@ -1311,7 +1311,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     //Only get matches whose reviewer is a student and is not for calibration
     function getStudentMatchesForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
-        $sh = $this->prepareQuery("getStudentMatchesForSubmissionQuery", "SELECT matchID FROM peer_review_assignment_matches JOIN users ON reviewerID = userID WHERE submissionID = ? && userType = 'student' && calibrationState = 'none' ORDER BY matchID;");
+        $sh = $this->prepareQuery("getStudentMatchesForSubmissionQuery", "SELECT matchID FROM peer_review_assignment_matches JOIN users ON reviewerID = userID WHERE submissionID = ? AND userType = 'student' AND calibrationState = 'none' ORDER BY matchID;");
         $sh->execute(array($submissionID));
 
         $matches = array();
@@ -1364,7 +1364,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getSpotChecksForMarker(PeerReviewAssignment $assignment, UserID $userID)
     {
-        $sh = $this->prepareQuery("getSpotChecksForMarkerQuery", "SELECT checks.submissionID, checkerID, status FROM peer_review_assignment_spot_checks checks JOIN peer_review_assignment_submissions subs ON checks.submissionID = subs.submissionID WHERE assignmentID = ? && checkerID = ?;");
+        $sh = $this->prepareQuery("getSpotChecksForMarkerQuery", "SELECT checks.submissionID, checkerID, status FROM peer_review_assignment_spot_checks checks JOIN peer_review_assignment_submissions subs ON checks.submissionID = subs.submissionID WHERE assignmentID = ? AND checkerID = ?;");
         $sh->execute(array($assignment->assignmentID,$userID));
 
         $checks = array();
@@ -1396,35 +1396,35 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         global $dataMgr;
         $stats = new stdClass;
 
-        $sh = $this->prepareQuery("numSubmissionsQuery", "SELECT count(*) as c FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_denied denied ON subs.assignmentID = denied.assignmentID && subs.authorID = denied.userID WHERE denied.userID is null && subs.assignmentID=?;");
+        $sh = $this->prepareQuery("numSubmissionsQuery", "SELECT count(*) as c FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_denied denied ON subs.assignmentID = denied.assignmentID AND subs.authorID = denied.userID WHERE denied.userID is null AND subs.assignmentID=?;");
         $sh->execute(array($assignment->assignmentID));
         $stats->numSubmissions = $sh->fetch()->c;
 
-        $sh = $this->prepareQuery("numPossibleSubmissionsQuery", "SELECT count(*) as c from users WHERE courseID = ? && userType = 'student' && userID not in (SELECT users.userID from users LEFT JOIN peer_review_assignment_denied denied ON users.userID = denied.userID WHERE assignmentID = ?);");
+        $sh = $this->prepareQuery("numPossibleSubmissionsQuery", "SELECT count(*) as c from users WHERE courseID = ? AND userType = 'student' AND userID not in (SELECT users.userID from users LEFT JOIN peer_review_assignment_denied denied ON users.userID = denied.userID WHERE assignmentID = ?);");
         $sh->execute(array($dataMgr->courseID, $assignment->assignmentID));
         $stats->numPossibleSubmissions = $sh->fetch()->c;
-        $sh = $this->prepareQuery("numStudentReviewsQuery","SELECT count(distinct matches.matchID) as c FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID JOIN peer_review_assignment_review_answers ans ON matches.matchID = ans.matchID WHERE assignmentID=? && instructorForced = 0;");
+        $sh = $this->prepareQuery("numStudentReviewsQuery","SELECT count(distinct matches.matchID) as c FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID JOIN peer_review_assignment_review_answers ans ON matches.matchID = ans.matchID WHERE assignmentID=? AND instructorForced = 0;");
 
         $sh->execute(array($assignment->assignmentID));
         $stats->numStudentReviews = $sh->fetch()->c;
 
-        $sh = $this->prepareQuery("numPossibleStudentReviewsQuery", "SELECT COUNT(*) as c FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID WHERE assignmentID=? && instructorForced = 0;");
+        $sh = $this->prepareQuery("numPossibleStudentReviewsQuery", "SELECT COUNT(*) as c FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID WHERE assignmentID=? AND instructorForced = 0;");
         $sh->execute(array($assignment->assignmentID));
         $stats->numPossibleStudentReviews = $sh->fetch()->c;
 
-        $sh = $this->prepareQuery("numUnmarkedSubmissionsQuery","SELECT COUNT(*) as c FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_denied denied ON subs.assignmentID = denied.assignmentID && subs.authorID = denied.userID JOIN peer_review_assignment_submission_marks marks ON subs.submissionID = marks.submissionID WHERE denied.userID is null && subs.assignmentID=?;");
+        $sh = $this->prepareQuery("numUnmarkedSubmissionsQuery","SELECT COUNT(*) as c FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_denied denied ON subs.assignmentID = denied.assignmentID AND subs.authorID = denied.userID JOIN peer_review_assignment_submission_marks marks ON subs.submissionID = marks.submissionID WHERE denied.userID is null AND subs.assignmentID=?;");
         $sh->execute(array($assignment->assignmentID));
         $stats->numUnmarkedSubmissions = $stats->numSubmissions - $sh->fetch()->c;
 
-        $sh = $this->prepareQuery("numUnmarkedReviewsQuery","SELECT count(distinct matches.matchID) as c FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID JOIN peer_review_assignment_review_answers ans ON matches.matchID = ans.matchID JOIN peer_review_assignment_review_marks marks ON marks.matchID = matches.matchID WHERE assignmentID=? && instructorForced = 0;");
+        $sh = $this->prepareQuery("numUnmarkedReviewsQuery","SELECT count(distinct matches.matchID) as c FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID JOIN peer_review_assignment_review_answers ans ON matches.matchID = ans.matchID JOIN peer_review_assignment_review_marks marks ON marks.matchID = matches.matchID WHERE assignmentID=? AND instructorForced = 0;");
         $sh->execute(array($assignment->assignmentID));
         $stats->numUnmarkedReviews = $stats->numStudentReviews - $sh->fetch()->c;
 
-        $sh = $this->prepareQuery("numPendingAppealsQuery","SELECT COUNT(matches.matchID) as c FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID && messages.matchID = messages2.matchID && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && users.userType='student';");
+        $sh = $this->prepareQuery("numPendingAppealsQuery","SELECT COUNT(matches.matchID) as c FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID AND messages.matchID = messages2.matchID AND messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL AND submissions.assignmentID = ? AND users.userType='student';");
         $sh->execute(array($assignment->assignmentID));
         $stats->numPendingAppeals = $sh->fetch()->c;
 
-        $sh = $this->prepareQuery("numPendingSpotChecksQuery","SELECT COUNT(*) as c FROM peer_review_assignment_spot_checks checks JOIN peer_review_assignment_submissions subs ON subs.submissionID = checks.submissionID WHERE status = 'pending' && assignmentID = ?;");
+        $sh = $this->prepareQuery("numPendingSpotChecksQuery","SELECT COUNT(*) as c FROM peer_review_assignment_spot_checks checks JOIN peer_review_assignment_submissions subs ON subs.submissionID = checks.submissionID WHERE status = 'pending' AND assignmentID = ?;");
         $sh->execute(array($assignment->assignmentID));
         $stats->numPendingSpotChecks = $sh->fetch()->c;
 
@@ -1435,15 +1435,15 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         $stats = new stdClass;
 
-        $sh = $this->prepareQuery("numUnmarkedSubmissionsForUserQuery","SELECT count(*) as c FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_matches matches ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_submission_marks marks ON subs.submissionID = marks.submissionID WHERE marks.score is null && assignmentID=? && matches.reviewerID = ?;");
+        $sh = $this->prepareQuery("numUnmarkedSubmissionsForUserQuery","SELECT count(*) as c FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_matches matches ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_submission_marks marks ON subs.submissionID = marks.submissionID WHERE marks.score is null AND assignmentID=? AND matches.reviewerID = ?;");
         $sh->execute(array($assignment->assignmentID, $user));
         $stats->numUnmarkedSubmissions = $sh->fetch()->c;
 
-        $sh = $this->prepareQuery("numUnmarkedReviewsForUserQuery","SELECT count(distinct matches.matchID) as c FROM peer_review_assignment_matches matches LEFT JOIN peer_review_assignment_review_marks marks ON matches.matchID = marks.matchID LEFT JOIN peer_review_assignment_review_answers ans ON ans.matchID = matches.matchID WHERE matches.submissionID IN (SELECT subs.submissionID FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_matches matches ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_submission_marks marks ON subs.submissionID = marks.submissionID WHERE assignmentID=:assignment && matches.reviewerID = :user) && marks.score is NULL && ans.matchID is not null && matches.reviewerID != :user;");
+        $sh = $this->prepareQuery("numUnmarkedReviewsForUserQuery","SELECT count(distinct matches.matchID) as c FROM peer_review_assignment_matches matches LEFT JOIN peer_review_assignment_review_marks marks ON matches.matchID = marks.matchID LEFT JOIN peer_review_assignment_review_answers ans ON ans.matchID = matches.matchID WHERE matches.submissionID IN (SELECT subs.submissionID FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_matches matches ON subs.submissionID = matches.submissionID LEFT JOIN peer_review_assignment_submission_marks marks ON subs.submissionID = marks.submissionID WHERE assignmentID=:assignment AND matches.reviewerID = :user) AND marks.score is NULL AND ans.matchID is not null AND matches.reviewerID != :user;");
         $sh->execute(array("assignment"=>$assignment->assignmentID, "user"=>$user));
         $stats->numUnmarkedReviews = $sh->fetch()->c;
 
-        $sh = $this->prepareQuery("numPendingSpotChecksForUserQuery","SELECT COUNT(*) as c FROM peer_review_assignment_spot_checks checks JOIN peer_review_assignment_submissions subs ON subs.submissionID = checks.submissionID WHERE status = 'pending' && assignmentID = ? && checkerID = ?;");
+        $sh = $this->prepareQuery("numPendingSpotChecksForUserQuery","SELECT COUNT(*) as c FROM peer_review_assignment_spot_checks checks JOIN peer_review_assignment_submissions subs ON subs.submissionID = checks.submissionID WHERE status = 'pending' AND assignmentID = ? AND checkerID = ?;");
         $sh->execute(array($assignment->assignmentID, $user));
         $stats->numPendingSpotChecks = $sh->fetch()->c;
 
@@ -1479,7 +1479,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         $reviews = array();
 		
-        $sh = $this->prepareQuery("getReviewsForMarkerQuery", "SELECT peer_review_assignment_matches.submissionID, peer_review_assignment_review_answers.questionID, peer_review_assignment_matches.matchID, peer_review_assignment_matches.instructorForced FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID LEFT JOIN peer_review_assignment_review_answers ON peer_review_assignment_matches.matchID = peer_review_assignment_review_answers.matchID JOIN users ON peer_review_assignment_matches.reviewerID = users.userID WHERE peer_review_assignment_submissions.assignmentID = ? && peer_review_assignment_matches.reviewerID = ? GROUP BY peer_review_assignment_matches.matchID ORDER BY users.userType, peer_review_assignment_matches.matchID;");
+        $sh = $this->prepareQuery("getReviewsForMarkerQuery", "SELECT peer_review_assignment_matches.submissionID, peer_review_assignment_review_answers.questionID, peer_review_assignment_matches.matchID, peer_review_assignment_matches.instructorForced FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID LEFT JOIN peer_review_assignment_review_answers ON peer_review_assignment_matches.matchID = peer_review_assignment_review_answers.matchID JOIN users ON peer_review_assignment_matches.reviewerID = users.userID WHERE peer_review_assignment_submissions.assignmentID = ? AND peer_review_assignment_matches.reviewerID = ? GROUP BY peer_review_assignment_matches.matchID ORDER BY users.userType, peer_review_assignment_matches.matchID;");
         $sh->execute(array($assignment->assignmentID, $reviewerID));
         while($res = $sh->fetch())
         {
@@ -1499,7 +1499,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         //First, figure out what should be there
         $reviewMap = array();
 
-        $sh = $this->prepareQuery("getCorrectReviewerMapQuery", "SELECT matches.submissionID, matches.reviewerID, answers.questionID, matches.matchID, matches.instructorForced FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID LEFT JOIN peer_review_assignment_review_answers answers ON matches.matchID = answers.matchID JOIN users ON matches.reviewerID = users.userID WHERE matches.calibrationState = 'key' && subs.assignmentID = ? GROUP BY matches.matchID ORDER BY users.userType, matches.matchID;"); 
+        $sh = $this->prepareQuery("getCorrectReviewerMapQuery", "SELECT matches.submissionID, matches.reviewerID, answers.questionID, matches.matchID, matches.instructorForced FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID LEFT JOIN peer_review_assignment_review_answers answers ON matches.matchID = answers.matchID JOIN users ON matches.reviewerID = users.userID WHERE matches.calibrationState = 'key' AND subs.assignmentID = ? GROUP BY matches.matchID ORDER BY users.userType, matches.matchID;"); 
         $sh->execute(array($assignment->assignmentID));
         while($res = $sh->fetch())
         {
@@ -1547,7 +1547,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $scoreMap = array();
 
         //Another beast. This avoids us from having to load all the reviews, and computes this all on the DB
-        $sh = $this->prepareQuery("getMatchScoreMapQuery", "SELECT peer_review_assignment_review_answers.matchID, SUM(score) as score FROM peer_review_assignment_review_answers JOIN peer_review_assignment_matches ON peer_review_assignment_matches.matchID = peer_review_assignment_review_answers.matchID JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID LEFT JOIN peer_review_assignment_radio_options ON peer_review_assignment_radio_options.questionID = peer_review_assignment_review_answers.questionID WHERE peer_review_assignment_radio_options.`index` = peer_review_assignment_review_answers.answerInt && peer_review_assignment_submissions.assignmentID = ? GROUP BY peer_review_assignment_review_answers.matchID;");
+        $sh = $this->prepareQuery("getMatchScoreMapQuery", "SELECT peer_review_assignment_review_answers.matchID, SUM(score) as score FROM peer_review_assignment_review_answers JOIN peer_review_assignment_matches ON peer_review_assignment_matches.matchID = peer_review_assignment_review_answers.matchID JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID LEFT JOIN peer_review_assignment_radio_options ON peer_review_assignment_radio_options.questionID = peer_review_assignment_review_answers.questionID WHERE peer_review_assignment_radio_options.`index` = peer_review_assignment_review_answers.answerInt AND peer_review_assignment_submissions.assignmentID = ? GROUP BY peer_review_assignment_review_answers.matchID;");
         $sh->execute(array($assignment->assignmentID));
 
         while($res = $sh->fetch())
@@ -1560,14 +1560,14 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function appealExists(PeerReviewAssignment $assignment, MatchID $matchID, $appealType)
     {
-        $sh = $this->prepareQuery("appealExistsQuery", "SELECT COUNT(appealMessageID) as c FROM peer_review_assignment_appeal_messages WHERE matchID = ? && appealType = ?;");
+        $sh = $this->prepareQuery("appealExistsQuery", "SELECT COUNT(appealMessageID) as c FROM peer_review_assignment_appeal_messages WHERE matchID = ? AND appealType = ?;");
         $sh->execute(array($matchID, $appealType));
         return $sh->fetch()->c > 0;
     }
 
     function getAppeal(PeerReviewAssignment $assignment, MatchID $matchID, $appealType)
     {
-        $sh = $this->prepareQuery("getAppealQuery", "SELECT appealMessageID, authorID, text FROM peer_review_assignment_appeal_messages WHERE matchID = ? && appealType = ? ORDER BY appealMessageID;");
+        $sh = $this->prepareQuery("getAppealQuery", "SELECT appealMessageID, authorID, text FROM peer_review_assignment_appeal_messages WHERE matchID = ? AND appealType = ? ORDER BY appealMessageID;");
         $sh->execute(array($matchID, $appealType));
 
         $appeal = new Appeal($matchID, $appealType);
@@ -1596,20 +1596,20 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function markAppealAsViewedByStudent(PeerReviewAssignment $assignment, MatchID $matchID, $appealType)
     {
-        $sh = $this->db->prepare("UPDATE peer_review_assignment_appeal_messages SET viewedByStudent = 1 WHERE matchID = ? && appealType = ?;");
+        $sh = $this->db->prepare("UPDATE peer_review_assignment_appeal_messages SET viewedByStudent = 1 WHERE matchID = ? AND appealType = ?;");
         $sh->execute(array($matchID, $appealType));
     }
 
     function hasNewAppealMessage(PeerReviewAssignment $assignment, MatchID $matchID, $appealType)
     {
-        $sh = $this->prepareQuery("hasNewAppealMessageQuery", "SELECT COUNT(appealMessageID) as c FROM peer_review_assignment_appeal_messages WHERE matchID = ? && appealType=? && viewedByStudent=0;");
+        $sh = $this->prepareQuery("hasNewAppealMessageQuery", "SELECT COUNT(appealMessageID) as c FROM peer_review_assignment_appeal_messages WHERE matchID = ? AND appealType=? AND viewedByStudent=0;");
         $sh->execute(array($matchID, $appealType));
         return $sh->fetch()->c > 0;
     }
 
     function getReviewAppealMap(PeerReviewAssignment $assignment)
     {
-        $sh = $this->prepareQuery("getReviewAppealMapQuery", "SELECT matches.matchID, users.userType='student' as needsResponse FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID && messages.matchID = messages2.matchID && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && messages.appealType = 'review';");
+        $sh = $this->prepareQuery("getReviewAppealMapQuery", "SELECT matches.matchID, users.userType='student' as needsResponse FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID AND messages.matchID = messages2.matchID AND messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL AND submissions.assignmentID = ? AND messages.appealType = 'review';");
         $sh->execute(array($assignment->assignmentID));
 
         $map = array();
@@ -1622,7 +1622,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getReviewMarkAppealMap(PeerReviewAssignment $assignment)
     {
-        $sh = $this->prepareQuery("getReviewMarkAppealMapQuery", "SELECT matches.matchID, users.userType='student' as needsResponse FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID && messages.matchID = messages2.matchID && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && messages.appealType = 'reviewmark';");
+        $sh = $this->prepareQuery("getReviewMarkAppealMapQuery", "SELECT matches.matchID, users.userType='student' as needsResponse FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID AND messages.matchID = messages2.matchID AND messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL AND submissions.assignmentID = ? AND messages.appealType = 'reviewmark';");
         $sh->execute(array($assignment->assignmentID));
 
         $map = array();
@@ -1636,7 +1636,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	//Strictly for peerreview/inc/appealstaskmanager.php
 	/*function getAppealMapBySubmission(PeerReviewAssignment $assignment)
     {
-        $sh = $this->prepareQuery("getReviewAppealMapBySubmissionQuery", "SELECT matches.submissionID, matches.matchID, users.userType='student' as needsResponse FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID && messages.matchID = messages2.matchID && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && messages.appealType = 'review' ORDER BY matches.submissionID;");
+        $sh = $this->prepareQuery("getReviewAppealMapBySubmissionQuery", "SELECT matches.submissionID, matches.matchID, users.userType='student' as needsResponse FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID AND messages.matchID = messages2.matchID AND messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL AND submissions.assignmentID = ? AND messages.appealType = 'review' ORDER BY matches.submissionID;");
         $sh->execute(array($assignment->assignmentID));
 
         $map = array();
@@ -1651,7 +1651,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
 		
 		
-		$sh = $this->prepareQuery("getReviewMarkAppealMapBySubmissionQuery", "SELECT matches.submissionID, matches.matchID, users.userType='student' as needsResponse FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID && messages.matchID = messages2.matchID && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && messages.appealType = 'reviewmark' ORDER BY matches.submissionID;");
+		$sh = $this->prepareQuery("getReviewMarkAppealMapBySubmissionQuery", "SELECT matches.submissionID, matches.matchID, users.userType='student' as needsResponse FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID AND messages.matchID = messages2.matchID AND messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID WHERE messages2.appealMessageID IS NULL AND submissions.assignmentID = ? AND messages.appealType = 'reviewmark' ORDER BY matches.submissionID;");
         $sh->execute(array($assignment->assignmentID));
 		while($res = $sh->fetch())
         {
@@ -1699,7 +1699,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	
 	function getUnansweredAppealsForMarker(PeerReviewAssignment $assignment, UserID $markerID)
     {
-    	$sh = $this->prepareQuery("getUnansweredAppealsForMarkerQuery", "SELECT matches.matchID, messages.appealType FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID && messages.matchID = messages2.matchID && messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID JOIN appeal_assignment ON appeal_assignment.submissionID = matches.submissionID WHERE messages2.appealMessageID IS NULL && submissions.assignmentID = ? && users.userType='student' && appeal_assignment.markerID = ?;");
+    	$sh = $this->prepareQuery("getUnansweredAppealsForMarkerQuery", "SELECT matches.matchID, messages.appealType FROM peer_review_assignment_appeal_messages messages LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID AND messages.matchID = messages2.matchID AND messages.appealType = messages2.appealType JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID JOIN users ON messages.authorID = users.userID JOIN appeal_assignment ON appeal_assignment.submissionID = matches.submissionID WHERE messages2.appealMessageID IS NULL AND submissions.assignmentID = ? AND users.userType='student' AND appeal_assignment.markerID = ?;");
     	$sh->execute(array($assignment->assignmentID, $markerID));
     	
     	$unansweredAppeals = array();
@@ -1791,7 +1791,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     function getNumberOfTimesReviewedByUserMap(PeerReviewAssignment $assignment, UserID $reviewerID)
     {
         //First, we need the counts of actuall reviews
-        $sh = $this->prepareQuery("getNumberOfTimesReviewedByUserMapQuery", "SELECT submissions.authorID as authorID, count(distinct(matches.matchID)) as c FROM peer_review_assignment_review_answers answers JOIN peer_review_assignment_matches matches ON answers.matchID = matches.matchID JOIN peer_review_assignment_submissions submissions ON matches.submissionID = submissions.submissionID JOIN peer_review_assignment assignments ON submissions.assignmentID = assignments.assignmentID WHERE matches.reviewerID = ? && assignments.reviewStopDate < FROM_UNIXTIME(?) GROUP BY matches.matchID;");
+        $sh = $this->prepareQuery("getNumberOfTimesReviewedByUserMapQuery", "SELECT submissions.authorID as authorID, count(distinct(matches.matchID)) as c FROM peer_review_assignment_review_answers answers JOIN peer_review_assignment_matches matches ON answers.matchID = matches.matchID JOIN peer_review_assignment_submissions submissions ON matches.submissionID = submissions.submissionID JOIN peer_review_assignment assignments ON submissions.assignmentID = assignments.assignmentID WHERE matches.reviewerID = ? AND assignments.reviewStopDate < FROM_UNIXTIME(?) GROUP BY matches.matchID;");
 
         $sh->execute(array($reviewerID, grace($assignment->reviewStopDate)));
 
@@ -1802,7 +1802,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
 
         //Now, we need the counts of spot checks
-        $sh = $this->prepareQuery("getNumberOfTimesSpotCheckedByUserMapQuery", "SELECT submissions.authorID as authorID, count(submissions.submissionID) as c FROM peer_review_assignment_spot_checks  checks JOIN peer_review_assignment_submissions submissions ON checks.submissionID = submissions.submissionID JOIN peer_review_assignment assignments ON submissions.assignmentID = assignments.assignmentID WHERE checks.checkerID = ? && assignments.reviewStopDate < FROM_UNIXTIME(?) GROUP BY submissions.authorID;");
+        $sh = $this->prepareQuery("getNumberOfTimesSpotCheckedByUserMapQuery", "SELECT submissions.authorID as authorID, count(submissions.submissionID) as c FROM peer_review_assignment_spot_checks  checks JOIN peer_review_assignment_submissions submissions ON checks.submissionID = submissions.submissionID JOIN peer_review_assignment assignments ON submissions.assignmentID = assignments.assignmentID WHERE checks.checkerID = ? AND assignments.reviewStopDate < FROM_UNIXTIME(?) GROUP BY submissions.authorID;");
 
         $sh->execute(array($reviewerID, grace($assignment->reviewStopDate)));
 
@@ -1830,7 +1830,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
 	function isInSameCourse(Assignment $assignment, Assignment $otherAssignment)
 	{
-		$sh = $this->prepareQuery("isInSameCourse", "SELECT x.courseID FROM assignments x, assignments y WHERE x.courseID = y.courseID && x.assignmentID = ? && y.assignmentID = ?");
+		$sh = $this->prepareQuery("isInSameCourse", "SELECT x.courseID FROM assignments x, assignments y WHERE x.courseID = y.courseID AND x.assignmentID = ? AND y.assignmentID = ?");
 		$sh->execute(array($assignment->assignmentID, $otherAssignment->assignmentID));
 		$res = $sh->fetch();
 		return $res != NULL;
@@ -1838,7 +1838,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	
 	function numCalibrationReviewsDone(PeerReviewAssignment $assignment, UserID $userID)
 	{
-		$sh = $this->prepareQuery("numCalibrationReviewsDone", "SELECT COUNT(DISTINCT matches.matchID) FROM peer_review_assignment_submissions subs, peer_review_assignment_matches matches, peer_review_assignment_review_answers answers WHERE subs.assignmentID = ? && matches.reviewerID = ? && matches.calibrationState = 'attempt' && subs.submissionID = matches.submissionID && matches.matchID = answers.matchID;"); 
+		$sh = $this->prepareQuery("numCalibrationReviewsDone", "SELECT COUNT(DISTINCT matches.matchID) FROM peer_review_assignment_submissions subs, peer_review_assignment_matches matches, peer_review_assignment_review_answers answers WHERE subs.assignmentID = ? AND matches.reviewerID = ? AND matches.calibrationState = 'attempt' AND subs.submissionID = matches.submissionID AND matches.matchID = answers.matchID;"); 
 		$sh->execute(array($assignment->assignmentID, $userID));
 		$res = $sh->fetch(PDO::FETCH_NUM);
 		return $res[0];
@@ -1846,7 +1846,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
 	function getStudentToCovertReviewsMap(PeerReviewAssignment $assignment)
 	{
-		$sh = $this->prepareQuery("getStudentToCovertReviewsMap", "SELECT reviewerID, matchID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID WHERE calibrationState = 'covert' && subs.assignmentID = ? ORDER BY reviewerID, matchID;"); 
+		$sh = $this->prepareQuery("getStudentToCovertReviewsMap", "SELECT reviewerID, matchID FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID WHERE calibrationState = 'covert' AND subs.assignmentID = ? ORDER BY reviewerID, matchID;"); 
 		$sh->execute(array($assignment->assignmentID));
 		$covertCalibrations = array();
 		while($res = $sh->fetch())
@@ -1860,7 +1860,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	
 	function getStudentToCovertScoresMap(PeerReviewAssignment $assignment)
 	{
-		$sh = $this->prepareQuery("getStudentToCovertScoresMap", "SELECT reviewerID, reviewPoints FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID LEFT JOIN peer_review_assignment_review_marks marks ON marks.matchID = matches.matchID WHERE calibrationState = 'covert' && subs.assignmentID = ? ORDER BY reviewerID, matches.matchID;"); 
+		$sh = $this->prepareQuery("getStudentToCovertScoresMap", "SELECT reviewerID, reviewPoints FROM peer_review_assignment_matches matches JOIN peer_review_assignment_submissions subs ON matches.submissionID = subs.submissionID LEFT JOIN peer_review_assignment_review_marks marks ON marks.matchID = matches.matchID WHERE calibrationState = 'covert' AND subs.assignmentID = ? ORDER BY reviewerID, matches.matchID;"); 
 		$sh->execute(array($assignment->assignmentID));
 		$covertScores = array();
 		while($res = $sh->fetch())
@@ -1875,7 +1875,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	function supervisedSubmissions(PeerReviewAssignment $assignment)
 	{
 		global $dataMgr;
-		$sh = $this->prepareQuery("supervisedSubmissions", "SELECT subs.submissionID, COUNT(DISTINCT answers.matchID) as numReviews FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_denied denied ON subs.authorID = denied.userID && subs.assignmentID = denied.assignmentID JOIN peer_review_assignment_matches matches ON matches.submissionID = subs.submissionID LEFT JOIN peer_review_assignment_review_answers answers ON matches.matchID = answers.matchID WHERE denied.userID IS NULL && subs.assignmentID = :assignmentID && subs.authorID IN (SELECT userID FROM users WHERE userType = 'student') && subs.authorID NOT IN (SELECT userID FROM peer_review_assignment_independent WHERE assignmentID = :assignmentID) GROUP BY subs.submissionID;");
+		$sh = $this->prepareQuery("supervisedSubmissions", "SELECT subs.submissionID, COUNT(DISTINCT answers.matchID) as numReviews FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_denied denied ON subs.authorID = denied.userID AND subs.assignmentID = denied.assignmentID JOIN peer_review_assignment_matches matches ON matches.submissionID = subs.submissionID LEFT JOIN peer_review_assignment_review_answers answers ON matches.matchID = answers.matchID WHERE denied.userID IS NULL AND subs.assignmentID = :assignmentID AND subs.authorID IN (SELECT userID FROM users WHERE userType = 'student') AND subs.authorID NOT IN (SELECT userID FROM peer_review_assignment_independent WHERE assignmentID = :assignmentID) GROUP BY subs.submissionID;");
 		$sh->execute(array("assignmentID"=>$assignment->assignmentID));
 		$result = array();
 		while($res = $sh->fetch())
@@ -1888,7 +1888,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	function independentSubmissions(PeerReviewAssignment $assignment)
 	{
 		global $dataMgr;
-		$sh = $this->prepareQuery("independentSubmissions", "SELECT subs.submissionID, COUNT(DISTINCT answers.matchID) as numReviews FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_denied denied ON subs.authorID = denied.userID && subs.assignmentID = denied.assignmentID JOIN peer_review_assignment_matches matches ON matches.submissionID = subs.submissionID LEFT JOIN peer_review_assignment_review_answers answers ON matches.matchID = answers.matchID WHERE denied.userID IS NULL && subs.assignmentID = :assignmentID && subs.authorID IN (SELECT userID FROM users WHERE userType = 'student') && subs.authorID IN (SELECT userID FROM peer_review_assignment_independent WHERE assignmentID = :assignmentID) GROUP BY subs.submissionID;");
+		$sh = $this->prepareQuery("independentSubmissions", "SELECT subs.submissionID, COUNT(DISTINCT answers.matchID) as numReviews FROM peer_review_assignment_submissions subs LEFT JOIN peer_review_assignment_denied denied ON subs.authorID = denied.userID AND subs.assignmentID = denied.assignmentID JOIN peer_review_assignment_matches matches ON matches.submissionID = subs.submissionID LEFT JOIN peer_review_assignment_review_answers answers ON matches.matchID = answers.matchID WHERE denied.userID IS NULL AND subs.assignmentID = :assignmentID AND subs.authorID IN (SELECT userID FROM users WHERE userType = 'student') AND subs.authorID IN (SELECT userID FROM peer_review_assignment_independent WHERE assignmentID = :assignmentID) GROUP BY subs.submissionID;");
 		$sh->execute(array("assignmentID"=>$assignment->assignmentID));
 		$result = array();
 		while($res = $sh->fetch())

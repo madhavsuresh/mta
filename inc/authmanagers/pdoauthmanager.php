@@ -25,14 +25,15 @@ class PDOAuthManager extends AuthManager
 
 	function formAddQuery($keys, $table, $others)
 	{
-		print_r("INSERT OR IGNORE INTO $table (".implode(",", $keys+$others).") VALUES (".implode(",",arraymap(($keys+$others), function($item){return ":".$item;;}))."); UPDATE $table SET ".implode(",",array_map($others, function($item){return $item."=:".$item;}))." WHERE ".implode(",", arraymap(($keys), function($item){return $item."=:".$item;})).";");
 		switch($this->db->getAttribute(PDO::ATTR_DRIVER_NAME)){
 			case 'mysql': 
-				return $this->db->prepare("INSERT INTO $table (".implode(",", $keys+$others).") VALUES (".implode(",",arraymap(($keys+$others), function($item){return ":".$item;})).") ON DUPLICATE KEY UPDATE ".implode(",", arraymap($others, function($item){return $item."=:".$item;})).";" );
+				return $this->db->prepare("INSERT INTO $table (".implode(",", array_merge($keys, $others)).") VALUES (".implode(",",array_map(function($item){return ":".$item;}, array_merge($keys, $others) ) ).") ON DUPLICATE KEY UPDATE ".implode(",", array_map(function($item){return $item."=:".$item;}, $others) ).";" );
 				break;
 			case 'sqlite':
-				//return $this->db->prepare("INSERT OR IGNORE INTO $table (".implode(",", $keys+$others).") VALUES (".implode(",",arraymap(($keys+$others), function($item){return ":".$item;;}))."); UPDATE $table SET ".implode(",",array_map($others, function($item){return $item."=:".$item;}))." WHERE ".implode(",", arraymap(($keys), function($item){return $item."=:".$item;})).";");
-				return $this->db->prepare("INSERT OR IGNORE INTO user_passwords (username, passwordHash) VALUES (:username, :passwordHash); UPDATE user_passwords SET passwordHash = :passwordHash WHERE username = :username;");
+				return $this->db->prepare("INSERT OR IGNORE INTO $table (".implode(",", array_merge($keys, $others)).") VALUES (".implode(",", array_map(function($item){return ":".$item;}, (array_merge($keys, $others)) ) )."); UPDATE $table SET ".implode(",",array_map(function($item){return $item."=:".$item;}, $others))." WHERE ".implode(",", array_map(function($item){return $item."=:".$item;}, $keys) ).";");
+				break;
+			default:
+				throw new Exception("PDO driver used is neither mysql or sqlite");
 				break;
 		}
 	}

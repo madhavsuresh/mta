@@ -36,6 +36,11 @@ class PDODataManager extends DataManager
         if(!isset($MTA_DATAMANAGER_PDO_CONFIG["password"])) { die("PDODataManager needs a database user password"); }
         //Load up a connection to the database
         $this->db = new PDO('sqlite:/ubc/cs/home/m/mglgms/database.sqlite');
+        /*$this->db = new PDO($MTA_DATAMANAGER_PDO_CONFIG["dsn"],
+                    $MTA_DATAMANAGER_PDO_CONFIG["username"],
+                    $MTA_DATAMANAGER_PDO_CONFIG["password"],
+                    array(PDO::ATTR_PERSISTENT => true));*/
+        
         $this->db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
         $this->db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
@@ -133,7 +138,6 @@ class PDODataManager extends DataManager
     function addUser($username, $firstName, $lastName, $studentID, $type='student', $markingLoad=0)
     {
         $sh = $this->db->prepare("INSERT INTO users (courseID, username, firstName, lastName, studentID, userType, markingLoad) VALUES (?, ?, ?, ?, ?, ?, ?);");
-        print_r("Type is ".$type);
         $sh->execute(array($this->courseID, $username, $firstName, $lastName, $studentID, $type, $markingLoad));
         return new UserID($this->db->lastInsertID());
     }

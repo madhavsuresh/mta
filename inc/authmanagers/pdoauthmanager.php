@@ -23,10 +23,10 @@ class PDOAuthManager extends AuthManager
     function supportsGettingFirstAndLastNames() { return false; }
     function supportsGettingStudentID() { return false; }
 
-	function formAddQuery($keys, $table, $others)
+	/*function formAddQuery($keys, $table, $others)
 	{
 		switch($this->db->getAttribute(PDO::ATTR_DRIVER_NAME)){
-			case 'mysql': 
+			case 'mysql':
 				return $this->db->prepare("INSERT INTO $table (".implode(",", array_merge($keys, $others)).") VALUES (".implode(",",array_map(function($item){return ":".$item;}, array_merge($keys, $others) ) ).") ON DUPLICATE KEY UPDATE ".implode(",", array_map(function($item){return $item."=:".$item;}, $others) ).";" );
 				break;
 			case 'sqlite':
@@ -36,7 +36,7 @@ class PDOAuthManager extends AuthManager
 				throw new Exception("PDO driver used is neither mysql or sqlite");
 				break;
 		}
-	}
+	}*/
 
     function userNameExists($username)
     {
@@ -57,8 +57,15 @@ class PDOAuthManager extends AuthManager
     {
         //TODO: Make this tied to username/courseID instead of just username
         $hash = $this->getHash($password);
-       	//$sh = $this->db->prepare("INSERT INTO user_passwords (username, passwordHash) VALUES (?, ?) ON DUPLICATE KEY UPDATE passwordHash = ?;");
-       	$sh = $this->formAddQuery(array("username"), "user_passwords", array("passwordHash"));
+        switch($this->db->getAttribute(PDO::ATTR_DRIVER_NAME)){
+        	case 'mysql':
+       			$sh = $this->db->prepare("INSERT INTO user_passwords (username, passwordHash) VALUES (:username, :passwordHash) ON DUPLICATE KEY UPDATE passwordHash = :passwordHash;");
+       			break;
+			case 'sqlite':
+       			$sh = $this->db->prepare("INSERT OR IGNORE INTO user_passwords (username, passwordHash) VALUES (:username, :passwordHash); UPDATE user_passwords SET passwordHash = :passwordHash WHERE username = :username;");
+       			break;
+		}
+		//$sh = $this->formAddQuery(array("username"), "user_passwords", array("passwordHash"));
         return $sh->execute(array("username"=>$username, "passwordHash"=>$hash));
     }
 

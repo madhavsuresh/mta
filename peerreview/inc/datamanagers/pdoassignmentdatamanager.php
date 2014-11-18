@@ -709,8 +709,16 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     function saveReviewMark(PeerReviewAssignment $assignment, ReviewMark $mark, MatchID $matchID)
     {
     	global $NOW;	
-    	
-        $sh = $this->prepareQuery("saveReviewMarkQuery", "INSERT INTO peer_review_assignment_review_marks (matchID, score, comments, automatic, reviewPoints, reviewMarkTimestamp) VALUES (:matchID, :score, :comments, :automatic, :reviewPoints, FROM_UNIXTIME(:reviewMarkTimestamp)) ON DUPLICATE KEY UPDATE score=:score, comments=:comments, automatic=:automatic, reviewPoints=:reviewPoints, reviewMarkTimestamp=FROM_UNIXTIME(:reviewMarkTimestamp);");
+    	switch($this->db->getAttribute(PDO::ATTR_DRIVER_NAME)){
+        	case 'mysql':
+       			$sh = $this->prepareQuery("saveReviewMarkQuery", "INSERT INTO peer_review_assignment_review_marks (matchID, score, comments, automatic, reviewPoints, reviewMarkTimestamp) VALUES (:matchID, :score, :comments, :automatic, :reviewPoints, FROM_UNIXTIME(:reviewMarkTimestamp)) ON DUPLICATE KEY UPDATE score=:score, comments=:comments, automatic=:automatic, reviewPoints=:reviewPoints, reviewMarkTimestamp=FROM_UNIXTIME(:reviewMarkTimestamp);");
+       			break;
+			case 'sqlite':
+				$sh = $this->prepareQuery("saveReviewMarkQuery", "INSERT OR IGNORE INTO peer_review_assignment_review_marks (matchID, score, comments, automatic, reviewPoints, reviewMarkTimestamp) VALUES (:matchID, :score, :comments, :automatic, :reviewPoints, date(:reviewMarkTimestamp,'unixepoch')); UPDATE peer_review_assignment_review_marks SET score=:score, comments=:comments, automatic=:automatic, reviewPoints=:reviewPoints, reviewMarkTimestamp=date(:reviewMarkTimestamp,'unixepoch') WHERE matchID=:matchID;");
+       			break;
+		}
+        
+        
         $sh->execute(array(":matchID" => $matchID, ":score"=>$mark->score, ":comments"=>$mark->comments, ":automatic"=>(int)$mark->isAutomatic, ":reviewPoints"=>$mark->reviewPoints, ":reviewMarkTimestamp"=>$NOW));
     }
 
@@ -1335,7 +1343,14 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function saveSpotCheck(PeerReviewAssignment $assignment, SpotCheck $check)
     {
-        $sh = $this->prepareQuery("saveSpotCheckQuery", "INSERT INTO peer_review_assignment_spot_checks (submissionID, checkerID, status) VALUES (:submissionID, :checkerID, :status) ON DUPLICATE KEY UPDATE checkerID=:checkerID, status=:status;");
+    	switch($this->db->getAttribute(PDO::ATTR_DRIVER_NAME)){
+        	case 'mysql':
+       			$sh = $this->prepareQuery("saveSpotCheckQuery", "INSERT INTO peer_review_assignment_spot_checks (submissionID, checkerID, status) VALUES (:submissionID, :checkerID, :status) ON DUPLICATE KEY UPDATE checkerID=:checkerID, status=:status;");
+       			break;
+			case 'sqlite':
+				$sh = $this->prepareQuery("saveSpotCheckQuery", "INSERT OR IGNORE INTO peer_review_assignment_spot_checks (submissionID, checkerID, status) VALUES (:submissionID, :checkerID, :status); UPDATE peer_review_assignment_spot_checks SET checkerID=:checkerID, status=:status WHERE submissionID=:submissionID;");
+       			break;
+		}
         $sh->execute(array("submissionID"=>$check->submissionID, "checkerID"=>$check->checkerID, "status"=>$check->status));
     }
 
@@ -1378,8 +1393,14 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     function touchSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID, UserID $userID)
     {
         global $NOW;
-        $sh = $this->prepareQuery("touchSubmissionQuery", "INSERT INTO peer_review_assignment_instructor_review_touch_times (submissionID, instructorID, timestamp) VALUES (:submissionID, :instructorID, FROM_UNIXTIME(:timestamp)) ON DUPLICATE KEY UPDATE timestamp=FROM_UNIXTIME(:timestamp);");
-
+		switch($this->db->getAttribute(PDO::ATTR_DRIVER_NAME)){
+        	case 'mysql':
+       			$sh = $this->prepareQuery("touchSubmissionQuery", "INSERT INTO peer_review_assignment_instructor_review_touch_times (submissionID, instructorID, timestamp) VALUES (:submissionID, :instructorID, FROM_UNIXTIME(:timestamp)) ON DUPLICATE KEY UPDATE timestamp=FROM_UNIXTIME(:timestamp);");
+       			break;
+			case 'sqlite':
+				$sh = $this->prepareQuery("touchSubmissionQuery", "INSERT OR IGNORE INTO peer_review_assignment_instructor_review_touch_times (submissionID, instructorID, timestamp) VALUES (:submissionID, :instructorID, date(:timestamp,'unixepoch')); UPDATE peer_review_assignment_instructor_review_touch_times SET timestamp=date(:timestamp,'unixepoch') WHERE userID submissionID = :submissionID AND instructorID = :instructorID;");
+       			break;
+		}
         $sh->execute(array("submissionID"=>$submissionID, "instructorID"=>$userID, "timestamp"=>$NOW));
     }
 

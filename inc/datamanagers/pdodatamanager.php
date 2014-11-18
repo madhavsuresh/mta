@@ -614,7 +614,14 @@ class PDODataManager extends DataManager
 	function demote(UserID $userID, $demotionThreshold)
 	{
 		global $NOW;
-		$sh = $this->prepareQuery("demoteQuery", "INSERT INTO peer_review_assignment_demotion_log (userID, demotionDate, demotionThreshold) VALUES (:userID, FROM_UNIXTIME(:demotionDate), :demotionThreshold) ON DUPLICATE KEY UPDATE demotionDate=FROM_UNIXTIME(:demotionDate), demotionThreshold=:demotionThreshold;");
+		switch($this->db->getAttribute(PDO::ATTR_DRIVER_NAME)){
+        	case 'mysql':
+       			$sh = $this->prepareQuery("demoteQuery", "INSERT INTO peer_review_assignment_demotion_log (userID, demotionDate, demotionThreshold) VALUES (:userID, FROM_UNIXTIME(:demotionDate), :demotionThreshold) ON DUPLICATE KEY UPDATE demotionDate=FROM_UNIXTIME(:demotionDate), demotionThreshold=:demotionThreshold;");
+       			break;
+			case 'sqlite':
+       			$sh = $this->db->prepare("INSERT OR IGNORE INTO peer_review_assignment_demotion_log (userID, demotionDate, demotionThreshold) VALUES (:userID, date(:demotionDate,'unixepoch'), :demotionThreshold); UPDATE user_passwords SET demotionDate=date(:demotionDate,'unixepoch'), demotionThreshold=:demotionThreshold WHERE userID = :userID;");
+       			break;
+		}
 		$sh->execute(array("userID"=>$userID, "demotionDate"=>$NOW, "demotionThreshold"=>$demotionThreshold));
 	}
 	
@@ -636,9 +643,18 @@ class PDODataManager extends DataManager
 	
 	function saveCourseConfiguration(CourseConfiguration $configuration) 
 	{
-		$sh = $this->prepareQuery("saveCourseConfigurationQuery", "INSERT INTO course_configuration (courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, highMarkThreshold, highMarkBias, calibrationThreshold, calibrationBias, scoreWindowSize, scoreThreshold, disqualifyWindowSize, disqualifyThreshold) 
-																							VALUES (:courseID, :windowSize, :numReviews, :scoreNoise, :maxAttempts, :numCovertCalibrations, :exhaustedCondition, :minReviews, :spotCheckProb, :highMarkThreshold, :highMarkBias, :calibrationThreshold, :calibrationBias, :scoreWindowSize, :scoreThreshold, :disqualifyWindowSize, :disqualifyThreshold) 
-																		   ON DUPLICATE KEY UPDATE courseID=:courseID , windowSize=:windowSize , numReviews=:numReviews , scoreNoise=:scoreNoise , maxAttempts=:maxAttempts , numCovertCalibrations=:numCovertCalibrations , exhaustedCondition=:exhaustedCondition, minReviews=:minReviews, spotCheckProb=:spotCheckProb, highMarkThreshold=:highMarkThreshold, highMarkBias=:highMarkBias, calibrationThreshold=:calibrationThreshold, calibrationBias=:calibrationBias, scoreWindowSize=:scoreWindowSize, scoreThreshold=:scoreThreshold, disqualifyWindowSize=:disqualifyWindowSize, disqualifyThreshold=:disqualifyThreshold;");
+		switch($this->db->getAttribute(PDO::ATTR_DRIVER_NAME)){
+        	case 'mysql':
+       			$sh = $this->prepareQuery("saveCourseConfigurationQuery", "INSERT INTO course_configuration (courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, highMarkThreshold, highMarkBias, calibrationThreshold, calibrationBias, scoreWindowSize, scoreThreshold, disqualifyWindowSize, disqualifyThreshold) 
+																			VALUES (:courseID, :windowSize, :numReviews, :scoreNoise, :maxAttempts, :numCovertCalibrations, :exhaustedCondition, :minReviews, :spotCheckProb, :highMarkThreshold, :highMarkBias, :calibrationThreshold, :calibrationBias, :scoreWindowSize, :scoreThreshold, :disqualifyWindowSize, :disqualifyThreshold) 
+																		   ON DUPLICATE KEY UPDATE windowSize=:windowSize , numReviews=:numReviews , scoreNoise=:scoreNoise , maxAttempts=:maxAttempts , numCovertCalibrations=:numCovertCalibrations , exhaustedCondition=:exhaustedCondition, minReviews=:minReviews, spotCheckProb=:spotCheckProb, highMarkThreshold=:highMarkThreshold, highMarkBias=:highMarkBias, calibrationThreshold=:calibrationThreshold, calibrationBias=:calibrationBias, scoreWindowSize=:scoreWindowSize, scoreThreshold=:scoreThreshold, disqualifyWindowSize=:disqualifyWindowSize, disqualifyThreshold=:disqualifyThreshold;");
+       			break;
+			case 'sqlite':
+       			$sh = $this->db->prepareQuery("saveCourseConfigurationQuery", "INSERT OR IGNORE INTO course_configuration (courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, highMarkThreshold, highMarkBias, calibrationThreshold, calibrationBias, scoreWindowSize, scoreThreshold, disqualifyWindowSize, disqualifyThreshold)
+       																		VALUES (:courseID, :windowSize, :numReviews, :scoreNoise, :maxAttempts, :numCovertCalibrations, :exhaustedCondition, :minReviews, :spotCheckProb, :highMarkThreshold, :highMarkBias, :calibrationThreshold, :calibrationBias, :scoreWindowSize, :scoreThreshold, :disqualifyWindowSize, :disqualifyThreshold);
+													       					UPDATE course_configuration SET windowSize=:windowSize , numReviews=:numReviews , scoreNoise=:scoreNoise , maxAttempts=:maxAttempts , numCovertCalibrations=:numCovertCalibrations , exhaustedCondition=:exhaustedCondition, minReviews=:minReviews, spotCheckProb=:spotCheckProb, highMarkThreshold=:highMarkThreshold, highMarkBias=:highMarkBias, calibrationThreshold=:calibrationThreshold, calibrationBias=:calibrationBias, scoreWindowSize=:scoreWindowSize, scoreThreshold=:scoreThreshold, disqualifyWindowSize=:disqualifyWindowSize, disqualifyThreshold=:disqualifyThreshold WHERE courseID=:courseID;");
+       			break;
+		}
 		$array = array(
 			"courseID"=>$this->courseID, 
 			"windowSize"=>$configuration->windowSize, 

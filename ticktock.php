@@ -15,6 +15,8 @@ try
 	$globalDataMgr = new PDODataManager();
 	
 	$submissionStoppedAssignments = $globalDataMgr->getSubmissionStoppedAssignments();
+	print_r("SO ... ");
+	print_r($submissionStoppedAssignments);
 	
 	$assignReviewsPeerReviewJob = new AssignReviewsPeerReviewCronJob();
 	$copyIndependentsFromPreviousJob = new CopyIndependentsFromPreviousCronJob();
@@ -25,10 +27,10 @@ try
 	foreach($submissionStoppedAssignments as $assignmentID)
 	{
 		$copyIndependentsFromPreviousJob->executeAndGetResult($assignmentID, $globalDataMgr);
-		$computeIndependentsFromScoresJob->executeAndGetResult($assignmentID, $globalDataMgr);
-		$computeIndependentsFromCalibrationsJob->executeAndGetResult($assignmentID, $globalDataMgr);
-		$disqualifyIndependentsFromScoresJob->executeAndGetResult($assignmentID, $globalDataMgr);
-		$assignReviewsPeerReviewJob->executeAndGetResult($assignmentID, $globalDataMgr);
+		//$computeIndependentsFromScoresJob->executeAndGetResult($assignmentID, $globalDataMgr);
+		//$computeIndependentsFromCalibrationsJob->executeAndGetResult($assignmentID, $globalDataMgr);
+		//$disqualifyIndependentsFromScoresJob->executeAndGetResult($assignmentID, $globalDataMgr);
+		//$assignReviewsPeerReviewJob->executeAndGetResult($assignmentID, $globalDataMgr);
 	}
 
 	$reviewStoppedAssignments = $globalDataMgr->getReviewStoppedAssignments();

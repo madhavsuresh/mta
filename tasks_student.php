@@ -15,7 +15,7 @@ $latestCalibrationAssignment = latestCalibrationAssignment();
 foreach($assignments as $assignment)
 {			
 	if(!$assignment->showForUser($USERID))
-    continue;
+    	continue;
 	
 	if($assignment->submissionStartDate <= $NOW AND grace($assignment->submissionStopDate) > $NOW)
 	{
@@ -107,7 +107,7 @@ foreach($assignments as $assignment)
 			//TO-DO: Clean-up logic flow
         	$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();#$#
             if($availableCalibrationSubmissions && $assignment->extraCalibrations > 0)
-            {					
+            {
                 $independents = $assignment->getIndependentUsers();
 				
                 $convertedAverage = convertTo10pointScale($currentAverage, $assignment);
@@ -160,7 +160,7 @@ foreach($items as $item)
 $status = "Supervised"; $reviewerAverage = "--"; $threshold = ""; $minimumReviews = "";
 if($latestCalibrationAssignment != NULL)
 {
-    $reviewerAverage = convertTo10pointScale($currentAverage, $latestCalibrationAssignment); 
+    $reviewerAverage = convertTo10pointScale($currentAverage, $latestCalibrationAssignment);
 	if(isIndependent($USERID, $latestCalibrationAssignment))
 		$status = "Independent";
 	$threshold = $latestCalibrationAssignment->calibrationThresholdScore;

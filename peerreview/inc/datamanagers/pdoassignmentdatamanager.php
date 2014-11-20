@@ -61,11 +61,38 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
     }
 
+	function from_unixtime($seconds)
+	{
+		$driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+		if($driver == 'sqlite')
+			return "datetime($seconds,'unixepoch')";
+		elseif($driver == 'mysql') 
+			return "FROM_UNIXTIME($seconds)";
+	}
+	
+	function unix_timestamp($seconds)
+	{
+		$driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+		if($driver == 'sqlite')
+			return "strftime('%s',$seconds)";
+		elseif($driver == 'mysql') 
+			return "UNIX_TIMESTAMP($seconds)";
+	}
+	
+	function random()
+	{
+		$driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+		if($driver == 'sqlite')
+			return "RANDOM()";
+		elseif($driver == 'mysql') 
+			return "RAND()";
+	}
+
     function loadAssignment(AssignmentID $assignmentID)
     {
         global $PEER_REVIEW_SUBMISSION_TYPES;
         #Go and include the assignment page
-        /*$%$*/$sh = $this->prepareQuery("loadAssignmentQuery", "SELECT name, submissionQuestion, submissionType, UNIX_TIMESTAMP(submissionStartDate) as submissionStartDate, UNIX_TIMESTAMP(submissionStopDate) as submissionStopDate, UNIX_TIMESTAMP(reviewStartDate) as reviewStartDate, UNIX_TIMESTAMP(reviewStopDate) as reviewStopDate, UNIX_TIMESTAMP(markPostDate) as markPostDate, UNIX_TIMESTAMP(appealStopDate) as appealStopDate, maxSubmissionScore, maxReviewScore, defaultNumberOfReviews, allowRequestOfReviews, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions, showPoolStatus, calibrationMinCount, calibrationMaxScore, calibrationThresholdMSE, calibrationThresholdScore, extraCalibrations, UNIX_TIMESTAMP(calibrationStartDate) as calibrationStartDate, UNIX_TIMESTAMP(calibrationStopDate) as calibrationStopDate FROM peer_review_assignment JOIN assignments ON assignments.assignmentID = peer_review_assignment.assignmentID WHERE peer_review_assignment.assignmentID=?;");
+        /*$%$*/$sh = $this->prepareQuery("loadAssignmentQuery", "SELECT name, submissionQuestion, submissionType, ".$this->unix_timestamp("submissionStartDate")." as submissionStartDate, ".$this->unix_timestamp("submissionStopDate")." as submissionStopDate, ".$this->unix_timestamp("reviewStartDate")." as reviewStartDate, ".$this->unix_timestamp("reviewStopDate")." as reviewStopDate, ".$this->unix_timestamp("markPostDate")." as markPostDate, ".$this->unix_timestamp("appealStopDate")." as appealStopDate, maxSubmissionScore, maxReviewScore, defaultNumberOfReviews, allowRequestOfReviews, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions, showPoolStatus, calibrationMinCount, calibrationMaxScore, calibrationThresholdMSE, calibrationThresholdScore, extraCalibrations, ".$this->unix_timestamp("calibrationStartDate")." as calibrationStartDate, ".$this->unix_timestamp("calibrationStopDate")." as calibrationStopDate FROM peer_review_assignment JOIN assignments ON assignments.assignmentID = peer_review_assignment.assignmentID WHERE peer_review_assignment.assignmentID=?;");
         $sh->execute(array($assignmentID));
         if(!$res = $sh->fetch())
         {
@@ -159,11 +186,11 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
         if($newAssignment)
         {
-            /*$%$*/$sh = $this->db->prepare("INSERT INTO peer_review_assignment (submissionQuestion, submissionType, submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate, markPostDate, appealStopDate, maxSubmissionScore, maxReviewScore, defaultNumberOfReviews, allowRequestOfReviews, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions, showPoolStatus, calibrationMinCount, calibrationMaxScore, calibrationThresholdMSE, calibrationThresholdScore, extraCalibrations, calibrationStartDate, calibrationStopDate, assignmentID) VALUES (?, ?, FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), FROM_UNIXTIME(?), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, FROM_UNIXTIME(?), FROM_UNIXTIME(?), ?);");
+            /*$%$*/$sh = $this->db->prepare("INSERT INTO peer_review_assignment (submissionQuestion, submissionType, submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate, markPostDate, appealStopDate, maxSubmissionScore, maxReviewScore, defaultNumberOfReviews, allowRequestOfReviews, showMarksForReviewsReceived, showOtherReviewsByStudents, showOtherReviewsByInstructors, showMarksForOtherReviews, showMarksForReviewedSubmissions, showPoolStatus, calibrationMinCount, calibrationMaxScore, calibrationThresholdMSE, calibrationThresholdScore, extraCalibrations, calibrationStartDate, calibrationStopDate, assignmentID) VALUES (?, ?, ".$this->from_unixtime("?").", ".$this->from_unixtime("?").", ".$this->from_unixtime("?").", ".$this->from_unixtime("?").", ".$this->from_unixtime("?").", ".$this->from_unixtime("?").", ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ".$this->from_unixtime("?").", ".$this->from_unixtime("?").", ?);");
         }
         else
         {
-            /*$%$*/$sh = $this->db->prepare("UPDATE peer_review_assignment SET submissionQuestion=?, submissionType=?, submissionStartDate=FROM_UNIXTIME(?), submissionStopDate=FROM_UNIXTIME(?), reviewStartDate=FROM_UNIXTIME(?), reviewStopDate=FROM_UNIXTIME(?), markPostDate=FROM_UNIXTIME(?), appealStopDate=FROM_UNIXTIME(?), maxSubmissionScore=?, maxReviewScore=?, defaultNumberOfReviews=?, allowRequestOfReviews=?, showMarksForReviewsReceived=?, showOtherReviewsByStudents=?, showOtherReviewsByInstructors=?, showMarksForOtherReviews=?, showMarksForReviewedSubmissions=?, showPoolStatus=?, calibrationMinCount=?, calibrationMaxScore=?, calibrationThresholdMSE=?, calibrationThresholdScore=?, extraCalibrations=?, calibrationStartDate=FROM_UNIXTIME(?), calibrationStopDate=FROM_UNIXTIME(?) WHERE assignmentID=?;");
+            /*$%$*/$sh = $this->db->prepare("UPDATE peer_review_assignment SET submissionQuestion=?, submissionType=?, submissionStartDate=".$this->from_unixtime("?").", submissionStopDate=".$this->from_unixtime("?").", reviewStartDate=".$this->from_unixtime("?").", reviewStopDate=".$this->from_unixtime("?").", markPostDate=".$this->from_unixtime("?").", appealStopDate=".$this->from_unixtime("?").", maxSubmissionScore=?, maxReviewScore=?, defaultNumberOfReviews=?, allowRequestOfReviews=?, showMarksForReviewsReceived=?, showOtherReviewsByStudents=?, showOtherReviewsByInstructors=?, showMarksForOtherReviews=?, showMarksForReviewedSubmissions=?, showPoolStatus=?, calibrationMinCount=?, calibrationMaxScore=?, calibrationThresholdMSE=?, calibrationThresholdScore=?, extraCalibrations=?, calibrationStartDate=".$this->from_unixtime("?").", calibrationStopDate=".$this->from_unixtime("?")." WHERE assignmentID=?;");
         }
         $sh->execute(array(
             $assignment->submissionQuestion,
@@ -575,8 +602,8 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	
     function getNewCalibrationSubmissionForUser(PeerReviewAssignment $assignment, UserID $userid)
     {
-        //$sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT submissionID FROM `peer_review_assignment_submissions` subs LEFT JOIN peer_review_assignment_calibration_pools pools ON subs.assignmentID = pools.poolAssignmentID WHERE pools.assignmentID = ? AND submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY RAND() LIMIT 1;");
-		$sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT subs.submissionID FROM `peer_review_assignment_submissions` subs JOIN peer_review_assignment_matches matches ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? AND matches.calibrationState = 'key' AND subs.submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY RAND() LIMIT 1;");
+        //$sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT submissionID FROM `peer_review_assignment_submissions` subs LEFT JOIN peer_review_assignment_calibration_pools pools ON subs.assignmentID = pools.poolAssignmentID WHERE pools.assignmentID = ? AND submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY ".$this->random()." LIMIT 1;");
+		$sh = $this->prepareQuery("getNewCalibSubmissionForUserQuery", "SELECT subs.submissionID FROM `peer_review_assignment_submissions` subs JOIN peer_review_assignment_matches matches ON subs.submissionID = matches.submissionID WHERE subs.assignmentID = ? AND matches.calibrationState = 'key' AND subs.submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) ORDER BY ".$this->random()." LIMIT 1;");
         
         $sh->execute(array($assignment->assignmentID, $userid));
 
@@ -588,7 +615,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     
     function getNewCalibrationSubmissionForUserRestricted(PeerReviewAssignment $assignment, UserID $userid, $topicIndex)
     {
-    	$sh = $this->prepareQuery("getNewCalibSubmissionForUserRestrictedQuery", "SELECT subs.submissionID FROM `peer_review_assignment_submissions` subs, peer_review_assignment_matches matches, peer_review_assignment_essays essays WHERE subs.submissionID = essays.submissionID AND subs.submissionID = matches.submissionID AND subs.assignmentID = ? AND matches.calibrationState = 'key' AND subs.submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) AND essays.topicIndex <> ? ORDER BY RAND() LIMIT 1;");
+    	$sh = $this->prepareQuery("getNewCalibSubmissionForUserRestrictedQuery", "SELECT subs.submissionID FROM `peer_review_assignment_submissions` subs, peer_review_assignment_matches matches, peer_review_assignment_essays essays WHERE subs.submissionID = essays.submissionID AND subs.submissionID = matches.submissionID AND subs.assignmentID = ? AND matches.calibrationState = 'key' AND subs.submissionID NOT IN ( SELECT submissionID from peer_review_assignment_matches WHERE peer_review_assignment_matches.reviewerID = ?) AND essays.topicIndex <> ? ORDER BY ".$this->random()." LIMIT 1;");
     	
     	$sh->execute(array($assignment->assignmentID, $userid, $topicIndex));
 
@@ -668,7 +695,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getSubmissionMark(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
-        $sh = $this->prepareQuery("getSubmissionMarkQuery", "SELECT score, comments, automatic, UNIX_TIMESTAMP(submissionMarkTimestamp) as submissionMarkTimestamp FROM peer_review_assignment_submission_marks WHERE submissionID=?;");
+        $sh = $this->prepareQuery("getSubmissionMarkQuery", "SELECT score, comments, automatic, ".$this->unix_timestamp("submissionMarkTimestamp")." as submissionMarkTimestamp FROM peer_review_assignment_submission_marks WHERE submissionID=?;");
         $sh->execute(array($submissionID));
         if($res = $sh->fetch())
         {
@@ -681,7 +708,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getReviewMark(PeerReviewAssignment $assignment, MatchID $matchID)
     {
-        $sh = $this->prepareQuery("getReviewMarkQuery", "SELECT score, comments, automatic, reviewPoints, UNIX_TIMESTAMP(reviewMarkTimestamp) as reviewMarkTimestamp FROM peer_review_assignment_review_marks WHERE matchID=?;");
+        $sh = $this->prepareQuery("getReviewMarkQuery", "SELECT score, comments, automatic, reviewPoints, ".$this->unix_timestamp("reviewMarkTimestamp")." as reviewMarkTimestamp FROM peer_review_assignment_review_marks WHERE matchID=?;");
         $sh->execute(array($matchID));
         if($res = $sh->fetch())
         {
@@ -702,7 +729,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     {
     	global $NOW;
 		
-        $sh = $this->prepareQuery("saveSubmissionMarkQuery", "INSERT INTO peer_review_assignment_submission_marks (submissionID, score, comments, automatic, submissionMarkTimestamp) VALUES (:submissionID, :score, :comments, :automatic, :submissionMarkTimestamp) ON DUPLICATE KEY UPDATE score=:score, comments=:comments, automatic=:automatic, submissionMarkTimestamp=FROM_UNIXTIME(:submissionMarkTimestamp);");
+        $sh = $this->prepareQuery("saveSubmissionMarkQuery", "INSERT INTO peer_review_assignment_submission_marks (submissionID, score, comments, automatic, submissionMarkTimestamp) VALUES (:submissionID, :score, :comments, :automatic, :submissionMarkTimestamp) ON DUPLICATE KEY UPDATE score=:score, comments=:comments, automatic=:automatic, submissionMarkTimestamp=".$this->from_unixtime(":submissionMarkTimestamp").";");
         $sh->execute(array(":submissionID" => $submissionID, ":score"=>$mark->score, ":comments"=>$mark->comments, ":automatic"=>(int)$mark->isAutomatic, ":submissionMarkTimestamp"=>$NOW));
     }
 
@@ -714,7 +741,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
        			$sh = $this->prepareQuery("saveReviewMarkQuery", "INSERT INTO peer_review_assignment_review_marks (matchID, score, comments, automatic, reviewPoints, reviewMarkTimestamp) VALUES (:matchID, :score, :comments, :automatic, :reviewPoints, FROM_UNIXTIME(:reviewMarkTimestamp)) ON DUPLICATE KEY UPDATE score=:score, comments=:comments, automatic=:automatic, reviewPoints=:reviewPoints, reviewMarkTimestamp=FROM_UNIXTIME(:reviewMarkTimestamp);");
        			break;
 			case 'sqlite':
-				$sh = $this->prepareQuery("saveReviewMarkQuery", "INSERT OR IGNORE INTO peer_review_assignment_review_marks (matchID, score, comments, automatic, reviewPoints, reviewMarkTimestamp) VALUES (:matchID, :score, :comments, :automatic, :reviewPoints, date(:reviewMarkTimestamp,'unixepoch')); UPDATE peer_review_assignment_review_marks SET score=:score, comments=:comments, automatic=:automatic, reviewPoints=:reviewPoints, reviewMarkTimestamp=date(:reviewMarkTimestamp,'unixepoch') WHERE matchID=:matchID;");
+				$sh = $this->prepareQuery("saveReviewMarkQuery", "INSERT OR IGNORE INTO peer_review_assignment_review_marks (matchID, score, comments, automatic, reviewPoints, reviewMarkTimestamp) VALUES (:matchID, :score, :comments, :automatic, :reviewPoints, datetime(:reviewMarkTimestamp,'unixepoch')); UPDATE peer_review_assignment_review_marks SET score=:score, comments=:comments, automatic=:automatic, reviewPoints=:reviewPoints, reviewMarkTimestamp=datetime(:reviewMarkTimestamp,'unixepoch') WHERE matchID=:matchID;");
        			break;
 		}
         
@@ -736,19 +763,19 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         {
         case "SubmissionID":
             //They want the submission with this id
-            $sh = $this->prepareQuery("getSubmissionQuery","SELECT submissionID, authorID, noPublicUse, UNIX_TIMESTAMP(submissionTimestamp) as submissionTimestamp FROM peer_review_assignment_submissions WHERE submissionID=?;");
+            $sh = $this->prepareQuery("getSubmissionQuery","SELECT submissionID, authorID, noPublicUse, ".$this->unix_timestamp("submissionTimestamp")." as submissionTimestamp FROM peer_review_assignment_submissions WHERE submissionID=?;");
             $sh->execute(array($id));
             $res = $sh->fetch();
             break;
         case "UserID":
             //They want to get the submission by the author
-            $sh = $this->prepareQuery("getSubmissionByAuthorQuery", "SELECT submissionID, authorID, noPublicUse, UNIX_TIMESTAMP(submissionTimestamp) as submissionTimestamp FROM peer_review_assignment_submissions WHERE assignmentID=? AND authorID=?;");
+            $sh = $this->prepareQuery("getSubmissionByAuthorQuery", "SELECT submissionID, authorID, noPublicUse, ".$this->unix_timestamp("submissionTimestamp")." as submissionTimestamp FROM peer_review_assignment_submissions WHERE assignmentID=? AND authorID=?;");
             $sh->execute(array($assignment->assignmentID, $id));
             $res = $sh->fetch();
             break;
         case "MatchID":
             //They want to get the submission for the given review
-            $sh = $this->prepareQuery("getSubmissionByMatchQuery", "SELECT peer_review_assignment_submissions.submissionID, authorID, noPublicUse, UNIX_TIMESTAMP(submissionTimestamp) as submissionTimestamp FROM peer_review_assignment_submissions JOIN peer_review_assignment_matches ON peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID WHERE matchID=?;");
+            $sh = $this->prepareQuery("getSubmissionByMatchQuery", "SELECT peer_review_assignment_submissions.submissionID, authorID, noPublicUse, ".$this->unix_timestamp("submissionTimestamp")." as submissionTimestamp FROM peer_review_assignment_submissions JOIN peer_review_assignment_matches ON peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID WHERE matchID=?;");
             $sh->execute(array($id));
             $res = $sh->fetch();
             break;
@@ -772,13 +799,13 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $isNewSubmission = !isset($submission->submissionID) || is_null($submission->submissionID);
         if($isNewSubmission)
         {
-            $sh = $this->db->prepare("INSERT INTO peer_review_assignment_submissions (assignmentID, authorID, noPublicUse, submissionTimestamp) VALUES(?, ?, ?, FROM_UNIXTIME(?));");
+            $sh = $this->db->prepare("INSERT INTO peer_review_assignment_submissions (assignmentID, authorID, noPublicUse, submissionTimestamp) VALUES(?, ?, ?, ".$this->from_unixtime("?").");");
             $sh->execute(array($assignment->assignmentID, $submission->authorID, $submission->noPublicUse, $NOW));
             $submission->submissionID = new SubmissionID($this->db->lastInsertID());
         }
         else
         {
-            $sh = $this->db->prepare("UPDATE peer_review_assignment_submissions SET noPublicUse=?, submissionTimestamp=FROM_UNIXTIME(?) WHERE submissionID=?;");
+            $sh = $this->db->prepare("UPDATE peer_review_assignment_submissions SET noPublicUse=?, submissionTimestamp=".$this->from_unixtime("?")." WHERE submissionID=?;");
             $sh->execute(array($submission->noPublicUse, $NOW, $submission->submissionID));
         }
         $this->submissionHelpers[$assignment->submissionType]->saveAssignmentSubmission($assignment, $submission, $isNewSubmission);
@@ -1162,7 +1189,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         if(!$headerRes)
             throw new Exception("Could not find review");
 
-        $questionSH = $this->prepareQuery("getReviewByMatchQuery", "SELECT questionID, answerInt, answerText, UNIX_TIMESTAMP(reviewTimestamp) as reviewTimestamp FROM peer_review_assignment_review_answers WHERE matchID=?;");
+        $questionSH = $this->prepareQuery("getReviewByMatchQuery", "SELECT questionID, answerInt, answerText, ".$this->unix_timestamp("reviewTimestamp")." as reviewTimestamp FROM peer_review_assignment_review_answers WHERE matchID=?;");
         $questionSH->execute(array($headerRes->matchID));
 
         //Make a new review
@@ -1238,7 +1265,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		
         $this->db->beginTransaction();
         $this->deleteReview($assignment, $review->matchID, false);
-        $sh = $this->prepareQuery("insertReviewAnswerQuery", "INSERT INTO peer_review_assignment_review_answers (matchID, questionID, answerInt, answerText, reviewTimestamp) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?));");
+        $sh = $this->prepareQuery("insertReviewAnswerQuery", "INSERT INTO peer_review_assignment_review_answers (matchID, questionID, answerInt, answerText, reviewTimestamp) VALUES (?, ?, ?, ?, ".$this->from_unixtime("?").");");
         foreach($review->answers as $questionID => $answer)
         {
             $answerText = NULL;
@@ -1398,7 +1425,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
        			$sh = $this->prepareQuery("touchSubmissionQuery", "INSERT INTO peer_review_assignment_instructor_review_touch_times (submissionID, instructorID, timestamp) VALUES (:submissionID, :instructorID, FROM_UNIXTIME(:timestamp)) ON DUPLICATE KEY UPDATE timestamp=FROM_UNIXTIME(:timestamp);");
        			break;
 			case 'sqlite':
-				$sh = $this->prepareQuery("touchSubmissionQuery", "INSERT OR IGNORE INTO peer_review_assignment_instructor_review_touch_times (submissionID, instructorID, timestamp) VALUES (:submissionID, :instructorID, date(:timestamp,'unixepoch')); UPDATE peer_review_assignment_instructor_review_touch_times SET timestamp=date(:timestamp,'unixepoch') WHERE userID submissionID = :submissionID AND instructorID = :instructorID;");
+				$sh = $this->prepareQuery("touchSubmissionQuery", "INSERT OR IGNORE INTO peer_review_assignment_instructor_review_touch_times (submissionID, instructorID, timestamp) VALUES (:submissionID, :instructorID, datetime(:timestamp,'unixepoch')); UPDATE peer_review_assignment_instructor_review_touch_times SET timestamp=datetime(:timestamp,'unixepoch') WHERE userID submissionID = :submissionID AND instructorID = :instructorID;");
        			break;
 		}
         $sh->execute(array("submissionID"=>$submissionID, "instructorID"=>$userID, "timestamp"=>$NOW));
@@ -1406,7 +1433,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
     function getTouchesForSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
-        $sh = $this->prepareQuery("getTouchesForSubmissionQuery", "SELECT submissionID, instructorID as userID, UNIX_TIMESTAMP(timestamp) as timestamp FROM peer_review_assignment_instructor_review_touch_times WHERE submissionID = ? ORDER BY timestamp DESC;");
+        $sh = $this->prepareQuery("getTouchesForSubmissionQuery", "SELECT submissionID, instructorID as userID, ".$this->unix_timestamp("timestamp")." as timestamp FROM peer_review_assignment_instructor_review_touch_times WHERE submissionID = ? ORDER BY timestamp DESC;");
         $sh->execute(array($submissionID));
 
         return $sh->fetchAll();
@@ -1812,7 +1839,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     function getNumberOfTimesReviewedByUserMap(PeerReviewAssignment $assignment, UserID $reviewerID)
     {
         //First, we need the counts of actuall reviews
-        $sh = $this->prepareQuery("getNumberOfTimesReviewedByUserMapQuery", "SELECT submissions.authorID as authorID, count(distinct(matches.matchID)) as c FROM peer_review_assignment_review_answers answers JOIN peer_review_assignment_matches matches ON answers.matchID = matches.matchID JOIN peer_review_assignment_submissions submissions ON matches.submissionID = submissions.submissionID JOIN peer_review_assignment assignments ON submissions.assignmentID = assignments.assignmentID WHERE matches.reviewerID = ? AND assignments.reviewStopDate < FROM_UNIXTIME(?) GROUP BY matches.matchID;");
+        $sh = $this->prepareQuery("getNumberOfTimesReviewedByUserMapQuery", "SELECT submissions.authorID as authorID, count(distinct(matches.matchID)) as c FROM peer_review_assignment_review_answers answers JOIN peer_review_assignment_matches matches ON answers.matchID = matches.matchID JOIN peer_review_assignment_submissions submissions ON matches.submissionID = submissions.submissionID JOIN peer_review_assignment assignments ON submissions.assignmentID = assignments.assignmentID WHERE matches.reviewerID = ? AND assignments.reviewStopDate < ".$this->from_unixtime("?")." GROUP BY matches.matchID;");
 
         $sh->execute(array($reviewerID, grace($assignment->reviewStopDate)));
 
@@ -1823,7 +1850,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
 
         //Now, we need the counts of spot checks
-        $sh = $this->prepareQuery("getNumberOfTimesSpotCheckedByUserMapQuery", "SELECT submissions.authorID as authorID, count(submissions.submissionID) as c FROM peer_review_assignment_spot_checks  checks JOIN peer_review_assignment_submissions submissions ON checks.submissionID = submissions.submissionID JOIN peer_review_assignment assignments ON submissions.assignmentID = assignments.assignmentID WHERE checks.checkerID = ? AND assignments.reviewStopDate < FROM_UNIXTIME(?) GROUP BY submissions.authorID;");
+        $sh = $this->prepareQuery("getNumberOfTimesSpotCheckedByUserMapQuery", "SELECT submissions.authorID as authorID, count(submissions.submissionID) as c FROM peer_review_assignment_spot_checks  checks JOIN peer_review_assignment_submissions submissions ON checks.submissionID = submissions.submissionID JOIN peer_review_assignment assignments ON submissions.assignmentID = assignments.assignmentID WHERE checks.checkerID = ? AND assignments.reviewStopDate < ".$this->from_unixtime("?")." GROUP BY submissions.authorID;");
 
         $sh->execute(array($reviewerID, grace($assignment->reviewStopDate)));
 
@@ -1839,7 +1866,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 
 	function getCalibrationSubmissionIDs(PeerReviewAssignment $assignment)
 	{
-		$sh = $this->prepareQuery("getCalibrationSubmissions", "SELECT subs.submissionID FROM peer_review_assignment_matches matches, peer_review_assignment_submissions subs WHERE subs.assignmentID = ? AND matches.submissionID = subs.submissionID AND matches.calibrationState = 'key'");
+		$sh = $this->prepareQuery("getCalibrationSubmissions", "SELECT subs.submissionID FROM peer_review_assignment_matches matches, peer_review_assignment_submissions subs WHERE subs.assignmentID = ? AND matches.submissionID = subs.submissionID AND matches.calibrationState = 'key';");
 		$sh->execute(array($assignment->assignmentID));
 		$calibrationSubmissionIDs = array();		
 		while($res = $sh->fetch())

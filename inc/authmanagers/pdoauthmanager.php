@@ -48,7 +48,7 @@ class PDOAuthManager extends AuthManager
     function checkAuthentication($username, $password)
     {
         $hash = $this->getHash($password);
-        $sh = $this->db->prepare("SELECT username FROM user_passwords WHERE username=? && passwordHash=?;");
+        $sh = $this->db->prepare("SELECT username FROM user_passwords WHERE username=? AND passwordHash=?;");
         $sh->execute(array($username, $hash));
         return $sh->fetch() != NULL;
     }

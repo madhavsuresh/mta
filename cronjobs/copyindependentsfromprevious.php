@@ -16,11 +16,13 @@ class CopyIndependentsFromPreviousCronJob
 			$currentAssignment = $globalDataMgr->getAssignment($assignmentID);
 			$assignments = $globalDataMgr->getAssignmentsBefore($assignmentID, 1);
 			
+			print_r("CHECKING ...");
 			if(sizeof($assignments) != 1){
+				print_r("CAUGHT");				
 			    throw new Exception("Could not find exactly one previous assignment!");
 			}
 			
-			$userNameMap = $globalDataMgr->getUserDisplayMapByAssignment($assignmentID);
+			/*$userNameMap = $globalDataMgr->getUserDisplayMapByAssignment($assignmentID);
 			$students = $globalDataMgr->getStudentsByAssignment($assignmentID);
 			$currentIndependents = $currentAssignment->getIndependentUsers();
 			$previousIndependents = $assignments[0]->getIndependentUsers();
@@ -87,9 +89,11 @@ class CopyIndependentsFromPreviousCronJob
 			
 			$summary = "Ran in $mode mode: $addedIndependents independents added and $removedIndependents independents removed";
 	
-			$globalDataMgr->createNotification($assignmentID, 'copyindependentsfromprevious', 1, $summary, $html);
+			$globalDataMgr->createNotification($assignmentID, 'copyindependentsfromprevious', 1, $summary, $html);*/
 		}catch(Exception $exception){
+			print_r("ERROR");
 			$globalDataMgr->createNotification($assignmentID, 'copyindependentsfromprevious', 0, cleanString($exception->getMessage()), "");
+			print_r("NOTIFICATION CREATED");
 		}
 	}
 }

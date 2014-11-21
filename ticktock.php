@@ -42,6 +42,8 @@ try
 		$autogradeAndAssignMarkersJob->executeAndGetResult($assignmentID, $globalDataMgr);
 	}
 	
+	print_r("END OF SCRIPT");
+	
 }catch(Exception $e) {
 	
 }

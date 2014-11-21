@@ -194,7 +194,6 @@ function getWeightedAverage(UserID $userid, Assignment $assignment=NULL)
 	global $dataMgr;
 	
 	$scores = $dataMgr->getCalibrationScores($userid);
-	print_r($scores);
 	
 	if($scores)
 		$average = computeWeightedAverage($scores);

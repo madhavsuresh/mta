@@ -12,11 +12,9 @@ require_once(MTA_ROOTPATH.'cronjobs/autogradeandassignmarkers.php');
 
 try
 {
-	$globalDataMgr = new PDODataManager();
-	
-	$submissionStoppedAssignments = $globalDataMgr->getSubmissionStoppedAssignments();
-	print_r("SO ... ");
-	print_r($submissionStoppedAssignments);
+	//$dataMgr = new PDODataManager();
+	global $dataMgr;
+	$submissionStoppedAssignments = $dataMgr->getSubmissionStoppedAssignments();
 	
 	$assignReviewsPeerReviewJob = new AssignReviewsPeerReviewCronJob();
 	$copyIndependentsFromPreviousJob = new CopyIndependentsFromPreviousCronJob();
@@ -26,23 +24,21 @@ try
 
 	foreach($submissionStoppedAssignments as $assignmentID)
 	{
-		$copyIndependentsFromPreviousJob->executeAndGetResult($assignmentID, $globalDataMgr);
-		//$computeIndependentsFromScoresJob->executeAndGetResult($assignmentID, $globalDataMgr);
-		//$computeIndependentsFromCalibrationsJob->executeAndGetResult($assignmentID, $globalDataMgr);
-		//$disqualifyIndependentsFromScoresJob->executeAndGetResult($assignmentID, $globalDataMgr);
-		//$assignReviewsPeerReviewJob->executeAndGetResult($assignmentID, $globalDataMgr);
+		/*$copyIndependentsFromPreviousJob->executeAndGetResult($assignmentID, $dataMgr);
+		$computeIndependentsFromScoresJob->executeAndGetResult($assignmentID, $dataMgr);
+		$computeIndependentsFromCalibrationsJob->executeAndGetResult($assignmentID, $dataMgr);
+		$disqualifyIndependentsFromScoresJob->executeAndGetResult($assignmentID, $dataMgr);*/
+		$assignReviewsPeerReviewJob->executeAndGetResult($assignmentID, $dataMgr);
 	}
 
-	$reviewStoppedAssignments = $globalDataMgr->getReviewStoppedAssignments();
+	$reviewStoppedAssignments = $dataMgr->getReviewStoppedAssignments();
 
 	$autogradeAndAssignMarkersJob = new AutogradeAndAssignMarkersCronJob();
 	
 	foreach($reviewStoppedAssignments as $assignmentID)
 	{
-		$autogradeAndAssignMarkersJob->executeAndGetResult($assignmentID, $globalDataMgr);
+		$autogradeAndAssignMarkersJob->executeAndGetResult($assignmentID, $dataMgr);
 	}
-	
-	print_r("END OF SCRIPT");
 	
 }catch(Exception $e) {
 	

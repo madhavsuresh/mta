@@ -65,8 +65,10 @@ class PDODataManager extends DataManager
         if($this->db->getAttribute(PDO::ATTR_DRIVER_NAME) == 'mysql')
        		$this->db->exec("SET NAMES 'utf8';");
 		if($this->db->getAttribute(PDO::ATTR_DRIVER_NAME) == 'sqlite')
-			$this->db->exec("pragma synchronous = off;");
-        
+		{
+			$this->db->exec("PRAGMA synchronous = OFF;");
+        	$this->db->exec("PRAGMA foreign_keys = ON;");
+		}
         $this->isUserQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? AND userID=? ;"); //AND userType IN ('instructor', 'student', 'marker');");
         $this->isStudentQuery = $this->db->prepare("SELECT userID FROM users WHERE userID=? AND userType = 'student';");
         $this->isUserByNameQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? AND username=? AND userType IN ('instructor', 'student', 'marker');");
@@ -158,7 +160,7 @@ class PDODataManager extends DataManager
     function addUser($username, $firstName, $lastName, $studentID, $type='student', $markingLoad=0)
     {
         $sh = $this->db->prepare("INSERT INTO users (courseID, username, firstName, lastName, studentID, userType, markingLoad) VALUES (?, ?, ?, ?, ?, ?, ?);");
-        /*&^&*/$sh->execute(array(1, $username, $firstName, $lastName, $studentID, $type, $markingLoad));
+        $sh->execute(array($this->courseID, $username, $firstName, $lastName, $studentID, $type, $markingLoad));
         return new UserID($this->db->lastInsertID());
     }
 
@@ -717,7 +719,7 @@ class PDODataManager extends DataManager
 		$configuration = new CourseConfiguration();
 		$res = $sh->fetch();
 		if(!$res)
-			throw new Exception('The course of assignment $assignmentID has no course configuration set');
+			throw new Exception('The course configuration has not been set for this course');
 
 		$configuration->windowSize = $res->windowSize;
 		$configuration->numReviews = $res->numReviews;

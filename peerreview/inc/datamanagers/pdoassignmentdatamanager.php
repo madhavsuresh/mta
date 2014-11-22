@@ -452,6 +452,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	//Modified original function to exclude submissions that are for calibration and have calibration reviews
     function getAuthorSubmissionMap_(PeerReviewAssignment $assignment)
     {
+    	//$sh = $this->db->prepare("SELECT authorID, submissionID FROM peer_review_assignment_submissions LEFT OUTER JOIN peer_review_assignment_denied ON peer_review_assignment_submissions.authorID = peer_review_assignment_denied.userID AND peer_review_assignment_submissions.assignmentID = peer_review_assignment_denied.assignmentID JOIN users ON users.userID = peer_review_assignment_submissions.authorID WHERE peer_review_assignment_denied.userID IS NULL AND submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_matches WHERE calibrationState = 'key' OR calibrationState = 'attempt') AND users.userType = 'student' AND peer_review_assignment_submissions.assignmentID = ?;");
         $sh = $this->db->prepare("SELECT authorID, submissionID FROM peer_review_assignment_submissions LEFT OUTER JOIN peer_review_assignment_denied ON peer_review_assignment_submissions.authorID = peer_review_assignment_denied.userID AND peer_review_assignment_submissions.assignmentID = peer_review_assignment_denied.assignmentID WHERE peer_review_assignment_denied.userID IS NULL AND submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_matches WHERE calibrationState = 'key' OR calibrationState = 'attempt') AND peer_review_assignment_submissions.assignmentID = ?;");
         $sh->execute(array($assignment->assignmentID));
 
@@ -733,13 +734,13 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
     	switch($this->db->getAttribute(PDO::ATTR_DRIVER_NAME)){
         	case 'mysql':
        			$sh = $this->prepareQuery("saveSubmissionMarkQuery", "INSERT INTO peer_review_assignment_submission_marks (submissionID, score, comments, automatic, submissionMarkTimestamp) VALUES (:submissionID, :score, :comments, :automatic, :submissionMarkTimestamp) ON DUPLICATE KEY UPDATE score=:score, comments=:comments, automatic=:automatic, submissionMarkTimestamp=".$this->from_unixtime(":submissionMarkTimestamp").";");
-				$sh->execute();
+				$sh->execute($array);
        			break;
 			case 'sqlite':
 				$sh = $this->prepareQuery("saveSubmissionMarkQuery", "INSERT OR IGNORE INTO peer_review_assignment_submission_marks (submissionID, score, comments, automatic, submissionMarkTimestamp) VALUES (:submissionID, :score, :comments, :automatic, :submissionMarkTimestamp);");
-				$sh->execute();
-				$sh = $this->prepareQuery("saveSubmissionMarkQuery", "UPDATE peer_review_assignment_review_marks SET score=:score, comments=:comments, automatic=:automatic, submissionMarkTimestamp=".$this->from_unixtime(":submissionMarkTimestamp")." WHERE submissionID=:submissionID;");
-				$sh->execute();
+				$sh->execute($array);
+				$sh = $this->prepareQuery("saveSubmissionMarkQuery2", "UPDATE peer_review_assignment_submission_marks SET score=:score, comments=:comments, automatic=:automatic, submissionMarkTimestamp=".$this->from_unixtime(":submissionMarkTimestamp")." WHERE submissionID=:submissionID;");
+				$sh->execute($array);
        			break;
 		}
     }

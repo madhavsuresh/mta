@@ -152,16 +152,16 @@ class AssignReviewsPeerReviewCronJob
 	        $html .= $this->getTableForAssignment($independentAssignment, $independents, $userNameMap);
 	        $html .= "<h2>Supervised</h2>\n";
 	        $html .= $this->getTableForAssignment($supervisedAssignment, $supervised, $userNameMap);
-	
+
 	        foreach($covertAssignment as $author => $reviewers)
 	            $reviewerAssignment[$authors[$author]->id] = $reviewers;
 	        foreach($independentAssignment as $author => $reviewers)
 	            $reviewerAssignment[$authors[$author]->id] = $reviewers;	
 	        foreach($supervisedAssignment as $author => $reviewers)
 	            $reviewerAssignment[$authors[$author]->id] = $reviewers;
-			
+
 	        $currentAssignment->saveReviewerAssignment($reviewerAssignment);
-			
+
 			if($this->numCovertCalibrations > 0 && sizeof($independents) > 0)
 			{
 	        	$studentToCovertReviewsMap = $currentAssignment->getStudentToCovertReviewsMap();
@@ -209,11 +209,11 @@ class AssignReviewsPeerReviewCronJob
 			if(sizeof($supervised)>0)
 				$summary .= "<br>For " . sizeof($supervised) . " in the supervised group: " . sizeof($supervised) . " have " . ($this->numReviews + $this->numCovertCalibrations) . " peer reviews";
 			//End of summary
-			
+
 			$globalDataMgr->createNotification($assignmentID, 'assignreviews', 1, $summary, $html);
 		}catch(Exception $exception){
 			$globalDataMgr->createNotification($assignmentID, 'assignreviews', 0, cleanString($exception->getMessage()), "");
-		}	
+		}
     }
 
 

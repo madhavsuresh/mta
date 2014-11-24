@@ -23,6 +23,21 @@ class PDOAuthManager extends AuthManager
     function supportsGettingFirstAndLastNames() { return false; }
     function supportsGettingStudentID() { return false; }
 
+	/*function formAddQuery($keys, $table, $others)
+	{
+		switch($this->db->getAttribute(PDO::ATTR_DRIVER_NAME)){
+			case 'mysql':
+				return $this->db->prepare("INSERT INTO $table (".implode(",", array_merge($keys, $others)).") VALUES (".implode(",",array_map(function($item){return ":".$item;}, array_merge($keys, $others) ) ).") ON DUPLICATE KEY UPDATE ".implode(",", array_map(function($item){return $item."=:".$item;}, $others) ).";" );
+				break;
+			case 'sqlite':
+				return $this->db->prepare("INSERT OR IGNORE INTO $table (".implode(",", array_merge($keys, $others)).") VALUES (".implode(",", array_map(function($item){return ":".$item;}, (array_merge($keys, $others)) ) )."); UPDATE $table SET ".implode(",",array_map(function($item){return $item."=:".$item;}, $others))." WHERE ".implode(",", array_map(function($item){return $item."=:".$item;}, $keys) ).";");
+				break;
+			default:
+				throw new Exception("PDO driver used is neither mysql or sqlite");
+				break;
+		}
+	}*/
+
     function userNameExists($username)
     {
         $sh = $this->db->prepare("SELECT username FROM user_passwords WHERE username=?;");
@@ -33,7 +48,7 @@ class PDOAuthManager extends AuthManager
     function checkAuthentication($username, $password)
     {
         $hash = $this->getHash($password);
-        $sh = $this->db->prepare("SELECT username FROM user_passwords WHERE username=? && passwordHash=?;");
+        $sh = $this->db->prepare("SELECT username FROM user_passwords WHERE username=? AND passwordHash=?;");
         $sh->execute(array($username, $hash));
         return $sh->fetch() != NULL;
     }
@@ -42,8 +57,16 @@ class PDOAuthManager extends AuthManager
     {
         //TODO: Make this tied to username/courseID instead of just username
         $hash = $this->getHash($password);
-        $sh = $this->db->prepare("INSERT INTO user_passwords (username, passwordHash) VALUES (?, ?) ON DUPLICATE KEY UPDATE passwordHash = ?;");
-        return $sh->execute(array($username, $hash, $hash));
+        switch($this->db->getAttribute(PDO::ATTR_DRIVER_NAME)){
+        	case 'mysql':
+       			$sh = $this->db->prepare("INSERT INTO user_passwords (username, passwordHash) VALUES (:username, :passwordHash) ON DUPLICATE KEY UPDATE passwordHash = :passwordHash;");
+       			break;
+			case 'sqlite':
+       			$sh = $this->db->prepare("INSERT OR IGNORE INTO user_passwords (username, passwordHash) VALUES (:username, :passwordHash); UPDATE user_passwords SET passwordHash = :passwordHash WHERE username = :username;");
+       			break;
+		}
+		//$sh = $this->formAddQuery(array("username"), "user_passwords", array("passwordHash"));
+        return $sh->execute(array("username"=>$username, "passwordHash"=>$hash));
     }
 
     function removeUserAuthentication($username)

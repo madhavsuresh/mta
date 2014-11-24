@@ -141,8 +141,7 @@ class EssaySubmissionSettings extends SubmissionSettings
             }
         }
 		$this->autoAssignEssayTopic = isset_bool($POST['autoAssignEssayTopic']);
-		$this->essayWordLimit = $this->minLength = isset_bool($POST['essayWordLimit']) ? max(intval($POST['essayWordLimit']), 0) : 0;
-
+		$this->essayWordLimit = isset_bool($POST['essayWordLimit']) ? max(intval($POST['essayWordLimit']), 0) : 0;
     }
 };
 

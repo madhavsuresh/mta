@@ -53,11 +53,11 @@ class PDODataManager extends DataManager
         if(!isset($MTA_DATAMANAGER_PDO_CONFIG["username"])) { die("PDODataManager needs a database user name"); }
         if(!isset($MTA_DATAMANAGER_PDO_CONFIG["password"])) { die("PDODataManager needs a database user password"); }
         //Load up a connection to the database
-        $this->db = new PDO('sqlite:/ubc/cs/home/m/mglgms/database.sqlite');
-        /*$this->db = new PDO($MTA_DATAMANAGER_PDO_CONFIG["dsn"],
+        //$this->db = new PDO('sqlite:/ubc/cs/home/m/mglgms/public_html/mta/sqlite/database.sqlite');
+        $this->db = new PDO($MTA_DATAMANAGER_PDO_CONFIG["dsn"],
                     $MTA_DATAMANAGER_PDO_CONFIG["username"],
                     $MTA_DATAMANAGER_PDO_CONFIG["password"],
-                    array(PDO::ATTR_PERSISTENT => true));*/
+                    array(PDO::ATTR_PERSISTENT => true));
         
         $this->db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
@@ -772,8 +772,7 @@ class PDODataManager extends DataManager
 	function getSubmissionStoppedAssignments()
 	{
 		global $NOW; global $GRACETIME;
-		//$sh = $this->prepareQuery("getSubmissionStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE ".$this->add_seconds(submissionStopDate, $GRACETIME)." > ".$this->from_unixtime("?")." AND ".$this->add_seconds(submissionStopDate, $GRACETIME)." < ".$this->from_unixtime("?").";");
-        $sh = $this->prepareQuery("getSubmissionStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE submissionStopDate > ".$this->from_unixtime("?")." AND submissionStopDate < ".$this->from_unixtime("?").";");
+		$sh = $this->prepareQuery("getSubmissionStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE ".$this->add_seconds(submissionStopDate, $GRACETIME)." > ".$this->from_unixtime("?")." AND ".$this->add_seconds(submissionStopDate, $GRACETIME)." < ".$this->from_unixtime("?").";");
         $sh->execute(array($NOW - (20*60), $NOW));
         $assignments = array();
         while($res = $sh->fetch())

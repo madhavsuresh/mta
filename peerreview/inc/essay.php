@@ -142,7 +142,6 @@ class EssaySubmissionSettings extends SubmissionSettings
         }
 		$this->autoAssignEssayTopic = isset_bool($POST['autoAssignEssayTopic']);
 		$this->essayWordLimit = isset_bool($POST['essayWordLimit']) ? max(intval($POST['essayWordLimit']), 0) : 0;
-		print_r($this->essayWordLimit);
     }
 };
 
@@ -164,7 +163,6 @@ class EssayPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
 		$sh = $this->prepareQuery("setAutoAssignEssayTopicQuery", "UPDATE peer_review_assignment SET autoAssignEssayTopic = ? WHERE assignmentID = ?;");
 		$sh->execute(array($assignment->submissionSettings->autoAssignEssayTopic, $assignment->assignmentID));
 		$sh = $this->prepareQuery("setEssayWordLimitQuery", "UPDATE peer_review_assignment SET essayWordLimit = ? WHERE assignmentID = ?;");
-		print_r($assignment->submissionSettings->essayWordLimit);
 		$sh->execute(array($assignment->submissionSettings->essayWordLimit, $assignment->assignmentID));
     }
 

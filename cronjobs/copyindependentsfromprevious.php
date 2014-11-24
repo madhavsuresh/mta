@@ -16,9 +16,10 @@ class CopyIndependentsFromPreviousCronJob
 			$currentAssignment = $globalDataMgr->getAssignment($assignmentID);
 			$assignments = $globalDataMgr->getAssignmentsBefore($assignmentID, 1);
 			
-			print_r("CHECKING at ".time());
 			if(sizeof($assignments) != 1){				
-			    throw new Exception("Could not find exactly one previous assignment!");
+			    //throw new Exception("Could not find exactly one previous assignment!");
+			    $globalDataMgr->createNotification($assignmentID, 'copyindependentsfromprevious', 1, "Not done. Could not find exactly one previous assignment!", "");
+				return;
 			}
 			
 			$userNameMap = $globalDataMgr->getUserDisplayMapByAssignment($assignmentID);
@@ -90,10 +91,7 @@ class CopyIndependentsFromPreviousCronJob
 	
 			$globalDataMgr->createNotification($assignmentID, 'copyindependentsfromprevious', 1, $summary, $html);
 		}catch(Exception $exception){
-			print_r("ERROR CAUGHT at ".time());
-			//$globalDataMgr->createNotification($assignmentID, 'copyindependentsfromprevious', 0, cleanString($exception->getMessage()), "");
-			$globalDataMgr->addUser('test_user', 'testy', 'tester', 11111111, 'student', 0);
-			print_r("NOTIFICATION CREATED at ".time());
+			$globalDataMgr->createNotification($assignmentID, 'copyindependentsfromprevious', 0, cleanString($exception->getMessage()), "");
 		}
 	}
 }

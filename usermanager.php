@@ -166,10 +166,16 @@ try
         $content .= "<h2>Registered Users</h2>\n";
         //We need to display a list of all the users...
         $userMap = $dataMgr->getUserDisplayMap();
+		$droppedStudents = $dataMgr->getDroppedStudents();
         foreach($userMap as $id => $displayName)
         {
-            $content .= "<a href='?edit=$id"."$extraUrl'>$displayName</a><br>\n";
+            $name = "<a href='?edit=$id"."$extraUrl'>$displayName";
+            if(in_array($id, $droppedStudents))
+            	$name .= "*";
+			$name .= "</a><br>\n";
+            $content .= $name;
         }
+
     }
     render_page();
 }catch(Exception $e){

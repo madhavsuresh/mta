@@ -36,14 +36,16 @@ try
 
         $deniedUsers = $assignment->getDeniedUsers();
         $independentUsers = $assignment->getIndependentUsers();
+		$droppedUsers = $dataMgr->getDroppedStudents();
 
 		$independentsRecord = array();
         $currentRowType = 0;
 		$i = 0;
-        foreach($dataMgr->getActiveUserDisplayMap() as $user => $name ){
+        foreach($dataMgr->getUserDisplayMap() as $user => $name ){
             if(!$dataMgr->isStudent(new UserID($user)))
                 continue;
-
+			if(in_array($user, $droppedUsers))
+				$name .= "*";
             $deniedChecked = '';
             $independentChecked = '';
             if(array_key_exists($user, $deniedUsers))

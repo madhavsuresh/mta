@@ -64,7 +64,7 @@ class AutogradeAndAssignMarkersCronJob
 			
 			$reviewMap = $assignment->getReviewMap();
 			$scoreMap = $assignment->getMatchScoreMap();
-			$submissions = $assignment->getAuthorSubmissionMap_();
+			$submissions = $assignment->getActiveAuthorSubmissionMap_();
 			$studentToCovertReviewsMap = $assignment->getStudentToCovertReviewsMap();
 			
 			$reviewedScores = array();

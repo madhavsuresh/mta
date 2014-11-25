@@ -179,7 +179,7 @@ class PDODataManager extends DataManager
     {
     	/*if($markingLoad != 0)
 		{*/
-			$sh = $this->db->prepare("UPDATE users SET username = ?, firstName = ?, lastName = ?, studentID = ?, userType = ?, markingLoad = ? WHERE userID = ?;");
+			$sh = $this->db->prepare("UPDATE users SET username = ?, firstName = ?, lastName = ?, studentID = ?, userType = ?, markingLoad = ?, dropped = 0 WHERE userID = ?;");
         	$sh->execute(array($username, $firstName, $lastName, $studentID, $type, $markingLoad, $id));
 		/*}
 		else
@@ -360,6 +360,13 @@ class PDODataManager extends DataManager
         $sh = $this->prepareQuery("getActiveUsersQuery", "SELECT userID FROM users WHERE userType='student' && dropped=0 && courseID=?;");
 		$sh->execute(array($this->courseID));
         return array_map(function($x) { return new UserID($x->userID); }, $sh->fetchAll());
+    }
+
+	function getDroppedStudents()
+    {
+        $sh = $this->prepareQuery("getActiveUsersQuery", "SELECT userID FROM users WHERE userType='student' && dropped=1 && courseID=?;");
+		$sh->execute(array($this->courseID));
+        return array_map(function($x) { return $x->userID; }, $sh->fetchAll());
     }
 
     function getInstructors()
@@ -792,6 +799,7 @@ class PDODataManager extends DataManager
 	{
 		global $NOW; global $GRACETIME;
 		$sh = $this->prepareQuery("getSubmissionStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE ".$this->add_seconds(submissionStopDate, $GRACETIME)." > ".$this->from_unixtime("?")." AND ".$this->add_seconds(submissionStopDate, $GRACETIME)." < ".$this->from_unixtime("?").";");
+		//$sh = $this->prepareQuery("getSubmissionStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE submissionStopDate > ".$this->from_unixtime("?")." AND submissionStopDate < ".$this->from_unixtime("?").";");
         $sh->execute(array($NOW - (20*60), $NOW));
         $assignments = array();
         while($res = $sh->fetch())
@@ -804,6 +812,16 @@ class PDODataManager extends DataManager
 	function getStudentsByAssignment(AssignmentID $assignmentID)
     {
         $sh = $this->prepareQuery("getStudentsByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE userType = 'student' AND assignmentID = ? ORDER BY lastName, firstName;");
+        $sh->execute(array($assignmentID));
+        $students = array();
+        while($res = $sh->fetch())
+            $students[] = new UserID($res->userID);
+        return $students;
+    }
+    
+    function getActiveStudentsByAssignment(AssignmentID $assignmentID)
+    {
+        $sh = $this->prepareQuery("getStudentsByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE userType = 'student' AND assignmentID = ? AND dropped = 0 ORDER BY lastName, firstName;");
         $sh->execute(array($assignmentID));
         $students = array();
         while($res = $sh->fetch())

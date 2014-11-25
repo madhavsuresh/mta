@@ -14,7 +14,7 @@ class ComputeIndependentsFromCalibrationsCronJob
 			$currentAssignment = $globalDataMgr->getAssignment($assignmentID);
 			
 			$userNameMap = $globalDataMgr->getUserDisplayMapByAssignment($assignmentID);
-			$students = $globalDataMgr->getStudentsByAssignment($assignmentID);
+			$students = $globalDataMgr->getActiveStudentsByAssignment($assignmentID);
 			
 			$keep = true;//hard-coded in
 			

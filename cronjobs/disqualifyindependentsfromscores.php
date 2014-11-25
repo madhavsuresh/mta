@@ -22,7 +22,7 @@ class DisqualifyIndependentsFromScoresCronJob
 			
 			$assignments = $globalDataMgr->getAssignmentsBefore($assignmentID, $windowSize);
 			$userNameMap = $globalDataMgr->getUserDisplayMapByAssignment($assignmentID);
-			$students = $globalDataMgr->getStudentsByAssignment($assignmentID);
+			$students = $globalDataMgr->getActiveStudentsByAssignment($assignmentID);
 			$independents = $currentAssignment->getIndependentUsers();
 			
 			$numIndependents = sizeof($independents);

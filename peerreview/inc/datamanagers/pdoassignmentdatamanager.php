@@ -464,7 +464,21 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         return $map;
     }
 	
+	//Modified original function to exclude submissions that are for calibration and have calibration reviews
+    function getActiveAuthorSubmissionMap_(PeerReviewAssignment $assignment)
+    {
+    	//$sh = $this->db->prepare("SELECT authorID, submissionID FROM peer_review_assignment_submissions LEFT OUTER JOIN peer_review_assignment_denied ON peer_review_assignment_submissions.authorID = peer_review_assignment_denied.userID AND peer_review_assignment_submissions.assignmentID = peer_review_assignment_denied.assignmentID JOIN users ON users.userID = peer_review_assignment_submissions.authorID WHERE peer_review_assignment_denied.userID IS NULL AND submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_matches WHERE calibrationState = 'key' OR calibrationState = 'attempt') AND users.userType = 'student' AND peer_review_assignment_submissions.assignmentID = ?;");
+        $sh = $this->db->prepare("SELECT authorID, submissionID FROM peer_review_assignment_submissions LEFT OUTER JOIN peer_review_assignment_denied ON peer_review_assignment_submissions.authorID = peer_review_assignment_denied.userID AND peer_review_assignment_submissions.assignmentID = peer_review_assignment_denied.assignmentID JOIN users ON peer_review_assignment_submissions.authorID = users.userID WHERE peer_review_assignment_denied.userID IS NULL AND submissionID NOT IN (SELECT submissionID FROM peer_review_assignment_matches WHERE calibrationState = 'key' OR calibrationState = 'attempt') AND users.dropped = 0 AND peer_review_assignment_submissions.assignmentID = ?;");
+        $sh->execute(array($assignment->assignmentID));
 
+        $map = array();
+        while($res = $sh->fetch())
+        {
+            $map[$res->authorID] = new SubmissionID($res->submissionID);
+        }
+        return $map;
+    }
+	
     function getReviewerAssignment(PeerReviewAssignment $assignment)
     {
         $sh = $this->db->prepare("SELECT peer_review_assignment_matches.submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE peer_review_assignment_submissions.assignmentID = ? AND instructorForced = 0 ORDER BY matchID;");

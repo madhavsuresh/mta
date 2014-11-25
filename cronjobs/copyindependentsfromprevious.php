@@ -7,7 +7,7 @@ class CopyIndependentsFromPreviousCronJob
     {
     	try{
 	    	//First check if the job has already been done
-	    	if($globalDataMgr->isJobDone($assignmentID, 'assignreviews'))
+	    	if($globalDataMgr->isJobDone($assignmentID, 'copyindependentsfromprevious'))
 				return;
 			
 			//Get all the assignments
@@ -23,7 +23,7 @@ class CopyIndependentsFromPreviousCronJob
 			}
 			
 			$userNameMap = $globalDataMgr->getUserDisplayMapByAssignment($assignmentID);
-			$students = $globalDataMgr->getStudentsByAssignment($assignmentID);
+			$students = $globalDataMgr->getActiveStudentsByAssignment($assignmentID);
 			$currentIndependents = $currentAssignment->getIndependentUsers();
 			$previousIndependents = $assignments[0]->getIndependentUsers();
 			$independents = array();

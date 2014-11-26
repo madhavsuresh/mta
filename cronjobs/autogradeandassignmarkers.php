@@ -64,8 +64,9 @@ class AutogradeAndAssignMarkersCronJob
 			
 			$reviewMap = $assignment->getReviewMap();
 			$scoreMap = $assignment->getMatchScoreMap();
-			$submissions = $assignment->getActiveAuthorSubmissionMap_();
+			$submissions = $assignment->getAuthorSubmissionMap_();
 			$studentToCovertReviewsMap = $assignment->getStudentToCovertReviewsMap();
+			$droppedStudents = $globalDataMgr->getDroppedStudents();
 			
 			$reviewedScores = array();
 			$independentSubs = array();
@@ -191,6 +192,8 @@ class AutogradeAndAssignMarkersCronJob
 			        //We need to put this into the list of stuff to be marked by a TA
 			        if(array_reduce($reviewMap[$submissionID->id], function($res,$item)use(&$markers){return $item->exists && in_array($item->reviewerID->id, $markers); }))
 			            continue;
+					if(in_array($authorID->id, $droppedStudents))
+						continue;
 			        $obj = new stdClass;
 			        $obj->submissionID = $submissionID->id;
 			        $obj->authorID = $authorID->id;

@@ -36,7 +36,7 @@ class DisqualifyIndependentsFromScoresPeerReviewScript extends Script
 
         $assignments = $currentAssignment->getAssignmentsBefore($windowSize);
         $userNameMap = $dataMgr->getUserDisplayMap();
-        $students = $dataMgr->getStudents();
+        $students = $dataMgr->getActiveStudents();
         $independents = $currentAssignment->getIndependentUsers();
 
         $html = "<table width='100%'>\n";
@@ -49,22 +49,24 @@ class DisqualifyIndependentsFromScoresPeerReviewScript extends Script
             # Don't disqualify someone for never having been marked
             if(count_valid_peer_review_marks_for_assignments($student, $assignments) < 1)
 			{
-				$currentRowType = ($currentRowType+1)%2;
-            	continue;
+				$html .= "&nbsp</td><td>&nbsp</td></tr>\n";
 			}
-            $score = compute_peer_review_score_for_assignments($student, $assignments) * 100;
-            $html .= precisionFloat($score);
-            $html .= "</td><td>\n";
-            if($score < $independentThreshold)
-            {
-            	if(array_key_exists($student->id, $independents))
-				{			
-            		unset($independents[$student->id]);
-					$dataMgr->demote($student, $independentThreshold);
-              		$html .= "Disqualified (forced to supervised)";
-              	}
+			else 
+			{	
+	            $score = compute_peer_review_score_for_assignments($student, $assignments) * 100;
+	            $html .= precisionFloat($score);
+	            $html .= "</td><td>\n";
+	            if($score < $independentThreshold)
+	            {
+	            	if(array_key_exists($student->id, $independents))
+					{			
+	            		unset($independents[$student->id]);
+						$dataMgr->demote($student, $independentThreshold);
+	              		$html .= "Disqualified (forced to supervised)";
+	              	}
+	            }
+	            $html .= "&nbsp</td></tr>\n";
             }
-            $html .= "&nbsp</td></tr>\n";
             $currentRowType = ($currentRowType+1)%2;
         }
         $html .= "</table>\n";

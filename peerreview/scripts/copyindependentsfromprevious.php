@@ -35,7 +35,7 @@ class CopyIndependentsFromPreviousPeerReviewScript extends Script
         }
 
         $userNameMap = $dataMgr->getUserDisplayMap();
-        $students = $dataMgr->getStudents();
+        $students = $dataMgr->getActiveStudents();
         $currentIndependents = $currentAssignment->getIndependentUsers();
         $previousIndependents = $assignments[0]->getIndependentUsers();
         $independents = array();

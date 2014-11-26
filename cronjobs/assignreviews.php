@@ -33,7 +33,7 @@ class AssignReviewsPeerReviewCronJob
 	        $assignments = $currentAssignment->getAssignmentsBefore($windowSize);
 	        $userNameMap = $globalDataMgr->getUserDisplayMapByAssignment($assignmentID);
 			$authors = $currentAssignment->getAuthorSubmissionMap();
-	        $authors_ = $currentAssignment->getAuthorSubmissionMap_();
+	        $activeAuthors = $currentAssignment->getActiveAuthorSubmissionMap_();
 	        $assignmentIndependent = $currentAssignment->getIndependentUsers();
 	        	
 			if($this->numCoverCalibrations > sizeof($currentAssignment->getCalibrationSubmissionIDs()))//Check that there are at least as many calibration submissions as covert reviews to be assigned
@@ -50,7 +50,7 @@ class AssignReviewsPeerReviewCronJob
 			
 	        $independents = array();
 	        $supervised = array();
-	        foreach($authors_ as $author => $essayID)
+	        foreach($activeAuthors as $author => $essayID)
 	        {
 	            $score = compute_peer_review_score_for_assignments(new UserID($author), $assignments);
 	

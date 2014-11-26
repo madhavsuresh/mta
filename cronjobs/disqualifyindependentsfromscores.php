@@ -22,7 +22,7 @@ class DisqualifyIndependentsFromScoresCronJob
 			
 			$assignments = $globalDataMgr->getAssignmentsBefore($assignmentID, $windowSize);
 			$userNameMap = $globalDataMgr->getUserDisplayMapByAssignment($assignmentID);
-			$students = $globalDataMgr->getStudentsByAssignment($assignmentID);
+			$students = $globalDataMgr->getActiveStudentsByAssignment($assignmentID);
 			$independents = $currentAssignment->getIndependentUsers();
 			
 			$numIndependents = sizeof($independents);
@@ -45,24 +45,25 @@ class DisqualifyIndependentsFromScoresCronJob
 			    # Don't disqualify someone for never having been marked
 			    if(count_valid_peer_review_marks_for_assignments($student, $assignments) < 1)
 				{
-					$currentRowType = ($currentRowType+1)%2;
-					$html .= "</td><td>&nbsp</td></tr>\n";
-			    	continue;
+					$html .= "&nbsp</td><td>&nbsp</td></tr>\n";
 				}
-			    $score = compute_peer_review_score_for_assignments($student, $assignments) * 100;
-			    $html .= precisionFloat($score);
-			    $html .= "</td><td>\n";
-			    if($score < $independentThreshold)
-			    {
-			    	if(array_key_exists($student->id, $independents))
-					{			
-			    		unset($independents[$student->id]);
-						$globalDataMgr->demote($student, $independentThreshold);
-			      		$html .= "Disqualified (forced to supervised)";
-						$disqualifiedIndependents++;
-			      	}
-			    }
-			    $html .= "&nbsp</td></tr>\n";
+				else
+				{	
+				    $score = compute_peer_review_score_for_assignments($student, $assignments) * 100;
+				    $html .= precisionFloat($score);
+				    $html .= "</td><td>\n";
+				    if($score < $independentThreshold)
+				    {
+				    	if(array_key_exists($student->id, $independents))
+						{			
+				    		unset($independents[$student->id]);
+							$globalDataMgr->demote($student, $independentThreshold);
+				      		$html .= "Disqualified (forced to supervised)";
+							$disqualifiedIndependents++;
+				      	}
+				    }
+				    $html .= "&nbsp</td></tr>\n";
+				}
 			    $currentRowType = ($currentRowType+1)%2;
 			}
 			$html .= "</table>\n";

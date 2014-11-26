@@ -44,6 +44,7 @@ try
     $stats = $assignment->getAssignmentStatistics();
     $userStats = $assignment->getAssignmentStatisticsForUser($USERID);
     $displayMap = $dataMgr->getUserDisplayMap();
+	$droppedStudents = $dataMgr->getDroppedStudents();
 	
     //Start making the big table
     $content .= "<h1>Submissions (".$stats->numSubmissions."/".$stats->numPossibleSubmissions.") and Reviews (".$stats->numStudentReviews."/".$stats->numPossibleStudentReviews.")</h1>";
@@ -98,6 +99,8 @@ try
 
         //The first real slot, has the submission in it
         $content .= "<table align='left' width='100%'><tr><td>\n";
+		if(in_array($authorID->id, $droppedStudents))
+			$authorName .= "*";
         if($submissionID)
         {
             $content .= "<a title='View' href='".get_redirect_url("peerreview/viewer.php?assignmentid=$assignment->assignmentID&type0=submission&submissionid0=$submissionID")."'>$authorName</a>";
@@ -246,6 +249,8 @@ try
     }
     $content .= "</table>\n";
 
+	$content .= "* indicates student has been dropped";
+    
     render_page();
 }catch(Exception $e){
     render_exception_page($e);

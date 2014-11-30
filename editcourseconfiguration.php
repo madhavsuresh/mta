@@ -55,6 +55,8 @@ try
 		$configuration = new CourseConfiguration();
 	}
 	
+	$content .= "<form action='?save=1' method='post'>";
+	
 	$content .= "<h3>Workflow</h3>";
 	$content .= "<h4>Copy independents from previous</h4>";
 	$content .= "<h4>Compute independents from scores</h4>";
@@ -62,8 +64,6 @@ try
 	$content .= "<h4>Disqualify independents from scores</h4>";
 	$content .= "<h4>Assign Reviews</h4>";
 	$content .= "<h4>Autograde and Assign</h4>";
-	
-	$content .= "<form action='?save=1' method='post'>";
 	
 	$content .= "<h3>Compute Independents From Scores</h3>";
     

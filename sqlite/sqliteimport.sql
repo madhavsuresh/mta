@@ -330,8 +330,8 @@ CREATE TABLE "users" (
   "username" varchar(64) NOT NULL,
   "studentID" INTEGER NOT NULL,
   "alias" varchar(64) DEFAULT NULL,
-  "markingLoad" float NOT NULL,
-  "dropped" tinyint(1) NOT NULL DEFAULT '1',
+  "markingLoad" float NOT NULL DEFAULT '0',
+  "dropped" tinyint(1) NOT NULL DEFAULT '0',
   CONSTRAINT "users_ibfk_1" FOREIGN KEY ("courseID") REFERENCES "course" ("courseID") ON DELETE CASCADE,
   CONSTRAINT "users_ibfk_2" FOREIGN KEY ("userType") REFERENCES "userType" ("value") ON DELETE SET NULL
 );

@@ -48,16 +48,16 @@ class PDODataManager extends DataManager
     private $getConfigPropertyQuery;
     function __construct()
     {
-        global $MTA_DATAMANAGER_PDO_CONFIG;
+        global $MTA_DATAMANAGER_PDO_CONFIG; global $SQLITEDB;
         if(!isset($MTA_DATAMANAGER_PDO_CONFIG["dsn"])) { die("PDO Data manager needs a DSN"); }
         if(!isset($MTA_DATAMANAGER_PDO_CONFIG["username"])) { die("PDODataManager needs a database user name"); }
         if(!isset($MTA_DATAMANAGER_PDO_CONFIG["password"])) { die("PDODataManager needs a database user password"); }
         //Load up a connection to the database
-        //$this->db = new PDO('sqlite:/ubc/cs/home/m/mglgms/public_html/mta/sqlite/database.sqlite');
-        $this->db = new PDO($MTA_DATAMANAGER_PDO_CONFIG["dsn"],
+        $this->db = new PDO("sqlite:/ubc/cs/home/m/mglgms/public_html/mta/sqlite/$SQLITEDB.db");
+        /*$this->db = new PDO($MTA_DATAMANAGER_PDO_CONFIG["dsn"],
                     $MTA_DATAMANAGER_PDO_CONFIG["username"],
                     $MTA_DATAMANAGER_PDO_CONFIG["password"],
-                    array(PDO::ATTR_PERSISTENT => true));
+                    array(PDO::ATTR_PERSISTENT => true));*/
         
         $this->db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
@@ -321,7 +321,7 @@ class PDODataManager extends DataManager
     
 	function getActiveUserDisplayMap()
 	{
-		$sh = $this->prepareQuery("getActiveUserDisplayMapQuery", "SELECT userID, firstName, lastName FROM users WHERE dropped = 0 && courseID=? ORDER BY lastName, firstName;");
+		$sh = $this->prepareQuery("getActiveUserDisplayMapQuery", "SELECT userID, firstName, lastName FROM users WHERE dropped = 0 AND courseID=? ORDER BY lastName, firstName;");
 		$sh->execute(array($this->courseID));
         $activeUsers = array();
         while($res = $sh->fetch())
@@ -357,14 +357,14 @@ class PDODataManager extends DataManager
 
 	function getActiveStudents()
     {
-        $sh = $this->prepareQuery("getActiveUsersQuery", "SELECT userID FROM users WHERE userType='student' && dropped=0 && courseID=?;");
+        $sh = $this->prepareQuery("getActiveUsersQuery", "SELECT userID FROM users WHERE userType='student' AND dropped=0 AND courseID=?;");
 		$sh->execute(array($this->courseID));
         return array_map(function($x) { return new UserID($x->userID); }, $sh->fetchAll());
     }
 
 	function getDroppedStudents()
     {
-        $sh = $this->prepareQuery("getActiveUsersQuery", "SELECT userID FROM users WHERE userType='student' && dropped=1 && courseID=?;");
+        $sh = $this->prepareQuery("getActiveUsersQuery", "SELECT userID FROM users WHERE userType='student' AND dropped=1 AND courseID=?;");
 		$sh->execute(array($this->courseID));
         return array_map(function($x) { return $x->userID; }, $sh->fetchAll());
     }

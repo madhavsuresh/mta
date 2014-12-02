@@ -1,5 +1,4 @@
 <?php
-
 date_default_timezone_set("America/Vancouver");
 
 #The base location of the site
@@ -37,5 +36,5 @@ $cfgLDAPAuthMgrHost = 'ldap.cs.ubc.ca';
 $cfgLDAPAuthMgrPort = 389;
 $cfgLDAPAuthMgrBaseDN  = 'ou=People,dc=cs,dc=ubc,dc=ca';
 
-$SQLITEDB = 'test';
+$SQLITEDB="test";
 ?>

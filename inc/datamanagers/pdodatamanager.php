@@ -53,7 +53,7 @@ class PDODataManager extends DataManager
         if(!isset($MTA_DATAMANAGER_PDO_CONFIG["username"])) { die("PDODataManager needs a database user name"); }
         if(!isset($MTA_DATAMANAGER_PDO_CONFIG["password"])) { die("PDODataManager needs a database user password"); }
         //Load up a connection to the database
-        $this->db = new PDO("sqlite:/ubc/cs/home/m/mglgms/public_html/mta/sqlite/$SQLITEDB.db");
+        $this->db = new PDO("sqlite:".MTA_ROOTPATH."sqlite/$SQLITEDB.db");
         /*$this->db = new PDO($MTA_DATAMANAGER_PDO_CONFIG["dsn"],
                     $MTA_DATAMANAGER_PDO_CONFIG["username"],
                     $MTA_DATAMANAGER_PDO_CONFIG["password"],

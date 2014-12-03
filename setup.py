@@ -34,7 +34,7 @@ def replace(file_path, pattern, subst):
 subprocess.call('cp -r ./config.php.template ./config.php', shell=True)
 #subprocess.call('cp -r ./.htaccess.template ./.htaccess', shell=True)
 subprocess.call('cp -r ./.user.ini.template ./.user.ini', shell=True)
-replace(".user.ini", "session.save_path", getcwd());
+replace(".user.ini", "session.save_path", getcwd()+'/sessions');
 
 #Prompt for ROOT URL
 root_url = 'ROOT URL: '
@@ -109,6 +109,6 @@ password = getpass.getpass("Administrator Password: ")
 ht = htpasswd.HtpasswdFile("admin/.htpasswd", create=True)
 ht.update(user, password)
 ht.save()
-chmod('admin/.htpasswd', stat.S_IRWXO)
+chmod('admin/.htpasswd', stat.S_IROTH+stat.S_IRWXU)
 
 print 'All Done. Have Fun!'

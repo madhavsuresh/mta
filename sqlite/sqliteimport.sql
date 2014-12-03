@@ -31,7 +31,8 @@ CREATE TABLE "course" (
   "displayName" varchar(128) NOT NULL,
   "authType" varchar(128) NOT NULL,
   "registrationType" varchar(128) NOT NULL,
-  "browsable" tinyint(1) NOT NULL DEFAULT '1'
+  "browsable" tinyint(1) NOT NULL DEFAULT '1',
+  UNIQUE ("name")
 );
 CREATE TABLE "course_configuration" (
   "courseID" INTEGER PRIMARY KEY,
@@ -71,6 +72,7 @@ CREATE TABLE "group_picker_assignment_selections" (
   "assignmentID" INTEGER NOT NULL,
   "userID" INTEGER NOT NULL,
   "groupIndex" INTEGER NOT NULL,
+  UNIQUE("assignmentID", "userID"),
   CONSTRAINT "group_picker_assignment_selections_ibfk_1" FOREIGN KEY ("assignmentID") REFERENCES "assignments" ("assignmentID") ON DELETE CASCADE,
   CONSTRAINT "group_picker_assignment_selections_ibfk_2" FOREIGN KEY ("userID") REFERENCES "users" ("userID") ON DELETE CASCADE
 );
@@ -226,6 +228,7 @@ CREATE TABLE "peer_review_assignment_matches" (
   "reviewerID" INTEGER NOT NULL,
   "instructorForced" tinyint(1) NOT NULL,
   "calibrationState" text  NOT NULL DEFAULT 'none',
+  UNIQUE ("submissionID","reviewerID"),
   CONSTRAINT "peer_review_assignment_matches_ibfk_1" FOREIGN KEY ("submissionID") REFERENCES "peer_review_assignment_submissions" ("submissionID") ON DELETE CASCADE,
   CONSTRAINT "peer_review_assignment_matches_ibfk_2" FOREIGN KEY ("reviewerID") REFERENCES "users" ("userID") ON DELETE CASCADE,
   CONSTRAINT "peer_review_assignment_matches_ibfk_3" FOREIGN KEY ("calibrationState") REFERENCES "calibrationState" ("value") ON DELETE SET NULL
@@ -309,6 +312,7 @@ CREATE TABLE "peer_review_assignment_submissions" (
   "authorID" INTEGER NOT NULL,
   "noPublicUse" tinyint(1) NOT NULL,
   "submissionTimestamp" datetime NOT NULL,
+  UNIQUE ("assignmentID","authorID"),
   CONSTRAINT "peer_review_assignment_submissions_ibfk_1" FOREIGN KEY ("assignmentID") REFERENCES "assignments" ("assignmentID") ON DELETE CASCADE,
   CONSTRAINT "peer_review_assignment_submissions_ibfk_2" FOREIGN KEY ("authorID") REFERENCES "users" ("userID") ON DELETE CASCADE
 );
@@ -332,6 +336,7 @@ CREATE TABLE "users" (
   "alias" varchar(64) DEFAULT NULL,
   "markingLoad" float NOT NULL DEFAULT '0',
   "dropped" tinyint(1) NOT NULL DEFAULT '0',
+  UNIQUE ("courseID","username"),
   CONSTRAINT "users_ibfk_1" FOREIGN KEY ("courseID") REFERENCES "course" ("courseID") ON DELETE CASCADE,
   CONSTRAINT "users_ibfk_2" FOREIGN KEY ("userType") REFERENCES "userType" ("value") ON DELETE SET NULL
 );

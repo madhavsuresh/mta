@@ -671,7 +671,7 @@ class PDODataManager extends DataManager
 			case 'sqlite':
        			$sh = $this->prepareQuery("demoteQuery", "INSERT OR IGNORE INTO peer_review_assignment_demotion_log (userID, demotionDate, demotionThreshold) VALUES (:userID, datetime(:demotionDate,'unixepoch'), :demotionThreshold);");
 				$sh->execute($array);
-				$sh = $this->prepareQuery("demoteQuery2", "UPDATE user_passwords SET demotionDate=datetime(:demotionDate,'unixepoch'), demotionThreshold=:demotionThreshold WHERE userID = :userID;");
+				$sh = $this->prepareQuery("demoteQuery2", "UPDATE peer_review_assignment_demotion_log SET demotionDate=datetime(:demotionDate,'unixepoch'), demotionThreshold=:demotionThreshold WHERE userID = :userID;");
 				$sh->execute($array);
        			break;
 		}

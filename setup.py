@@ -3,16 +3,11 @@
 import sys
 
 import re
-import shutil
 from tempfile import mkstemp
 from shutil import move
-from os import remove, close
+from os import remove, close, getcwd
 
 import subprocess
-
-#Copy config.php and .htaccess
-subprocess.call('cp -r ./config.php.template ./config.php', shell=True)
-#subprocess.call('cp -r ./.htaccess.template ./.htaccess', shell=True)
 
 def replace(file_path, pattern, subst):
     #Create temp file
@@ -20,7 +15,7 @@ def replace(file_path, pattern, subst):
     new_file = open(abs_path,'wb')
     old_file = open(file_path)
     for line in old_file:
-	x = re.findall('^'+pattern+'="(\S*)";', line)	
+	x = re.findall('^'+pattern+'\s*=\s*(\S*)', line)	
 	if len(x) > 0:
 		new_file.write(line.replace(x[0], subst))
 	else:
@@ -35,16 +30,23 @@ def replace(file_path, pattern, subst):
     #Move new file
     move(abs_path, file_path)
 
+#Copy config.php and .htaccess
+subprocess.call('cp -r ./config.php.template ./config.php', shell=True)
+#subprocess.call('cp -r ./.htaccess.template ./.htaccess', shell=True)
+subprocess.call('cp -r ./.user.ini.template ./.user.ini', shell=True)
+replace(".user.ini", "session.save_path", getcwd());
+
 #Prompt for ROOT URL
 root_url = 'ROOT URL: '
 #and replace in config.php
-replace("config.php", "\$SITEURL", raw_input(root_url))
+replace("config.php", "\$SITEURL", '"'+raw_input(root_url)+'";')
 
 #Make new sqlite database
 scriptfilename = 'sqlite/sqliteimport.sql'
-dbfilename = 'NAME OF DATABASE: '
+samplefile = 'sqlite/sample.sql'
+dbfilename = 'NAME OF SQLITE DATABASE: '
 dbfilename = raw_input(dbfilename)
-replace("config.php", "\$SQLITEDB", dbfilename)
+replace("config.php", "\$SQLITEDB", '"'+dbfilename+'";')
 
 import sqlite3 as sqlite
  
@@ -75,8 +77,30 @@ if __name__ == "__main__":
 		print "\nClosing DB"
 		connection.close() 
 
+if __name__ == "__main__":    
+    try:
+        print "\nOpening DB"
+        connection = sqlite.connect("sqlite/"+dbfilename+".db")
+        cursor = connection.cursor()
+        print "Reading Script..."
+        scriptFile2 = open(samplefile, 'r')
+        script2 = scriptFile2.read()
+        scriptFile2.close()
+        print "Running Script..."
+        cursor.executescript(script2)
+        connection.commit()
+        print "Changes successfully committed\n"
+    except Exception, e:
+        print "Something went wrong:"
+        print e
+    finally:
+        print "\nClosing DB"
+        connection.close()
+
 import htpasswd
 import getpass
+from os import chmod
+import stat
 
 user = "Administrator User: "
 user = raw_input(user)
@@ -85,5 +109,6 @@ password = getpass.getpass("Administrator Password: ")
 ht = htpasswd.HtpasswdFile("admin/.htpasswd", create=True)
 ht.update(user, password)
 ht.save()
+chmod('admin/.htpasswd', stat.S_IRWXO)
 
-print 'Hello, world!'
+print 'All Done. Have Fun!'

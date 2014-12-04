@@ -20,8 +20,8 @@ function mta_error_handler($errno, $errstr, $errfile, $errline) {
   return false;
 }
 //set_error_handler('mta_error_handler');
-#error_reporting(E_ALL);
-#ini_set('display_errors','On');
+error_reporting(E_ALL);
+ini_set('display_errors','On');
 
 try
 {
@@ -61,19 +61,6 @@ try
     else
         $USERID = NULL;
 
-    //Leave a global for the HTML purifier
-    $HTML_PURIFIER = NULL;
-    $PRETTYURLS = isset($_GET["prettyurls"]);
-    $NOW = time();
-    $GRACETIME = 15*60;//15 minutes
-
-    /** Stuff that's needed by the template */
-    $content="";
-    $page_scripts = array();
-    $title = "Mechanical TA";
-    $menu=get_default_menu_items();
-
-
 }catch(Exception $e) {
     render_exception_page($e);
 }
@@ -103,7 +90,6 @@ try
     
     render_page();
 }catch(Exception $e) {
-	print_r("HOUR ... NUMBER ... THREE ... SWAG!!!");
 	/*
 	$e->getMessage( void );
 	$e->getPrevious ( void );

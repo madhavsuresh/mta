@@ -62,16 +62,17 @@ replace(".user.ini", "session.save_path", getcwd()+'/sessions');
 subprocess.call('cp -r ./.htaccess.template ./.htaccess', shell=True)
 
 #Prompt for ROOT URL
-root_url = 'ROOT URL: '
+root_url = raw_input('ROOT URL: ')
 #and replace in config.php
-replace("config.php", "\$SITEURL", '"'+raw_input(root_url)+'";')
-replace2(".htaccess", 'RewriteBase', '/~mglgms/mta')
+replace("config.php", "\$SITEURL", '"'+root_url+'";')
+stuff = re.search('\S*\.[a-zA-Z]+\/(\S*)', root_url)
+if stuff:
+	replace2(".htaccess", 'RewriteBase', stuff.group(1))
 
 #Make new sqlite database
 scriptfilename = 'sqlite/sqliteimport.sql'
 samplefile = 'sqlite/sample.sql'
-dbfilename = 'NAME OF SQLITE DATABASE: '
-dbfilename = raw_input(dbfilename)
+dbfilename = raw_input('NAME OF SQLITE DATABASE: ')
 replace("config.php", "\$SQLITEDB", '"'+dbfilename+'";')
 
 import sqlite3 as sqlite

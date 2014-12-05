@@ -58,6 +58,8 @@ def replace2(file_path, pattern, subst):
 subprocess.call('cp -r ./config.php.template ./config.php', shell=True)
 subprocess.call('cp -r ./.user.ini.template ./.user.ini', shell=True)
 replace(".user.ini", "session.save_path", getcwd()+'/sessions');
+subprocess.call('cp -r ./.user.ini peerreview/.user.ini', shell=True)
+subprocess.call('cp -r ./.user.ini grouppicker/.user.ini', shell=True)
 
 subprocess.call('cp -r ./.htaccess.template ./.htaccess', shell=True)
 

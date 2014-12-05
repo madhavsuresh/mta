@@ -33,6 +33,7 @@ try
 	}else{
 		$content .= "<td><span style='color:red'>Bad</span></td>";
 	}
+	$content .= "</tr>";
 	
 	$content .= "<tr><td>MYSQL database connection:</td>";
 	//1. The database is accessible
@@ -52,6 +53,7 @@ try
 		elseif(strpos($error,"Access denied for user"))
 			$content .= "";
 	}
+	$content .= "</tr>";
 	
 	$content .= "<tr><td>Schema:</td>";
 	if($db)
@@ -70,13 +72,36 @@ try
 		}
 		$content .= "</tr>";
 	}
-	
 	mysqli_close($db);
+	
+	$content .= "<tr><td>htaccess working</td>";
+	$content .= "<td><div id='htaccessstatus'></div></td>";
+	$content .= "</tr>";
 	$content .= "</table>"; 
     
-    $content .= "<iframe src='$SITEURL' width='400' height='150'>
+    $content .= "<iframe src='$SITEURL' id='probe'>
     				<p>iframes are not supported by your browser.</p>
     			</iframe>";
+    
+    $content .= "<script type='text/javascript'>	
+    function inIframe () {
+	    try {
+	        return $('#probe').window.self !== $('#probe').window.top;
+	    } catch (e) {
+	        return true;
+	    }
+	}
+	if(inIframe())
+	{
+		$('#htaccessstatus').css('color','green');
+		$('#htaccessstatus').html('Good');
+	}
+	else
+	{
+		$('#htaccessstatus').css('color','red');
+		$('#htaccessstatus').html('Bad');
+	}
+	</script>\n";
     			
     //2. Redirects based on .htaccess are working properly (this might need to go through an iframe)
     //    One of the failure modes that I often encounter is enabling .htaccess in Apache, so some way to detect whether it is enabled and working would be helpful.

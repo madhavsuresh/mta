@@ -5,7 +5,7 @@ import sys
 import re
 from tempfile import mkstemp
 from shutil import move
-from os import remove, close, getcwd, chmod
+from os import remove, close, getcwd, chmod, system
 import subprocess
 import htpasswd
 import getpass
@@ -60,6 +60,7 @@ subprocess.call('cp -r ./.user.ini.template ./.user.ini', shell=True)
 replace(".user.ini", "session.save_path", getcwd()+'/sessions');
 subprocess.call('cp -r ./.user.ini peerreview/.user.ini', shell=True)
 subprocess.call('cp -r ./.user.ini grouppicker/.user.ini', shell=True)
+system("wget -O- https://www.cs.ubc.ca/~mglgms/mta/test.html > wget.out 2> wget.err")
 
 subprocess.call('cp -r ./.htaccess.template ./.htaccess', shell=True)
 
@@ -67,7 +68,7 @@ subprocess.call('cp -r ./.htaccess.template ./.htaccess', shell=True)
 root_url = raw_input('ROOT URL: ')
 #and replace in config.php
 replace("config.php", "\$SITEURL", '"'+root_url+'";')
-stuff = re.search('\S*\.[a-zA-Z]+\/(\S*)', root_url)
+stuff = re.search('\S*\.[a-zA-Z]+(\/\S*)', root_url)
 if stuff:
 	replace2(".htaccess", 'RewriteBase', stuff.group(1))
 

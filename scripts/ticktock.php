@@ -41,8 +41,6 @@ class TickTockScript extends Script
 			$computeIndependentsFromCalibrationsJob = new ComputeIndependentsFromCalibrationsCronJob();
 			$disqualifyIndependentsFromScoresJob = new DisqualifyIndependentsFromScoresCronJob();
 		
-			print_r("fetched");
-			print_r($submissionStoppedAssignments);
 			foreach($submissionStoppedAssignments as $assignmentID)
 			{
 				$copyIndependentsFromPreviousJob->executeAndGetResult($assignmentID, $dataMgr);
@@ -53,7 +51,7 @@ class TickTockScript extends Script
 			}
 			
 			$reviewStoppedAssignments = $dataMgr->getReviewStoppedAssignments();
-		
+
 			$autogradeAndAssignMarkersJob = new AutogradeAndAssignMarkersCronJob();
 			foreach($reviewStoppedAssignments as $assignmentID)
 			{

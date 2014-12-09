@@ -5,7 +5,7 @@ import sys
 import re
 from tempfile import mkstemp
 from shutil import move
-from os import remove, close, getcwd, chmod, system
+from os import remove, close, getcwd, chmod, popen, system
 import subprocess
 import htpasswd
 import getpass
@@ -60,17 +60,11 @@ subprocess.call('cp -r ./.user.ini.template ./.user.ini', shell=True)
 replace(".user.ini", "session.save_path", getcwd()+'/sessions');
 subprocess.call('cp -r ./.user.ini peerreview/.user.ini', shell=True)
 subprocess.call('cp -r ./.user.ini grouppicker/.user.ini', shell=True)
-system("wget -O- https://www.cs.ubc.ca/~mglgms/mta/test.html > wget.out 2> wget.err")
-
-subprocess.call('cp -r ./.htaccess.template ./.htaccess', shell=True)
 
 #Prompt for ROOT URL
 root_url = raw_input('ROOT URL: ')
 #and replace in config.php
 replace("config.php", "\$SITEURL", '"'+root_url+'";')
-stuff = re.search('\S*\.[a-zA-Z]+(\/\S*)', root_url)
-if stuff:
-	replace2(".htaccess", 'RewriteBase', stuff.group(1))
 
 #Make new sqlite database
 scriptfilename = 'sqlite/sqliteimport.sql'
@@ -107,6 +101,13 @@ finally:
 	print "\nClosing DB"
 	connection.close()
 
+if system("wget -O- https://www.cs.ubc.ca/~mglgms/mta/TEST100/login.php &> /dev/null"):
+	#error page
+	subprocess.call('cp -r ./.htaccess.template ./.htaccess', shell=True)
+	stuff = re.search('\S*\.[a-zA-Z]+(\/\S*)', root_url)
+	if stuff:
+		replace2(".htaccess", 'RewriteBase', stuff.group(1))
+
 user = "Administrator User: "
 user = raw_input(user)
 password = getpass.getpass("Administrator Password: ")
@@ -124,5 +125,11 @@ chmod('admin/.htaccess', 0777)
 #chmod a+r .htaccess
 #chmod a+r admin/.htpasswd
 #chmod a+r admin/.htaccess
+
+#p = popen("wget -O- https://www.cs.ubc.ca/~mglgms/mta/test.html")
+#while 1:
+#	line = p.readline()
+#	if not line: break
+#	print line
 
 print 'All Done. Have Fun!'

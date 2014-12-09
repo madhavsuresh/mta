@@ -41,7 +41,7 @@ class ComputeIndependentsFromPointsPeerReviewScript extends Script
         $assignments = $currentAssignment->getAssignmentsBefore($windowSize);
         array_unshift($assignments, $currentAssignment);
         $userNameMap = $dataMgr->getUserDisplayMap();
-        $students = $dataMgr->getActiveStudents();
+        $students = $dataMgr->getStudents();
         if(array_key_exists("keep", $_POST)){
             $independents = $currentAssignment->getIndependentUsers();
         }else{

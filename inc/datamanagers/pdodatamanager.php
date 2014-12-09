@@ -318,18 +318,6 @@ class PDODataManager extends DataManager
         }
         return $users;
     }
-    
-	function getActiveUserDisplayMap()
-	{
-		$sh = $this->prepareQuery("getActiveUserDisplayMapQuery", "SELECT userID, firstName, lastName FROM users WHERE dropped = 0 AND courseID=? ORDER BY lastName, firstName;");
-		$sh->execute(array($this->courseID));
-        $activeUsers = array();
-        while($res = $sh->fetch())
-        {
-            $activeUsers[$res->userID] = $res->firstName." ".$res->lastName;
-        }
-        return $activeUsers;
-	}
 	
     function getUserAliasMap()
     {

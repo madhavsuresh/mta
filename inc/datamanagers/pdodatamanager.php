@@ -41,6 +41,29 @@ class PDODataManager extends DataManager
 			return "($time + INTERVAL $seconds SECOND)";
 	}
 	
+	function connectToDB($driver)
+	{
+		if($driver == 'mysql')
+		{
+			global $MTA_DATAMANAGER_PDO_CONFIG;
+	        if(!isset($MTA_DATAMANAGER_PDO_CONFIG["dsn"])) { die("PDO Data manager needs a DSN"); }
+	        if(!isset($MTA_DATAMANAGER_PDO_CONFIG["username"])) { die("PDODataManager needs a database user name"); }
+	        if(!isset($MTA_DATAMANAGER_PDO_CONFIG["password"])) { die("PDODataManager needs a database user password"); }
+	        //Load up a connection to the database
+	        $this->db = new PDO($MTA_DATAMANAGER_PDO_CONFIG["dsn"],
+	                    $MTA_DATAMANAGER_PDO_CONFIG["username"],
+	                    $MTA_DATAMANAGER_PDO_CONFIG["password"],
+	                    array(PDO::ATTR_PERSISTENT => true));
+		}
+		elseif($driver == 'sqlite')
+		{
+			global $SQLITEDB;
+	        $this->db = new PDO("sqlite:".MTA_ROOTPATH."sqlite/$SQLITEDB.db");
+		}
+		else 
+			throw new Exception("Database driver not recognized");
+	}
+	
     private $isUserQuery;
     private $userIDQuery;
     private $isInstructorQuery;
@@ -48,17 +71,8 @@ class PDODataManager extends DataManager
     private $getConfigPropertyQuery;
     function __construct()
     {
-        global $MTA_DATAMANAGER_PDO_CONFIG; global $SQLITEDB;
-        if(!isset($MTA_DATAMANAGER_PDO_CONFIG["dsn"])) { die("PDO Data manager needs a DSN"); }
-        if(!isset($MTA_DATAMANAGER_PDO_CONFIG["username"])) { die("PDODataManager needs a database user name"); }
-        if(!isset($MTA_DATAMANAGER_PDO_CONFIG["password"])) { die("PDODataManager needs a database user password"); }
-        //Load up a connection to the database
-        //$this->db = new PDO("sqlite:".MTA_ROOTPATH."sqlite/$SQLITEDB.db");
-        $this->db = new PDO($MTA_DATAMANAGER_PDO_CONFIG["dsn"],
-                    $MTA_DATAMANAGER_PDO_CONFIG["username"],
-                    $MTA_DATAMANAGER_PDO_CONFIG["password"],
-                    array(PDO::ATTR_PERSISTENT => true));
-        
+    	global $driver;
+        $this->connectToDB($driver);
         $this->db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
         $this->db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);

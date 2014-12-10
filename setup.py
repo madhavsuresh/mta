@@ -10,6 +10,16 @@ import subprocess
 import htpasswd
 import getpass
 
+try:
+    import crypt
+except ImportError:
+    try:
+        import fcrypt as crypt
+    except ImportError:
+        sys.stderr.write("Cannot find a crypt module.  "
+                         "Possibly http://carey.geek.nz/code/python-fcrypt/\n")
+        sys.exit(1)
+
 def replace(file_path, pattern, subst):
     #Create temp file
     fh, abs_path = mkstemp()
@@ -108,8 +118,7 @@ if system("wget -O- https://www.cs.ubc.ca/~mglgms/mta/TEST100/login.php &> /dev/
 	if stuff:
 		replace2(".htaccess", 'RewriteBase', stuff.group(1))
 
-user = "Administrator User: "
-user = raw_input(user)
+user = raw_input("Administrator User: ")
 password = getpass.getpass("Administrator Password: ")
 
 ht = htpasswd.HtpasswdFile("admin/.htpasswd", create=True)
@@ -119,17 +128,8 @@ ht.save()
 subprocess.call('cp -r admin/.htaccess.template admin/.htaccess', shell=True)
 replace2('admin/.htaccess', 'AuthUserFile', getcwd()+'/admin/.htpasswd')
 
-chmod('./.htaccess', 0777)
-chmod('admin/.htpasswd', 0777)
-chmod('admin/.htaccess', 0777)
-#chmod a+r .htaccess
-#chmod a+r admin/.htpasswd
-#chmod a+r admin/.htaccess
-
-#p = popen("wget -O- https://www.cs.ubc.ca/~mglgms/mta/test.html")
-#while 1:
-#	line = p.readline()
-#	if not line: break
-#	print line
+chmod('./.htaccess', 0555)
+chmod('admin/.htpasswd', 0555)
+chmod('admin/.htaccess', 0555)
 
 print 'All Done. Have Fun!'

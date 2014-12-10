@@ -319,6 +319,21 @@ class PDODataManager extends DataManager
         return $users;
     }
 	
+	function getUserDisplayMap2()
+    {
+        $this->getUserDisplayMapQuery->execute(array($this->courseID));
+
+        $users = array();
+        while($res = $this->getUserDisplayMapQuery->fetch())
+        {
+        	$obj = new stdClass();
+			$obj->firstName = $res->firstName;
+            $obj->lastName = $res->lastName;
+			$users[$res->userID] = $obj;
+        }
+        return $users;
+    }
+	
     function getUserAliasMap()
     {
         $this->getUserAliasMapQuery->execute(array($this->courseID));

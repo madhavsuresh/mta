@@ -554,6 +554,8 @@ class PeerReviewAssignment extends Assignment
         $html .= "<tr><td>Extra calibrations for supervised students</td><td><input type='text' name='extraCalibrations' value='$this->extraCalibrations'/></td></tr>\n";
         $html .= "</table><br>\n";
 		
+		$html .= "<br><div id='error_submissionDate'></div>\n";
+		
         /*global $dataMgr;
         $html .= "<h3>Calibration Pool Selection</h3>";
 
@@ -608,6 +610,13 @@ class PeerReviewAssignment extends Assignment
             $code .= $settings->getValidationCode();
             $code .= "}";
         }
+		
+        $code .= "if($('#submissionStopDate').val() >= $('#reviewStopDate').val()) {";
+        $code .= "$('#error_submissionDate').html('Review stop date is not after the submission stop date');\n";
+        $code .= "$('#error_submissionDate').css( 'color', 'red' );\n";
+        $code .= "error = true;";
+        $code .= "}";
+
         return $code;
     }
 
@@ -635,7 +644,7 @@ class PeerReviewAssignment extends Assignment
             $maxDate = "new Date(".($stopDate*1000).")";
         return "  <script type='text/javascript'>
                 $('#$startID').datetimepicker({
-                    maxDate: $maxDate,
+                	//maxDate: $maxDate,
                     showOtherMonths: true,
                     selectOtherMonths: true,
                     defaultDate : $minDate,
@@ -655,12 +664,12 @@ class PeerReviewAssignment extends Assignment
                     onSelect: function (selectedDateTime){
                         var start = $(this).datetimepicker('getDate');
                         var d = new Date($('#$stopID').datetimepicker('getDate'));
-                        $('#$stopID').datetimepicker('option', 'minDate', new Date(start.getTime()));
+                        //$('#$stopID').datetimepicker('option', 'minDate', new Date(start.getTime()));
                         $('#$stopID').val(zeroFill(d.getMonth() + 1, 2) + '/' + zeroFill(d.getDate(), 2) + '/' + d.getFullYear() + ' ' + zeroFill(d.getHours(), 2) + ':' + zeroFill(d.getMinutes(), 2));
                     },
                 });
                 $('#$stopID').datetimepicker({
-                    minDateTime: $minDate,
+                	//minDate: $minDate,
                     showOtherMonths: true,
                     selectOtherMonths: true,
                     defaultDate : $maxDate,
@@ -679,7 +688,7 @@ class PeerReviewAssignment extends Assignment
                     onSelect: function (selectedDateTime){
                         var end = $(this).datetimepicker('getDate');
                         var d = new Date($('#$startID').datetimepicker('getDate'));
-                        $('#$startID').datetimepicker('option', 'maxDate', new Date(end.getTime()));
+                        //$('#$startID').datetimepicker('option', 'maxDate', new Date(end.getTime()));
                         $('#$startID').val(zeroFill(d.getMonth() + 1, 2) + '/' + zeroFill(d.getDate(), 2) + '/' + d.getFullYear() + ' ' + zeroFill(d.getHours(), 2) + ':' + zeroFill(d.getMinutes(), 2));
                     }
     });".

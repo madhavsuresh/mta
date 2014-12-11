@@ -5,10 +5,27 @@ import sys
 import re
 from tempfile import mkstemp
 from shutil import move
-from os import remove, close, getcwd, chmod, popen, system
+from os import remove, close, getcwd, chmod, popen, system, path
 import subprocess
-import htpasswd
 import getpass
+import random
+
+try:
+    import crypt
+except ImportError:
+    try:
+        import fcrypt as crypt
+    except ImportError:
+        sys.stderr.write("Cannot find a crypt module.  "
+                         "Possibly http://carey.geek.nz/code/python-fcrypt/\n")
+        sys.exit(1)
+
+def salt():
+    """Returns a string of 2 randome letters"""
+    letters = 'abcdefghijklmnopqrstuvwxyz' \
+              'ABCDEFGHIJKLMNOPQRSTUVWXYZ' \
+              '0123456789/.'
+    return random.choice(letters) + random.choice(letters)
 
 def replace(file_path, pattern, subst):
     #Create temp file
@@ -108,28 +125,38 @@ if system("wget -O- https://www.cs.ubc.ca/~mglgms/mta/TEST100/login.php &> /dev/
 	if stuff:
 		replace2(".htaccess", 'RewriteBase', stuff.group(1))
 
-user = "Administrator User: "
-user = raw_input(user)
+username = raw_input("Administrator User: ")
 password = getpass.getpass("Administrator Password: ")
 
-ht = htpasswd.HtpasswdFile("admin/.htpasswd", create=True)
-ht.update(user, password)
-ht.save()
-
+#ht = htpasswd.HtpasswdFile("admin/.htpasswd", create=True)
+#ht.update(user, password)
+#ht.save()
+entries = []
+if path.exists('admin/.htpasswd'):
+	print "Should be here"
+	lines = open('admin/.htpasswd', 'r').readlines()
+        for line in lines:
+	    print "Stage 1"
+            username, pwhash = line.split(':')
+            entry = [username, pwhash.rstrip()]
+            entries.append(entry)
+	    print entries
+pwhash = crypt.crypt(password, salt())
+matching_entries = [entry for entry in entries
+                    if entry[0] == username]
+if matching_entries:
+    print "Stage 2"
+    matching_entries[0][1] = pwhash
+else:
+    print "Stage 3"
+    entries.append([username, pwhash])
+open('admin/.htpasswd', 'w').writelines(["%s:%s\n" % (entry[0], entry[1])
+                                     for entry in entries])
 subprocess.call('cp -r admin/.htaccess.template admin/.htaccess', shell=True)
 replace2('admin/.htaccess', 'AuthUserFile', getcwd()+'/admin/.htpasswd')
 
 chmod('./.htaccess', 0777)
 chmod('admin/.htpasswd', 0777)
 chmod('admin/.htaccess', 0777)
-#chmod a+r .htaccess
-#chmod a+r admin/.htpasswd
-#chmod a+r admin/.htaccess
-
-#p = popen("wget -O- https://www.cs.ubc.ca/~mglgms/mta/test.html")
-#while 1:
-#	line = p.readline()
-#	if not line: break
-#	print line
 
 print 'All Done. Have Fun!'

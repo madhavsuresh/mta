@@ -36,5 +36,7 @@ $cfgLDAPAuthMgrHost = 'ldap.cs.ubc.ca';
 $cfgLDAPAuthMgrPort = 389;
 $cfgLDAPAuthMgrBaseDN  = 'ou=People,dc=cs,dc=ubc,dc=ca';
 
-$SQLITEDB="test";
+$SQLITEDB="testdb";
+
+$driver = "sqlite";
 ?>

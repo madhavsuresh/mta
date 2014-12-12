@@ -86,7 +86,13 @@ replace("config.php", "\$SITEURL", '"'+root_url+'";')
 #Make new sqlite database
 scriptfilename = 'sqlite/sqliteimport.sql'
 samplefile = 'sqlite/sample.sql'
-dbfilename = raw_input('NAME OF SQLITE DATABASE: ')
+dbfilename = raw_input('NAME OF SQLITE DATABASE:') or 'mta_sqlite_db'
+if re.search('(\.db$)', dbfilename):
+	dbfilename = re.search('(.+?)\.db$', dbfilename).group(1)
+if re.search('(\.sqlite$)', dbfilename):
+	dbfilename = re.search('(.+?)\.sqlite$', dbfilename).group(1)
+print dbfilename+'.db created in sqlite directory'
+
 replace("config.php", "\$SQLITEDB", '"'+dbfilename+'";')
 
 import sqlite3 as sqlite
@@ -95,27 +101,23 @@ try:
 	print "\nOpening DB"
 	connection = sqlite.connect("sqlite/"+dbfilename+".db")
 	cursor = connection.cursor()
-	print "Reading Script..."
 	scriptFile = open(scriptfilename, 'r')
 	script = scriptFile.read()
 	scriptFile.close()
-	print "Running Script..."
 	cursor.executescript(script)
 	connection.commit()
-	print "New schema created..."
-	print "Reading sample data script..."
+	print "Database Schema created..."
         scriptFile2 = open(samplefile, 'r')
         script2 = scriptFile2.read()
         scriptFile2.close()
-	print "Running Script..."
 	cursor.executescript(script2)
 	connection.commit()
-	print "Changes successfully committed"
+	print "Sample Data inserted successfully..."
 except Exception, e:
 	print "Something went wrong:"
 	print e
 finally:
-	print "\nClosing DB"
+	print "Closing DB\n"
 	connection.close()
 
 if system("wget -O- https://www.cs.ubc.ca/~mglgms/mta/TEST100/login.php &> /dev/null"):
@@ -125,31 +127,29 @@ if system("wget -O- https://www.cs.ubc.ca/~mglgms/mta/TEST100/login.php &> /dev/
 	if stuff:
 		replace2(".htaccess", 'RewriteBase', stuff.group(1))
 
-username = raw_input("Administrator User: ")
-password = getpass.getpass("Administrator Password: ")
+user = raw_input("Administrator User: ") or "admin"
+print "Administrator '"+user+"' created";
+while True:
+	password = getpass.getpass("Administrator Password: ")
+	password_match = getpass.getpass("Re-type Administrator Password: ")
+	if password == password_match:
+		break	
+	print 'Password was re-typed incorrectly'
 
-#ht = htpasswd.HtpasswdFile("admin/.htpasswd", create=True)
-#ht.update(user, password)
-#ht.save()
 entries = []
 if path.exists('admin/.htpasswd'):
-	print "Should be here"
 	lines = open('admin/.htpasswd', 'r').readlines()
         for line in lines:
-	    print "Stage 1"
-            username, pwhash = line.split(':')
-            entry = [username, pwhash.rstrip()]
-            entries.append(entry)
-	    print entries
-pwhash = crypt.crypt(password, salt())
+        	username, pwhash = line.split(':')
+        	entry = [username, pwhash.rstrip()]
+        	entries.append(entry)
+passwordhash = crypt.crypt(password, salt())
 matching_entries = [entry for entry in entries
-                    if entry[0] == username]
+                    if entry[0] == user]
 if matching_entries:
-    print "Stage 2"
-    matching_entries[0][1] = pwhash
+	matching_entries[0][1] = passwordhash
 else:
-    print "Stage 3"
-    entries.append([username, pwhash])
+	entries.append([user, passwordhash])
 open('admin/.htpasswd', 'w').writelines(["%s:%s\n" % (entry[0], entry[1])
                                      for entry in entries])
 subprocess.call('cp -r admin/.htaccess.template admin/.htaccess', shell=True)

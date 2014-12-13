@@ -45,7 +45,7 @@ try
             if(!$dataMgr->isStudent(new UserID($user)))
                 continue;
 			if(in_array($user, $droppedUsers))
-				$name .= "*";
+				continue;
             $deniedChecked = '';
             $independentChecked = '';
             if(array_key_exists($user, $deniedUsers))
@@ -67,8 +67,6 @@ try
         $content .= "</table>\n";
         $content .= "<br><input type='submit' value='Save' />\n";
         $content .= "</form>\n";
-
-		$content .= "* indicates student has been dropped";
 
 		$content .= "<script type='text/javascript'>";
 		$content .= "var independent = new Array();";

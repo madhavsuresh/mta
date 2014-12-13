@@ -47,7 +47,7 @@ class TickTockScript extends Script
 				$computeIndependentsFromScoresJob->executeAndGetResult($assignmentID, $dataMgr);
 				$computeIndependentsFromCalibrationsJob->executeAndGetResult($assignmentID, $dataMgr);
 				$disqualifyIndependentsFromScoresJob->executeAndGetResult($assignmentID, $dataMgr);
-				$assignReviewsPeerReviewJob->executeAndGetResult($assignmentID, $dataMgr);
+				//$assignReviewsPeerReviewJob->executeAndGetResult($assignmentID, $dataMgr);
 			}
 			
 			$reviewStoppedAssignments = $dataMgr->getReviewStoppedAssignments();

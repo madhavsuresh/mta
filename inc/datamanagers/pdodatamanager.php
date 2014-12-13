@@ -321,6 +321,7 @@ class PDODataManager extends DataManager
             return $sh->fetch()->value;
     }
 
+	//TODO: Get rid of this and use getUserDisplayMap2() instead
     function getUserDisplayMap()
     {
         $this->getUserDisplayMapQuery->execute(array($this->courseID));
@@ -347,6 +348,19 @@ class PDODataManager extends DataManager
         }
         return $users;
     }
+	
+	/*function getActiveStudentDisplayMap()
+	{
+		$sh = $this->prepareQuery("getActiveStudentDisplayMapQuery", "SELECT userID, firstName, lastName FROM users WHERE courseID=? ORDER BY lastName, firstName;");
+		$this->getUserDisplayMapQuery->execute(array($this->courseID));
+
+        $users = array();
+        while($res = $this->getUserDisplayMapQuery->fetch())
+        {
+            $users[$res->userID] = $res->firstName." ".$res->lastName;
+        }
+        return $users;
+	}*/
 	
     function getUserAliasMap()
     {
@@ -1012,13 +1026,13 @@ class PDODataManager extends DataManager
 	}
 	
 	//Just for re-assigning old unanswered appeals from previous appeal assignment  
-	function assignOldUnansweredAppeals()
+	function getOldUnansweredAppeals()
 	{
-		$sh = $this->prepareQuery("assignOldUnansweredAppealsQuery", "SELECT submissions.submissionID, submissions.assignmentID
+		$sh = $this->prepareQuery("getOldUnansweredAppealsQuery", "SELECT submissions.submissionID, submissions.assignmentID
 		FROM peer_review_assignment_appeal_messages messages 
 		LEFT OUTER JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID AND messages.matchID = messages2.matchID AND messages.appealType = messages2.appealType 
 		JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID 
-		JOIN users ON messages.authorID = users.userID 
+		JOIN users ON messages.authorID = users.userID
 		JOIN assignments ON assignments.assignmentID = submissions.assignmentID
 		WHERE messages2.appealMessageID IS NULL AND users.userType = 'student' AND submissions.submissionID NOT IN (SELECT submissionID FROM appeal_assignment) AND assignments.courseID = ?
 		ORDER BY submissions.assignmentID;");

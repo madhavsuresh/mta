@@ -171,7 +171,7 @@ try
         {
             $name = "<a href='?edit=$id"."$extraUrl'>$displayName";
             if(in_array($id, $droppedStudents))
-            	$name .= "*";
+            	$name .= "<sub style='color:#FE2E2E;'>dropped</sub>";
 			$name .= "</a><br>\n";
             $content .= $name;
         }

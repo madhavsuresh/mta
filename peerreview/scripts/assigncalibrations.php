@@ -28,7 +28,7 @@ class AssignCalibrationsPeerReviewScript extends Script
 
         $numCalibrations = require_from_post("numCalibrations");
 
-        $students = $dataMgr->getStudents();
+        $students = $dataMgr->getActiveStudents();
         $independents = $assignment->getIndependentUsers();
         $userNameMap = $dataMgr->getUserDisplayMap();
 

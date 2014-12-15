@@ -35,7 +35,7 @@ class DownloadSubmissionsPeerReviewScript extends Script
 		if(array_key_exists("includedropped", $_POST)){
             $authors = $assignment->getAuthorSubmissionMap_();
         }else{
-            $authors = $assignment->getActiveAuthorSubmissionMap_();;
+            $authors = $assignment->getActiveAuthorSubmissionMap_();
         }
         $userNameMap = $dataMgr->getUserDisplayMap();
 

@@ -36,7 +36,7 @@ try
 
         $deniedUsers = $assignment->getDeniedUsers();
         $independentUsers = $assignment->getIndependentUsers();
-		$droppedUsers = $dataMgr->getDroppedStudents();
+		$droppedStudents = $dataMgr->getDroppedStudents();
 
 		$independentsRecord = array();
         $currentRowType = 0;
@@ -44,7 +44,7 @@ try
         foreach($dataMgr->getUserDisplayMap() as $user => $name ){
             if(!$dataMgr->isStudent(new UserID($user)))
                 continue;
-			if(in_array($user, $droppedUsers))
+			if(in_array($user, $droppedStudents))
 				continue;
             $deniedChecked = '';
             $independentChecked = '';

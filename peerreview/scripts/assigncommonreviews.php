@@ -25,12 +25,15 @@ class AssignCommonReviewsPeerReviewScript extends Script
 
         $submissionAuthors = $assignment->getAuthorSubmissionMap();
         $displayMap = $dataMgr->getUserDisplayMap();
+		$droppedUsers = $dataMgr->getDroppedStudents();
         $html .= "<h3>Select Submissions to Review</h3>";
         $html .= "<table width='100%'>\n";
         foreach($displayMap as $authorID => $authorName)
         {
             if(!array_key_exists($authorID, $submissionAuthors))
                 continue;
+			if(in_array($authorID, $droppedUsers))
+				continue;
             $submissionID = $submissionAuthors[$authorID];
             $html .= "<tr><td><input type='checkbox' name='submissions[]' value='$submissionID' />$authorName</td></tr>\n";
         }
@@ -39,23 +42,24 @@ class AssignCommonReviewsPeerReviewScript extends Script
     }
     function executeAndGetResult()
     {
+    	ini_set('display_errors','On');
         global $dataMgr;
         $assignment = get_peerreview_assignment();
         $submissions = require_from_post("submissions");
         $displayMap = $dataMgr->getUserDisplayMap();
 
+        $students = $dataMgr->getActiveStudents();
         $reviewers = array();
-        foreach($displayMap as $reviewerID => $reviewerName)
+        foreach($students as $reviewerID)
         {
             $reviewerID = new UserID($reviewerID);
-            if($dataMgr->isStudent($reviewerID) && !$assignment->deniedUser($reviewerID))
+            if(!$assignment->deniedUser($reviewerID))
                 $reviewers[] = $reviewerID;
         }
 
         $reviewerAssignment = array();
         foreach($submissions as $submissionID){
             $submissionID = new SubmissionID($submissionID);
-            $userNameMap = $dataMgr->getUserDisplayMap();
             $reviewerAssignment[$submissionID->id] = $reviewers;
         }
         $assignment->saveReviewerAssignment($reviewerAssignment);

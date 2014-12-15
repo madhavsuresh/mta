@@ -60,7 +60,7 @@ class DownloadGradesScript extends Script
             }
         }
 
-        $students = $dataMgr->getStudents();
+        $students = $dataMgr->getActiveStudents();
         $studentIDs = $dataMgr->getStudentIDMap();
         $displayNames = $dataMgr->getUserDisplayMap2();
         foreach($students as $userID)

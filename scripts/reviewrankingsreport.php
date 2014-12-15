@@ -27,13 +27,11 @@ class ReviewRankingsReportScript extends Script
 		$assignments = $dataMgr->getAssignments();
 		
 		$latestCalibrationAssignment = latestCalibrationAssignment();
+		$userDisplayMap = $dataMgr->getUserDisplayMap();
 		
 		$students = array();
-		foreach($dataMgr->getUserDisplayMap() as $user => $name)
+		foreach($dataMgr->getActiveStudents() as $user)
         {
-            if(!$dataMgr->isStudent(new UserID($user))){
-                continue;
-            }
             $student = new stdClass();
 			$student->name = $name;
 			$student->calibrationScore = (getWeightedAverage(new UserID($user), $latestCalibrationAssignment) == "--") ? 0 : (getWeightedAverage(new UserID($user), latestCalibrationAssignment()));

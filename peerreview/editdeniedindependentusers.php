@@ -36,7 +36,7 @@ try
 
         $deniedUsers = $assignment->getDeniedUsers();
         $independentUsers = $assignment->getIndependentUsers();
-		$droppedUsers = $dataMgr->getDroppedStudents();
+		$droppedStudents = $dataMgr->getDroppedStudents();
 
 		$independentsRecord = array();
         $currentRowType = 0;
@@ -44,8 +44,8 @@ try
         foreach($dataMgr->getUserDisplayMap() as $user => $name ){
             if(!$dataMgr->isStudent(new UserID($user)))
                 continue;
-			if(in_array($user, $droppedUsers))
-				$name .= "*";
+			if(in_array($user, $droppedStudents))
+				continue;
             $deniedChecked = '';
             $independentChecked = '';
             if(array_key_exists($user, $deniedUsers))
@@ -67,8 +67,6 @@ try
         $content .= "</table>\n";
         $content .= "<br><input type='submit' value='Save' />\n";
         $content .= "</form>\n";
-
-		$content .= "* indicates student has been dropped";
 
 		$content .= "<script type='text/javascript'>";
 		$content .= "var independent = new Array();";

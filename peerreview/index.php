@@ -82,6 +82,7 @@ try
     $content .= "<table width='100%'>\n";
     $currentRowIndex = 0;
     $currentRowType = 0;
+	ini_set('display_errors','On');
     foreach($displayMap as $authorID => $authorName)
     {
         $authorID = new UserID($authorID);
@@ -91,7 +92,16 @@ try
         }
         $submissionID = null;
         if(array_key_exists($authorID->id, $submissionAuthors))
+		{
             $submissionID = $submissionAuthors[$authorID->id];
+		}
+		if(in_array($authorID->id, $droppedStudents)){
+			if($submissionID == NULL)
+				continue;
+			//TODO:What if all the reviewers are dropped students???
+			elseif(empty($reviewMap[$submissionID->id]))
+				continue;
+		}
         $currentRowType = ($currentRowType+1)%2;
         $currentRowIndex++;
 
@@ -99,8 +109,6 @@ try
 
         //The first real slot, has the submission in it
         $content .= "<table align='left' width='100%'><tr><td>\n";
-		if(in_array($authorID->id, $droppedStudents))
-			$authorName .= "*";
         if($submissionID)
         {
             $content .= "<a title='View' href='".get_redirect_url("peerreview/viewer.php?assignmentid=$assignment->assignmentID&type0=submission&submissionid0=$submissionID")."'>$authorName</a>";
@@ -248,8 +256,6 @@ try
         $content .= "</td></tr>";
     }
     $content .= "</table>\n";
-
-	$content .= "* indicates student has been dropped";
     
     render_page();
 }catch(Exception $e){

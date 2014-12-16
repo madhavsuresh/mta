@@ -623,25 +623,6 @@ class PeerReviewAssignment extends Assignment
     function _getFormScripts()
     {
         $code  = init_tiny_mce(false);      
-		$code .= "<script type='text/javascript'>
-					function checkWithSubmissionDate(){	
-						if($('#submissionStopDate').val() >= $('#reviewStopDate').val()) {
-							$('#error_reviewStopDate').html('Review stop date is not after the submission stop date');\n
-						}else{
-							$('#error_reviewStopDate').html('');
-						}
-						if($('#submissionStopDate').val() >= $('#markPostDate').val()) {
-							$('#error_markPostDate').html('Mark post date is not after the submission stop date');\n
-						}else{
-							$('#error_markPostDate').html('');
-						}
-						if($('#submissionStopDate').val() >= $('#appealStopDate').val()) {
-							$('#error_appealStopDate').html('Appeal post date is not after the submission stop date');\n
-						}else{
-							$('#error_appealStopDate').html('');
-						}
-					}
-				</script>";
         $code .= $this->getScriptForDatePickers('submissionStartDate','submissionStopDate',$this->submissionStartDate, $this->submissionStopDate);
         $code .= $this->getScriptForDatePickers('reviewStartDate','reviewStopDate', $this->reviewStartDate, $this->reviewStopDate);
         $code .= "<script type='text/javascript'> $('#markPostDate').datetimepicker({ defaultDate : new Date(".($this->markPostDate*1000).")}); </script>\n";
@@ -649,9 +630,51 @@ class PeerReviewAssignment extends Assignment
         $code .= set_element_to_date("markPostDate", $this->markPostDate);
         $code .= set_element_to_date("appealStopDate", $this->appealStopDate);
 		$code .= $this->getScriptForDatePickers('calibrationStartDate','calibrationStopDate',$this->calibrationStartDate, $this->calibrationStopDate);
+		$code .= $this->checkWithSubmissionDate();
         return $code;
     }
 
+    static private function checkWithSubmissionDate()
+    {
+    	return "
+    		<script type='text/javascript'>
+			function checkWithSubmissionDate(){
+				alert('RAWR');
+				if($('#submissionStopDate').val() >= $('#reviewStopDate').val()) {
+					$('#error_reviewStopDate').html('Review stop date is not after the submission stop date');\n
+				}else{
+					$('#error_reviewStopDate').html('');
+				}
+				if($('#submissionStopDate').val() >= $('#markPostDate').val()) {
+					$('#error_markPostDate').html('Mark post date is not after the submission stop date');\n
+				}else{
+					$('#error_markPostDate').html('');
+				}
+				if($('#submissionStopDate').val() >= $('#appealStopDate').val()) {
+					$('#error_appealStopDate').html('Appeal post date is not after the submission stop date');\n
+				}else{
+					alert('RAWR');
+					$('#error_appealStopDate').html('');
+				}
+			}
+    		
+    		$('#markPostDate').datetimepicker({
+    			onClose: checkWithSubmissionDate
+    		})
+			$('#appealStopDate').datetimepicker({
+    			onClose: checkWithSubmissionDate
+    		})
+    	 </script>";
+    }
+    
+    /*static private function checkWithSubmissionDate()
+    {
+    	return "
+    		<script type='text/javascript'>
+			
+    	 </script>";
+    }*/
+    
     #Function for the date pickers
     static private function getScriptForDatePickers($startID, $stopID, $startDate='', $stopDate='')
     {
@@ -679,7 +702,6 @@ class PeerReviewAssignment extends Assignment
                         else {
                             endDateTextBox.val(dateText);
                         }
-						checkWithSubmissionDate();
                     },
                     onSelect: function (selectedDateTime){
                         var start = $(this).datetimepicker('getDate');
@@ -704,7 +726,6 @@ class PeerReviewAssignment extends Assignment
                         else {
                             startDateTextBox.val(dateText);
                         }
-						checkWithSubmissionDate();
                     },
                     onSelect: function (selectedDateTime){
                         var end = $(this).datetimepicker('getDate');

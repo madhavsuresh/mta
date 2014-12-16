@@ -1,0 +1,1 @@
+ALTER TABLE `course` ADD `archived` tinyint(1) NOT NULL DEFAULT '0';

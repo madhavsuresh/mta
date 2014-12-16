@@ -563,6 +563,18 @@ class PDODataManager extends DataManager
         $sh->execute(array($name, $displayName, $authType, $regType, $browsable));
     }
 	
+	function deleteCourse(CourseID $id)
+	{
+		$sh = $this->db->prepare("DELETE FROM course where courseID = ?;");
+        $sh->execute(array($id));
+	}
+	
+	function archiveCourse(CourseID $id)
+    {
+        $sh = $this->db->prepare("UPDATE course SET archived = 1 WHERE courseID = ?;");
+        $sh->execute(array($id));
+    }
+	
 	function getInstructedAssignmentHeaders(UserID $instructorID)
     {
     	$username = $this->getUserName($instructorID);

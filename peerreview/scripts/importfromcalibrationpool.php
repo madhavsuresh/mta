@@ -13,7 +13,7 @@ class ImportFromCalibrationPoolPeerReviewScript extends Script
     }
     function getFormHTML()
     {
-    	global $dataMgr;
+    	global $dataMgr, $USERID;
 		
     	$html = "";
 		
@@ -23,7 +23,7 @@ class ImportFromCalibrationPoolPeerReviewScript extends Script
 		
 		$html .= "<select name='courseSelect' id='courseSelect'>";
 		
-		foreach($dataMgr->getCourses() as $courseObj){
+		foreach($dataMgr->getCoursesInstructedByUser($USERID) as $courseObj){
 			$html .= "<option value='$courseObj->courseID'>$courseObj->name - $courseObj->displayName</option>\n";
 		}
 		$html .= "</select>\n";

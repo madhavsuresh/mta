@@ -113,8 +113,6 @@ class PDODataManager extends DataManager
         //$this->assignmentSwapDisplayOrderQuery = $this->db->prepare("UPDATE assignments SET
 
  		$this->getInstructedAssignmentHeadersQuery = $this->db->prepare("SELECT assignmentID, name, courseID, assignmentType, displayPriority FROM assignments WHERE assignmentType = 'peerreview' AND courseID IN (SELECT courseID FROM users WHERE username = ?) ORDER BY displayPriority ASC;");
-		//$this->getAllCalibrationPoolsQuery = $this->db->prepare("SELECT assignmentID, a.name, a.courseID, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_submissions ps, users u WHERE ps.assignmentID = a.assignmentID AND ps.authorID = u.a AND u.userType = 'anonymous' ORDER BY displayPriority ASC;");
-		$this->getAllCalibrationPoolsQuery = $this->db->prepare("SELECT a.assignmentID, a.name, a.courseID, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_calibration_pools pcp WHERE a.assignmentID = pcp.poolAssignmentID ORDER BY displayPriority ASC;");
         
 		$this->getCalibrationAssignmentHeadersQuery = $this->db->prepare("SELECT a.assignmentID, a.name, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_calibration_matches pr WHERE a.assignmentID = pr.assignmentID AND courseID = ? ORDER BY displayPriority DESC;");
 		
@@ -512,7 +510,14 @@ class PDODataManager extends DataManager
 
     function getCourses()
     {
-        $sh = $this->db->prepare("SELECT name, displayName, courseID, browsable FROM course;");
+        $sh = $this->db->prepare("SELECT name, displayName, courseID, browsable FROM course WHERE archived = 0;");
+        $sh->execute(array());
+        return $sh->fetchall();
+    }
+
+	function getArchivedCourses()
+    {
+        $sh = $this->db->prepare("SELECT name, displayName, courseID, browsable FROM course WHERE archived = 1;");
         $sh->execute(array());
         return $sh->fetchall();
     }
@@ -571,9 +576,13 @@ class PDODataManager extends DataManager
 	
 	function archiveCourse(CourseID $id)
     {
-        $sh = $this->db->prepare("UPDATE course SET archived = 1 WHERE courseID = ?;");
-        $sh->execute(array($id));
-    }
+    	$sh = $this->db->prepare("SELECT name FROM course WHERE courseID = ?");
+		$sh->execute(array($id));
+		$res = $sh->fetch(PDO::FETCH_NUM);
+		$archivedname = 'ARCHIVED_' . $res[0];
+        $sh = $this->db->prepare("UPDATE course SET name = ?, archived = 1 WHERE courseID = ?;");
+        $sh->execute(array($archivedname, $id));
+  	 }
 	
 	function getInstructedAssignmentHeaders(UserID $instructorID)
     {
@@ -589,9 +598,10 @@ class PDODataManager extends DataManager
 	
 	function getAllCalibrationPoolHeaders()
     {
-        $this->getAllCalibrationPoolsQuery->execute();
+    	$sh = $this->db->prepare("SELECT assignments.assignmentID, name, courseID, assignmentType, displayPriority FROM assignments JOIN peer_review_assignment_calibration_pools ON assignments.assignmentID = peer_review_assignment_calibration_pools.poolAssignmentID ORDER BY displayPriority ASC;");
+        $sh->execute();
         $headers = array();
-        while($res = $this->getAllCalibrationPoolsQuery->fetch())
+        while($res = $sh->fetch())
         {
             $headers[] = new GlobalAssignmentHeader(new AssignmentID($res->assignmentID), $res->name, new CourseID($res->courseID) , $res->assignmentType, $res->displayPriority);
         }

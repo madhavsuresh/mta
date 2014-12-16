@@ -32,6 +32,7 @@ CREATE TABLE "course" (
   "authType" varchar(128) NOT NULL,
   "registrationType" varchar(128) NOT NULL,
   "browsable" tinyint(1) NOT NULL DEFAULT '1',
+  "archived" tinyint(1) NOT NULL DEFAULT '0',
   UNIQUE ("name")
 );
 CREATE TABLE "course_configuration" (

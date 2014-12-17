@@ -120,12 +120,32 @@ finally:
 	print "Closing DB\n"
 	connection.close()
 
+f = open('fetch_target.html','w')
+f.write('<html>\n<body>\n<h1>TESTING</h1>\n</body>\n</html>\n'); # python will convert \n to os.linesep
+f.close() # you can omit in most cases as the destructor will call if
+f = open('redirect_target.html','w')
+f.close()
+
 if system("wget -O- https://www.cs.ubc.ca/~mglgms/mta/TEST100/login.php &> /dev/null"):
 	#error page
 	subprocess.call('cp -r ./.htaccess.template ./.htaccess', shell=True)
 	stuff = re.search('\S*\.[a-zA-Z]+(\/\S*)', root_url)
 	if stuff:
 		replace2(".htaccess", 'RewriteBase', stuff.group(1))
+with open("./.htaccess", "a") as myfile:
+    myfile.write("RewriteRule ^redirect_target.html$ $2fetch_target.html [L]")
+
+chmod('./.htaccess', 0777)
+chmod('fetch_target.html', 0777)
+chmod('redirect_target.html', 0777)
+
+system("wget -O- https://www.cs.ubc.ca/~mglgms/mta/redirect_target.html >out.txt 2> /dev/null")
+import filecmp
+if filecmp.cmp('out.txt', 'fetch_target.html'):
+	print 'htaccess works. Hurray!'
+	remove('out.txt')
+	remove('redirect_target.html')
+	remove('fetch_target.html')
 
 user = raw_input("Administrator User: ") or "admin"
 print "Administrator '"+user+"' created";
@@ -155,7 +175,6 @@ open('admin/.htpasswd', 'w').writelines(["%s:%s\n" % (entry[0], entry[1])
 subprocess.call('cp -r admin/.htaccess.template admin/.htaccess', shell=True)
 replace2('admin/.htaccess', 'AuthUserFile', getcwd()+'/admin/.htpasswd')
 
-chmod('./.htaccess', 0777)
 chmod('admin/.htpasswd', 0777)
 chmod('admin/.htaccess', 0777)
 

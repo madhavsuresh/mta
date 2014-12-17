@@ -480,7 +480,8 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	
     function getReviewerAssignment(PeerReviewAssignment $assignment)
     {
-        $sh = $this->db->prepare("SELECT peer_review_assignment_matches.submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE peer_review_assignment_submissions.assignmentID = ? AND instructorForced = 0 ORDER BY matchID;");
+    	//$sh = $this->db->prepare("SELECT peer_review_assignment_matches.submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE peer_review_assignment_submissions.assignmentID = ? AND instructorForced = 0 ORDER BY matchID;");
+    	$sh = $this->db->prepare("SELECT peer_review_assignment_matches.submissionID, reviewerID FROM peer_review_assignment_matches JOIN peer_review_assignment_submissions ON peer_review_assignment_submissions.submissionID = peer_review_assignment_matches.submissionID WHERE peer_review_assignment_submissions.assignmentID = ? AND instructorForced = 0 AND calibrationState <> 'attempt' ORDER BY matchID;");
         $sh->execute(array($assignment->assignmentID));
         $reviewerAssignment = array();
         while($res = $sh->fetch())

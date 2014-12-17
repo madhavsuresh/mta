@@ -751,7 +751,7 @@ class PeerReviewAssignment extends Assignment
     {
         #Figure out the maximum number of reviews that a person did
         $reviewAssignment = $this->dataMgr->getReviewerAssignment($this);
-        $maxReviews = array_reduce($reviewAssignment, function ($a, $b) { return max(sizeof($a), sizeof($b)); });
+        $maxReviews = array_reduce($reviewAssignment, function ($a, $b) { return max($a, sizeof($b)); });
         $authorMap = $this->dataMgr->getAuthorSubmissionMap($this);
 
         $grades = new AssignmentGrades();

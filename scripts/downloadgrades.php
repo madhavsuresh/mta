@@ -41,7 +41,7 @@ class DownloadGradesScript extends Script
         }
 
         //First, we need to pump out the first row
-        $csv = ",";
+        $csv = ",,";
         for($i = 0; $i < sizeof($assignmentNames); $i++)
         {
             $csv .= ",".$assignmentNames[$i];

@@ -120,6 +120,8 @@ finally:
 	print "Closing DB\n"
 	connection.close()
 
+system("cat > fetch_target.htm");
+
 if system("wget -O- https://www.cs.ubc.ca/~mglgms/mta/TEST100/login.php &> /dev/null"):
 	#error page
 	subprocess.call('cp -r ./.htaccess.template ./.htaccess', shell=True)

@@ -159,6 +159,23 @@ try
 	$content .= "<tr><td>/grouppicker/.user.ini</td><td>".substr(sprintf('%o', fileperms('grouppicker/.user.ini')), -4)."</td></tr>";
 	$content .= "<tr><td>/admin/.htpasswd</td><td>".substr(sprintf('%o', fileperms('admin/.htpasswd')), -4)."</td></tr>";
 	$content .= "<tr><td>/admin/.htaccess</td><td>".substr(sprintf('%o', fileperms('admin/.htaccess')), -4)."</td></tr>";
+	$handle = @fopen("./config.php", "r");
+	$themeUsed = NULL;
+	if ($handle) {
+    	while (($buffer = fgets($handle, 4096)) !== false) 
+    	{
+	        if(preg_match("/$MTA_THEME/", $buffer))
+	        {
+				$pos = strpos($buffer, "=");
+				$themeUsed = str_replace( array(' ','"',';'), '', substr($buffer, $pos+1));
+			}
+	    }
+	    if (!feof($handle)) {
+	        echo "Error: unexpected fgets() fail\n";
+	    }
+	    fclose($handle);
+	}
+	$content .= "<tr><td>themes/$themeUsed/style.css</td><td>".substr(sprintf('%o', fileperms("themes/".$themeUsed."/style.css")), -4)."</td></tr>";
 	$content .= "</table>";
 	
     //2. Redirects based on .htaccess are working properly (this might need to go through an iframe)

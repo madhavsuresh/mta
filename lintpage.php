@@ -24,19 +24,46 @@ try
 	$content = "<h1>Lint page</h1>";
 	
 	$content .= "<table>";
-	$content .= "<tr><td>SQLite database present:</td>";
-	if(file_exists("sqlite/$SQLITEDB.db")){	
-		$content .= "<td><span style='color:green'>Yes</span></td></tr>";
-	}else{
+	$content .= "<col/>";
+	$content .= "<col id='sqlite_column' />";
+	$content .= "<col id='mysql_column' />";
+	$sqliteWorking = false;
+	$mysqlWorking = false;
+	$content .= "<tr><td></td><td>SQLite</td><td>MySQL</td></tr>";
+	$content .= "<tr><td>Connection</td>";
+	if(file_exists("sqlite/$SQLITEDB.db"))
+	{
+		$content .= "<td><span style='color:green'>Yes</span></td>";
+	}	
+	else
 		$content .= "<td><span style='color:red'>No</span></td>";
+	try{
+		$db = new PDO($MTA_DATAMANAGER_PDO_CONFIG["dsn"],
+		                    $MTA_DATAMANAGER_PDO_CONFIG["username"],
+		                    $MTA_DATAMANAGER_PDO_CONFIG["password"],
+		                    array(PDO::ATTR_PERSISTENT => true));
+		$content .= "<td><span style='color:green'>Yes</span></td>";
+	} catch(Exception $e){
+		$content .= "<td><span style='color:red'>No</span></td>";
+		$error = cleanString($e->getMessage());
+		if(strpos($error,"No such file or directory"))
+			$content .= "<td>Database Not Found. Ensure the correct DSN, user, and, password are set in config.php</td>";
+		elseif(strpos($error,"Connection refused"))
+			$content .= "<td>Connection refused</td>";
+		elseif(strpos($error,"Access denied for user"))
+			$content .= "<td></td>";
 	}
 	$content .= "</tr>";
-	
-	$content .= "<tr><td>SQLite schema:</td>";
-	if(file_exists("sqlite/$SQLITEDB.db")){
+	$content .= "<tr><td>Schema Present</td>";
+	if(file_exists("sqlite/$SQLITEDB.db"))
+	{
 		$sqlitedb = new PDO("sqlite:sqlite/$SQLITEDB.db");
 		$result = $sqlitedb->query("SELECT name FROM sqlite_master WHERE type='table';");
 		$tableList = array();
+		/*if(array_reduce($MYSQLcorrectSchema, function($res, $item) use ($tableList){return $res AND in_array($item, $tableList);}))
+			$SQLiteschemastatus .= "<td><span style='color:red'>No</span></td></tr>";
+		else
+			$SQLiteschemastatus = "<td><span style='color:green'>Yes</span></td></tr>";*/
 		while ($table = $result->fetch(SQLITE3_ASSOC)) {
         	$tableList[] = $table['name'];
     	}
@@ -49,32 +76,15 @@ try
     		}
     	}
     	if(!$SQLiteschemastatus)
+    	{
     		$SQLiteschemastatus = "<td><span style='color:green'>Yes</span></td></tr>";
+    		$sqliteWorking = true;	
+		}
     	$content .= $SQLiteschemastatus;
 	}
-	$content .= "</tr>";
+	else
+		$content .= "<td>&nbsp</td>";
 	
-	$content .= "<tr><td>MYSQL database connection:</td>";
-	//1. The database is accessible
-	try{
-		$db = new PDO($MTA_DATAMANAGER_PDO_CONFIG["dsn"],
-		                    $MTA_DATAMANAGER_PDO_CONFIG["username"],
-		                    $MTA_DATAMANAGER_PDO_CONFIG["password"],
-		                    array(PDO::ATTR_PERSISTENT => true));
-		$content .= "<td><span style='color:green'>Yes</span></td></tr>";
-	} catch(Exception $e){
-		$content .= "<td><span style='color:red'>No</span></td>";
-		$error = cleanString($e->getMessage());
-		if(strpos($error,"No such file or directory"))
-			$content .= "<td>Database Not Found. Ensure the correct DSN, user, and, password are set in config.php</td>";
-		elseif(strpos($error,"Connection refused"))
-			$content .= "<td>Connection refused</td>";
-		elseif(strpos($error,"Access denied for user"))
-			$content .= "<td></td>";
-	}
-	$content .= "</tr>";
-	
-	$content .= "<tr><td>MYSQL schema:</td>";
 	if($db)
 	{
 		//2. and has a schema
@@ -92,19 +102,49 @@ try
     		}
     	}
     	if(!$MYSQLschemastatus)
+		{
     		$MYSQLschemastatus = "<td><span style='color:green'>Yes</span></td>";
+			$mysqlWorking = true;	
+		}
     	$content .= $MYSQLschemastatus;
 		$content .= "</tr>";
 	}
+	else
+		$content .= "<td>&nbsp</td>";
+		
+	$content .= "</tr>";
+	$content .= "<tr><td>Database Working Status:</td><td colspan = '2'>";
+	if( ($driver == 'sqlite' && $sqliteWorking) || ($driver == 'mysql' && $mysqlWorking))
+		$content .= "<span style='color:green'>Yes</span>";
+	else
+		$content .= "<span style='color:red'>No</span>";
+	$content .= "</td></tr>";
+	$content .= "</table>";
 	
+	$handle = @fopen('./config.php', 'r');
+	$driverUsed = NULL;
+	if ($handle) {
+    	while (($buffer = fgets($handle, 4096)) !== false) 
+    	{
+	        if(preg_match("/$driver/", $buffer))
+	        {
+				$pos = strpos($buffer, '=');
+				$driverUsed = trim(str_replace( array('"',';'), '', substr($buffer, $pos+1)));
+			}
+	    }
+	    if (!feof($handle)) {
+	        echo 'Error: unexpected fgets() fail\n';
+	    }
+	    fclose($handle);
+	}
+	$content .= "<script type='text/javascript'>
+		$('#sqlite_column').css('background-color','#F5F6CE');				
+	</script>";
+	
+	$content .= "<table>";
 	$content .= "<tr><td>htaccess Working Status:</td>";
 	$content .= "<td><div id='htaccessstatus'></div></td>";
 	$content .= "</tr>";
-    
-    /*$content .= "<iframe src='$SITEURL/TEST100/login.php' id='iframe'>
-    				<p>iframes are not supported by your browser.</p>
-    			</iframe>";*/
-    
     $content .= "<script type='text/javascript'>		
 
 	var httpRequest = new XMLHttpRequest();
@@ -148,35 +188,61 @@ try
 	else
 		$content .= "<td><span style='color:red'>No</span></td>";
 	$content .= "</tr>";
-	
 	$content .= "</table>";
 	
-	clearstatcache();
-	$content .= "<h3>Important File Permissions</h3>";
-	$content .= "<table>";
-	$content .= "<tr><td>.user.ini</td><td>".substr(sprintf('%o', fileperms('.user.ini')), -4)."</td></tr>";
-	$content .= "<tr><td>/peerreview/.user.ini</td><td>".substr(sprintf('%o', fileperms('peerreview/.user.ini')), -4)."</td></tr>";
-	$content .= "<tr><td>/grouppicker/.user.ini</td><td>".substr(sprintf('%o', fileperms('grouppicker/.user.ini')), -4)."</td></tr>";
-	$content .= "<tr><td>/admin/.htpasswd</td><td>".substr(sprintf('%o', fileperms('admin/.htpasswd')), -4)."</td></tr>";
-	$content .= "<tr><td>/admin/.htaccess</td><td>".substr(sprintf('%o', fileperms('admin/.htaccess')), -4)."</td></tr>";
-	$handle = @fopen("./config.php", "r");
+	//clearstatcache();
+	//$content .= "<tr><td>/peerreview/.user.ini</td><td>".substr(sprintf('%o', fileperms('peerreview/.user.ini')), -4)."</td></tr>";
+	
+	$unreadables = array();
+	#user.ini in peerreview directory
+	if(!is_readable('.user.ini'))
+		$unreadables[] = '.user.ini';
+	
+	#user.ini in peerreview directory
+	if(!is_readable('peerreview/.user.ini'))
+		$unreadables[] = 'peerreview/.user.ini';
+	
+	#user.ini in grouppicker directory 
+	if(!is_readable('grouppicker/.user.ini'))
+		$unreadables[] = 'grouppicker/.user.ini';
+	
+	#Admin htpasswd file
+	if(!is_readable('admin/.htpasswd'))
+		$unreadables[] = 'admin/.htpasswd';
+	
+	#Admin htaccess file
+	if(!is_readable('admin/.htaccess'))
+		$unreadables[] = 'admin/.htaccess';
+		
+	#CSS File
+	//First detect which theme is used in config.php
+	$handle = @fopen('./config.php', 'r');
 	$themeUsed = NULL;
 	if ($handle) {
     	while (($buffer = fgets($handle, 4096)) !== false) 
     	{
 	        if(preg_match("/$MTA_THEME/", $buffer))
 	        {
-				$pos = strpos($buffer, "=");
-				$themeUsed = str_replace( array(' ','"',';'), '', substr($buffer, $pos+1));
+				$pos = strpos($buffer, '=');
+				$themeUsed = trim(str_replace( array('"',';'), '', substr($buffer, $pos+1)));
 			}
 	    }
 	    if (!feof($handle)) {
-	        echo "Error: unexpected fgets() fail\n";
+	        echo 'Error: unexpected fgets() fail\n';
 	    }
 	    fclose($handle);
 	}
-	$content .= "<tr><td>themes/$themeUsed/style.css</td><td>".substr(sprintf('%o', fileperms("themes/".$themeUsed."/style.css")), -4)."</td></tr>";
-	$content .= "</table>";
+	if(!is_readable("themes/$themeUsed/style.css"))
+		$unreadables[] = "themes/$themeUsed/style.css";
+	
+	if(!empty($unreadables))
+	{
+		$content .= "<h3>Important Files that are not readable</h3>";
+		$content .= "<table>";
+		foreach($unreadables as $file)
+			$content .= "<tr><td>mta/$file</td></tr>";
+		$content .= "</table>";
+	}
 	
     //2. Redirects based on .htaccess are working properly (this might need to go through an iframe)
     //    One of the failure modes that I often encounter is enabling .htaccess in Apache, so some way to detect whether it is enabled and working would be helpful.

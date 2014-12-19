@@ -21,22 +21,29 @@ $SQLitecorrectSchema = array ( "0" => "appeal_assignment" , "1" => "assignment_p
 
 try
 {
+	$sqliteWorking = false;
+	$mysqlWorking = false;
+	
 	$content = "<h1>Lint page</h1>";
+	
+	$content .= "<table>";
+	$content .= "<tr><td>Database driver set as:</td><td>$driver</td></tr>";
+	$content .= "</table>";
 	
 	$content .= "<table>";
 	$content .= "<col/>";
 	$content .= "<col id='sqlite_column'/>";
+	$content .= "<col/>";
 	$content .= "<col id='mysql_column'/>";
-	$sqliteWorking = false;
-	$mysqlWorking = false;
-	$content .= "<tr><td></td><td>SQLite</td><td>MySQL</td></tr>";
+	$content .= "<tr><td></td><td>SQLite</td><td><td>MySQL</td></tr>";
 	$content .= "<tr><td>Connection</td>";
 	if(file_exists("sqlite/$SQLITEDB.db"))
 	{
-		$content .= "<td><span style='color:green'>Yes</span></td>";
+		$content .= "<td><span style='color:green'>Yes</span></td><td></td>";
 	}	
 	else
 		$content .= "<td><span style='color:red'>No</span></td>";
+		$content .= "<td>Could not find SQLite database '$SQLITEDB.db'";
 	try{
 		$db = new PDO($MTA_DATAMANAGER_PDO_CONFIG["dsn"],
 		                    $MTA_DATAMANAGER_PDO_CONFIG["username"],
@@ -72,18 +79,19 @@ try
     		if(!in_array($table, $tableList))
     		{
     			$SQLiteschemastatus .= "<td><span style='color:red'>No</span></td>";
+				$SQLiteschemastatus .= "<td>Database schema is not correct</td>";
     			break;
     		}
     	}
     	if(!$SQLiteschemastatus)
     	{
-    		$SQLiteschemastatus = "<td><span style='color:green'>Yes</span></td>";
+    		$SQLiteschemastatus = "<td><span style='color:green'>Yes</span></td><td></td>";
     		$sqliteWorking = true;	
 		}
     	$content .= $SQLiteschemastatus;
 	}
 	else
-		$content .= "<td>&nbsp</td>";
+		$content .= "<td></td><td></td>";
 	
 	if($db)
 	{
@@ -114,13 +122,14 @@ try
 		$content .= "<td>&nbsp</td>";
 		
 	$content .= "</tr>";
+	$content .= "</table>";
+	$content .= "<table>";
 	$content .= "<tr><td>Database Working Status:</td><td colspan = '2'>";
 	if( ($driver == 'sqlite' && $sqliteWorking) || ($driver == 'mysql' && $mysqlWorking))
 		$content .= "<span style='color:green'>Yes</span>";
 	else
 		$content .= "<span style='color:red'>No</span>";
 	$content .= "</td></tr>";
-	$content .= "</table>";
 	
 	$handle = @fopen('./config.php', 'r');
 	$driverUsed = NULL;
@@ -144,7 +153,6 @@ try
 			$('#".$driverUsed."_column').css('background-color','#F5F6CE');				
 	</script>";
 	
-	$content .= "<table>";
 	$content .= "<tr><td>htaccess Working Status:</td>";
 	$content .= "<td><div id='htaccessstatus'></div></td>";
 	$content .= "</tr>";

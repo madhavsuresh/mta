@@ -291,16 +291,18 @@ function go_without_prettyurls()
 function render_exception_page($exception)
 {
     global $SITEMASTER, $content, $_SESSION, $_GET, $_POST, $SHOW_EXCEPTION_STACK_TRACE;
-    $content  = "<h1>Ooops!</h1>";
-    $content .= "<h3>The server beasts have eaten your request!</h3>";
-
+    //$content  = "<h1>Ooops!</h1>";
+    //$content .= "<h3>The server beasts have eaten your request!</h3>";
+    $content  = "<h1>Error</h1>";
+    $content .= "<h3>Something seems to have gone wrong</h3>";
+    
     //Do we show the full exception or just the message
     if(isset($SHOW_EXCEPTION_STACK_TRACE) && $SHOW_EXCEPTION_STACK_TRACE)
         $content .= cleanString($exception);
     else
         $content .= cleanString($exception->getMessage());
     
-    $content .= "<br><br><center><a href='http://theoatmeal.com'><img src='".get_ui_url(false)."tumbeasts.png'/></a></ceter>\n";
+    //$content .= "<br><br><center><a href='http://theoatmeal.com'><img src='".get_ui_url(false)."tumbeasts.png'/></a></ceter>\n";
 
     $dump  = $exception."\n\n";
     $dump .= "URL: ".$_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"]."\n\n";

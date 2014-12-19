@@ -51,7 +51,7 @@ try
 		elseif(strpos($error,"Connection refused"))
 			$content .= "<td>Connection refused</td>";
 		elseif(strpos($error,"Access denied for user"))
-			$content .= "<td></td>";
+			$content .= "<td>Access denied for user</td>";
 	}
 	$content .= "</tr>";
 	$content .= "<tr><td>Schema Present</td>";

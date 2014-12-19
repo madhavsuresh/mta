@@ -126,6 +126,9 @@ try
             $content .= "</div>\n";
         }
         $content .= "</div>\n";
+		//for operating without htaccess rewrites
+		if(!file_exists('.htaccess'))
+			$content .= "<input type='hidden' name='courseid' value='".$_GET["courseid"]."'>";
 
         $content .= "<br><br><input type='submit' value='Set Arguments' />\n";
         $content .= "</form>\n";

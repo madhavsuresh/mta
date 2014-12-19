@@ -150,6 +150,7 @@ try
 	$content .= "<input type='submit' value='Save'>";
 	$content .= "</form>";
 	
+	$content .= notpretty();
     render_page();
 }catch(Exception $e){
     render_exception_page($e);

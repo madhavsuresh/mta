@@ -13,6 +13,7 @@ try
     $submissionAuthorMap = $assignment->getAuthorSubmissionMap();
     $reviewerAssignment = $assignment->getReviewerAssignment();
     $userDisplayMap = $dataMgr->getUserDisplayMap();
+	$droppedStudents = $dataMgr->getDroppedStudents();
 
     //Load up everything in the post
     foreach($submissionAuthorMap as $_ => $submissionID){
@@ -110,6 +111,11 @@ try
     foreach($userDisplayMap as $author => $authorName){
         if(!array_key_exists($author, $submissionAuthorMap))
             continue;
+		$submissionID = $submissionAuthorMap[$author];
+		if(!array_key_exists($submissionID->id, $reviewerAssignment))
+        	continue;
+        if(in_array($author, $droppedStudents))
+        	$authorName .= "<sub style='color:#FE2E2E;'>dropped</sub>";	
         $content .= "<tr ><td class='rowType$currentRowType'><div style='height:1.5em;'>$authorName</div></td><tr>\n";
         $currentRowType = ($currentRowType+1)%2;
     }
@@ -125,6 +131,8 @@ try
         if(!array_key_exists($author, $submissionAuthorMap))
             continue;
         $submissionID = $submissionAuthorMap[$author];
+		if(!array_key_exists($submissionID->id, $reviewerAssignment))
+        	continue;
         $content .= "<tr class='rowType$currentRowType'>\n";
         for($i = 0; $i < $numCols; $i++)
         {
@@ -145,6 +153,8 @@ try
                 foreach($availibleReviewers as $reviewer => $reviewerName){
                     if($reviewer == $author)
                         continue;
+					if(in_array($reviewer, $droppedStudents))
+						continue;
                     $selected = '';
                     if(isset($reviewerAssignment[$submissionID->id][$i]) && $reviewer == $reviewerAssignment[$submissionID->id][$i]->id)
                         $selected = 'selected';
@@ -152,7 +162,10 @@ try
                 }
                 $content .= "</select>\n";
             }else{
-                $content .= $userDisplayMap[$reviewerAssignment[$submissionID->id][$i]->id];
+            	$name = $userDisplayMap[$reviewerAssignment[$submissionID->id][$i]->id];
+            	if(in_array($reviewerAssignment[$submissionID->id][$i]->id, $droppedStudents))
+					$name .= "<sub style='color:#FE2E2E;'>dropped</sub>";
+                $content .= $name;
             }
             $content .= "</div></td>\n";
         }

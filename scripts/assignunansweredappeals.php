@@ -39,7 +39,7 @@ class AssignUnansweredAppealsScript extends Script
 		foreach($markers as $markerID)
 			$targetLoads[$markerID] = precisionFloat($markingLoadMap[$markerID]/$sumLoad);
 		
-		$unansweredappeals = $dataMgr->assignOldUnansweredAppeals();
+		$unansweredappeals = $dataMgr->getOldUnansweredAppeals();
 		
 		$markerJobs = array();
 		foreach($markers as $markerID)

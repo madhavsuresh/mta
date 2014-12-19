@@ -32,8 +32,6 @@ class CopyAssignmentsScript extends Script
 		
 		$html .= "</div>\n";
 		
-		$html .= "Please select assignments from $dataMgr->courseName - $dataMgr->courseDisplayName below:";
-		
 		$html .= "<div id='assignmentSelect' style='margin-bottom: 20px; border-width: 1px; border-style: solid; border-color: black; padding:10px'>";
 		
 		foreach($dataMgr->getInstructedAssignmentHeaders($USERID) as $assignmentObj){

@@ -467,16 +467,16 @@ class PeerReviewAssignment extends Assignment
 
         $html .= "<table align='left' width='100%'>\n";
         $html .= "<tr><td width=190>&nbsp;</td></tr>\n";
-        $html .= "<tr><td>Submission&nbsp;Start&nbsp;Date</td><td><input type='text' name='submissionStartDate' id='submissionStartDate' /></td></tr>\n";
-        $html .= "<tr><td>Submission&nbsp;Stop&nbsp;Date</td><td><input type='text' name='submissionStopDate' id='submissionStopDate'/></td></tr>\n";
+        $html .= "<tr><td>Submission&nbsp;Start&nbsp;Date</td><td><input type='text' name='submissionStartDate' id='submissionStartDate' class='dateInput'/></td></tr>\n";
+        $html .= "<tr><td>Submission&nbsp;Stop&nbsp;Date</td><td><input type='text' name='submissionStopDate' id='submissionStopDate' class='dateInput'/></td></tr>\n";
         $html .= "<tr><td>&nbsp;</td></tr>\n";
-        $html .= "<tr><td>Review&nbsp;Start&nbsp;Date</td><td><input type='text' name='reviewStartDate' id='reviewStartDate' /></td></tr>\n";
-        $html .= "<tr><td>Review&nbsp;Stop&nbsp;Date</td><td><input type='text' name='reviewStopDate' id='reviewStopDate' /></td></tr>\n";
+        $html .= "<tr><td>Review&nbsp;Start&nbsp;Date</td><td><input type='text' name='reviewStartDate' id='reviewStartDate' class='dateInput'/></td></tr>\n";
+        $html .= "<tr><td>Review&nbsp;Stop&nbsp;Date</td><td><input type='text' name='reviewStopDate' id='reviewStopDate' class='dateInput'/></td><td><div id='error_reviewStopDate' style='color:red'></div></td></tr>\n";
 		$html .= "<tr><td>&nbsp;</td></tr>\n";
-		$html .= "<tr><td>Calibration&nbsp;Start&nbsp;Date</td><td><input type='text' name='calibrationStartDate' id='calibrationStartDate' /></td></tr>\n";
-        $html .= "<tr><td>Calibration&nbsp;Stop&nbsp;Date</td><td><input type='text' name='calibrationStopDate' id='calibrationStopDate'/></td></tr>\n";
+		$html .= "<tr><td>Calibration&nbsp;Start&nbsp;Date</td><td><input type='text' name='calibrationStartDate' id='calibrationStartDate' class='dateInput'/></td></tr>\n";
+        $html .= "<tr><td>Calibration&nbsp;Stop&nbsp;Date</td><td><input type='text' name='calibrationStopDate' id='calibrationStopDate'class='dateInput'/></td></tr>\n";
         $html .= "<tr><td>&nbsp;</td></tr>\n";
-        $html .= "<tr><td>Mark&nbsp;Post&nbsp;Date</td><td><input type='text' name='markPostDate' id='markPostDate' /></td></tr>\n";
+        $html .= "<tr><td>Mark&nbsp;Post&nbsp;Date</td><td><input type='text' name='markPostDate' id='markPostDate' class='dateInput'/></td><td><div id='error_markPostDate' style='color:red'></div></td></tr>\n";
         $html .= "<tr><td>&nbsp;</td></tr>\n";
         $html .= "<tr><td>Max&nbsp;Submission&nbsp;Score</td><td><input type='text' name='maxSubmissionScore' id='maxSubmissionScore' value='$this->maxSubmissionScore'/></td></tr>\n";
         $html .= "<tr><td>Max&nbsp;Review&nbsp;Score</td><td><input type='text' name='maxReviewScore' id='maxReviewScore' value='$this->maxReviewScore'/></td></tr>\n";
@@ -487,7 +487,7 @@ class PeerReviewAssignment extends Assignment
 
         $html .= "<tr><td>Allow&nbsp;Request&nbsp;of&nbsp;Reviews</td><td><input type='checkbox' name='allowRequestOfReviews' id='allowRequestOfReviews' $tmp /></td></tr>\n";
         $html .= "<tr><td>&nbsp;</td></tr>\n";
-        $html .= "<tr><td>Appeal&nbsp;Stop&nbsp;Date</td><td><input type='text' name='appealStopDate' id='appealStopDate' /></td></tr>\n";
+        $html .= "<tr><td>Appeal&nbsp;Stop&nbsp;Date</td><td><input type='text' name='appealStopDate' id='appealStopDate' class='dateInput'/></td><td><div id='error_appealStopDate' style='color:red'></div></td></tr>\n";
         $html .= "<tr><td>&nbsp;</td></tr>\n";
 
         $tmp = '';
@@ -568,6 +568,8 @@ class PeerReviewAssignment extends Assignment
 
             $html .= "<input type='checkbox' name='calibrationPoolAssignmentIds[]' value='$assgn->assignmentID' $tmp /> $assgn->name <br>\n";
         }*/
+        
+        $html .= "<div id='error_blankDate' style='color:red'></div>";
 
         return $html;
     }
@@ -590,7 +592,13 @@ class PeerReviewAssignment extends Assignment
     function _getValidationCode()
     {
         global $PEER_REVIEW_SUBMISSION_TYPES;
-        $code = "$('#submissionStartDateSeconds').val(moment($('#submissionStartDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
+		//$code = "alert('The value is '+$('#calibrationStopDate').val());";
+		/*$code .= "if($('#calibrationStopDate').val() == ''){
+					alert('GNYAHH');
+					//$('#error_blankDate').html('There is data input that is blank');
+					error = true;
+					}else{alert('BLAH');}";*/
+        $code .= "$('#submissionStartDateSeconds').val(moment($('#submissionStartDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
         $code .= "$('#submissionStopDateSeconds').val(moment($('#submissionStopDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
         $code .= "$('#reviewStartDateSeconds').val(moment($('#reviewStartDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
         $code .= "$('#reviewStopDateSeconds').val(moment($('#reviewStopDate').val(), 'MM/DD/YYYY HH:mm').unix());\n";
@@ -608,12 +616,32 @@ class PeerReviewAssignment extends Assignment
             $code .= $settings->getValidationCode();
             $code .= "}";
         }
+		
         return $code;
     }
 
     function _getFormScripts()
     {
-        $code  = init_tiny_mce(false);
+        $code  = init_tiny_mce(false);      
+		$code .= "<script type='text/javascript'>
+					function checkWithSubmissionDate(){	
+						if($('#submissionStopDate').val() >= $('#reviewStopDate').val()) {
+							$('#error_reviewStopDate').html('Review stop date is not after the submission stop date');\n
+						}else{
+							$('#error_reviewStopDate').html('');
+						}
+						if($('#submissionStopDate').val() >= $('#markPostDate').val()) {
+							$('#error_markPostDate').html('Mark post date is not after the submission stop date');\n
+						}else{
+							$('#error_markPostDate').html('');
+						}
+						if($('#submissionStopDate').val() >= $('#appealStopDate').val()) {
+							$('#error_appealStopDate').html('Appeal post date is not after the submission stop date');\n
+						}else{
+							$('#error_appealStopDate').html('');
+						}
+					}
+				</script>";
         $code .= $this->getScriptForDatePickers('submissionStartDate','submissionStopDate',$this->submissionStartDate, $this->submissionStopDate);
         $code .= $this->getScriptForDatePickers('reviewStartDate','reviewStopDate', $this->reviewStartDate, $this->reviewStopDate);
         $code .= "<script type='text/javascript'> $('#markPostDate').datetimepicker({ defaultDate : new Date(".($this->markPostDate*1000).")}); </script>\n";
@@ -635,7 +663,7 @@ class PeerReviewAssignment extends Assignment
             $maxDate = "new Date(".($stopDate*1000).")";
         return "  <script type='text/javascript'>
                 $('#$startID').datetimepicker({
-                    maxDate: $maxDate,
+                	//maxDate: $maxDate,
                     showOtherMonths: true,
                     selectOtherMonths: true,
                     defaultDate : $minDate,
@@ -651,16 +679,17 @@ class PeerReviewAssignment extends Assignment
                         else {
                             endDateTextBox.val(dateText);
                         }
+						checkWithSubmissionDate();
                     },
                     onSelect: function (selectedDateTime){
                         var start = $(this).datetimepicker('getDate');
                         var d = new Date($('#$stopID').datetimepicker('getDate'));
-                        $('#$stopID').datetimepicker('option', 'minDate', new Date(start.getTime()));
+                        //$('#$stopID').datetimepicker('option', 'minDate', new Date(start.getTime()));
                         $('#$stopID').val(zeroFill(d.getMonth() + 1, 2) + '/' + zeroFill(d.getDate(), 2) + '/' + d.getFullYear() + ' ' + zeroFill(d.getHours(), 2) + ':' + zeroFill(d.getMinutes(), 2));
                     },
                 });
                 $('#$stopID').datetimepicker({
-                    minDateTime: $minDate,
+                	//minDate: $minDate,
                     showOtherMonths: true,
                     selectOtherMonths: true,
                     defaultDate : $maxDate,
@@ -675,11 +704,12 @@ class PeerReviewAssignment extends Assignment
                         else {
                             startDateTextBox.val(dateText);
                         }
+						checkWithSubmissionDate();
                     },
                     onSelect: function (selectedDateTime){
                         var end = $(this).datetimepicker('getDate');
                         var d = new Date($('#$startID').datetimepicker('getDate'));
-                        $('#$startID').datetimepicker('option', 'maxDate', new Date(end.getTime()));
+                        //$('#$startID').datetimepicker('option', 'maxDate', new Date(end.getTime()));
                         $('#$startID').val(zeroFill(d.getMonth() + 1, 2) + '/' + zeroFill(d.getDate(), 2) + '/' + d.getFullYear() + ' ' + zeroFill(d.getHours(), 2) + ':' + zeroFill(d.getMinutes(), 2));
                     }
     });".
@@ -721,7 +751,7 @@ class PeerReviewAssignment extends Assignment
     {
         #Figure out the maximum number of reviews that a person did
         $reviewAssignment = $this->dataMgr->getReviewerAssignment($this);
-        $maxReviews = array_reduce($reviewAssignment, function ($a, $b) { return max(sizeof($a), sizeof($b)); });
+        $maxReviews = array_reduce($reviewAssignment, function ($a, $b) { return max($a, sizeof($b)); });
         $authorMap = $this->dataMgr->getAuthorSubmissionMap($this);
 
         $grades = new AssignmentGrades();

@@ -36,7 +36,7 @@ class ComputeIndependentsFromCalibrationsPeerReviewScript extends Script
         //$minimumCalibrationReviews = require_from_post("minimumReviews");
         //$independentThreshold = require_from_post("threshold");
         $userNameMap = $dataMgr->getUserDisplayMap();
-        $students = $dataMgr->getStudents();
+        $students = $dataMgr->getActiveStudents();
         if(array_key_exists("keep", $_POST)){
             $independents = $currentAssignment->getIndependentUsers();
         }else{

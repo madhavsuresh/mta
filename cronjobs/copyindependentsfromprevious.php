@@ -7,7 +7,7 @@ class CopyIndependentsFromPreviousCronJob
     {
     	try{
 	    	//First check if the job has already been done
-	    	if($globalDataMgr->isJobDone($assignmentID, 'assignreviews'))
+	    	if($globalDataMgr->isJobDone($assignmentID, 'copyindependentsfromprevious'))
 				return;
 			
 			//Get all the assignments
@@ -16,12 +16,14 @@ class CopyIndependentsFromPreviousCronJob
 			$currentAssignment = $globalDataMgr->getAssignment($assignmentID);
 			$assignments = $globalDataMgr->getAssignmentsBefore($assignmentID, 1);
 			
-			if(sizeof($assignments) != 1){
-			    throw new Exception("Could not find exactly one previous assignment!");
+			if(sizeof($assignments) != 1){				
+			    //throw new Exception("Could not find exactly one previous assignment!");
+			    $globalDataMgr->createNotification($assignmentID, 'copyindependentsfromprevious', 1, "Not done. Could not find exactly one previous assignment!", "");
+				return;
 			}
 			
 			$userNameMap = $globalDataMgr->getUserDisplayMapByAssignment($assignmentID);
-			$students = $globalDataMgr->getStudentsByAssignment($assignmentID);
+			$students = $globalDataMgr->getActiveStudentsByAssignment($assignmentID);
 			$currentIndependents = $currentAssignment->getIndependentUsers();
 			$previousIndependents = $assignments[0]->getIndependentUsers();
 			$independents = array();

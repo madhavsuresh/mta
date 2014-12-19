@@ -44,6 +44,7 @@ try
     $stats = $assignment->getAssignmentStatistics();
     $userStats = $assignment->getAssignmentStatisticsForUser($USERID);
     $displayMap = $dataMgr->getUserDisplayMap();
+	$droppedStudents = $dataMgr->getDroppedStudents();
 	
     //Start making the big table
     $content .= "<h1>Submissions (".$stats->numSubmissions."/".$stats->numPossibleSubmissions.") and Reviews (".$stats->numStudentReviews."/".$stats->numPossibleStudentReviews.")</h1>";
@@ -81,6 +82,7 @@ try
     $content .= "<table width='100%'>\n";
     $currentRowIndex = 0;
     $currentRowType = 0;
+	ini_set('display_errors','On');
     foreach($displayMap as $authorID => $authorName)
     {
         $authorID = new UserID($authorID);
@@ -90,7 +92,16 @@ try
         }
         $submissionID = null;
         if(array_key_exists($authorID->id, $submissionAuthors))
+		{
             $submissionID = $submissionAuthors[$authorID->id];
+		}
+		if(in_array($authorID->id, $droppedStudents)){
+			if($submissionID == NULL)
+				continue;
+			//TODO:What if all the reviewers are dropped students???
+			elseif(empty($reviewMap[$submissionID->id]))
+				continue;
+		}
         $currentRowType = ($currentRowType+1)%2;
         $currentRowIndex++;
 
@@ -245,7 +256,7 @@ try
         $content .= "</td></tr>";
     }
     $content .= "</table>\n";
-
+    
     render_page();
 }catch(Exception $e){
     render_exception_page($e);

@@ -12,22 +12,33 @@ class ExportCalibrationsPeerReviewScript extends Script
     {
         return "Dumps out the calibration data for analysis";
     }
-
-    function getFormHTML()
+	function getFormHTML()
+    {
+        $html  = "<table width='100%'>\n";
+        $html .= "<tr><td>Include dropped students</td><td>";
+        $html .= "<input type='checkbox' name='includedropped' value='includedropped' checked/></td></tr>";
+        $html .= "</table>\n";
+        return $html;
+    }
+    /*function getFormHTML()
     {
         return "(None)";
     }
     function hasParams()
     {
         return false;
-    }
+    }*/
     function executeAndGetResult()
     {
         global $dataMgr;
         //Get all the assignments
         $currentAssignment = get_peerreview_assignment();
 
-        $students = $dataMgr->getStudents();
+		if(array_key_exists("includedropped", $_POST)){
+            $students = $dataMgr->getStudents();
+        }else{
+            $students = $dataMgr->getActiveStudents();
+        }
 
         $instructorReviews = array();
         $assignments = array();

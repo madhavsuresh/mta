@@ -41,7 +41,7 @@ class DownloadGradesScript extends Script
         }
 
         //First, we need to pump out the first row
-        $csv = ",";
+        $csv = ",,";
         for($i = 0; $i < sizeof($assignmentNames); $i++)
         {
             $csv .= ",".$assignmentNames[$i];
@@ -51,7 +51,7 @@ class DownloadGradesScript extends Script
             }
         }
         //Next, pump out the sub header row
-        $csv .= "\nName,StudentID";
+        $csv .= "\nFirstName,LastName,StudentID";
         foreach($assignmentGrades as $grades)
         {
             foreach($grades->headers as $header)
@@ -60,12 +60,12 @@ class DownloadGradesScript extends Script
             }
         }
 
-        $students = $dataMgr->getStudents();
+        $students = $dataMgr->getActiveStudents();
         $studentIDs = $dataMgr->getStudentIDMap();
-        $displayNames = $dataMgr->getUserDisplayMap();
+        $displayNames = $dataMgr->getUserDisplayMap2();
         foreach($students as $userID)
         {
-            $csv .= "\n".$displayNames[$userID->id].",".$studentIDs[$userID->id];
+            $csv .= "\n".$displayNames[$userID->id]->firstName.",".$displayNames[$userID->id]->lastName.",".$studentIDs[$userID->id];
 
             foreach($assignmentGrades as $grades)
             {

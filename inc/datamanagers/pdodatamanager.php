@@ -13,7 +13,57 @@ class PDODataManager extends DataManager
         }
         return $this->$name;
     }
-
+	
+	function from_unixtime($seconds)
+	{
+		$driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+		if($driver == 'sqlite')
+			return "datetime($seconds,'unixepoch')";
+		elseif($driver == 'mysql') 
+			return "FROM_UNIXTIME($seconds)";
+	}
+	
+	function unix_timestamp($seconds)
+	{
+		$driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+		if($driver == 'sqlite')
+			return "strftime('%s',$seconds)";
+		elseif($driver == 'mysql') 
+			return "UNIX_TIMESTAMP($seconds)";
+	}
+	
+	function add_seconds($time, $seconds)
+	{
+		$driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+		if($driver == 'sqlite')
+			return "datetime($time, '+$seconds seconds')";
+		elseif($driver == 'mysql') 
+			return "($time + INTERVAL $seconds SECOND)";
+	}
+	
+	function connectToDB($driver)
+	{
+		if($driver == 'mysql')
+		{
+			global $MTA_DATAMANAGER_PDO_CONFIG;
+	        if(!isset($MTA_DATAMANAGER_PDO_CONFIG["dsn"])) { die("PDO Data manager needs a DSN"); }
+	        if(!isset($MTA_DATAMANAGER_PDO_CONFIG["username"])) { die("PDODataManager needs a database user name"); }
+	        if(!isset($MTA_DATAMANAGER_PDO_CONFIG["password"])) { die("PDODataManager needs a database user password"); }
+	        //Load up a connection to the database
+	        $this->db = new PDO($MTA_DATAMANAGER_PDO_CONFIG["dsn"],
+	                    $MTA_DATAMANAGER_PDO_CONFIG["username"],
+	                    $MTA_DATAMANAGER_PDO_CONFIG["password"],
+	                    array(PDO::ATTR_PERSISTENT => true));
+		}
+		elseif($driver == 'sqlite')
+		{
+			global $SQLITEDB;
+	        $this->db = new PDO("sqlite:".MTA_ROOTPATH."sqlite/$SQLITEDB.db");
+		}
+		else 
+			throw new Exception("Database driver not recognized");
+	}
+	
     private $isUserQuery;
     private $userIDQuery;
     private $isInstructorQuery;
@@ -21,41 +71,38 @@ class PDODataManager extends DataManager
     private $getConfigPropertyQuery;
     function __construct()
     {
-        global $MTA_DATAMANAGER_PDO_CONFIG;
-        if(!isset($MTA_DATAMANAGER_PDO_CONFIG["dsn"])) { die("PDO Data manager needs a DSN"); }
-        if(!isset($MTA_DATAMANAGER_PDO_CONFIG["username"])) { die("PDODataManager needs a database user name"); }
-        if(!isset($MTA_DATAMANAGER_PDO_CONFIG["password"])) { die("PDODataManager needs a database user password"); }
-        //Load up a connection to the database
-        $this->db = new PDO($MTA_DATAMANAGER_PDO_CONFIG["dsn"],
-                            $MTA_DATAMANAGER_PDO_CONFIG["username"],
-                            $MTA_DATAMANAGER_PDO_CONFIG["password"],
-                            array(PDO::ATTR_PERSISTENT => true));
-
+    	global $driver;
+        $this->connectToDB($driver);
         $this->db->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
         $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );
         $this->db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
-        $this->db->exec("SET NAMES 'utf8';");
-
-        $this->isUserQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? && userID=? ;"); //&& userType IN ('instructor', 'student', 'marker');");
-        $this->isStudentQuery = $this->db->prepare("SELECT userID FROM users WHERE userID=? && userType = 'student';");
-        $this->isUserByNameQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? && username=? && userType IN ('instructor', 'student', 'marker');");
-        $this->userIDQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? && username=? ;");
-        $this->isInstructorQuery = $this->db->prepare("SELECT userID FROM users WHERE userID=? && (userType IN ('instructor', 'shadowinstructor'));");
-        $this->isMarkerQuery = $this->db->prepare("SELECT userID FROM users WHERE userID=? && (userType IN ('marker', 'shadowmarker', 'instructor', 'shadowinstructor'));");
+        if($this->db->getAttribute(PDO::ATTR_DRIVER_NAME) == 'mysql')
+       		$this->db->exec("SET NAMES 'utf8';");
+		if($this->db->getAttribute(PDO::ATTR_DRIVER_NAME) == 'sqlite')
+		{
+			$this->db->exec("PRAGMA synchronous = OFF;");
+        	$this->db->exec("PRAGMA foreign_keys = ON;");
+		}
+        $this->isUserQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? AND userID=? ;"); //AND userType IN ('instructor', 'student', 'marker');");
+        $this->isStudentQuery = $this->db->prepare("SELECT userID FROM users WHERE userID=? AND userType = 'student';");
+        $this->isUserByNameQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? AND username=? AND userType IN ('instructor', 'student', 'marker');");
+        $this->userIDQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? AND username=? ;");
+        $this->isInstructorQuery = $this->db->prepare("SELECT userID FROM users WHERE userID=? AND (userType IN ('instructor', 'shadowinstructor'));");
+        $this->isMarkerQuery = $this->db->prepare("SELECT userID FROM users WHERE userID=? AND (userType IN ('marker', 'shadowmarker', 'instructor', 'shadowinstructor'));");
         $this->getAssignmentHeadersQuery = $this->db->prepare("SELECT assignmentID, name, assignmentType, displayPriority FROM assignments WHERE courseID = ? ORDER BY displayPriority DESC;");
         $this->getAssignmentHeaderQuery = $this->db->prepare("SELECT name, assignmentType, displayPriority FROM assignments WHERE assignmentID = ?;");
         $this->getUsernameQuery = $this->db->prepare("SELECT username FROM users WHERE userID=?;");
         $this->getUsersQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? ORDER BY lastName, firstName;");
-        $this->getStudentsQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? && userType = 'student' ORDER BY lastName, firstName;");
+        $this->getStudentsQuery = $this->db->prepare("SELECT userID FROM users WHERE courseID=? AND userType = 'student' ORDER BY lastName, firstName;");
         $this->getUserDisplayMapQuery = $this->db->prepare("SELECT userID, firstName, lastName FROM users WHERE courseID=? ORDER BY lastName, firstName;");
         $this->getUserDisplayNameQuery = $this->db->prepare("SELECT firstName, lastName FROM users WHERE userID=?;");
         $this->getUserAliasMapQuery = $this->db->prepare("SELECT userID, alias FROM users WHERE courseID=?;");
         $this->getUserAliasQuery = $this->db->prepare("SELECT alias FROM users WHERE userID=?;");
         $this->setUserAliasQuery = $this->db->prepare("UPDATE users SET alias = ? WHERE userID=?;");
-        $this->numUserTypeQuery = $this->db->prepare("SELECT COUNT(userID) FROM users WHERE courseID=? && userType=?;");
+        $this->numUserTypeQuery = $this->db->prepare("SELECT COUNT(userID) FROM users WHERE courseID=? AND userType=?;");
         $this->assignmentExistsQuery = $this->db->prepare("SELECT assignmentID FROM assignments WHERE assignmentID=?;");
         $this->assignmentFieldsQuery = $this->db->prepare("SELECT password, passwordMessage, visibleToStudents FROM assignments WHERE assignmentID=?;");
-        $this->getEnteredPasswordQuery = $this->db->prepare("SELECT userID from assignment_password_entered WHERE assignmentID = ? && userID = ?;");
+        $this->getEnteredPasswordQuery = $this->db->prepare("SELECT userID from assignment_password_entered WHERE assignmentID = ? AND userID = ?;");
         $this->userEnteredPasswordQuery = $this->db->prepare("INSERT INTO assignment_password_entered (assignmentID, userID) VALUES (?, ?);");
 
         $this->addAssignmentToCourseQuery = $this->db->prepare( "INSERT INTO assignments (courseID, name, displayPriority, assignmentType) SELECT :courseID, :name, COUNT(courseID), :type FROM assignments WHERE courseID=:courseID;",
@@ -65,20 +112,18 @@ class PDODataManager extends DataManager
         //$this->getConfigPropertyQuery = $this->db->prepare("SELECT *;");
         //$this->assignmentSwapDisplayOrderQuery = $this->db->prepare("UPDATE assignments SET
 
- 		$this->getInstructedAssignmentHeadersQuery = $this->db->prepare("SELECT assignmentID, name, courseID, assignmentType, displayPriority FROM assignments WHERE assignmentType = 'peerreview' && courseID IN (SELECT courseID FROM users WHERE username = ?) ORDER BY displayPriority ASC;");
-		//$this->getAllCalibrationPoolsQuery = $this->db->prepare("SELECT assignmentID, a.name, a.courseID, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_submissions ps, users u WHERE ps.assignmentID = a.assignmentID AND ps.authorID = u.a AND u.userType = 'anonymous' ORDER BY displayPriority ASC;");
-		$this->getAllCalibrationPoolsQuery = $this->db->prepare("SELECT a.assignmentID, a.name, a.courseID, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_calibration_pools pcp WHERE a.assignmentID = pcp.poolAssignmentID ORDER BY displayPriority ASC;");
+ 		$this->getInstructedAssignmentHeadersQuery = $this->db->prepare("SELECT assignmentID, name, courseID, assignmentType, displayPriority FROM assignments WHERE assignmentType = 'peerreview' AND courseID IN (SELECT courseID FROM users WHERE username = ?) ORDER BY displayPriority ASC;");
         
 		$this->getCalibrationAssignmentHeadersQuery = $this->db->prepare("SELECT a.assignmentID, a.name, a.assignmentType, a.displayPriority FROM assignments a, peer_review_assignment_calibration_matches pr WHERE a.assignmentID = pr.assignmentID AND courseID = ? ORDER BY displayPriority DESC;");
 		
 		#before deprication of calibration matches
 		//$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), prara.reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm, peer_review_assignment_calibration_matches pracm WHERE pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID AND pram.matchID = pracm.matchID ORDER BY prara.reviewTimeStamp DESC;");
 		#after deprication of calibration matches
-		$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), prara.reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 'attempt' AND pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;"); 
-		$this->getCalibrationReviewsAfterDateQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), prara.reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 'attempt' AND pram.reviewerID = ? AND prara.reviewTimestamp > FROM_UNIXTIME(?) AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;");
+		$this->getCalibrationReviewsQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), ".$this->unix_timestamp("reviewTimeStamp")." as reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 'attempt' AND pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;"); 
+		$this->getCalibrationReviewsAfterDateQuery = $this->db->prepare("SELECT DISTINCT(pram.matchID), ".$this->unix_timestamp("reviewTimeStamp")." as reviewTimeStamp, prarm.reviewPoints FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 'attempt' AND pram.reviewerID = ? AND prara.reviewTimestamp > ".$this->from_unixtime("?")." AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;");
 		
 		$this->numCalibrationReviewsQuery = $this->db->prepare("SELECT COUNT(DISTINCT pram.matchID) FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 'attempt' AND pram.reviewerID = ? AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;");
-       	$this->numCalibrationReviewsAfterDateQuery = $this->db->prepare("SELECT COUNT(DISTINCT pram.matchID) FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 'attempt' AND pram.reviewerID = ? AND prara.reviewTimestamp > FROM_UNIXTIME(?) AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;");
+       	$this->numCalibrationReviewsAfterDateQuery = $this->db->prepare("SELECT COUNT(DISTINCT pram.matchID) FROM peer_review_assignment_matches pram, peer_review_assignment_review_answers prara, peer_review_assignment_review_marks prarm WHERE pram.calibrationState = 'attempt' AND pram.reviewerID = ? AND prara.reviewTimestamp > ".$this->from_unixtime("?")." AND pram.matchID = prara.matchID AND pram.matchID = prarm.matchID ORDER BY prara.reviewTimeStamp DESC;");
        	
        	$this->latestAssignmentWithFlaggedIndependentsQuery = $this->db->prepare("SELECT peer_review_assignment.assignmentID FROM peer_review_assignment, peer_review_assignment_independent WHERE peer_review_assignment.assignmentID = peer_review_assignment_independent.assignmentID ORDER BY peer_review_assignment.calibrationStopDate DESC LIMIT 10");
         
@@ -146,7 +191,7 @@ class PDODataManager extends DataManager
     {
     	/*if($markingLoad != 0)
 		{*/
-			$sh = $this->db->prepare("UPDATE users SET username = ?, firstName = ?, lastName = ?, studentID = ?, userType = ?, markingLoad = ? WHERE userID = ?;");
+			$sh = $this->db->prepare("UPDATE users SET username = ?, firstName = ?, lastName = ?, studentID = ?, userType = ?, markingLoad = ?, dropped = 0 WHERE userID = ?;");
         	$sh->execute(array($username, $firstName, $lastName, $studentID, $type, $markingLoad, $id));
 		/*}
 		else
@@ -274,6 +319,7 @@ class PDODataManager extends DataManager
             return $sh->fetch()->value;
     }
 
+	//TODO: Get rid of this and use getUserDisplayMap2() instead
     function getUserDisplayMap()
     {
         $this->getUserDisplayMapQuery->execute(array($this->courseID));
@@ -285,7 +331,35 @@ class PDODataManager extends DataManager
         }
         return $users;
     }
-    
+	
+	function getUserDisplayMap2()
+    {
+        $this->getUserDisplayMapQuery->execute(array($this->courseID));
+
+        $users = array();
+        while($res = $this->getUserDisplayMapQuery->fetch())
+        {
+        	$obj = new stdClass();
+			$obj->firstName = $res->firstName;
+            $obj->lastName = $res->lastName;
+			$users[$res->userID] = $obj;
+        }
+        return $users;
+    }
+	
+	/*function getActiveStudentDisplayMap()
+	{
+		$sh = $this->prepareQuery("getActiveStudentDisplayMapQuery", "SELECT userID, firstName, lastName FROM users WHERE courseID=? ORDER BY lastName, firstName;");
+		$this->getUserDisplayMapQuery->execute(array($this->courseID));
+
+        $users = array();
+        while($res = $this->getUserDisplayMapQuery->fetch())
+        {
+            $users[$res->userID] = $res->firstName." ".$res->lastName;
+        }
+        return $users;
+	}*/
+	
     function getUserAliasMap()
     {
         $this->getUserAliasMapQuery->execute(array($this->courseID));
@@ -310,9 +384,23 @@ class PDODataManager extends DataManager
         return array_map(function($x) { return new UserID($x->userID); }, $this->getStudentsQuery->fetchAll());
     }
 
+	function getActiveStudents()
+    {
+        $sh = $this->prepareQuery("getActiveUsersQuery", "SELECT userID FROM users WHERE userType='student' AND dropped=0 AND courseID=?;");
+		$sh->execute(array($this->courseID));
+        return array_map(function($x) { return new UserID($x->userID); }, $sh->fetchAll());
+    }
+
+	function getDroppedStudents()
+    {
+        $sh = $this->prepareQuery("getActiveUsersQuery", "SELECT userID FROM users WHERE userType='student' AND dropped=1 AND courseID=?;");
+		$sh->execute(array($this->courseID));
+        return array_map(function($x) { return $x->userID; }, $sh->fetchAll());
+    }
+
     function getInstructors()
     {
-        $sh = $this->prepareQuery("getInstructorsQuery", "SELECT userID FROM users WHERE userType='instructor' && courseID=?;");
+        $sh = $this->prepareQuery("getInstructorsQuery", "SELECT userID FROM users WHERE userType='instructor' AND courseID=?;");
         $sh->execute(array($this->courseID));
         $instructors = array();
         while($res = $sh->fetch())
@@ -322,7 +410,7 @@ class PDODataManager extends DataManager
 
     function getMarkers()
     {
-        $sh = $this->prepareQuery("getMarkersQuery", "SELECT userID FROM users WHERE (userType='instructor' || userType='marker') && courseID=?;");
+        $sh = $this->prepareQuery("getMarkersQuery", "SELECT userID FROM users WHERE (userType='instructor' OR userType='marker') AND courseID=?;");
         $sh->execute(array($this->courseID));
         $instructors = array();
         while($res = $sh->fetch())
@@ -387,7 +475,7 @@ class PDODataManager extends DataManager
     {
         $this->db->beginTransaction();
         $header = $this->getAssignmentHeader($id);
-        $sh = $this->db->prepare("SELECT assignmentID FROM assignments WHERE courseID = ? && displayPriority = ?;");
+        $sh = $this->db->prepare("SELECT assignmentID FROM assignments WHERE courseID = ? AND displayPriority = ?;");
         $sh->execute(array($this->courseID, $header->displayPriority+1));
         if(!$res = $sh->fetch())
             return;
@@ -411,7 +499,7 @@ class PDODataManager extends DataManager
     {
         $this->db->beginTransaction();
         $header = $this->getAssignmentHeader($id);
-        $sh = $this->db->prepare("SELECT assignmentID FROM assignments WHERE courseID = ? && displayPriority = ?;");
+        $sh = $this->db->prepare("SELECT assignmentID FROM assignments WHERE courseID = ? AND displayPriority = ?;");
         $sh->execute(array($this->courseID, $header->displayPriority-1));
         if(!$res = $sh->fetch())
             return;
@@ -422,7 +510,14 @@ class PDODataManager extends DataManager
 
     function getCourses()
     {
-        $sh = $this->db->prepare("SELECT name, displayName, courseID, browsable FROM course;");
+        $sh = $this->db->prepare("SELECT name, displayName, courseID, browsable FROM course WHERE archived = 0;");
+        $sh->execute(array());
+        return $sh->fetchall();
+    }
+
+	function getArchivedCourses()
+    {
+        $sh = $this->db->prepare("SELECT name, displayName, courseID, browsable FROM course WHERE archived = 1;");
         $sh->execute(array());
         return $sh->fetchall();
     }
@@ -473,6 +568,22 @@ class PDODataManager extends DataManager
         $sh->execute(array($name, $displayName, $authType, $regType, $browsable));
     }
 	
+	function deleteCourse(CourseID $id)
+	{
+		$sh = $this->db->prepare("DELETE FROM course where courseID = ?;");
+        $sh->execute(array($id));
+	}
+	
+	function archiveCourse(CourseID $id)
+    {
+    	$sh = $this->db->prepare("SELECT name FROM course WHERE courseID = ?");
+		$sh->execute(array($id));
+		$res = $sh->fetch(PDO::FETCH_NUM);
+		$archivedname = 'ARCHIVED_' . $res[0];
+        $sh = $this->db->prepare("UPDATE course SET name = ?, archived = 1 WHERE courseID = ?;");
+        $sh->execute(array($archivedname, $id));
+  	 }
+	
 	function getInstructedAssignmentHeaders(UserID $instructorID)
     {
     	$username = $this->getUserName($instructorID);
@@ -487,9 +598,10 @@ class PDODataManager extends DataManager
 	
 	function getAllCalibrationPoolHeaders()
     {
-        $this->getAllCalibrationPoolsQuery->execute();
+    	$sh = $this->db->prepare("SELECT assignments.assignmentID, name, courseID, assignmentType, displayPriority FROM assignments JOIN peer_review_assignment_calibration_pools ON assignments.assignmentID = peer_review_assignment_calibration_pools.poolAssignmentID ORDER BY displayPriority ASC;");
+        $sh->execute();
         $headers = array();
-        while($res = $this->getAllCalibrationPoolsQuery->fetch())
+        while($res = $sh->fetch())
         {
             $headers[] = new GlobalAssignmentHeader(new AssignmentID($res->assignmentID), $res->name, new CourseID($res->courseID) , $res->assignmentType, $res->displayPriority);
         }
@@ -603,13 +715,24 @@ class PDODataManager extends DataManager
 	function demote(UserID $userID, $demotionThreshold)
 	{
 		global $NOW;
-		$sh = $this->prepareQuery("demoteQuery", "INSERT INTO peer_review_assignment_demotion_log (userID, demotionDate, demotionThreshold) VALUES (:userID, FROM_UNIXTIME(:demotionDate), :demotionThreshold) ON DUPLICATE KEY UPDATE demotionDate=FROM_UNIXTIME(:demotionDate), demotionThreshold=:demotionThreshold;");
-		$sh->execute(array("userID"=>$userID, "demotionDate"=>$NOW, "demotionThreshold"=>$demotionThreshold));
+		$array = array("userID"=>$userID, "demotionDate"=>$NOW, "demotionThreshold"=>$demotionThreshold);
+		switch($this->db->getAttribute(PDO::ATTR_DRIVER_NAME)){
+        	case 'mysql':
+       			$sh = $this->prepareQuery("demoteQuery", "INSERT INTO peer_review_assignment_demotion_log (userID, demotionDate, demotionThreshold) VALUES (:userID, FROM_UNIXTIME(:demotionDate), :demotionThreshold) ON DUPLICATE KEY UPDATE demotionDate=FROM_UNIXTIME(:demotionDate), demotionThreshold=:demotionThreshold;");
+				$sh->execute($array);
+       			break;
+			case 'sqlite':
+       			$sh = $this->prepareQuery("demoteQuery", "INSERT OR IGNORE INTO peer_review_assignment_demotion_log (userID, demotionDate, demotionThreshold) VALUES (:userID, datetime(:demotionDate,'unixepoch'), :demotionThreshold);");
+				$sh->execute($array);
+				$sh = $this->prepareQuery("demoteQuery2", "UPDATE peer_review_assignment_demotion_log SET demotionDate=datetime(:demotionDate,'unixepoch'), demotionThreshold=:demotionThreshold WHERE userID = :userID;");
+				$sh->execute($array);
+       			break;
+		}
 	}
 	
 	function getDemotionEntry(UserID $userID)
 	{
-		$sh = $this->prepareQuery("getDemotionEntryQuery", "SELECT UNIX_TIMESTAMP(demotionDate) as demotionDate, demotionThreshold FROM peer_review_assignment_demotion_log WHERE userID = ?;");
+		$sh = $this->prepareQuery("getDemotionEntryQuery", "SELECT ".$this->unix_timestamp("demotionDate")." as demotionDate, demotionThreshold FROM peer_review_assignment_demotion_log WHERE userID = ?;");
 		$sh->execute(array($userID->id));
 		$res = $sh->fetch();
 		if($res)
@@ -625,29 +748,39 @@ class PDODataManager extends DataManager
 	
 	function saveCourseConfiguration(CourseConfiguration $configuration) 
 	{
-		$sh = $this->prepareQuery("saveCourseConfigurationQuery", "INSERT INTO course_configuration (courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, highMarkThreshold, highMarkBias, calibrationThreshold, calibrationBias, scoreWindowSize, scoreThreshold, disqualifyWindowSize, disqualifyThreshold) 
-																							VALUES (:courseID, :windowSize, :numReviews, :scoreNoise, :maxAttempts, :numCovertCalibrations, :exhaustedCondition, :minReviews, :spotCheckProb, :highMarkThreshold, :highMarkBias, :calibrationThreshold, :calibrationBias, :scoreWindowSize, :scoreThreshold, :disqualifyWindowSize, :disqualifyThreshold) 
-																		   ON DUPLICATE KEY UPDATE courseID=:courseID , windowSize=:windowSize , numReviews=:numReviews , scoreNoise=:scoreNoise , maxAttempts=:maxAttempts , numCovertCalibrations=:numCovertCalibrations , exhaustedCondition=:exhaustedCondition, minReviews=:minReviews, spotCheckProb=:spotCheckProb, highMarkThreshold=:highMarkThreshold, highMarkBias=:highMarkBias, calibrationThreshold=:calibrationThreshold, calibrationBias=:calibrationBias, scoreWindowSize=:scoreWindowSize, scoreThreshold=:scoreThreshold, disqualifyWindowSize=:disqualifyWindowSize, disqualifyThreshold=:disqualifyThreshold;");
 		$array = array(
-			"courseID"=>$this->courseID, 
-			"windowSize"=>$configuration->windowSize, 
-			"numReviews"=>$configuration->numReviews, 
-			"scoreNoise"=>$configuration->scoreNoise, 
-			"maxAttempts"=>$configuration->maxAttempts, 
-			"numCovertCalibrations"=>$configuration->numCovertCalibrations, 
-			"exhaustedCondition"=>$configuration->exhaustedCondition,
-			"minReviews"=>$configuration->minReviews, 
-			"spotCheckProb"=>$configuration->spotCheckProb, 
-			"highMarkThreshold"=>$configuration->highMarkThreshold, 
-			"highMarkBias"=>$configuration->highMarkBias, 
-			"calibrationThreshold"=>$configuration->calibrationThreshold, 
-			"calibrationBias"=>$configuration->calibrationBias,
-			"scoreWindowSize"=>$configuration->scoreWindowSize,
-			"scoreThreshold"=>$configuration->scoreThreshold,
-			"disqualifyWindowSize"=>$configuration->disqualifyWindowSize,
-			"disqualifyThreshold"=>$configuration->disqualifyThreshold
-			);
-		$sh->execute($array);
+		"courseID"=>$this->courseID, 
+		"windowSize"=>$configuration->windowSize, 
+		"numReviews"=>$configuration->numReviews, 
+		"scoreNoise"=>$configuration->scoreNoise, 
+		"maxAttempts"=>$configuration->maxAttempts, 
+		"numCovertCalibrations"=>$configuration->numCovertCalibrations, 
+		"exhaustedCondition"=>$configuration->exhaustedCondition,
+		"minReviews"=>$configuration->minReviews, 
+		"spotCheckProb"=>$configuration->spotCheckProb, 
+		"highMarkThreshold"=>$configuration->highMarkThreshold, 
+		"highMarkBias"=>$configuration->highMarkBias, 
+		"calibrationThreshold"=>$configuration->calibrationThreshold, 
+		"calibrationBias"=>$configuration->calibrationBias,
+		"scoreWindowSize"=>$configuration->scoreWindowSize,
+		"scoreThreshold"=>$configuration->scoreThreshold,
+		"disqualifyWindowSize"=>$configuration->disqualifyWindowSize,
+		"disqualifyThreshold"=>$configuration->disqualifyThreshold
+		);
+		switch($this->db->getAttribute(PDO::ATTR_DRIVER_NAME)){
+        	case 'mysql':
+       			$sh = $this->prepareQuery("saveCourseConfigurationQuery", "INSERT INTO course_configuration (courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, highMarkThreshold, highMarkBias, calibrationThreshold, calibrationBias, scoreWindowSize, scoreThreshold, disqualifyWindowSize, disqualifyThreshold) 
+																			VALUES (:courseID, :windowSize, :numReviews, :scoreNoise, :maxAttempts, :numCovertCalibrations, :exhaustedCondition, :minReviews, :spotCheckProb, :highMarkThreshold, :highMarkBias, :calibrationThreshold, :calibrationBias, :scoreWindowSize, :scoreThreshold, :disqualifyWindowSize, :disqualifyThreshold) 
+																		   ON DUPLICATE KEY UPDATE windowSize=:windowSize , numReviews=:numReviews , scoreNoise=:scoreNoise , maxAttempts=:maxAttempts , numCovertCalibrations=:numCovertCalibrations , exhaustedCondition=:exhaustedCondition, minReviews=:minReviews, spotCheckProb=:spotCheckProb, highMarkThreshold=:highMarkThreshold, highMarkBias=:highMarkBias, calibrationThreshold=:calibrationThreshold, calibrationBias=:calibrationBias, scoreWindowSize=:scoreWindowSize, scoreThreshold=:scoreThreshold, disqualifyWindowSize=:disqualifyWindowSize, disqualifyThreshold=:disqualifyThreshold;");
+				$sh->execute($array);
+				break;
+			case 'sqlite':
+       			$sh = $this->prepareQuery("saveCourseConfigurationQuery", "INSERT OR IGNORE INTO course_configuration (courseID, windowSize, numReviews, scoreNoise, maxAttempts, numCovertCalibrations, exhaustedCondition, minReviews, spotCheckProb, highMarkThreshold, highMarkBias, calibrationThreshold, calibrationBias, scoreWindowSize, scoreThreshold, disqualifyWindowSize, disqualifyThreshold) VALUES (:courseID, :windowSize, :numReviews, :scoreNoise, :maxAttempts, :numCovertCalibrations, :exhaustedCondition, :minReviews, :spotCheckProb, :highMarkThreshold, :highMarkBias, :calibrationThreshold, :calibrationBias, :scoreWindowSize, :scoreThreshold, :disqualifyWindowSize, :disqualifyThreshold);");
+				$result = $sh->execute($array); 																		
+				$sh = $this->prepareQuery("saveCourseConfigurationQuery2", "UPDATE course_configuration SET windowSize=:windowSize, numReviews=:numReviews , scoreNoise=:scoreNoise , maxAttempts=:maxAttempts , numCovertCalibrations=:numCovertCalibrations , exhaustedCondition=:exhaustedCondition, minReviews=:minReviews, spotCheckProb=:spotCheckProb, highMarkThreshold=:highMarkThreshold, highMarkBias=:highMarkBias, calibrationThreshold=:calibrationThreshold, calibrationBias=:calibrationBias, scoreWindowSize=:scoreWindowSize, scoreThreshold=:scoreThreshold, disqualifyWindowSize=:disqualifyWindowSize, disqualifyThreshold=:disqualifyThreshold WHERE courseID=:courseID;");       																		
+       			$sh->execute($array); 
+       			break;
+		}
 	}
 	
 	function getCourseConfiguration(AssignmentID $assignmentID=NULL) 
@@ -665,7 +798,7 @@ class PDODataManager extends DataManager
 		$configuration = new CourseConfiguration();
 		$res = $sh->fetch();
 		if(!$res)
-			throw new Exception('The course of assignment $assignmentID has no course configuration set');
+			throw new Exception('The course configuration has not been set for this course');
 
 		$configuration->windowSize = $res->windowSize;
 		$configuration->numReviews = $res->numReviews;
@@ -705,7 +838,7 @@ class PDODataManager extends DataManager
 	function getReviewStoppedAssignments()
 	{
 		global $NOW; global $GRACETIME;
-		$sh = $this->prepareQuery("getReviewStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE (reviewStopDate + INTERVAL $GRACETIME SECOND) > FROM_UNIXTIME(?) && (reviewStopDate + INTERVAL $GRACETIME SECOND) < FROM_UNIXTIME(?);");
+		$sh = $this->prepareQuery("getReviewStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE ".$this->add_seconds(reviewStopDate, $GRACETIME)." > ".$this->from_unixtime("?")." AND ".$this->add_seconds(reviewStopDate, $GRACETIME)." < ".$this->from_unixtime("?").";");
         $sh->execute(array($NOW - (20*60), $NOW));
         $assignments = array();
         while($res = $sh->fetch())
@@ -718,7 +851,8 @@ class PDODataManager extends DataManager
 	function getSubmissionStoppedAssignments()
 	{
 		global $NOW; global $GRACETIME;
-		$sh = $this->prepareQuery("getSubmissionStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE (submissionStopDate + INTERVAL $GRACETIME SECOND) > FROM_UNIXTIME(?) && (submissionStopDate + INTERVAL $GRACETIME SECOND) < FROM_UNIXTIME(?);");
+		$sh = $this->prepareQuery("getSubmissionStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE ".$this->add_seconds(submissionStopDate, $GRACETIME)." > ".$this->from_unixtime("?")." AND ".$this->add_seconds(submissionStopDate, $GRACETIME)." < ".$this->from_unixtime("?").";");
+		//$sh = $this->prepareQuery("getSubmissionStoppedAssignmentsQuery", "SELECT assignmentID FROM peer_review_assignment WHERE submissionStopDate > ".$this->from_unixtime("?")." AND submissionStopDate < ".$this->from_unixtime("?").";");
         $sh->execute(array($NOW - (20*60), $NOW));
         $assignments = array();
         while($res = $sh->fetch())
@@ -730,7 +864,17 @@ class PDODataManager extends DataManager
 	
 	function getStudentsByAssignment(AssignmentID $assignmentID)
     {
-        $sh = $this->prepareQuery("getStudentsByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE userType = 'student' && assignmentID = ? ORDER BY lastName, firstName;");
+        $sh = $this->prepareQuery("getStudentsByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE userType = 'student' AND assignmentID = ? ORDER BY lastName, firstName;");
+        $sh->execute(array($assignmentID));
+        $students = array();
+        while($res = $sh->fetch())
+            $students[] = new UserID($res->userID);
+        return $students;
+    }
+    
+    function getActiveStudentsByAssignment(AssignmentID $assignmentID)
+    {
+        $sh = $this->prepareQuery("getStudentsByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE userType = 'student' AND assignmentID = ? AND dropped = 0 ORDER BY lastName, firstName;");
         $sh->execute(array($assignmentID));
         $students = array();
         while($res = $sh->fetch())
@@ -740,7 +884,7 @@ class PDODataManager extends DataManager
 	
 	function getMarkersByAssignment(AssignmentID $assignmentID)
     {
-        $sh = $this->prepareQuery("getMarkersByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE (userType='instructor' || userType='marker') && assignmentID=?;");
+        $sh = $this->prepareQuery("getMarkersByAssignmentQuery", "SELECT userID FROM users JOIN assignments ON assignments.courseID = users.courseID WHERE (userType='instructor' OR userType='marker') AND assignmentID=?;");
         $sh->execute(array($assignmentID));
         $instructors = array();
         while($res = $sh->fetch())
@@ -770,7 +914,7 @@ class PDODataManager extends DataManager
 		$foundCurrent = false;  
 	   	while($res = $sh->fetch())
         {
-        	if($foundCurrent && $res->assignmentType == "peerreview") {
+        	if($foundCurrent AND $res->assignmentType == "peerreview") {
         		$blah = $this->getAssignment(new AssignmentID($res->assignmentID), "peerreview");
                 $assignments[] = $blah;
             } else if ($res->assignmentID == $assignmentID->id) {
@@ -801,7 +945,7 @@ class PDODataManager extends DataManager
 	
 	function isJobDone(AssignmentID $assignmentID, $job) 
 	{
-		$sh = $this->prepareQuery("independentsCopiedQuery", "SELECT notificationID FROM job_notifications WHERE success = 1 && assignmentID = ? && job = ?;");
+		$sh = $this->prepareQuery("independentsCopiedQuery", "SELECT notificationID FROM job_notifications WHERE success = 1 AND assignmentID = ? AND job = ?;");
 		$sh->execute(array($assignmentID, $job));
 		$res = $sh->fetch();
 		return $res != NULL;
@@ -810,18 +954,19 @@ class PDODataManager extends DataManager
 	function createNotification(AssignmentID $assignmentID, $job, $success, $summary, $details)
 	{
 		global $NOW;
-		$sh = $this->prepareQuery("createNotificationQuery", "INSERT INTO job_notifications (courseID, assignmentID, job, dateRan, success, summary, details) VALUES ((SELECT courseID FROM assignments WHERE assignmentID = :assignmentID), :assignmentID, :job, FROM_UNIXTIME(:dateRan), :success, :summary, :details);");
-		$sh->execute(array("assignmentID"=>$assignmentID,
+		$array = array("assignmentID"=>$assignmentID,
 					  "job"=>$job, 
 					  "dateRan"=>$NOW,
 				      "success"=>$success,
 					  "summary"=>$summary,
-					  "details"=>$details));
+					  "details"=>$details);
+		$sh = $this->prepareQuery("createNotificationQuery", "INSERT INTO job_notifications (courseID, assignmentID, job, dateRan, success, summary, details) VALUES ((SELECT courseID FROM assignments WHERE assignmentID = :assignmentID), :assignmentID, :job, ".$this->from_unixtime(":dateRan").", :success, :summary, :details);");
+		$sh->execute($array);
 	}
 	
 	function getNewNotifications()
 	{
-		$sh = $this->prepareQuery("getNewNotificationsQuery", "SELECT notificationID, assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary FROM job_notifications WHERE courseID = ? && seen = 0 ORDER BY dateRan DESC;");
+		$sh = $this->prepareQuery("getNewNotificationsQuery", "SELECT notificationID, assignmentID, job, ".$this->unix_timestamp("dateRan")." as dateRan, success, seen, summary FROM job_notifications WHERE courseID = ? AND seen = 0 ORDER BY dateRan DESC;");
 		$sh->execute(array($this->courseID));
 		$notifications = array();
 		while($res = $sh->fetch())
@@ -841,7 +986,7 @@ class PDODataManager extends DataManager
 	
 	function getAllNotifications()
 	{
-		$sh = $this->prepareQuery("getAllNotificationsQuery", "SELECT notificationID, assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary FROM job_notifications WHERE courseID = ? ORDER BY dateRan DESC;");
+		$sh = $this->prepareQuery("getAllNotificationsQuery", "SELECT notificationID, assignmentID, job, ".$this->unix_timestamp("dateRan")." as dateRan, success, seen, summary FROM job_notifications WHERE courseID = ? ORDER BY dateRan DESC;");
 		$sh->execute(array($this->courseID));
 		$notifications = array();
 		while($res = $sh->fetch())
@@ -861,7 +1006,7 @@ class PDODataManager extends DataManager
 	
 	function getNotification(/*NotificationID*/ $notificationID)
 	{
-		$sh = $this->prepareQuery("getNotificationQuery", "SELECT assignmentID, job, UNIX_TIMESTAMP(dateRan) as dateRan, success, seen, summary, details FROM job_notifications WHERE notificationID = ?;");
+		$sh = $this->prepareQuery("getNotificationQuery", "SELECT assignmentID, job, ".$this->unix_timestamp("dateRan")." as dateRan, success, seen, summary, details FROM job_notifications WHERE notificationID = ?;");
 		$sh->execute(array($notificationID));
 		if(!$res = $sh->fetch())
         {
@@ -897,21 +1042,21 @@ class PDODataManager extends DataManager
 	
 	function getCalibrationReviewer(SubmissionID $submissionID)
 	{
-		$sh = $this->prepareQuery("isCalibratedSubmissionQuery", "SELECT matches.reviewerID FROM peer_review_assignment_submissions submissions JOIN peer_review_assignment_matches matches ON submissions.submissionID = matches.submissionID WHERE submissions.submissionID = ? && matches.calibrationState = 'key';");
+		$sh = $this->prepareQuery("isCalibratedSubmissionQuery", "SELECT matches.reviewerID FROM peer_review_assignment_submissions submissions JOIN peer_review_assignment_matches matches ON submissions.submissionID = matches.submissionID WHERE submissions.submissionID = ? AND matches.calibrationState = 'key';");
 		$sh->execute(array($submissionID));
 		return $sh->fetch()->reviewerID;
 	}
 	
 	//Just for re-assigning old unanswered appeals from previous appeal assignment  
-	function assignOldUnansweredAppeals()
+	function getOldUnansweredAppeals()
 	{
-		$sh = $this->prepareQuery("assignOldUnansweredAppealsQuery", "SELECT submissions.submissionID, submissions.assignmentID
+		$sh = $this->prepareQuery("getOldUnansweredAppealsQuery", "SELECT submissions.submissionID, submissions.assignmentID
 		FROM peer_review_assignment_appeal_messages messages 
-		LEFT JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID && messages.matchID = messages2.matchID && messages.appealType = messages2.appealType 
+		LEFT OUTER JOIN peer_review_assignment_appeal_messages messages2 ON messages.appealMessageID < messages2.appealMessageID AND messages.matchID = messages2.matchID AND messages.appealType = messages2.appealType 
 		JOIN peer_review_assignment_matches matches ON matches.matchID = messages.matchID JOIN peer_review_assignment_submissions submissions ON submissions.submissionID = matches.submissionID 
-		JOIN users ON messages.authorID = users.userID 
+		JOIN users ON messages.authorID = users.userID
 		JOIN assignments ON assignments.assignmentID = submissions.assignmentID
-		WHERE messages2.appealMessageID IS NULL && users.userType = 'student' && submissions.submissionID NOT IN (SELECT submissionID FROM appeal_assignment) && assignments.courseID = ?
+		WHERE messages2.appealMessageID IS NULL AND users.userType = 'student' AND submissions.submissionID NOT IN (SELECT submissionID FROM appeal_assignment) AND assignments.courseID = ?
 		ORDER BY submissions.assignmentID;");
 		$sh->execute(array($this->courseID));
 		$unansweredappeals = array();
@@ -929,5 +1074,11 @@ class PDODataManager extends DataManager
 	{
 		$sh = $this->prepareQuery("assignAppealQuery", "INSERT INTO appeal_assignment (markerID, submissionID) VALUES (?, ?);");
 		$sh->execute(array($markerID, $submissionID));
+	}
+	
+	function dropUser(UserID $studentID) 
+	{
+		$sh = $this->prepareQuery("dropUserQuery", "UPDATE users SET dropped = 1 WHERE userID = ?;");
+		$sh->execute(array($studentID));
 	}
 }

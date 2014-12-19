@@ -216,11 +216,12 @@ class AutogradeAndAssignMarkersCronJob
 			$pendingSpotChecks = pickSpotChecks($independentSubs, $randomSpotCheckProb, $output);
 			
 			$submissionsAssigned = sizeof($pendingSubmissions);
-			$spotChecksAssigned = sizeof($pendingSpotChecks);
+			$totalSpotChecks = sizeof($pendingSpotChecks);
 			
 			//asort($submissionScores, SORT_NUMERIC);
 			if ($targetLoadSum == 0)
-			    return "Only marks updated, no assignments to markers"; //$html;
+			    //return "Only marks updated, no assignments to markers";
+			    throw new Exception('Total marking load is zero. Only marks updated, no assignments to markers');
 			
 			$markerJobs = array();
 			$markerReviewCountMaps = array();
@@ -338,6 +339,8 @@ class AutogradeAndAssignMarkersCronJob
 			    $assignedJobs++;
 			}
 	
+			$spotChecksAssigned = $totalSpotChecks - sizeof($pendingSpotChecks);
+	
 			$html = "";
 			$html .= "Minimum reviews set as: ".$minReviews."<br>";
 			$html .= "High Mark Threshold used: ".$configuration->highMarkThreshold."<br>";
@@ -354,9 +357,7 @@ class AutogradeAndAssignMarkersCronJob
 			}
 			$html .= "</table>";
 			
-			$spotChecksAssigned = sizeof($pendingSpotChecks);
-			
-			$summary = "Autograded submissions: $autogradedSubmissions Autograded reviews: $autogradedReviews<br> Submissions assigned: $submissionsAssigned Spotchecks assigned: $spotChecksAssigned";
+			$summary = "Autograded submissions: $autogradedSubmissions Autograded reviews: $autogradedReviews<br> Submissions assigned: $submissionsAssigned, $spotChecksAssigned of $totalSpotChecks spotchecks assigned";
 			
 			$globalDataMgr->createNotification($assignmentID, 'autogradeandassign', 1, $summary, $html);
 		}catch(Exception $exception){

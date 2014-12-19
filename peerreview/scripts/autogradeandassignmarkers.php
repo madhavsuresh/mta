@@ -191,7 +191,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         $scoreMap = $assignment->getMatchScoreMap();
         $submissions = $assignment->getAuthorSubmissionMap_();
 		$studentToCovertReviewsMap = $assignment->getStudentToCovertReviewsMap();
-
+		
         $reviewedScores = array();
 		$independentSubs = array();
 		
@@ -482,7 +482,7 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
         }
         $html .= "</table>";
 
-        return $output.$html;
+        return $html;
     }
 
 }

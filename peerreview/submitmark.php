@@ -28,7 +28,7 @@ try
         throw new Exception("Unknown mark type '$type'");
     }
 
-    $content .= '<script type="text/javascript"> window.onload = function(){window.close();} </script>';
+    $content .= '<script type="text/javascript"> window.onload = function(){window.opener.location.reload(); window.close();} </script>';
 
     render_page();
 }catch(Exception $e){

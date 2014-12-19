@@ -12,19 +12,31 @@ class DownloadSubmissionsPeerReviewScript extends Script
     {
         return "Gets a zip file with all the submissions for this assignment in it";
     }
-    function getFormHTML()
+	function getFormHTML()
+    {
+        $html  = "<table width='100%'>\n";
+        $html .= "<tr><td>Include dropped students</td><td>";
+        $html .= "<input type='checkbox' name='includedropped' value='includedropped' checked/></td></tr>";
+        $html .= "</table>\n";
+        return $html;
+    }
+    /*function getFormHTML()
     {
         return "(None)";
     }
     function hasParams()
     {
         return false;
-    }
+    }*/
     function executeAndGetResult()
     {
         global $dataMgr;
         $assignment = get_peerreview_assignment();
-        $authors = $assignment->getAuthorSubmissionMap();
+		if(array_key_exists("includedropped", $_POST)){
+            $authors = $assignment->getAuthorSubmissionMap_();
+        }else{
+            $authors = $assignment->getActiveAuthorSubmissionMap_();
+        }
         $userNameMap = $dataMgr->getUserDisplayMap();
 
         $zip = new zipfile();

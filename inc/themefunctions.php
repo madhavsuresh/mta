@@ -269,6 +269,7 @@ function render_page()
     exit();
 }
 
+//for operating without htaccess rewrites
 function go_without_prettyurls()
 {
 	echo "<script type='text/javascript'>

@@ -19,7 +19,6 @@ try
             $content .= "<a href=?action=edit&type=$type>$name</a><br/>\n";
         }
 
-		$content .= notpretty();
         render_page();
     }
     else if($action == "save")
@@ -96,7 +95,6 @@ try
 
         //Any extra scripts
         $content .= $assignment->getFormScripts();
-
         render_page();
     }
     else if($action == "delete")

@@ -263,28 +263,3 @@ function grace($seconds)
 	global $GRACETIME;
 	return $seconds + $GRACETIME; //15 minute grace period
 }
-
-function notpretty()
-{
-	if(array_key_exists("courseid", $_GET))
-	{
-		return "<script type='text/javascript'>
-			alert('ROCK YOUR BODY');
-			$('a').each(function(){
-				var a = $(this),
-				aHref = a.attr('href');
-				if(aHref.substring(0,1) == '?')
-					a.attr('href', aHref+'&courseid='+".$_GET["courseid"].");
-			});
-			$('form').each(function(){
-				var form = $(this),
-				action = form.attr('action');
-				if(action.substring(0,1) == '?')
-					form.attr('action', action+'&courseid='+".$_GET["courseid"].");
-			});
-		</script>\n";
-	}
-	else {
-		throw new Exception('error. enough said');
-	}
-}

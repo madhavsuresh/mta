@@ -25,8 +25,8 @@ try
 	
 	$content .= "<table>";
 	$content .= "<col/>";
-	$content .= "<col id='sqlite_column' />";
-	$content .= "<col id='mysql_column' />";
+	$content .= "<col id='sqlite_column'/>";
+	$content .= "<col id='mysql_column'/>";
 	$sqliteWorking = false;
 	$mysqlWorking = false;
 	$content .= "<tr><td></td><td>SQLite</td><td>MySQL</td></tr>";
@@ -71,13 +71,13 @@ try
     	{
     		if(!in_array($table, $tableList))
     		{
-    			$SQLiteschemastatus .= "<td><span style='color:red'>No</span></td></tr>";
+    			$SQLiteschemastatus .= "<td><span style='color:red'>No</span></td>";
     			break;
     		}
     	}
     	if(!$SQLiteschemastatus)
     	{
-    		$SQLiteschemastatus = "<td><span style='color:green'>Yes</span></td></tr>";
+    		$SQLiteschemastatus = "<td><span style='color:green'>Yes</span></td>";
     		$sqliteWorking = true;	
 		}
     	$content .= $SQLiteschemastatus;
@@ -93,6 +93,7 @@ try
 		while ($row = $result->fetch(PDO::FETCH_NUM)) {
             $tableList[] = $row[0];
         }
+		$MYSQLschemastatus = NULL;
     	foreach($MYSQLcorrectSchema as $table)
     	{
     		if(!in_array($table, $tableList))
@@ -137,8 +138,10 @@ try
 	    }
 	    fclose($handle);
 	}
+	//TODO: Maybe javascript can open config.php instead
 	$content .= "<script type='text/javascript'>
-		$('#sqlite_column').css('background-color','#F5F6CE');				
+		if('$driverUsed' == 'sqlite' || '$driverUsed' == 'mysql')
+			$('#".$driverUsed."_column').css('background-color','#F5F6CE');				
 	</script>";
 	
 	$content .= "<table>";

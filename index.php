@@ -8,22 +8,11 @@ try
     {
         //Nope, run up the course picker for people
         $content .= "<h1>Course Select</h1>";
-		if($PRETTYURLS)
-		{
-	        foreach($dataMgr->getCourses() as $courseObj)
-	        {
-	            if($courseObj->browsable)
-	                $content .= "<a href='$SITEURL$courseObj->name'/>$courseObj->displayName</a><br>";
-	        }
-		}
-		else 
-		{
-			foreach($dataMgr->getCourses() as $courseObj)
-	        {
-	            if($courseObj->browsable)
-	                $content .= "<a href='{$SITEURL}login.php?courseid=$courseObj->courseID'/>$courseObj->displayName</a><br>";
-	        }
-		}
+        foreach($dataMgr->getCourses() as $courseObj)
+        {
+            if($courseObj->browsable)
+                $content .= "<a href='$SITEURL$courseObj->name'/>$courseObj->displayName</a><br>";
+        }
         render_page();
     }
     else

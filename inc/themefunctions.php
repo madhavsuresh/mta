@@ -262,7 +262,7 @@ function get_user_name($echo=true) {
 
 function render_page()
 {
-    global $MTA_THEME, $authMgr;
+    global $MTA_THEME, $authMgr, $PRETTYURLS;
     header("Content-Type: text/html; charset=utf-8");
     include("themes/".$MTA_THEME."/template.php");
     exit();

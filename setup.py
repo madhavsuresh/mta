@@ -120,12 +120,12 @@ finally:
 	print "Closing DB\n"
 	connection.close()
 
-if system("wget -O- https://www.cs.ubc.ca/~mglgms/mta/TEST100/login.php &> /dev/null"):
-	#error page
-	subprocess.call('cp -r ./.htaccess.template ./.htaccess', shell=True)
-	stuff = re.search('\S*\.[a-zA-Z]+(\/\S*)', root_url)
-	if stuff:
-		replace2(".htaccess", 'RewriteBase', stuff.group(1))
+#if system("wget -O- https://www.cs.ubc.ca/~mglgms/mta/TEST100/login.php &> /dev/null"):
+#error page
+subprocess.call('cp -r ./.htaccess.template ./.htaccess', shell=True)
+stuff = re.search('\S*\.[a-zA-Z]+(\/\S*)', root_url)
+if stuff:
+	replace2('.htaccess', 'RewriteBase', stuff.group(1))
 
 f = open('fetch_target.html','w')
 f.write('<html>\n<body>\n<h1>TESTING</h1>\n</body>\n</html>\n'); # python will convert \n to os.linesep
@@ -144,9 +144,11 @@ system("wget -O- https://www.cs.ubc.ca/~mglgms/mta/redirect_target.html >out.txt
 import filecmp
 if filecmp.cmp('out.txt', 'fetch_target.html'):
 	print 'htaccess works. Hurray!'
-	remove('out.txt')
-	remove('redirect_target.html')
-	remove('fetch_target.html')
+else:
+	remove('.htaccess')
+remove('out.txt')
+remove('redirect_target.html')
+remove('fetch_target.html')
 
 user = raw_input("Administrator User: ") or "admin"
 print "Administrator '"+user+"' created";

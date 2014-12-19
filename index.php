@@ -11,7 +11,7 @@ try
         foreach($dataMgr->getCourses() as $courseObj)
         {
             if($courseObj->browsable)
-                $content .= "<a href='$SITEURL$courseObj->name/'>$courseObj->displayName</a><br>";
+                $content .= "<a href='$SITEURL$courseObj->name'/>$courseObj->displayName</a><br>";
         }
         render_page();
     }

@@ -265,7 +265,26 @@ function render_page()
     global $MTA_THEME, $authMgr, $PRETTYURLS;
     header("Content-Type: text/html; charset=utf-8");
     include("themes/".$MTA_THEME."/template.php");
+	if(!$PRETTYURLS) go_without_prettyurls();
     exit();
+}
+
+function go_without_prettyurls()
+{
+	echo "<script type='text/javascript'>
+	$('a').each(function(){
+		var a = $(this),
+		aHref = a.attr('href');
+		if(aHref.substring(0,1) == '?')
+			a.attr('href', aHref+'&courseid='+".$_GET["courseid"].");
+	});
+	$('form').each(function(){
+		var form = $(this),
+		action = form.attr('action');
+		if(action.substring(0,1) == '?')
+			form.attr('action', action+'&courseid='+".$_GET["courseid"].");
+	});
+	</script>\n";
 }
 
 function render_exception_page($exception)

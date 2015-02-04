@@ -58,7 +58,7 @@ class CodeSubmission extends Submission
         return $html;
     }
     
-    function _dumpRaw($forceDownload, $dumpHeaders)
+    function _dumpRaw($forceDownload = false, $dumpHeaders = true)
     {
         if($dumpHeaders){
             header('Content-Type: text/plain');

@@ -153,6 +153,7 @@ try
                 $content .= "</select>\n";
             }else{
                 $content .= $userDisplayMap[$reviewerAssignment[$submissionID->id][$i]->id];
+				$content .= "<input type='hidden' name='$submissionID"."_$i' value='".$reviewerAssignment[$submissionID->id][$i]->id."'/>";
             }
             $content .= "</div></td>\n";
         }

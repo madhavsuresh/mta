@@ -166,6 +166,7 @@ try
             	if(in_array($reviewerAssignment[$submissionID->id][$i]->id, $droppedStudents))
 					$name .= "<sub style='color:#FE2E2E;'>dropped</sub>";
                 $content .= $name;
+				$content .= "<input type='hidden' name='$submissionID"."_$i' value='".$reviewerAssignment[$submissionID->id][$i]->id."'/>";
             }
             $content .= "</div></td>\n";
         }

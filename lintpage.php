@@ -42,8 +42,10 @@ try
 		$content .= "<td><span style='color:green'>Yes</span></td><td></td>";
 	}	
 	else
+	{
 		$content .= "<td><span style='color:red'>No</span></td>";
 		$content .= "<td>Could not find SQLite database '$SQLITEDB.db'";
+	}
 	try{
 		$db = new PDO($MTA_DATAMANAGER_PDO_CONFIG["dsn"],
 		                    $MTA_DATAMANAGER_PDO_CONFIG["username"],
@@ -174,11 +176,11 @@ try
 	    }
 	};
 	// arbitrary course example to test rewrite function
-	httpRequest.open('GET', '$SITEURL/TEST100/login.php');
+	httpRequest.open('GET', '$SITEURL/redirect_target.html');
 	httpRequest.send();
 
 	</script>\n";
-    			
+    
 	$content .= "<tr><td>Sessions configured:</td>";	
 	if(file_exists(".user.ini") && file_exists("peerreview/.user.ini") && file_exists("grouppicker/.user.ini"))
 		$content .= "<td><span style='color:green'>Yes</span></td>";

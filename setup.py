@@ -147,8 +147,6 @@ if filecmp.cmp('out.txt', 'fetch_target.html'):
 else:
 	remove('.htaccess')
 remove('out.txt')
-remove('redirect_target.html')
-remove('fetch_target.html')
 
 user = raw_input("Administrator User: ") or "admin"
 print "Administrator '"+user+"' created";

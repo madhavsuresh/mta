@@ -418,6 +418,8 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
             $assignedSpotChecks[$markerID] = 0;
         }
 
+		$assignment->removeSpotChecks();
+		
         //Now do all the spot checks
         while(sizeof($pendingSpotChecks))
         {

@@ -829,6 +829,12 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         $sh->execute(array($matchID));
     }
 
+	function removeSpotChecks(PeerReviewAssignment $assignment)
+	{
+		$sh = $this->db->prepare("DELETE FROM peer_review_assignment_spot_checks WHERE submissionID IN (SELECT submissionID FROM peer_review_assignment_submissions where assignmentID = ?);");
+		$sh->execute(array($assignment->assignmentID));
+	}
+
     function getMatchID(PeerReviewAssignment $assignment, MechanicalTA_ID $id, UserID $reviewer = null)
     {
         if(!is_null($reviewer))

@@ -16,8 +16,18 @@ try
     }
 
     $assignment = get_peerreview_assignment();
-
-    switch($action){
+    /*else if(array_key_exists("upload", $_GET))
+    {
+        //Run up the message about how to upload a list
+        $content .= '<h2>Upload Class List</h2>';
+        $content .= "Class lists must be headerless CSV files (not tab separated like Open Office does by default), with the following order:<br>Last Name, First Name, Student ID Number, Account Name, User Type (one of student ,instructor or marker)<br><br>";
+        $content .= "<form action='?uploadpost=1$extraUrl' method='post' enctype='multipart/form-data'>\n";
+        $content .= "<label for='file'>Filename:</label>\n";
+        $content .= "<input type='file' name='file' id='file'><br>\n";
+        $content .= "<input type='submit' name='submit' value='Upload'>\n";
+        $content .= "</form>\n";
+    }*/
+    switch($action){	
     case 'moveUp':
         if(!isset($questionID)) {
             throw new Exception("No question id specified");
@@ -61,6 +71,44 @@ try
             $content .= "<tr><td><a href='".get_redirect_url("?assignmentid=$assignment->assignmentID&type=$type&action=edit")."'>$name</a></td></tr>\n";
         }
         $content .= "</table>\n";
+        render_page();
+        break;
+	case "upload":
+		$content .= '<h2>Upload Class List</h2>';
+        $content .= "Class lists must be headerless CSV files (not tab separated like Open Office does by default), with the following order:<br>Last Name, First Name, Student ID Number, Account Name, User Type (one of student ,instructor or marker)<br><br>";
+        $content .= "<form action='?assignmentid=$assignment->assignmentID&action=uploadpost' method='post' enctype='multipart/form-data'>\n";
+        $content .= "<label for='file'>Filename:</label>\n";
+        $content .= "<input type='file' name='file' id='file'><br>\n";
+        $content .= "<input type='submit' name='submit' value='Upload'>\n";
+        $content .= "</form>\n";
+        render_page();
+		break;
+	case "uploadpost":
+        //Parse through the uploaded file and insert all the questions as required
+        if ($_FILES["file"]["error"] > 0)
+        {
+            throw new RuntimeException("Error reading uploaded HTML: " . $_FILES["file"]["error"]);
+        }
+        else
+        {
+            foreach(file($_FILES["file"]["tmp_name"]) as $lineNum => $line){
+                try
+                {
+                    $content .= $line;
+                    /*try
+                    {
+                        $id = $dataMgr->getUserID($username);
+                        $dataMgr->updateUser($id, $username, $firstName, $lastName, $studentID, $type);
+                        $content .= "Updating $firstName $lastName<br>";
+                    }catch(Exception $e){
+                        //This is a new user, add them in
+                        $dataMgr->addUser($username, $firstName, $lastName, $studentID, $type);
+                    }*/
+                }catch(Exception $e){
+                    $content .= "At line $lineNum: " . $e->getMessage() . "<br\n>";
+                }
+            }
+        }
         render_page();
         break;
     case 'save':
@@ -118,6 +166,8 @@ try
         $content .= "<table align='left'><tr>\n";
         $content .= "<td><a title='Create new question' href='".get_redirect_url("?assignmentid=$assignment->assignmentID&action=create")."'><div class='icon new'></div></a</td>";
         $content .= "</tr></table>";
+        
+		$content .= "<a href='".get_redirect_url("?assignmentid=$assignment->assignmentID&action=upload")."'>Upload Class List</a><br>\n";
 
         $content .= "<table align='left' width='100%'>\n";
         $currentRowType = 0;

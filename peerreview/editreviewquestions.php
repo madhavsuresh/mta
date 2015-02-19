@@ -82,8 +82,8 @@ try
         {
 			$questions = array();
            	$i = 0;
-           	$hitquestionpart= 0;
-           	$question = "";
+           	$isQuestionContent= 0;
+           	$questionHeading = "";
             foreach(file($_FILES["file"]["tmp_name"]) as $lineNum => $line){
                 try
                 {
@@ -91,32 +91,43 @@ try
 					preg_match('/<input.*type=[\'\"]text.*|<textarea/i', $line, $textareas);
                     if($radios)
                     {
+                    	preg_match('/name=[\'\"]([^\'\"]*)[\'\"]/i', $line, $names);
                     	if(!isset($questions[$i]))
                     	{
 							$questions[$i] = new stdClass;
 							$questions[$i]->type = "radio";
-							$questions[$i]->question = $question;
+							if($names[1])
+								$questions[$i]->name = $names[1];
+							else
+								$questions[$i]->name = "Question ".($i+1);
+							$questions[$i]->question = $questionHeading;
 							$questions[$i]->options = array();
 						}
+						//elseif($names[1] != $questions[$i]){}
 						preg_match('/<input.*>(.*)<\/input>/i', $line, $keys);
 						preg_match('/value=[\'\"]([^\'\"]*)[\'\"]/i', $line, $values);
 						$questions[$i]->options[$keys[1]] = $values[1];
-						$hitquestionpart= 1;
+						$isQuestionContent= 1;
                     }
 					elseif($textareas)
 					{
 						$questions[$i] = new stdClass;
 						$questions[$i]->type = "textarea";
-						$questions[$i]->question = $question;
-						$hitquestionpart= 1;
+						preg_match('/name=[\'\"]([^\'\"]*)[\'\"]/i', $line, $names);
+						if($names[1])
+							$questions[$i]->name = $names[1];
+						else
+							$questions[$i]->name = "Question ".($i+1);
+						$questions[$i]->question = $questionHeading;
+						$isQuestionContent= 1;
 					}
 					else
 					{
-						$question = $line;
-						if($hitquestionpart = 1)
+						$questionHeading = strip_tags($line);
+						if($isQuestionContent == 1)
 						{
 							$i++;
-							$hitquestionpart= 0;
+							$isQuestionContent = 0;
 						}
 					}
                 }catch(Exception $e){
@@ -128,7 +139,7 @@ try
 				{
 					if($question->type == "radio")
 					{
-						$radioquestion = new RadioButtonQuestion(NULL, $question->question, $question->question);
+						$radioquestion = new RadioButtonQuestion(NULL, $question->name, $question->question);
 						foreach($question->options as $label => $score)
 						{
 							$radioquestion->options[] = new RadioButtonOption($label, $score);
@@ -137,7 +148,7 @@ try
 					}
 					elseif($question->type == "textarea")
 					{
-						$textareaquestion = new TextAreaQuestion(NULL, $question->question, $question->question);
+						$textareaquestion = new TextAreaQuestion(NULL, $question->name, $question->question);
 						$assignment->saveReviewQuestion($textareaquestion);
 					}
 				}

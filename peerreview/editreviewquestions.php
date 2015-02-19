@@ -16,17 +16,6 @@ try
     }
 
     $assignment = get_peerreview_assignment();
-    /*else if(array_key_exists("upload", $_GET))
-    {
-        //Run up the message about how to upload a list
-        $content .= '<h2>Upload Class List</h2>';
-        $content .= "Class lists must be headerless CSV files (not tab separated like Open Office does by default), with the following order:<br>Last Name, First Name, Student ID Number, Account Name, User Type (one of student ,instructor or marker)<br><br>";
-        $content .= "<form action='?uploadpost=1$extraUrl' method='post' enctype='multipart/form-data'>\n";
-        $content .= "<label for='file'>Filename:</label>\n";
-        $content .= "<input type='file' name='file' id='file'><br>\n";
-        $content .= "<input type='submit' name='submit' value='Upload'>\n";
-        $content .= "</form>\n";
-    }*/
     switch($action){	
     case 'moveUp':
         if(!isset($questionID)) {
@@ -91,25 +80,72 @@ try
         }
         else
         {
+			$questions = array();
+           	$i = 0;
+           	$hitquestionpart= 0;
+           	$question = "";
             foreach(file($_FILES["file"]["tmp_name"]) as $lineNum => $line){
                 try
                 {
-                    $content .= $line;
-                    /*try
+                    preg_match('/<input.*type=[\'\"]radio.*/i', $line, $radios);
+					preg_match('/<input.*type=[\'\"]text.*|<textarea/i', $line, $textareas);
+                    if($radios)
                     {
-                        $id = $dataMgr->getUserID($username);
-                        $dataMgr->updateUser($id, $username, $firstName, $lastName, $studentID, $type);
-                        $content .= "Updating $firstName $lastName<br>";
-                    }catch(Exception $e){
-                        //This is a new user, add them in
-                        $dataMgr->addUser($username, $firstName, $lastName, $studentID, $type);
-                    }*/
+                    	if(!isset($questions[$i]))
+                    	{
+							$questions[$i] = new stdClass;
+							$questions[$i]->type = "radio";
+							$questions[$i]->question = $question;
+							$questions[$i]->options = array();
+						}
+						preg_match('/<input.*>(.*)<\/input>/i', $line, $keys);
+						preg_match('/value=[\'\"]([^\'\"]*)[\'\"]/i', $line, $values);
+						$questions[$i]->options[$keys[1]] = $values[1];
+						$hitquestionpart= 1;
+                    }
+					elseif($textareas)
+					{
+						$questions[$i] = new stdClass;
+						$questions[$i]->type = "textarea";
+						$questions[$i]->question = $question;
+						$hitquestionpart= 1;
+					}
+					else
+					{
+						$question = $line;
+						if($hitquestionpart = 1)
+						{
+							$i++;
+							$hitquestionpart= 0;
+						}
+					}
                 }catch(Exception $e){
                     $content .= "At line $lineNum: " . $e->getMessage() . "<br\n>";
                 }
             }
+			try{
+				foreach($questions as $question)
+				{
+					if($question->type == "radio")
+					{
+						$radioquestion = new RadioButtonQuestion(NULL, $question->question, $question->question);
+						foreach($question->options as $label => $score)
+						{
+							$radioquestion->options[] = new RadioButtonOption($label, $score);
+						}
+						$assignment->saveReviewQuestion($radioquestion);
+					}
+					elseif($question->type == "textarea")
+					{
+						$textareaquestion = new TextAreaQuestion(NULL, $question->question, $question->question);
+						$assignment->saveReviewQuestion($textareaquestion);
+					}
+				}
+			}catch(Exception $e){
+				
+			}	
         }
-        render_page();
+        redirect_to_page("?assignmentid=$assignment->assignmentID");
         break;
     case 'save':
         $type = require_from_get("type");
@@ -167,7 +203,7 @@ try
         $content .= "<td><a title='Create new question' href='".get_redirect_url("?assignmentid=$assignment->assignmentID&action=create")."'><div class='icon new'></div></a</td>";
         $content .= "</tr></table>";
         
-		$content .= "<a href='".get_redirect_url("?assignmentid=$assignment->assignmentID&action=upload")."'>Upload Class List</a><br>\n";
+		$content .= "<a href='".get_redirect_url("?assignmentid=$assignment->assignmentID&action=upload")."'>Upload Questions</a><br>\n";
 
         $content .= "<table align='left' width='100%'>\n";
         $currentRowType = 0;

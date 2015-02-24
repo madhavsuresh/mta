@@ -80,61 +80,15 @@ try
         }
         else
         {
-			$questions = array();
+        	$contents = file_get_contents($_FILES["file"]["tmp_name"]);
+			$newcontents = preg_replace('/<!--(.|\s)*?-->/s', '', $contents);
+			//preg_match('/<h1>(.*)<\/h1>/i', $newcontents, $matches, PREG_OFFSET_CAPTURE);
+			eat($newcontents, $assignment);
+			/*$questions = array();
            	$i = 0;
            	$isQuestionContent= 0;
            	$questionHeading = "";
-            foreach(file($_FILES["file"]["tmp_name"]) as $lineNum => $line){
-                try
-                {
-                    preg_match('/<input.*type=[\'\"]radio.*/i', $line, $radios);
-					preg_match('/<input.*type=[\'\"]text.*|<textarea/i', $line, $textareas);
-                    if($radios)
-                    {
-                    	preg_match('/name=[\'\"]([^\'\"]*)[\'\"]/i', $line, $names);
-                    	if(!isset($questions[$i]))
-                    	{
-							$questions[$i] = new stdClass;
-							$questions[$i]->type = "radio";
-							if($names[1])
-								$questions[$i]->name = $names[1];
-							else
-								$questions[$i]->name = "Question ".($i+1);
-							$questions[$i]->question = $questionHeading;
-							$questions[$i]->options = array();
-						}
-						//elseif($names[1] != $questions[$i]){}
-						preg_match('/<input.*>(.*)<\/input>/i', $line, $keys);
-						preg_match('/value=[\'\"]([^\'\"]*)[\'\"]/i', $line, $values);
-						$questions[$i]->options[$keys[1]] = $values[1];
-						$isQuestionContent= 1;
-                    }
-					elseif($textareas)
-					{
-						$questions[$i] = new stdClass;
-						$questions[$i]->type = "textarea";
-						preg_match('/name=[\'\"]([^\'\"]*)[\'\"]/i', $line, $names);
-						if($names[1])
-							$questions[$i]->name = $names[1];
-						else
-							$questions[$i]->name = "Question ".($i+1);
-						$questions[$i]->question = $questionHeading;
-						$isQuestionContent= 1;
-					}
-					else
-					{
-						$questionHeading = strip_tags($line);
-						if($isQuestionContent == 1)
-						{
-							$i++;
-							$isQuestionContent = 0;
-						}
-					}
-                }catch(Exception $e){
-                    $content .= "At line $lineNum: " . $e->getMessage() . "<br\n>";
-                }
-            }
-			try{
+			try{0
 				foreach($questions as $question)
 				{
 					if($question->type == "radio")
@@ -154,9 +108,10 @@ try
 				}
 			}catch(Exception $e){
 				
-			}	
+			}*/	
         }
-        redirect_to_page("?assignmentid=$assignment->assignmentID");
+		render_page();
+        //redirect_to_page("?assignmentid=$assignment->assignmentID");
         break;
     case 'save':
         $type = require_from_get("type");
@@ -242,5 +197,37 @@ try
     }
 }catch(Exception $e){
     render_exception_page($e);
+}
+$j = 0;
+function eat($newcontents, $assignment){
+		global $content;
+    	preg_match('/<h1>(.*)<\/h1>/i', $newcontents, $matches, PREG_OFFSET_CAPTURE);
+		if(isset($matches[1])){
+				$questionname = $matches[1][0];
+				$content .= $questionname;
+				$newercontents = substr($newcontents, $matches[1][1]);
+				preg_match('/<h1>(.*)<\/h1>/i', $newercontents, $matches2, PREG_OFFSET_CAPTURE);
+				if(isset($matches2[1]))
+					$portion = substr($newercontents, 0, $matches2[1][1]);
+				else
+				{
+					$portion = $newercontents;
+					print_r($questionname);
+				}
+				preg_match('/<p>(.*)<\/p>/s', $portion, $matches3, PREG_OFFSET_CAPTURE);
+				if(isset($matches3[1]))
+				{
+					$p = $matches3[1][0];
+					if(substr_count($p, "Accumulate") > 0)
+					{
+						preg_match_all('/(\d+)\s+points/i', $p, $points);
+						$question = new RadioButtonQuestion(NULL, $questionname, $p);
+					}
+					else
+						$question = new TextAreaQuestion(NULL, $questionname, $p);
+					$assignment->saveReviewQuestion($question);
+					eat($newercontents, $assignment);
+				}
+			}
 }
 ?>

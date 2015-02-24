@@ -29,7 +29,7 @@ try
     $content .= "<ol>\n";
     foreach($assignment->getReviewQuestions() as $question)
     {
-       $content .= "<li>".cleanString($question->question)."</li>\n";
+       $content .= "<li>".$question->question."</li>\n";
     }
     $content .= '</ol>';
 

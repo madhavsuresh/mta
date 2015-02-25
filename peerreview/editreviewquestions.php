@@ -80,35 +80,60 @@ try
         }
         else
         {
+        	//Based on Professor Ron Garcia's HTML template
         	$contents = file_get_contents($_FILES["file"]["tmp_name"]);
-			$newcontents = preg_replace('/<!--(.|\s)*?-->/s', '', $contents);
-			//preg_match('/<h1>(.*)<\/h1>/i', $newcontents, $matches, PREG_OFFSET_CAPTURE);
-			eat($newcontents, $assignment);
-			/*$questions = array();
-           	$i = 0;
-           	$isQuestionContent= 0;
-           	$questionHeading = "";
-			try{0
-				foreach($questions as $question)
+        	
+        	//Remove commented out rubric guide
+			preg_match('/<!--(.*)-->/s', $contents, $commentmatches, PREG_OFFSET_CAPTURE);
+			preg_match('/<h1>(.*)<\/h1>/i', $contents, $headermatches, PREG_OFFSET_CAPTURE);
+			preg_match('/(-->)/i', $contents, $endcommentmatches, PREG_OFFSET_CAPTURE);
+			if($commentmatches[1][1] <= $headermatches[1][1])
+			{
+				$contents = substr($contents, $endcommentmatches[1][1] + 3);
+			}
+			
+			while(1){
+				//Check if there is a question heading
+			    preg_match('/<h1>(.*)<\/h1>/i', $contents, $matches, PREG_OFFSET_CAPTURE);
+				//If not, stop parsing
+				if(!isset($matches[1]))
+					break;
+				//Get question name
+				$questionname = $matches[1][0];
+				//Remove header from remaining contents
+				$contents = substr($contents, $matches[1][1]);
+				//See where the next question header is
+				preg_match('/<h1>(.*)<\/h1>/i', $contents, $matches2, PREG_OFFSET_CAPTURE);
+				//If there is an upcoming question header get the contents up until that point
+				if(isset($matches2[1]))
+					$questiondetails = substr($contents, 0, $matches2[1][1]);
+				else // if not then just continue
+					$questiondetails = $contents;
+				preg_match('/<p>(.*)<\/p>/s', $questiondetails, $matches3, PREG_OFFSET_CAPTURE);
+				if(isset($matches3[1]))
 				{
-					if($question->type == "radio")
+					$questionbody = $matches3[1][0];
+					//Check if there is a point spread portion
+					preg_match('/<!--(.*)-->/s', $questiondetails, $commentmatches2, PREG_OFFSET_CAPTURE);
+					//Store all point options in array 'pointSpreadMatches'
+					preg_match_all('/(\d+)\s?points?/s', $commentmatches2[1][0], $pointSpreadMatches);
+					//If there is no point spread then it is a text area question
+					if(empty($pointSpreadMatches[0]))
+						$question = new TextAreaQuestion(NULL, $questionname, $questionbody);
+					else //otherwise it is a radio button question
 					{
-						$radioquestion = new RadioButtonQuestion(NULL, $question->name, $question->question);
-						foreach($question->options as $label => $score)
+						$question = new RadioButtonQuestion(NULL, $questionname, $questionbody);
+						//Create options based on pointSpread matches and add to radio button question
+						for($i = 0; $i < sizeof($pointSpreadMatches[1]); $i++)
 						{
-							$radioquestion->options[] = new RadioButtonOption($label, $score);
+							$option = new RadioButtonOption($pointSpreadMatches[0][$i], $pointSpreadMatches[1][$i] + 0);
+							$question->options[] = $option;
 						}
-						$assignment->saveReviewQuestion($radioquestion);
 					}
-					elseif($question->type == "textarea")
-					{
-						$textareaquestion = new TextAreaQuestion(NULL, $question->name, $question->question);
-						$assignment->saveReviewQuestion($textareaquestion);
-					}
+					//Save the question
+					$assignment->saveReviewQuestion($question);
 				}
-			}catch(Exception $e){
-				
-			}*/	
+			}
         }
 		render_page();
         //redirect_to_page("?assignmentid=$assignment->assignmentID");
@@ -228,6 +253,6 @@ function eat($newcontents, $assignment){
 					$assignment->saveReviewQuestion($question);
 					eat($newercontents, $assignment);
 				}
-			}
+		}
 }
 ?>

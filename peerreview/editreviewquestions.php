@@ -64,7 +64,7 @@ try
         break;
 	case "upload":
 		$content .= '<h2>Upload Class List</h2>';
-        $content .= "Class lists must be headerless CSV files (not tab separated like Open Office does by default), with the following order:<br>Last Name, First Name, Student ID Number, Account Name, User Type (one of student ,instructor or marker)<br><br>";
+        $content .= "Class lists must be an HTML file following a specifc HTML format. Please contact admin for this HTML template. Do not remove the commented guide at the top.<br><br>";
         $content .= "<form action='?assignmentid=$assignment->assignmentID&action=uploadpost' method='post' enctype='multipart/form-data'>\n";
         $content .= "<label for='file'>Filename:</label>\n";
         $content .= "<input type='file' name='file' id='file'><br>\n";
@@ -80,18 +80,31 @@ try
         }
         else
         {
+        	//Check if it is an HTML file
+        	preg_match('/.+\.html$/', $_FILES["file"]["name"], $isHTMLfile);
+        	if(empty($isHTMLfile))
+				redirect_to_page("?assignmentid=$assignment->assignmentID");
+				
         	//Based on Professor Ron Garcia's HTML template
         	$contents = file_get_contents($_FILES["file"]["tmp_name"]);
         	
-        	//Remove commented out rubric guide
-			preg_match('/<!--(.*)-->/s', $contents, $commentmatches, PREG_OFFSET_CAPTURE);
+        	//Remove commented out rubric guide if it exists
+			/*preg_match('/<!--(.*)-->/s', $contents, $commentmatches, PREG_OFFSET_CAPTURE);
 			preg_match('/<h1>(.*)<\/h1>/i', $contents, $headermatches, PREG_OFFSET_CAPTURE);
 			preg_match('/(-->)/i', $contents, $endcommentmatches, PREG_OFFSET_CAPTURE);
 			if($commentmatches[1][1] <= $headermatches[1][1])
 			{
 				$contents = substr($contents, $endcommentmatches[1][1] + 3);
-			}
+			}*/
 			
+			//Assert and remove commented out rubric guide
+			preg_match('/<!--<h1>Problem 0\.0: Title<\/h1>(.*)-->/s', $contents, $rubricmatches, PREG_OFFSET_CAPTURE);
+			preg_match('/(-->)/i', $contents, $endcommentmatches, PREG_OFFSET_CAPTURE);
+			if(isset($rubricmatches[1]))
+				$contents = substr($contents, $endcommentmatches[1][1] + 3);
+			else
+				redirect_to_page("?assignmentid=$assignment->assignmentID");
+
 			//Gather all questions created
 			$questions = array();
 			

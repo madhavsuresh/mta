@@ -92,6 +92,9 @@ try
 				$contents = substr($contents, $endcommentmatches[1][1] + 3);
 			}
 			
+			//Gather all questions created
+			$questions = array();
+			
 			while(1){
 				//Check if there is a question heading
 			    preg_match('/<h1>(.*)<\/h1>/i', $contents, $matches, PREG_OFFSET_CAPTURE);
@@ -130,13 +133,19 @@ try
 							$question->options[] = $option;
 						}
 					}
-					//Save the question
-					$assignment->saveReviewQuestion($question);
+					//Add the question to array
+					$questions[] = $question;
 				}
 			}
+			//Reverse array for the intended order
+			$reversed = array_reverse($questions);
+			//Save questions to assignment
+			foreach($reversed as $question)
+			{
+				$assignment->saveReviewQuestion($question);
+			}
         }
-		render_page();
-        //redirect_to_page("?assignmentid=$assignment->assignmentID");
+        redirect_to_page("?assignmentid=$assignment->assignmentID");
         break;
     case 'save':
         $type = require_from_get("type");
@@ -222,37 +231,5 @@ try
     }
 }catch(Exception $e){
     render_exception_page($e);
-}
-$j = 0;
-function eat($newcontents, $assignment){
-		global $content;
-    	preg_match('/<h1>(.*)<\/h1>/i', $newcontents, $matches, PREG_OFFSET_CAPTURE);
-		if(isset($matches[1])){
-				$questionname = $matches[1][0];
-				$content .= $questionname;
-				$newercontents = substr($newcontents, $matches[1][1]);
-				preg_match('/<h1>(.*)<\/h1>/i', $newercontents, $matches2, PREG_OFFSET_CAPTURE);
-				if(isset($matches2[1]))
-					$portion = substr($newercontents, 0, $matches2[1][1]);
-				else
-				{
-					$portion = $newercontents;
-					print_r($questionname);
-				}
-				preg_match('/<p>(.*)<\/p>/s', $portion, $matches3, PREG_OFFSET_CAPTURE);
-				if(isset($matches3[1]))
-				{
-					$p = $matches3[1][0];
-					if(substr_count($p, "Accumulate") > 0)
-					{
-						preg_match_all('/(\d+)\s+points/i', $p, $points);
-						$question = new RadioButtonQuestion(NULL, $questionname, $p);
-					}
-					else
-						$question = new TextAreaQuestion(NULL, $questionname, $p);
-					$assignment->saveReviewQuestion($question);
-					eat($newercontents, $assignment);
-				}
-		}
 }
 ?>

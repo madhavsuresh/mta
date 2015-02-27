@@ -111,7 +111,8 @@ try
     default:
         $reviewQuestions = $assignment->getReviewQuestions();
 
-        $content .= "<h1>Edit Review Questions</h1>\n";
+        $content .= "<h1>$assignment->name</h1>\n";
+        $content .= "<h2>Edit Review Questions</h2>\n";
         //$content .= "Note: If you change the order of questions or remove one after someone has submitted a review, horrible things can happen.<br><br>\n";
 
         #Give them the option of creating an assignment

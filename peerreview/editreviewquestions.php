@@ -16,8 +16,7 @@ try
     }
 
     $assignment = get_peerreview_assignment();
-
-    switch($action){
+    switch($action){	
     case 'moveUp':
         if(!isset($questionID)) {
             throw new Exception("No question id specified");
@@ -62,6 +61,104 @@ try
         }
         $content .= "</table>\n";
         render_page();
+        break;
+	case "upload":
+		$content .= '<h2>Upload Class List</h2>';
+        $content .= "Class lists must be an HTML file following a specifc HTML format. Please contact admin for this HTML template. Do not remove the commented guide at the top.<br><br>";
+        $content .= "<form action='?assignmentid=$assignment->assignmentID&action=uploadpost' method='post' enctype='multipart/form-data'>\n";
+        $content .= "<label for='file'>Filename:</label>\n";
+        $content .= "<input type='file' name='file' id='file'><br>\n";
+        $content .= "<input type='submit' name='submit' value='Upload'>\n";
+        $content .= "</form>\n";
+        render_page();
+		break;
+	case "uploadpost":
+        //Parse through the uploaded file and insert all the questions as required
+        if ($_FILES["file"]["error"] > 0)
+        {
+            throw new RuntimeException("Error reading uploaded HTML: " . $_FILES["file"]["error"]);
+        }
+        else
+        {
+        	//Check if it is an HTML file
+        	preg_match('/.+\.html$/', $_FILES["file"]["name"], $isHTMLfile);
+        	if(empty($isHTMLfile))
+				redirect_to_page("?assignmentid=$assignment->assignmentID");
+				
+        	//Based on Professor Ron Garcia's HTML template
+        	$contents = file_get_contents($_FILES["file"]["tmp_name"]);
+        	
+        	//Remove commented out rubric guide if it exists
+			/*preg_match('/<!--(.*)-->/s', $contents, $commentmatches, PREG_OFFSET_CAPTURE);
+			preg_match('/<h1>(.*)<\/h1>/i', $contents, $headermatches, PREG_OFFSET_CAPTURE);
+			preg_match('/(-->)/i', $contents, $endcommentmatches, PREG_OFFSET_CAPTURE);
+			if($commentmatches[1][1] <= $headermatches[1][1])
+			{
+				$contents = substr($contents, $endcommentmatches[1][1] + 3);
+			}*/
+			
+			//Assert and remove commented out rubric guide
+			preg_match('/<!--<h1>Problem 0\.0: Title<\/h1>(.*)-->/s', $contents, $rubricmatches, PREG_OFFSET_CAPTURE);
+			preg_match('/(-->)/i', $contents, $endcommentmatches, PREG_OFFSET_CAPTURE);
+			if(isset($rubricmatches[1]))
+				$contents = substr($contents, $endcommentmatches[1][1] + 3);
+			else
+				redirect_to_page("?assignmentid=$assignment->assignmentID");
+
+			//Gather all questions created
+			$questions = array();
+			
+			while(1){
+				//Check if there is a question heading
+			    preg_match('/<h1>(.*)<\/h1>/i', $contents, $matches, PREG_OFFSET_CAPTURE);
+				//If not, stop parsing
+				if(!isset($matches[1]))
+					break;
+				//Get question name
+				$questionname = $matches[1][0];
+				//Remove header from remaining contents
+				$contents = substr($contents, $matches[1][1]);
+				//See where the next question header is
+				preg_match('/<h1>(.*)<\/h1>/i', $contents, $matches2, PREG_OFFSET_CAPTURE);
+				//If there is an upcoming question header get the contents up until that point
+				if(isset($matches2[1]))
+					$questiondetails = substr($contents, 0, $matches2[1][1]);
+				else // if not then just continue
+					$questiondetails = $contents;
+				preg_match('/<p>(.*)<\/p>/s', $questiondetails, $matches3, PREG_OFFSET_CAPTURE);
+				if(isset($matches3[1]))
+				{
+					$questionbody = $matches3[1][0];
+					//Check if there is a point spread portion
+					preg_match('/<!--(.*)-->/s', $questiondetails, $commentmatches2, PREG_OFFSET_CAPTURE);
+					//Store all point options in array 'pointSpreadMatches'
+					preg_match_all('/(\d+)\s?points?/s', $commentmatches2[1][0], $pointSpreadMatches);
+					//If there is no point spread then it is a text area question
+					if(empty($pointSpreadMatches[0]))
+						$question = new TextAreaQuestion(NULL, $questionname, $questionbody);
+					else //otherwise it is a radio button question
+					{
+						$question = new RadioButtonQuestion(NULL, $questionname, $questionbody);
+						//Create options based on pointSpread matches and add to radio button question
+						for($i = 0; $i < sizeof($pointSpreadMatches[1]); $i++)
+						{
+							$option = new RadioButtonOption($pointSpreadMatches[0][$i], $pointSpreadMatches[1][$i] + 0);
+							$question->options[] = $option;
+						}
+					}
+					//Add the question to array
+					$questions[] = $question;
+				}
+			}
+			//Reverse array for the intended order
+			$reversed = array_reverse($questions);
+			//Save questions to assignment
+			foreach($reversed as $question)
+			{
+				$assignment->saveReviewQuestion($question);
+			}
+        }
+        redirect_to_page("?assignmentid=$assignment->assignmentID");
         break;
     case 'save':
         $type = require_from_get("type");
@@ -119,6 +216,8 @@ try
         $content .= "<table align='left'><tr>\n";
         $content .= "<td><a title='Create new question' href='".get_redirect_url("?assignmentid=$assignment->assignmentID&action=create")."'><div class='icon new'></div></a</td>";
         $content .= "</tr></table>";
+        
+		$content .= "<a href='".get_redirect_url("?assignmentid=$assignment->assignmentID&action=upload")."'>Upload Questions</a><br>\n";
 
         $content .= "<table align='left' width='100%'>\n";
         $currentRowType = 0;

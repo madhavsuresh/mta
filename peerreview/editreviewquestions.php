@@ -98,7 +98,7 @@ try
 			}*/
 			
 			//Assert and remove commented out rubric guide
-			preg_match('/<!--<h1>Problem 0\.0: Title<\/h1>(.*)-->/s', $contents, $rubricmatches, PREG_OFFSET_CAPTURE);
+			preg_match('/<!--\s*<h1>Problem 0\.0: Title<\/h1>(.*)-->/s', $contents, $rubricmatches, PREG_OFFSET_CAPTURE);
 			preg_match('/(-->)/i', $contents, $endcommentmatches, PREG_OFFSET_CAPTURE);
 			if(isset($rubricmatches[1]))
 				$contents = substr($contents, $endcommentmatches[1][1] + 3);

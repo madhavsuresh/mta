@@ -83,8 +83,10 @@ try
         	//Check if it is an HTML file
         	preg_match('/.+\.html$/', $_FILES["file"]["name"], $isHTMLfile);
         	if(empty($isHTMLfile))
-				redirect_to_page("?assignmentid=$assignment->assignmentID");
-				
+        	{
+        		throw new RuntimeException("File uploaded is not in HTML format.");
+				//redirect_to_page("?assignmentid=$assignment->assignmentID&action=uploaderror&type=0");
+			}	
         	//Based on Professor Ron Garcia's HTML template
         	$contents = file_get_contents($_FILES["file"]["tmp_name"]);
         	
@@ -103,8 +105,11 @@ try
 			if(isset($rubricmatches[1]))
 				$contents = substr($contents, $endcommentmatches[1][1] + 3);
 			else
-				redirect_to_page("?assignmentid=$assignment->assignmentID");
-
+			{
+				throw new RuntimeException("HTML file uploaded does not contain a distinct feature. Please contact admin for the correct HTML template.");
+				//redirect_to_page("?assignmentid=$assignment->assignmentID&action=uploaderror&type=1");
+			}
+			
 			//Gather all questions created
 			$questions = array();
 			
@@ -160,6 +165,19 @@ try
         }
         redirect_to_page("?assignmentid=$assignment->assignmentID");
         break;
+	/*case "uploaderror":
+		$content .= "<h2>Upload error</h3>";
+		$uploaderrors = array("File uploaded is not in HTML format",
+						"HTML file uploaded does not contain a distinct feature. Please contact admin for the correct HTML template.");
+		if(array_key_exists('type', $_GET))
+			$content .= $uploaderrors[$_GET['type']]."\n";
+		else
+			$content .= "Unknown upload error occured\n";
+        $content .= "<form action='?assignmentid=$assignment->assignmentID&action=upload' method='post'>\n";
+       	$content .= "<input type='submit' name='submit' value='Go back'>\n";
+        $content .= "</form>\n";
+		render_page();
+		break;*/
     case 'save':
         $type = require_from_get("type");
         $id = null;

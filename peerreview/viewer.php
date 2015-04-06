@@ -29,9 +29,10 @@ try
             $matchID = new MatchID($_GET["matchid$i"]);
 
             $review = $assignment->getReview($matchID);
-
             $reviewerName = $dataMgr->getUserDisplayName($review->reviewerID);
-            $content .= "<h1>Review by $reviewerName</h1>\n";
+			$submission = $assignment->getSubmission($matchID);
+			$submitterName = $dataMgr->getUserDisplayName($submission->authorID);
+            $content .= "<h1>Review by $reviewerName on submission by $submitterName</h1>\n";
             $content .= $review->getHTML(true);
 
             $content .= "<h2>Mark</h2>\n";

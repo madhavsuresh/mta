@@ -420,8 +420,6 @@ class AutoGradeAndAssignMarkersPeerReviewScript extends Script
 		
 		//First remove old spot checks
 		$assignment->removeSpotChecks();
-
-		$assignment->removeSpotChecks();
 		
         //Now do all the spot checks
         while(sizeof($pendingSpotChecks))

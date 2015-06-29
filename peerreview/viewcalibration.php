@@ -1,5 +1,6 @@
 <?php 
 require_once("inc/common.php");
+require_once(dirname(__FILE__)."/inc/calibrationutils.php");
 
 try
 {
@@ -9,8 +10,8 @@ try
 
     $assignment = get_peerreview_assignment();
 
-    $beforeReviewStart = $NOW < $assignment->reviewStartDate;
-    $afterReviewStop   = $assignment->reviewStopDate < $NOW;
+	$beforeCalibrationStart = $NOW < $assignment->calibrationStartDate;
+	$afterCalibrationStop   = grace($assignment->calibrationStopDate) < $NOW;
 
     if(array_key_exists("calibration", $_GET)){
         #We're in student mode
@@ -28,7 +29,7 @@ try
         $assignmentWithSubmission = $dataMgr->getAssignment($dataMgr->getAssignmentDataManager("peerreview")->getAssignmentIDForMatchID($matchID));
 
         $submission = $assignmentWithSubmission->getSubmission($matchID);
-        $instructorReview = $assignmentWithSubmission->getSingleInstructorReviewForSubmission($submission->submissionID);
+        $instructorReview = $assignmentWithSubmission->getSingleCalibrationKeyReviewForSubmission($submission->submissionID);
         $review = $assignmentWithSubmission->getReview($matchID);
         $reviewerName = $dataMgr->getUserDisplayName($reviewerID);
     }
@@ -38,11 +39,11 @@ try
     }
 
     #Check to make sure submissions are valid
-    if($beforeReviewStart)
+    if($beforeCalibrationStart)
     {
         $content .= 'This assignment has not been posted';
     }
-    else if($afterReviewStop)
+    else if($afterCalibrationStop)
     {
         $content .= 'Reviews can no longer be submitted';
     }
@@ -68,9 +69,13 @@ try
         $content .= "<h1>$reviewerName's Review</h1>\n";
         $content .= $review->getHTML();
 
-        //Tell them how many points they recieved
-        $content .= "<h1>Review Points</h1>\n";
-        $content .= $assignmentWithSubmission->getReviewMark($matchID)->getReviewPoints();
+        //Tell them the calibration score they recieved
+        $content .= "<h1>Calibration Score</h1>\n";
+        $content .= convertTo10pointScale($assignmentWithSubmission->getReviewMark($matchID)->getReviewPoints(), $assignment);
+
+		//Tell them their current average score
+        $content .= "<h1>Current Weighted Average</h1>\n";
+        $content .= getWeightedAverage($USERID, $assignment);
 
         if(array_key_exists("saved", $_GET))
         $content .= "<br><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=".$assignment->assignmentID)."'>Get another calibration essay</a>";

@@ -31,6 +31,25 @@ try
         }
         //Now that save is done, we can just fall back to the regular editor
     }
+	//TODO: Security issues
+	if(array_key_exists("delete", $_GET))
+    {
+        if(array_key_exists("courseID", $_POST)){
+            $courseObj->courseID = new CourseID($_POST["courseID"]);
+        }else{
+        	throw new Exception('No course ID given');
+        }
+		$dataMgr->deleteCourse($courseObj->courseID);
+	}
+	if(array_key_exists("archive", $_GET))
+    {
+        if(array_key_exists("courseID", $_POST)){
+            $courseID = new CourseID($_POST["courseID"]);
+        }else{
+        	throw new Exception('No course ID given');
+        }
+		$dataMgr->archiveCourse($courseID);
+	}
     //We're in an editing mode
     if (array_key_exists("edit", $_GET))
     {
@@ -76,6 +95,21 @@ try
         $content .= "</table>\n";
         $content .= "<input type='submit' value='Save'/>\n";
         $content .= "</form>\n";
+		if(array_key_exists("edit", $_GET))
+		{
+			$content .= "<form id='delete' action='?delete=1' method='post'>\n";
+			$content .= "<input type='hidden' name='courseID' value='$courseObj->courseID'>\n";
+			$content .= "<input type='submit' value='Delete'/>\n";
+			$content .= "</form>\n";
+			$content .= "<script type='text/javascript'>
+						$('#delete').submit(function(){
+							return confirm('Are you sure you want to delete this course?');
+						});</script>";
+			$content .= "<form id='archive' action='?archive=1' method='post'>\n";
+			$content .= "<input type='hidden' name='courseID' value='$courseObj->courseID'>\n";
+			$content .= "<input type='submit' value='Archive'/>\n";
+			$content .= "</form>\n";
+		}
         //Get the validate function
         $content .= "<script> $(document).ready(function(){ $('#save').submit(function() {\n";
         $content .= "var error = false;\n";
@@ -116,6 +150,16 @@ try
         {
             $content .= "<a href='?edit=$courseObj->courseID'>$courseObj->displayName ($courseObj->name)</a><br>\n";
         }
+		
+		$archivedCourses = $dataMgr->getArchivedCourses();
+		if($archivedCourses)
+		{
+			$content .= "<h2>Archived Courses</h2>";
+			foreach($archivedCourses as $courseObj)
+	        {
+	            $content .= "<a href='?edit=$courseObj->courseID'>$courseObj->displayName ($courseObj->name)</a><br>\n";
+	        }
+		}
     }
     render_page();
 }catch(Exception $e){

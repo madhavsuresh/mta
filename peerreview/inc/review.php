@@ -6,6 +6,7 @@ class Review
     public $submissionID;
     public $reviewerID;
     public $answers = array();
+	public $reviewTimeStamp;
 
     function __construct(PeerReviewAssignment $assignment)
     {
@@ -73,7 +74,9 @@ class Review
             }
             $html .= "\n";
         }
-
+		
+		if(ISSET($this->reviewTimestamp)) $html .= "<h4>Last Updated: ".date("Y-m-d H:i:s",$this->reviewTimestamp)."</h4>";
+		
         return $html;
     }
 

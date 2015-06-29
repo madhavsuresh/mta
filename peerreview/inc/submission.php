@@ -5,6 +5,7 @@ abstract class Submission
     public $submissionID;
     public $authorID;
     public $noPublicUse;
+	public $submissionTimestamp;
     protected $submissionSettings;
 
     function __construct(SubmissionSettings $settings, SubmissionID $submissionID = NULL, UserID $authorID = NULL, $noPublicUse = false)
@@ -24,6 +25,7 @@ abstract class Submission
     function getHTML($showHidden=false)
     {
         $html = $this->_getHTML($showHidden);
+		if(ISSET($this->submissionTimestamp)) $html .= "<h4>Last Updated: ".date("Y-m-d H:i:s",$this->submissionTimestamp)."</h4>";
         if($this->noPublicUse)
             $html .= "<h2>Exclude from public use</h2>";
         return $html;
@@ -32,7 +34,7 @@ abstract class Submission
     function getFormHTML()
     {
         $html = $this->_getFormHTML();
-
+		if(ISSET($this->submissionTimestamp)) $html .= "<h4>Last Updated: ".date("Y-m-d H:i:s",$this->submissionTimestamp)."</h4>";
         $tmp = '';
         if($this->noPublicUse)
             $tmp = 'checked';

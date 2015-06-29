@@ -44,12 +44,13 @@ try
     $stats = $assignment->getAssignmentStatistics();
     $userStats = $assignment->getAssignmentStatisticsForUser($USERID);
     $displayMap = $dataMgr->getUserDisplayMap();
-
+	$droppedStudents = $dataMgr->getDroppedStudents();
+	
     //Start making the big table
     $content .= "<h1>Submissions (".$stats->numSubmissions."/".$stats->numPossibleSubmissions.") and Reviews (".$stats->numStudentReviews."/".$stats->numPossibleStudentReviews.")</h1>";
     $content .= "There are ".$stats->numUnmarkedSubmissions." unmarked submissions, ".$stats->numUnmarkedReviews." unmarked reviews, ".$stats->numPendingAppeals." pending appeals and ".$stats->numPendingSpotChecks." pending spot checks<br>\n";
     $content .= "You have ".$userStats->numUnmarkedSubmissions." unmarked submissions, ".$userStats->numUnmarkedReviews." unmarked reviews and ".$userStats->numPendingSpotChecks." pending spot checks<br>\n";
-
+	
     if($hideBlank) {
         $content .= "<a href='".get_redirect_url("?assignmentid=$assignment->assignmentID&hideblank=0&hideedit=$hideEdit")."'>Show Blank Submissions</a>\n";
     }else{
@@ -60,12 +61,28 @@ try
     }else{
         $content .= "<a href='".get_redirect_url("?assignmentid=$assignment->assignmentID&hideblank=$hideBlank&hideedit=1")."'>Hide All Edit Buttons</a>\n";
     }
+	//$content .= $USERID." ".$authMgr->getCurrentUsername()." + ".$dataMgr->courseID." - ".$authMgr->getCurrentUsername();
+	//$content .= print_r($assignment, true);
     $content .= "<a title='New' target='_blank' href='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID&authorid=".$assignment->getUserIDForAnonymousSubmission($USERID, $authMgr->getCurrentUsername())."&close=1")."'>Create Instructor Submission</a>\n";
 
+    $appealMatchToMarkerMap = $assignment->getAppealMatchToMarkerMap();	
+	$unansweredAppeals = array_filter($appealMap, function($item){return $item;}) + array_filter($markAppealMap, function($item){return $item;});
+	$numUnansweredAppeals = sizeof($unansweredAppeals);
+	$appeals = array_merge(array_keys($appealMap), array_keys($markAppealMap));
+	$unassignedAppeals = array_filter($appeals, function($item) use ($appealMatchToMarkerMap){return !array_key_exists($item, $appealMatchToMarkerMap);});
+	$numUnassignedAppeals = sizeof($unassignedAppeals);
+	$numUnansweredUnassignedAppeals = sizeof( array_filter(array_keys($unansweredAppeals), function($item) use ($appealMatchToMarkerMap){return ! array_key_exists($item, $appealMatchToMarkerMap);}) );
+    $content .= "<table width='35%'>\n";
+    $content .= "<tr><td>Unanswered Appeals</td><td>$numUnansweredAppeals</td></tr>";
+	$content .= "<tr><td>Unassigned Appeals</td><td>$numUnassignedAppeals</td></tr>";
+	$content .= "<tr><td>Unanswered and Unassigned Appeals</td><td>$numUnansweredUnassignedAppeals</td></tr>";
+    $content .= "</table>\n";
+	
     #Now start going through stuff by user names
     $content .= "<table width='100%'>\n";
     $currentRowIndex = 0;
     $currentRowType = 0;
+	ini_set('display_errors','On');
     foreach($displayMap as $authorID => $authorName)
     {
         $authorID = new UserID($authorID);
@@ -75,7 +92,16 @@ try
         }
         $submissionID = null;
         if(array_key_exists($authorID->id, $submissionAuthors))
+		{
             $submissionID = $submissionAuthors[$authorID->id];
+		}
+		if(in_array($authorID->id, $droppedStudents)){
+			if($submissionID == NULL)
+				continue;
+			//TODO:What if all the reviewers are dropped students???
+			elseif(empty($reviewMap[$submissionID->id]))
+				continue;
+		}
         $currentRowType = ($currentRowType+1)%2;
         $currentRowIndex++;
 
@@ -122,9 +148,11 @@ try
 
         #Middle Cell - Stuff about reviews
         $content .= "<table align='left' width='100%'>";
-
+		
         if($submissionID && array_key_exists($submissionID->id, $reviewMap))
         {
+        	$keyMatches = $assignment->getCalibrationKeyMatchesForSubmission($submissionID);
+        	
             foreach($reviewMap[$submissionID->id] as $reviewObj)
             {
                 $reviewerName = $displayMap[$reviewObj->reviewerID->id];
@@ -132,7 +160,10 @@ try
 
                 if($reviewObj->exists)
                 {
-                    $content .= "<a title='View' href='".get_redirect_url("peerreview/viewer.php?assignmentid=$assignment->assignmentID&type0=review&matchid0=$reviewObj->matchID")."'>Review by $reviewerName</a></td><tr>";
+               		if(in_array($reviewObj->matchID, $keyMatches))
+                    	$content .= "<a title='View' href='".get_redirect_url("peerreview/viewer.php?assignmentid=$assignment->assignmentID&type0=review&matchid0=$reviewObj->matchID")."'>Calibration Key by $reviewerName</a></td><tr>";
+					else
+						$content .= "<a title='View' href='".get_redirect_url("peerreview/viewer.php?assignmentid=$assignment->assignmentID&type0=review&matchid0=$reviewObj->matchID")."'>Review by $reviewerName</a></td><tr>";
                     $content .= "<tr><td><table align='right'><tr>";
                     $score = precisionFloat($scoreMap[$reviewObj->matchID->id]);
                     $content .= "<td>(Gave&nbsp;score&nbsp;of&nbsp;$score)</td>";
@@ -151,6 +182,11 @@ try
                     }else{
                         $content .= "<td width='20'>&nbsp;</td>\n";
                     }
+
+					$assigned = "";
+					if(array_key_exists($reviewObj->matchID->id, $appealMatchToMarkerMap))
+						$assigned = " assigned to ".$displayMap[$appealMatchToMarkerMap[$reviewObj->matchID->id]];
+
                     //Is there an appeal for this review?
                     if(array_key_exists($reviewObj->matchID->id, $appealMap))
                     {
@@ -159,7 +195,7 @@ try
                             $appealText = "Unanswered Appeal";
                         else
                             $appealText = "Appeal";
-                        $content .= "</tr><td colspan='2'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=review")."'>$appealText</a></td>";
+                        $content .= "</tr><td colspan='2'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=review")."'>$appealText$assigned</a></td>";
                     }
                     //Is there an appeal for this review's mark?
                     if(array_key_exists($reviewObj->matchID->id, $markAppealMap))
@@ -169,7 +205,7 @@ try
                             $appealText = "Unanswered Mark Appeal";
                         else
                             $appealText = "Mark Appeal";
-                        $content .= "</tr><td colspan='2'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=reviewmark")."'>$appealText</a></td>";
+                        $content .= "</tr><td colspan='2'><a target='_blank' href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&close=1&matchid=$reviewObj->matchID&appealtype=reviewmark")."'>$appealText$assigned</a></td>";
                     }
                     $content .= "</tr></table></td></tr>";
                 }
@@ -205,7 +241,9 @@ try
             }
             $content .= "<tr><td><a href='viewer.php?assignmentid=$assignment->assignmentID&$args'>View All Reviews</a></td></tr>";
             $content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid=$submissionID&reviewer=anonymous&close=1")."'>Add Anonymous Review</a></td></tr>\n";
-            $content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid=$submissionID&reviewer=instructor&close=1")."'>Add Instructor Review</a></td></tr>\n";
+            $content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid=$submissionID&reviewer=instructor&close=1")."'>Add Instructor Review</a></td></tr>\n";			
+			if($dataMgr->isInstructor($USERID))
+				$content .= "<tr><td><a target='_blank' href='".get_redirect_url("peerreview/copymarkerreviewtokey.php?assignmentid=$assignment->assignmentID&submissionid=$submissionID")."'>Copy Marker Review to Calibration Key</a></td></tr>\n";
             if(array_key_exists($submissionID->id, $spotCheckMap))
             {
                 $spotCheck = $spotCheckMap[$submissionID->id];
@@ -218,7 +256,7 @@ try
         $content .= "</td></tr>";
     }
     $content .= "</table>\n";
-
+    
     render_page();
 }catch(Exception $e){
     render_exception_page($e);

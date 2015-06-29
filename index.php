@@ -1,5 +1,6 @@
 <?php
 require_once("inc/common.php");
+require_once("peerreview/inc/calibrationutils.php");
 try
 {
     //Has the course been set?
@@ -7,11 +8,22 @@ try
     {
         //Nope, run up the course picker for people
         $content .= "<h1>Course Select</h1>";
-        foreach($dataMgr->getCourses() as $courseObj)
-        {
-            if($courseObj->browsable)
-                $content .= "<a href='$SITEURL$courseObj->name/'>$courseObj->displayName</a><br>";
-        }
+		if(file_exists('.htaccess'))
+		{
+	        foreach($dataMgr->getCourses() as $courseObj)
+	        {
+	            if($courseObj->browsable)
+	                $content .= "<a href='$SITEURL$courseObj->name'/>$courseObj->displayName</a><br>";
+	        }
+		}
+		else 
+		{
+			foreach($dataMgr->getCourses() as $courseObj)
+	        {
+	            if($courseObj->browsable)
+	                $content .= "<a href='{$SITEURL}login.php?courseid=$courseObj->courseID'/>$courseObj->displayName</a><br>";
+	        }
+		}
         render_page();
     }
     else
@@ -23,6 +35,22 @@ try
 
         #Figure out what courses are availible, and display them to the user (showing what roles they have)
         $assignments = $dataMgr->getAssignments();
+		
+		if($dataMgr->isInstructor($USERID))
+        {
+			require_once("notifications.php");
+		}
+		
+		#TO-DO Section and Calibration Section processing
+		if($dataMgr->isStudent($USERID))
+		{		
+			require_once("tasks_student.php");
+		}
+		
+		if($dataMgr->isMarker($USERID))
+		{
+			require_once("tasks_TA.php");
+		}
 
         if($dataMgr->isInstructor($USERID))
         {
@@ -31,9 +59,10 @@ try
             $content .= "<td><a title='Create new Assignment' href='".get_redirect_url("editassignment.php?action=new")."'><div class='icon new'></div></a</td>\n";
             $content .= "<td><a title='Run Scripts' href='".get_redirect_url("runscript.php")."'><div class='icon script'></div></a></td>\n";
             $content .= "<td><a title='User Manager' href='".get_redirect_url("usermanager.php")."'><div class='icon userManager'></div></a></td>\n";
+			$content .= "<td><a title='Course Configuration' href='".get_redirect_url("editcourseconfiguration.php")."'>Course Configuration</a></td>\n";
             $content .= "</tr></table><br>\n";
         }
-
+		
         $content .= "<h1>Assignments</h1>\n";
         $currentRowIndex = 0;
         foreach($assignments as $assignment)

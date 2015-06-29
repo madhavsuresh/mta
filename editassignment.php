@@ -16,7 +16,7 @@ try
         $content .= "<h1>New Assignment</h1>\n";
         foreach($dataMgr->getAssignmentTypeToNameMap() as $type => $name)
         {
-            $content .= "<a href='?action=edit&type=$type'>$name</a><br/>\n";
+            $content .= "<a href=?action=edit&type=$type>$name</a><br/>\n";
         }
 
         render_page();
@@ -95,7 +95,6 @@ try
 
         //Any extra scripts
         $content .= $assignment->getFormScripts();
-
         render_page();
     }
     else if($action == "delete")

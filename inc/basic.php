@@ -92,6 +92,18 @@ function shuffle_assoc( $array )
     return array_merge( array_flip( $keys ) , $array );
 }
 
+function shuffle_assoc2($list) { 
+  if (!is_array($list)) return $list; 
+
+  $keys = array_keys($list); 
+  shuffle($keys); 
+  $random = array(); 
+  foreach ($keys as $key) { 
+    $random[$key] = $list[$key]; 
+  }
+  return $random; 
+} 
+
 function mt_shuffle(&$items) {
     for ($i = count($items) - 1; $i > 0; $i--){
         $j = mt_rand(0, $i);
@@ -216,4 +228,38 @@ function isset_bool($x)
     return 1;
   else
     return 0;
+}
+
+function insertTask($object, &$array)
+{
+	$length = sizeof($array);
+	if($length == 0)
+	{
+		$array[0] = $object;
+		return;
+	}
+	for($i = 0; $i < $length; $i++)
+	{
+		if($object->endDate < $array[$i]->endDate)
+		{
+			for($j = $length; $j > $i; $j--)
+			{
+				$array[$j] = $array[$j-1];
+			}
+			$array[$i] = $object;
+			return;
+		}
+	}
+	$array[$length] = $object;
+}
+
+function phpDate($seconds)
+{
+	return date('M jS Y, H:i', $seconds);
+}
+
+function grace($seconds)
+{
+	global $GRACETIME;
+	return $seconds + $GRACETIME; //15 minute grace period
 }

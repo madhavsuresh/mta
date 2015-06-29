@@ -38,7 +38,7 @@ try
     $authorID = $USERID;
 
     $beforeSubmissionStart = $NOW < $assignment->submissionStartDate;
-    $afterSubmissionStop   = $assignment->submissionStopDate < $NOW;
+    $afterSubmissionStop   = grace($assignment->submissionStopDate) < $NOW;
 
     if(array_key_exists("authorid", $_GET)){
         #We better be an instructor
@@ -89,7 +89,7 @@ try
 
     if($closeOnDone)
     {
-        $content .= '<script type="text/javascript"> window.onload = function(){window.close();} </script>';
+        $content .= '<script type="text/javascript"> window.onload = function(){window.opener.location.reload(); window.close();} </script>';
     }
 
     render_page();

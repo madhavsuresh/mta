@@ -1,0 +1,1 @@
+ALTER TABLE `peer_review_assignment_matches` ADD `calibrationState` TINYINT(1) NOT NULL DEFAULT '0' ;

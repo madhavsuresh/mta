@@ -1,5 +1,6 @@
 <?php
 require_once("inc/common.php");
+require_once("inc/calibrationutils.php");
 try
 {
     $title .= " | Edit Review";
@@ -15,7 +16,10 @@ try
     $assignmentWithSubmission = $assignment;
 
     $beforeReviewStart = $NOW < $assignment->reviewStartDate;
-    $afterReviewStop   = $assignment->reviewStopDate < $NOW;
+    $afterReviewStop   = grace($assignment->reviewStopDate) < $NOW;
+	$beforeCalibrationStart = $NOW < $assignment->calibrationStartDate;
+	$afterCalibrationStop   = grace($assignment->calibrationStopDate) < $NOW;
+	
     $isCalibration = false;
 
     if(array_key_exists("review", $_GET) || array_key_exists("calibration", $_GET)){
@@ -145,14 +149,16 @@ try
         #We can just override the data on this assignment so that we can force a write
         $beforeReviewStart = false;
         $afterReviewStop   = false;
+		$beforeCalibrationStart = false;
+		$afterCalibrationStop = false;
     }
 
     #Check to make sure submissions are valid
-    if($beforeReviewStart)
+    if($isCalibration ? $beforeCalibrationStart : $beforeReviewStart) 
     {
         $content .= 'This assignment has not been posted';
     }
-    else if($afterReviewStop)
+    else if($isCalibration ? $afterCalibrationStop : $afterReviewStop)
     {
         $content .= 'Reviews can no longer be submitted';
     }
@@ -184,6 +190,88 @@ try
         $content .= $review->getFormHTML();
         $content .= "<br><br><input type='submit' name='saveAction' id='saveButton' value='Submit' /><input type='submit' name='saveAction' value='Save Draft' />\n";
         $content .= "</form>\n";
+		
+		if(array_key_exists("showall",$_GET))
+		{
+			$reviews = $assignmentWithSubmission->getReviewsForSubmission($submission->submissionID);
+			if($reviews)
+			{
+				$reviewMap = $assignmentWithSubmission->getReviewMap();
+				
+				$content .= "<div style='margin-top:20px; border-top: 3px solid #999; border-bottom: 3px solid #999;'><h1>Student Reviews</h1></div>";
+				foreach($reviews as $review)
+				{
+					if($dataMgr->isStudent($review->reviewerID) && !$reviewMap[$review->submissionID->id][$review->reviewerID->id]->instructorForced)
+					{
+						$content .= "<h1>".$dataMgr->getUserDisplayName($review->reviewerID)."'s Review</h1>\n";
+						$content .= $review->getHTML(true);
+	 				   
+	 				    $content .= "<h1>".$dataMgr->getUserDisplayName($review->reviewerID)."'s Current Review Score</h1>\n";
+					    //TODO: Remove this hardcoded bit for the window size
+					    $content .= precisionFloat(compute_peer_review_score_for_assignments($review->reviewerID, $assignment->getAssignmentsBefore(4))*100)."%";
+					    
+					    $matchID = $assignment->getMatchID($review->submissionID, $review->reviewerID);
+						$reviewMark = $assignment->getReviewMark($matchID);
+						
+					    $content .= "<form id='mark$matchID' action='peerreview/submitmark.php?assignmentid=$assignment->assignmentID&type=review&matchid=$matchID' method='post'>\n";
+						//Extracted from getFormHTML function from ReviewMark Class. Need ID's on every review's inputs.
+						$content .= "<h1>Mark</h1>\n";
+				        $content .= "<h2>Score</h2>\n";
+				        $content .= "<input type='text' value='$reviewMark->score' name='score' id='score$matchID'>\n";
+				        $content .= "<h2>Comments</h2>\n";
+				        $content .= "<textarea name='comments' cols='60' rows='10'>\n";
+				        $content .= "$reviewMark->comments";
+				        $content .= "</textarea>\n";
+						if($reviewMark->markTimestamp) $html .= "<h4>Last Updated: ".date("Y-m-d H:i:s",$reviewMark->markTimestamp)."</h4>";
+						
+						$content .= "<br><br><input type='submit' value='Submit' />\n";
+						$content .= "</form>\n";
+						
+						$content .= "<div id='message$matchID'></div><br>\n";
+				
+						$content .= "<script type='text/javascript'>
+									$(document).ready(function(){
+										  $('#mark$matchID').submit(function(){
+									      $.post($(this).attr('action'), $(this).serialize(), function(response){},'json');
+									      if($('#score$matchID').val() != ''){
+									      	  $('#message$matchID').css('color','green');
+										      $('#message$matchID').html('Mark submitted');
+										  } else {
+										  	  $('#message$matchID').css('color','red');
+										      $('#message$matchID').html('You must enter a score');
+										  }
+									      return false;
+									   });
+									});
+									</script>";
+									
+						/*$content .= "<script type='text/javascript'> $(document).ready(function(){ $('#mark$matchID').submit(function() {\n";
+				        $content .= "var error = false;\n";
+						$content .= "$('#message$matchID').html('').parent().hide();\n";
+        				$content .= "if($('#score$matchID').val() == ''){";
+        				$content .= "$('#message$matchID').html('You must enter a score');error = true;\n";
+						$content .= "}else{";
+						$content .= "$('#message$matchID').html('Mark submitted'); error = false;\n";
+        				$content .= "}$('#message$matchID').parent().show();\n";
+				        $content .= "if(error){return false;}else{return true;}\n";
+				        $content .= "}); }); </script>\n";*/	
+					}
+				}
+			}
+		}
+		
+		//Miguel: new calibration score briefing
+		if($isCalibration)
+		{
+			$numberOfCalibrations = $dataMgr->numCalibrationReviews($reviewerID);
+			if($numberOfCalibrations){
+				$score = convertTo10pointScale(computeWeightedAverage($dataMgr->getCalibrationScores($reviewerID)), $assignment);
+			} else {
+				$score = "--";
+			}
+			$content .= "<h4>Current Weighted Average: $score / $assignment->calibrationMaxScore</h4>";
+			
+		}
     }
 
     render_page();

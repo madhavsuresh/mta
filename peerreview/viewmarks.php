@@ -58,6 +58,7 @@ try
                 return $html;
             }
 
+			//print_r("It is ".$isCalibrated);
             //Print out the submission
             $html .= $submission->getHTML();
             if($showSubmissionMark)
@@ -101,7 +102,7 @@ try
                         }
                         $html .= "<br><br><a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$assignedReviewIndex&appealtype=reviewmark")."'>View/Respond to Review Mark Appeal $tmp</a><br>";
                     }
-                    else if($NOW < $assignment->appealStopDate)
+                    else if($NOW < grace($assignment->appealStopDate))
                     {
                         //Show them a link to launching an appeal
                         $html .= "<br><br><a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$assignedReviewIndex&appealtype=reviewmark")."'>Appeal Review Mark </a><br>";
@@ -110,7 +111,10 @@ try
                     break;
                 }
             }
-
+			
+			//Get the calibration reviewer if this is a calibration submission 
+			$calibrationReviewer = $dataMgr->getCalibrationReviewer($submissionID);
+			$numReviews = $assignment->defaultNumberOfReviews;
             //Show them the reviews that this submission
             if($showStudentReviews || $showInstructorReviews)
             {
@@ -118,11 +122,16 @@ try
                 //Next, do all of the other reviews
                 foreach($reviews as $review)
                 {
+                	//If this a covert review then only show the number of reviews as all the other student submissions
                     if($review->reviewerID->id != $USERID->id)
                     {
                         if(sizeof($review->answers) == 0)
                             continue;
-
+                        if($calibrationReviewer != NULL && $reviewCount > ($numReviews-1)) 
+                			break;
+						//Do not show the calibration key for covert reviews
+						if($review->reviewerID->id == $calibrationReviewer)
+                            continue;
                         if($dataMgr->isInstructor($review->reviewerID)) {
                             if(!$showInstructorReviews)
                                 continue;
@@ -138,7 +147,6 @@ try
                             }
                         }
 
-                        $reviewCount++;
                         if($showAppealLinks)
                         {
                             //Now we need to do the stuff for appeals
@@ -151,7 +159,7 @@ try
                                 }
                                 $html .= "<a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$reviewIndex&appealtype=review")."'>View/Respond to Appeal $tmp</a><br>";
                             }
-                            else if($NOW < $assignment->appealStopDate)
+                            else if($NOW < grace($assignment->appealStopDate))
                             {
                                 //Show them a link to launching an appeal
                                 $html .= "<a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$reviewIndex&appealtype=review")."'>Appeal Review</a><br>";
@@ -164,6 +172,7 @@ try
                             $html .= "<h2 class='altHeader'>Review $reviewCount Mark</h2>\n";
                             $html .= $assignment->getReviewMark($review->matchID)->getHTML($assignment->maxReviewScore);
                         }
+                        $reviewCount++;
                     }
                     $reviewIndex++;
                 }

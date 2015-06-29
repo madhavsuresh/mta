@@ -6,6 +6,7 @@ class Mark
     public $comments = "";
     public $isValid = false;
     public $isAutomatic;
+	public $markTimestamp;
 
     function __construct($score=null, $comments=null, $automatic=false)
     {
@@ -24,13 +25,14 @@ class Mark
         $html .= "<textarea name='comments' cols='60' rows='10'>\n";
         $html .= "$this->comments";
         $html .= "</textarea>\n";
+		if($this->markTimestamp) $html .= "<h4>Last Updated: ".date("Y-m-d H:i:s",$this->markTimestamp)."</h4>";
 
         return $html;
     }
 
     function loadFromPost($POST)
     {
-        if(!isset($POST["score"]) || !isset($POST["comments"]))
+        if(!isset($POST["score"]) || !isset($POST["comments"]) || !is_numeric($POST["score"]))
         {
             return "Could not load mark from POST";
         }

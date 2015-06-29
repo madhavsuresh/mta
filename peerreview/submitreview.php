@@ -42,9 +42,11 @@ try
 
     $isCalibration = false;
     $beforeReviewStart = $NOW < $assignment->reviewStartDate;
-    $afterReviewStop   = $assignment->reviewStopDate < $NOW;
+    $afterReviewStop   = grace($assignment->reviewStopDate) < $NOW;
+	$beforeCalibrationStart = $NOW < $assignment->calibrationStartDate;
+	$afterCalibrationStop   = grace($assignment->calibrationStopDate) < $NOW;
 
-    if(array_key_exists("review", $_GET) || array_key_exists("calibration", $_GET)){
+   	if(array_key_exists("review", $_GET) || array_key_exists("calibration", $_GET)){
         #We're in student mode
         $reviewerID = $USERID;
         if(array_key_exists("review", $_GET)){
@@ -53,12 +55,12 @@ try
         }else{
             $id = $_GET["calibration"];
             $reviewAssignments = $assignment->getAssignedCalibrationReviews($reviewerID);
-            $isCalibration = true;
+			$isCalibration = true;
         }
 
         #Try and extract who the author is - if we have an invalid index, return to main
         if(!isset($reviewAssignments[$id]))
-            throw new Exception("No review assignment with id $id");
+            throw new Exception("No review assignment with id $id");	
 
         #Set the match id
         $matchID = $reviewAssignments[$id];
@@ -107,13 +109,15 @@ try
         #We can just override the data on this assignment so that we can force a write
         $beforeReviewStart = false;
         $afterReviewStop   = false;
+		$beforeCalibrationStart = false; //Not necessary but for completion
+		$afterCalibrationStop   = false; //Not necessary but for completion
     }
 
-    if($beforeReviewStart)
+    if($isCalibration ? $beforeCalibrationStart : $beforeReviewStart) 
     {
         displayReviewWithError('This assignment has not been posted');
     }
-    else if($afterReviewStop)
+    else if($isCalibration ? $afterCalibrationStop : $afterReviewStop)
     {
         displayReviewWithError('Reviews can no longer be submitted');
     }
@@ -138,6 +142,9 @@ try
 
             if(!$isCalibration)
                 $content .= "Review saved - check to make sure that it looks right below. You may edit your review by returning to the home page.\n";
+			$author = $assignmentWithSubmission->getSubmission($review->submissionID)->authorID;
+			if(($dataMgr->isInstructor($review->reviewerID) || $dataMgr->isMarker($review->reviewerID)) && $dataMgr->isStudent($author))
+				$assignmentWithSubmission->saveSubmissionMark(new Mark($review->getScore(), ""), $review->submissionID);
         }
         else
         {
@@ -152,7 +159,7 @@ try
                 $content .= $assignmentWithSubmission->getReview($matchID)->getShortHTML();
             }else{
                 //Do the auto grade
-                $instructorReview = $assignmentWithSubmission->getSingleInstructorReviewForSubmission($review->submissionID);
+                $instructorReview = $assignmentWithSubmission->getSingleCalibrationKeyReviewForSubmission($review->submissionID);
 
                 $mark = generateAutoMark($assignmentWithSubmission, $instructorReview, $review);
                 $assignment->saveReviewMark($mark, $matchID);
@@ -166,7 +173,7 @@ try
 
     if($closeOnDone)
     {
-        $content .= '<script type="text/javascript"> window.onload = function(){window.close();} </script>';
+        $content .= '<script type="text/javascript"> window.onload = function(){window.opener.location.reload(); window.close();} </script>';
     }
 
     render_page();

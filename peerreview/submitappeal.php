@@ -44,9 +44,13 @@ try
             break;
         case "reviewmark":
             //Get the specified id
-            $reviews= $assignment->getAssignedReviews($USERID);
+            $matches = $assignment->getAssignedReviews($USERID);
+			$reviews = array();
+			foreach($matches as $match)
+				$reviews[] = $assignment->getReview($match);
+            $reviews = array_values(array_filter($reviews, function($v) { return sizeof($v->answers) > 0; }));
             if(isset($reviews[$reviewid])) {
-                $review = $assignment->getReview($reviews[$reviewid]);
+                $review = $reviews[$reviewid];
             } else {
                 throw new Exception("Invalid review ID");
             }
@@ -56,7 +60,7 @@ try
         }
 
         //If we're after the stop date, we better be sure that this appeal exists
-        if($assignment->appealStopDate < $NOW && !$assignment->appealExists($review->matchID, $appealType))
+        if(grace($assignment->appealStopDate) < $NOW && !$assignment->appealExists($review->matchID, $appealType))
         {
             $content .= "Appeal submissions are closed";
             render_page();
@@ -104,6 +108,8 @@ try
     $appealMessage = new AppealMessage($appealID, $appealType, $review->matchID, $appealAuthor);
     $appealMessage->loadFromPost($_POST);
     $assignment->saveAppealMessage($appealMessage);
+	if($dataMgr->isStudent($appealAuthor))
+		$assignment->assignAppeal($appealMessage->matchID);
 
     $content .= "<h1>Appeal Submitted</h1>\n";
     $appeal = $assignment->getAppeal($review->matchID, $appealType);
@@ -111,7 +117,7 @@ try
 
     if($closeOnDone)
     {
-        $content .= '<script type="text/javascript"> window.onload = function(){window.close();} </script>';
+        $content .= '<script type="text/javascript"> window.onload = function(){window.opener.location.reload(); window.close();} </script>';
     }
 
     if($viewedByStudent)

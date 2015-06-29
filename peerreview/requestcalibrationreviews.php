@@ -1,5 +1,7 @@
 <?php
 require_once("inc/common.php");
+require_once("inc/calibrationutils.php");
+
 try
 {
     $title = " | Request Calibration Review";
@@ -7,9 +9,16 @@ try
     $authMgr->enforceLoggedIn();
 
     $assignment = get_peerreview_assignment();
-
-    $submissionID = $assignment->getNewCalibrationSubmissionForUser($USERID);
-
+	
+	if($assignment->submissionSettings->autoAssignEssayTopic == true && sizeof($assignment->submissionSettings->topics))
+	{
+		$i = topicHash($USERID, $assignment->submissionSettings->topics);
+		
+		$submissionID = $assignment->getNewCalibrationSubmissionForUserRestricted($USERID, $i);
+	}
+	else 
+	    $submissionID = $assignment->getNewCalibrationSubmissionForUser($USERID);
+	
     if(!is_null($submissionID))
     {
         $assignment->assignCalibrationReview($submissionID, $USERID); 
@@ -20,6 +29,7 @@ try
 
     //If we don't escape, say that they've done everything
     $content .= "<h3>Oops</h3>There are no more calibration essays to do!";
+	
     render_page();
 
 }catch(Exception $e){

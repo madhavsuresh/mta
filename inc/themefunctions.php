@@ -262,25 +262,47 @@ function get_user_name($echo=true) {
 
 function render_page()
 {
-    global $MTA_THEME, $authMgr;
+    global $MTA_THEME, $authMgr, $PRETTYURLS;
     header("Content-Type: text/html; charset=utf-8");
     include("themes/".$MTA_THEME."/template.php");
+	if(!$PRETTYURLS) go_without_prettyurls();
     exit();
+}
+
+//for operating without htaccess rewrites
+function go_without_prettyurls()
+{
+	echo "<script type='text/javascript'>
+	$('a').each(function(){
+		var a = $(this),
+		aHref = a.attr('href');
+		if(aHref.substring(0,1) == '?')
+			a.attr('href', aHref+'&courseid='+".$_GET["courseid"].");
+	});
+	$('form').each(function(){
+		var form = $(this),
+		action = form.attr('action');
+		if(action.substring(0,1) == '?')
+			form.attr('action', action+'&courseid='+".$_GET["courseid"].");
+	});
+	</script>\n";
 }
 
 function render_exception_page($exception)
 {
     global $SITEMASTER, $content, $_SESSION, $_GET, $_POST, $SHOW_EXCEPTION_STACK_TRACE;
-    $content  = "<h1>Ooops!</h1>";
-    $content .= "<h3>The server beasts have eaten your request!</h3>";
-
+    //$content  = "<h1>Ooops!</h1>";
+    //$content .= "<h3>The server beasts have eaten your request!</h3>";
+    $content  = "<h1>Error</h1>";
+    $content .= "<h3>Something seems to have gone wrong</h3>";
+    
     //Do we show the full exception or just the message
     if(isset($SHOW_EXCEPTION_STACK_TRACE) && $SHOW_EXCEPTION_STACK_TRACE)
         $content .= cleanString($exception);
     else
         $content .= cleanString($exception->getMessage());
     
-    $content .= "<br><br><center><a href='http://theoatmeal.com'><img src='".get_ui_url(false)."tumbeasts.png'/></a></ceter>\n";
+    //$content .= "<br><br><center><a href='http://theoatmeal.com'><img src='".get_ui_url(false)."tumbeasts.png'/></a></ceter>\n";
 
     $dump  = $exception."\n\n";
     $dump .= "URL: ".$_SERVER["SERVER_NAME"].$_SERVER["REQUEST_URI"]."\n\n";

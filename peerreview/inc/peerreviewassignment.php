@@ -623,7 +623,7 @@ class PeerReviewAssignment extends Assignment
     function _getFormScripts()
     {
         $code  = init_tiny_mce(false);      
-		$code .= "<script type='text/javascript'>
+		/*$code .= "<script type='text/javascript'>
 					function checkWithSubmissionDate(){	
 						if($('#submissionStopDate').val() >= $('#reviewStopDate').val()) {
 							$('#error_reviewStopDate').html('Review stop date is not after the submission stop date');\n
@@ -642,6 +642,14 @@ class PeerReviewAssignment extends Assignment
 						}
 					}
 				</script>";
+		$code .= "<script type='text/javascript'>
+					$('#markPostDate').datetimepicker({
+						onClose: checkWithSubmissionDate
+					})
+					$('#appealStopDate').datetimepicker({
+						onClose: checkWithSubmissionDate
+					})
+				</script>";*/
         $code .= $this->getScriptForDatePickers('submissionStartDate','submissionStopDate',$this->submissionStartDate, $this->submissionStopDate);
         $code .= $this->getScriptForDatePickers('reviewStartDate','reviewStopDate', $this->reviewStartDate, $this->reviewStopDate);
         $code .= "<script type='text/javascript'> $('#markPostDate').datetimepicker({ defaultDate : new Date(".($this->markPostDate*1000).")}); </script>\n";
@@ -649,6 +657,10 @@ class PeerReviewAssignment extends Assignment
         $code .= set_element_to_date("markPostDate", $this->markPostDate);
         $code .= set_element_to_date("appealStopDate", $this->appealStopDate);
 		$code .= $this->getScriptForDatePickers('calibrationStartDate','calibrationStopDate',$this->calibrationStartDate, $this->calibrationStopDate);
+		//Check initial dates on loading the page
+		/*$code .= "<script type='text/javascript'> 
+					checkWithSubmissionDate();
+				</script>";*/
         return $code;
     }
 
@@ -679,7 +691,7 @@ class PeerReviewAssignment extends Assignment
                         else {
                             endDateTextBox.val(dateText);
                         }
-						checkWithSubmissionDate();
+						//checkWithSubmissionDate();
                     },
                     onSelect: function (selectedDateTime){
                         var start = $(this).datetimepicker('getDate');
@@ -704,7 +716,7 @@ class PeerReviewAssignment extends Assignment
                         else {
                             startDateTextBox.val(dateText);
                         }
-						checkWithSubmissionDate();
+						//checkWithSubmissionDate();
                     },
                     onSelect: function (selectedDateTime){
                         var end = $(this).datetimepicker('getDate');

@@ -18,9 +18,6 @@ $MTA_DATAMANAGER="pdo";
     $MTA_DATAMANAGER_PDO_CONFIG["dsn"] = "mysql:host=localhost;dbname=mta";
     $MTA_DATAMANAGER_PDO_CONFIG["username"] = "mta";
     $MTA_DATAMANAGER_PDO_CONFIG["password"] = "mta";
-    //$MTA_DATAMANAGER_PDO_CONFIG["dsn"] = "mysql:host=kunghit.ugrad.cs.ubc.ca;dbname=mta;port=4045";
-    //$MTA_DATAMANAGER_PDO_CONFIG["username"] = "mtauser";
-    //$MTA_DATAMANAGER_PDO_CONFIG["password"] = "turnitin";
 
 //What type of assignments have been installed?
 $MTA_ASSIGNMENTS = array(

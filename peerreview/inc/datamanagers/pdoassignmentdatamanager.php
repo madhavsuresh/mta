@@ -983,13 +983,28 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         else
         {
             //We have to go and create a new shadow user
-            $sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' AND substr(username, 1, ?) = ? AND courseId = ?;");
+            /*$sh = $this->db->prepare("SELECT COUNT(*) as count FROM users WHERE userType = 'anonymous' AND substr(username, 1, ?) = ? AND courseId = ?;");
             $sh->execute(array(strlen($basename), $basename, $dataMgr->courseID));
             $nameInfo = $this->dataMgr->getUserFirstAndLastNames($baseID);
             $count = $sh->fetch()->count;
+			$lastName = $nameInfo->lastName;
+            if($count > 0)
+            $lastName.= " (".($count+1).")";*/
+            
+            $sh = $this->db->prepare("SELECT username FROM users WHERE userType = 'anonymous' AND substr(username, 1, ?) = ? AND courseId = ?;");
+            $sh->execute(array(strlen($basename), $basename, $dataMgr->courseID));
+            $nameInfo = $this->dataMgr->getUserFirstAndLastNames($baseID);
+            $usernames = $sh->fetchall();
+            
+			$count = sizeof($usernames);
             $lastName = $nameInfo->lastName;
             if($count > 0)
-                $lastName.= " (".($count+1).")";
+			{
+				$numbers = array_map(function($v) use(&$basename){$ret = preg_replace("/$basename/", '', $v->username, 1); if(strlen($ret) > 0) return $ret; return 0;}, $usernames);
+	           	$count = max($numbers)+1; 
+				$lastName.= " (".($count+1).")";
+			}
+			
             return $this->dataMgr->addUser($basename.$count, "Anonymous ".$nameInfo->firstName, $lastName, 0, 'anonymous');
         }
     }

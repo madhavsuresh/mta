@@ -27,7 +27,10 @@ try
 
     //Figure out what we're supposed to be doing
     $action = optional_from_get("action");
-    $addUserAuthentication = array_key_exists("__adduserauth", $_POST);
+	//MG: This will always be false because link that sets global var was commented out by Chris in inc/authmanagers/multilevelauthmanager.php
+    //$addUserAuthentication = array_key_exists("__adduserauth", $_POST);
+    //MG: Hard-coded to true for now
+    $addUserAuthentication = true;
     $loginAttemptFailed = false;
 
     if($action == "register")

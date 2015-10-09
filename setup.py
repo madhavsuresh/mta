@@ -140,7 +140,7 @@ chmod('./.htaccess', 0644)
 chmod('fetch_target.html', 0644)
 chmod('redirect_target.html', 0644)
 
-system("wget -O- https://www.cs.ubc.ca/~mglgms/mta/redirect_target.html >out.txt 2> /dev/null")
+system("wget -O- %s/redirect_target.html >out.txt 2> /dev/null" % root_url)
 import filecmp
 if filecmp.cmp('out.txt', 'fetch_target.html'):
 	print 'htaccess works. Hurray!'

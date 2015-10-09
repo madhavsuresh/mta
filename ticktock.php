@@ -23,10 +23,10 @@ try
 
 	foreach($submissionStoppedAssignments as $assignmentID)
 	{
-		/*$copyIndependentsFromPreviousJob->executeAndGetResult($assignmentID, $globalDataMgr);
+		$copyIndependentsFromPreviousJob->executeAndGetResult($assignmentID, $globalDataMgr);
 		$computeIndependentsFromScoresJob->executeAndGetResult($assignmentID, $globalDataMgr);
 		$computeIndependentsFromCalibrationsJob->executeAndGetResult($assignmentID, $globalDataMgr);
-		$disqualifyIndependentsFromScoresJob->executeAndGetResult($assignmentID, $globalDataMgr);*/
+		$disqualifyIndependentsFromScoresJob->executeAndGetResult($assignmentID, $globalDataMgr);
 		$assignReviewsPeerReviewJob->executeAndGetResult($assignmentID, $globalDataMgr);
 	}
 

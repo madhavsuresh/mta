@@ -991,11 +991,13 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             if($count > 0)
             $lastName.= " (".($count+1).")";*/
             
+            //Get all usernames in course with the same base
             $sh = $this->db->prepare("SELECT username FROM users WHERE userType = 'anonymous' AND substr(username, 1, ?) = ? AND courseId = ?;");
             $sh->execute(array(strlen($basename), $basename, $dataMgr->courseID));
             $nameInfo = $this->dataMgr->getUserFirstAndLastNames($baseID);
             $usernames = $sh->fetchall();
             
+			//Get the maximum suffix number, if any, and increment
 			$count = sizeof($usernames);
             $lastName = $nameInfo->lastName;
             if($count > 0)

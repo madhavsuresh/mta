@@ -38,6 +38,9 @@ try
 		$review->matchID = $newMatchID;
 		$assignment->saveReview($review);
 		
+		//Now mark all unmarked reviews on this submission as calibration
+		$assignment->markUnmarkedReviewsAsCalibration($submission->submissionID);
+		
 		$content .= "Review by $markerDisplayName has been copied as a  calibration key by $newAnonymousName.<br>";
 		$content .= "Please make sure to refresh the marking page."; 
 	} else {

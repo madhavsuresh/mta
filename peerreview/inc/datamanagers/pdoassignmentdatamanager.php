@@ -1989,6 +1989,27 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		return $result;
 	}
 	
+	function markUnmarkedReviewsAsCalibration(PeerReviewAssignment $assignment, SubmissionID $submissionID)
+	{
+		$this->db->beginTransaction();
+		print_r("1");
+		//Get all normal reviews that are done and unmarked from submissionID TODO: Ensure student???
+		$sh = $this->prepareQuery("getUnmarkedReviewsAsCalibrationQuery", "SELECT matchID FROM peer_review_assignment_matches WHERE matchID NOT IN (SELECT matchID FROM peer_review_assignment_review_marks) AND matchID IN (SELECT matchID FROM peer_review_assignment_review_answers) AND reviewerID IN (SELECT userID FROM users WHERE userType = 'student') AND calibrationState = 'none' AND submissionID = ?;");
+		$sh->execute(array($submissionID));	
+        $instructorReview = $assignment->getSingleCalibrationKeyReviewForSubmission($submissionID);
+		$results = $sh->fetchAll();
+		foreach($results as $res)
+		{
+			$unmarkedReviewAttempt = $assignment->getReview(new MatchID($res->matchID));
+			$mark = generateAutoMark($assignment, $unmarkedReviewAttempt, $instructorReview);
+			$assignment->saveReviewMark($mark, new MatchID($res->matchID));
+			//Change review match to 'attempt'
+			$sh = $this->prepareQuery("changeNormalReviewToCalibrationQuery", "UPDATE peer_review_assignment_matches SET calibrationState = 'attempt' WHERE matchID = ?;");
+			$sh->execute(array($res->matchID));	
+		}
+		$this->db->commit();
+	}
+
     //Because PHP doesn't do multiple inheritance, we have to define this method all over the place
 	private function prepareQuery($name, $query)
     {
@@ -1997,5 +2018,5 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         }
         return $this->$name;
     }
-	
+
 };

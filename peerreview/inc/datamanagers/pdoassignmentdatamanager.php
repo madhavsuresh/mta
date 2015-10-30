@@ -1992,7 +1992,6 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 	function markUnmarkedReviewsAsCalibration(PeerReviewAssignment $assignment, SubmissionID $submissionID)
 	{
 		$this->db->beginTransaction();
-		print_r("1");
 		//Get all normal reviews that are done and unmarked from submissionID TODO: Ensure student???
 		$sh = $this->prepareQuery("getUnmarkedReviewsAsCalibrationQuery", "SELECT matchID FROM peer_review_assignment_matches WHERE matchID NOT IN (SELECT matchID FROM peer_review_assignment_review_marks) AND matchID IN (SELECT matchID FROM peer_review_assignment_review_answers) AND reviewerID IN (SELECT userID FROM users WHERE userType = 'student') AND calibrationState = 'none' AND submissionID = ?;");
 		$sh->execute(array($submissionID));	
@@ -2003,7 +2002,8 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 			$unmarkedReviewAttempt = $assignment->getReview(new MatchID($res->matchID));
 			$mark = generateAutoMark($assignment, $unmarkedReviewAttempt, $instructorReview);
 			$score = convertTo10pointScale($mark->reviewPoints, $assignment);
-			$score = (double) ($score * $assignment->maxReviewScore/10);
+			$score = (double) (convertTo10pointScale($mark->reviewPoints, $assignment) * ($assignment->maxReviewScore/10));
+			$mark->score = $score;
 			$mark->reviewPoints = 0;
 			$assignment->saveReviewMark($mark, new MatchID($res->matchID));
 			//Change review match to 'attempt'

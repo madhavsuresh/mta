@@ -2002,9 +2002,9 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
 		{
 			$unmarkedReviewAttempt = $assignment->getReview(new MatchID($res->matchID));
 			$mark = generateAutoMark($assignment, $unmarkedReviewAttempt, $instructorReview);
-			$score = (double) convertTo10pointScale($mark->reviewPoints, $assignment);
+			$score = convertTo10pointScale($mark->reviewPoints, $assignment);
+			$score = (double) ($score * $assignment->maxReviewScore/10);
 			$mark->reviewPoints = 0;
-			$mark->score = $score;
 			$assignment->saveReviewMark($mark, new MatchID($res->matchID));
 			//Change review match to 'attempt'
 			//$sh = $this->prepareQuery("changeNormalReviewToCalibrationQuery", "UPDATE peer_review_assignment_matches SET calibrationState = 'attempt' WHERE matchID = ?;");

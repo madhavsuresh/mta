@@ -1,6 +1,7 @@
 <?php
 require_once(dirname(__FILE__)."/common.php");
 
+//TODO: should return mean squared error only
 function generateAutoMark(PeerReviewAssignment $assignment, Review $instructorReview, Review $review)
 {
     //get an array of all the differences

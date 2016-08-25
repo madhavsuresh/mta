@@ -6,11 +6,9 @@ require_once("submission_api.php");
 require_once("inc/assignment.php");
 require_once("inc/ids.php");
 
-setupCourse(5);
 
-function setupCourse($num_students=10){
 
-    function createTestCourse($json){
+    function createTestCourse($courseName){
         global $dataMgr, $NOW;
 
 
@@ -23,6 +21,8 @@ function setupCourse($num_students=10){
 
         $courseObj->name .= substr(md5(microtime()),rand(0,26),5); #random 5 chr str to allow uniqueness
         echo $courseObj->name;
+
+        $courseObj->name = $courseName;
 
         $courseObj->displayName = $courseObj->name;
         $courseObj->authType = $course_vars->authType;
@@ -43,17 +43,6 @@ function setupCourse($num_students=10){
         $db->commit();
         return $new_course_id;
     }
-
-
-    $json = '{
-        "name": "thename",
-        "displayName": "thedisplayname",
-        "authType": "pdo",
-        "registrationType": "Open",
-        "browsable" : "true"}' ;
-
-
-    $new_course_id = createTestCourse($json);
 
 
     function addStudentsToCourse($num_students){
@@ -85,7 +74,6 @@ function setupCourse($num_students=10){
     }
 
 
-    addStudentsToCourse($num_students);
 
     function createAssignment(){
         global $dataMgr, $NOW;
@@ -154,6 +142,27 @@ function setupCourse($num_students=10){
         $assignmentID = $db->lastInsertId();
         return $assignmentID;
     }
+
+
+function setupCourse($num_students=10, $courseName=10){
+
+
+
+    $json = '{
+        "name": "thename",
+        "displayName": "thedisplayname",
+        "authType": "pdo",
+        "registrationType": "Open",
+        "browsable" : "true"}' ;
+
+
+    $new_course_id = createTestCourse($courseName);
+
+
+
+
+    addStudentsToCourse($num_students);
+
 
     $assignmentID = createAssignment();
 

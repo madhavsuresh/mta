@@ -27,6 +27,7 @@ function createCourse(){
     $courseObj->browsable = isset_bool($course_vars->browsable);
 
     $db = $dataMgr->getDatabase();
+    $db->commit();
     $db->beginTransaction();
 
     $sh = $db->prepare("SELECT MAX(courseID) AS course_id FROM COURSE;");

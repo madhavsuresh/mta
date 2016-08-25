@@ -13,19 +13,19 @@ $items = array();
 $latestCalibrationAssignment = latestCalibrationAssignment();
 
 foreach($assignments as $assignment)
-{			
+{
 	if(!$assignment->showForUser($USERID))
     	continue;
-	
+
 	if($assignment->submissionStartDate <= $NOW AND grace($assignment->submissionStopDate) > $NOW)
 	{
 		if(!($assignment->password == NULL) AND !($dataMgr->hasEnteredPassword($assignment->assignmentID, $USERID)))
-		{		
+		{
 			$item = new stdClass();
 			$item->type = "Password";
 			$item->assignmentID = $assignment->assignmentID;
 			$item->endDate = $assignment->submissionStopDate;
-			$item->html = 
+			$item->html =
 			"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 			<td class='column2'>Password</td></td>
 			<td class='column3'><form action='enterpassword.php?assignmentid=".$assignment->assignmentID."' method='post'><table width='100%'><td>Enter password:<input type='text' name='password' size='10'/></td>
@@ -33,7 +33,7 @@ foreach($assignments as $assignment)
 			<td class='column4'>".phpDate($assignment->submissionStopDate)."</td></tr></table>\n";
 			insertTask($item, $items);
 		}
-		else 
+		else
 		{
 			if(!$assignment->submissionExists($USERID))
 			{
@@ -44,14 +44,14 @@ foreach($assignments as $assignment)
 				$item->html =
 				"<table width='100%' class='tables'><tr><td class='column1'><h4>$assignment->name</h4></td>
 				<td class='column2'>".ucfirst($assignment->submissionType)."</td>
-				
+
 				<td class='column3'><form action='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID")."' method='post'><input type='submit' value='Create Submission'/></form></td>
 				<td class='column4'>".phpDate($assignment->submissionStopDate)."</td></tr></table>\n";
 				insertTask($item, $items);
 			}
-		}	
+		}
 	}
-	
+
 	if($assignment->password == NULL || $dataMgr->hasEnteredPassword($assignment->assignmentID, $USERID))
 	{
 		if($assignment->reviewStartDate <= $NOW AND grace($assignment->reviewStopDate) > $NOW)
@@ -67,18 +67,18 @@ foreach($assignments as $assignment)
 					$item->type = "Peer Review";
 					$item->assignmentID = $assignment->assignmentID;
 					$item->endDate = $assignment->reviewStopDate;
-					$item->html = 
+					$item->html =
 					"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 					<td class='column2'>Peer Review $temp</td>
-					
+
 					<td class='column3'><a href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&review=$id")."''><button>Go</button></a></td>
 					<td class='column4'>".phpDate($assignment->reviewStopDate)."</td></tr></table>\n";
 					insertTask($item, $items);
 				}
-				$id++;			
-			} 
+				$id++;
+			}
 		}
-		
+
 		//reviewStartDate is used as deadline but students can still request calibration from calibration section before calibrationStopDate
 		if($assignment->calibrationStartDate <= $NOW AND $assignment->reviewStartDate > $NOW)
 		{
@@ -93,7 +93,7 @@ foreach($assignments as $assignment)
 					$item->type = "Calibration";
 					$item->assignmentID = $assignment->assignmentID;
 					$item->endDate = $assignment->reviewStartDate;
-					$item->html = 
+					$item->html =
 					"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 					<td class='column2'>Calibration Review $temp</td>
 
@@ -102,16 +102,16 @@ foreach($assignments as $assignment)
 					insertTask($item, $items);
 				}
 				$id++;
-			}			
+			}
 
 			//TO-DO: Clean-up logic flow
         	$availableCalibrationSubmissions = $assignment->getCalibrationSubmissionIDs();#$#
             if($availableCalibrationSubmissions && $assignment->extraCalibrations > 0)
             {
                 $independents = $assignment->getIndependentUsers();
-				
+
                 $convertedAverage = convertTo10pointScale($currentAverage, $assignment);
-				
+
 				if($assignment->submissionSettings->autoAssignEssayTopic == true && sizeof($assignment->submissionSettings->topics))
 					{
 						$i = topicHash($USERID, $assignment->submissionSettings->topics);
@@ -119,22 +119,22 @@ foreach($assignments as $assignment)
 					}
 				else
 					$isMoreEssays = $assignment->getNewCalibrationSubmissionForUser($USERID);
-				
+
                 if(!isIndependent($USERID, $latestCalibrationAssignment) && $isMoreEssays != NULL)
                 {
                 	$doneForThisAssignment = $assignment->numCalibrationReviewsDone($USERID);
                 	$completionStatus = "";
 					if($doneForThisAssignment < $assignment->extraCalibrations)
                 		$completionStatus .= "<br/>$doneForThisAssignment of $assignment->extraCalibrations completed";
-					
+
 					$item = new stdClass();
 					$item->type = "Calibration";
 					$item->assignmentID = $assignment->assignmentID;
 					$item->endDate = $assignment->reviewStartDate;
-                	$item->html = 
+                	$item->html =
                 	"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
                 	<td class='column2'>Calibration Review $completionStatus</td>
-                	<td class='column3'><table width='100%'><td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td> 
+                	<td class='column3'><table width='100%'><td>Current Average: $convertedAverage <br/> Threshold: $assignment->calibrationThresholdScore</td>
                 	<td><a href='".get_redirect_url("peerreview/requestcalibrationreviews.php?assignmentid=$assignment->assignmentID")."'><button>Request Calibration Review</button></a></td></table></td>
                 	<td class='column4'>".phpDate($assignment->reviewStartDate)."</td></tr></table>\n";
 					insertTask($item, $items);
@@ -184,11 +184,11 @@ $content .= "<h2>Current Weighted Average : ".$reviewerAverage."</h2>\n";
 $content .= "<h2>Threshold: ".$threshold."</h2>\n";
 $content .= "<h2>Number of Effective Calibrations Done: ".$dataMgr->numCalibrationReviews($USERID)."</h2>\n";
 $content .= "<h2>Minimum Calibrations Required: ".$minimumReviews."</h2>\n";
-			
+
 foreach($assignments as $assignment)
 {
 	$calibrationSubmissionIDs = $assignment->getCalibrationSubmissionIDs();
-	if(sizeof(calibrationSubmissionIDs) > 0)
+	if(sizeof($calibrationSubmissionIDs) > 0)
 	{
 		$doneCalibrations = array();
 		$unfinishedCalibrations = array();
@@ -201,7 +201,7 @@ foreach($assignments as $assignment)
 				$mark = $assignment->getReviewMark($matchID);
 				$doneCalibrations[$id] = new stdClass;
                 if($mark->isValid){
-                    $doneCalibrations[$id]->text = "(".convertTo10pointScale($mark->reviewPoints, $assignment).")"; 
+                    $doneCalibrations[$id]->text = "(".convertTo10pointScale($mark->reviewPoints, $assignment).")";
                     $doneCalibrations[$id]->points = $mark->reviewPoints;
                    	$review = $assignment->getReview($matchID);
 					if($demotion ? $demotion->demotionDate >= $review->reviewTimestamp : false)

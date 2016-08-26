@@ -11,7 +11,7 @@ for ($i=9;$i<19;$i++){
 $late_unix_time = $unix_time;
 $late_unix_time[0] = "2";
 
-$assignment_defaults_json = json_encode(array( 
+$assignment_defaults = json_encode(array( 
     "AsignmentType"=> "peerreview",
     "submissionQuestion"=> "Default Question",
     "submissionStartDate"=> $unix_time,
@@ -40,7 +40,8 @@ $assignment_defaults_json = json_encode(array(
     "assignmentName"=> "test assignment",
     "autoAssignEssayTopic"=> "0"));
 
-    
+$class_defaults = json_encode(array(
+"
     
 
 ?>

@@ -5,44 +5,44 @@ require_once("submission_api.php");
 #require_once("try.php");
 require_once("inc/assignment.php");
 require_once("inc/ids.php");
+require_once("setup_radio_question.php");
 
 
-
-    function createTestCourse($courseName){
-        global $dataMgr, $NOW;
-
-
-        $course_vars = (json_decode($json));
+function createTestCourse($json){
+    global $dataMgr, $NOW;
 
 
-        $courseObj = new stdClass();
+    $course_vars = (json_decode($json));
 
-        $courseObj->name = "test";
 
-        $courseObj->name .= substr(md5(microtime()),rand(0,26),5); #random 5 chr str to allow uniqueness
-        echo $courseObj->name;
+    $courseObj = new stdClass();
 
-        $courseObj->name = $courseName;
+    $courseObj->name = "test";
 
-        $courseObj->displayName = $courseObj->name;
-        $courseObj->authType = $course_vars->authType;
-        $courseObj->registrationType = $course_vars->registrationType;
-        $courseObj->browsable = isset_bool($course_vars->browsable);
+    $courseObj->name .= substr(md5(microtime()),rand(0,26),5); #random 5 chr str to allow uniqueness
+    echo $courseObj->name;
 
-        $db = $dataMgr->getDatabase();
-        $db->beginTransaction();
+    #$courseObj->name = $courseName;
 
-        $sh = $db->prepare("SELECT MAX(courseID) AS course_id FROM COURSE;");
-        $sh->execute();
-        $new_course_id = $sh->fetchall();
-        $new_course_id = $new_course_id[0]->course_id + 1;
+    $courseObj->displayName = $courseObj->name;
+    $courseObj->authType = $course_vars->authType;
+    $courseObj->registrationType = $course_vars->registrationType;
+    $courseObj->browsable = isset_bool($course_vars->browsable);
 
-        $dataMgr->createCourse($courseObj->name, $courseObj->displayName, $courseObj->authType, $courseObj->registrationType, $courseObj->browsable);
+    $db = $dataMgr->getDatabase();
+    $db->beginTransaction();
 
-        $dataMgr->setCourseFromID(new CourseID($new_course_id));
-        $db->commit();
-        return $new_course_id;
-    }
+    $sh = $db->prepare("SELECT MAX(courseID) AS course_id FROM COURSE;");
+    $sh->execute();
+    $new_course_id = $sh->fetchall();
+    $new_course_id = $new_course_id[0]->course_id + 1;
+
+    $dataMgr->createCourse($courseObj->name, $courseObj->displayName, $courseObj->authType, $courseObj->registrationType, $courseObj->browsable);
+
+    $dataMgr->setCourseFromID(new CourseID($new_course_id));
+    $db->commit();
+    return $new_course_id;
+}
 
 
     function addStudentsToCourse($num_students){
@@ -75,14 +75,16 @@ require_once("inc/ids.php");
 
 
 
-    function createAssignment(){
+    function createAssignment($json){
         global $dataMgr, $NOW;
+        $assignment_params = json_decode($json);
+
         $db = $dataMgr->getDatabase();
-        $assignmentType = 'peerreview';
+        $assignmentType = $assignment_params->assignmentType;
 
         $new_assignment = $dataMgr->createAssignmentInstance(null, $assignmentType);
 
-        $new_assignment->submissionQuestion = "What is the question?";
+        $new_assignment->submissionQuestion = $assignment_params->submissionQuestion;
         $time = $dataMgr->from_unixtime($NOW);
         # for some reason I can't just put this value into the db. It will accept
         # the unix epoch offset. Need to loop through time and grab that value
@@ -97,54 +99,54 @@ require_once("inc/ids.php");
 
 
 
-        $new_assignment->submissionStartDate = $unix_time;
-        $new_assignment->submissionStopDate =$late_unix_time;
+        $new_assignment->submissionStartDate = $assignment_params->submissionStartDate;
+        $new_assignment->submissionStopDate =  $assignment_params->submissionStopDate;
 
-        $new_assignment->reviewStartDate = $unix_time;
-        $new_assignment->reviewStopDate = $late_unix_time;
+        $new_assignment->reviewStartDate =  $assignment_params->reviewStartDate;
+        $new_assignment->reviewStopDate =  $assignment_params->reviewStopDate;
 
-        $new_assignment->markPostDate =$unix_time;
+        $new_assignment->markPostDate =  $assignment_params->markPostDate;
 
-        $new_assignment->appealStopDate = $late_unix_time;
+        $new_assignment->appealStopDate =  $assignment_params->appealStopDate;
 
-        $new_assignment->maxSubmissionScore = 0;
-        $new_assignment->maxReviewScore = 10;
-        $new_assignment->defaultNumberOfReviews = 3;
-        $new_assignment->allowRequestOfReviews = 0;
-        $new_assignment->showMarksForReviewsReceived = 0;
-        $new_assignment->showOtherReviewsByStudents = 0;
-        $new_assignment->showOtherReviewsByInstructors = 0;
-        $new_assignment->showMarksForOtherReviews = 0;
-        $new_assignment->showMarksForReviewedSubmissions = 0;
-        $new_assignment->showPoolStatus = 0;
+        $new_assignment->maxSubmissionScore =  $assignment_params->maxSubmissionScore;
+        $new_assignment->maxReviewScore =  $assignment_params->maxReviewScore;
+        $new_assignment->defaultNumberOfReviews =  $assignment_params->defaultNumberOfReviews;
+        $new_assignment->allowRequestOfReviews =  $assignment_params->alllowRequestOfReviews;
+        $new_assignment->showMarksForReviewsReceived =  $assignment_params->showMarksForReviewsReceived;
+        $new_assignment->showOtherReviewsByStudents =  $assignment_params->showOtherReviewsByStudents;
+        $new_assignment->showOtherReviewsByInstructors =  $assignment_params->showOtherReviewsByInstructors;
+        $new_assignment->showMarksForOtherReviews =  $assignment_params->showMarksForOtherReviews;
+        $new_assignment->showMarksForReviewedSubmissions =  $assignment_params->showMarksForReviewedSubmissions;
+        $new_assignment->showPoolStatus =  $assignment_params->showPoolStatus;
 
-        $new_assignment->calibrationMinCount = 0;
-        $new_assignment->calibrationMaxScore = 0;
-        $new_assignment->calibrationThresholdMSE = 0;
-        $new_assignment->calibrationThresholdScore = 0;
-        $new_assignment->extraCalibrations = 0;
-        $new_assignment->calibrationStartDate = $unix_time; #set these equal so calibration doesn't happen ??
-        $new_assignment->calibrationStopDate = $unix_time;
+        $new_assignment->calibrationMinCount =  $assignment_params->calibrationMinCount;
+        $new_assignment->calibrationMaxScore =  $assignment_params->calibrationMaxScore;
+        $new_assignment->calibrationThresholdMSE =  $assignment_params->calibrationThresholdMSE;
+        $new_assignment->calibrationThresholdScore =  $assignment_params->calibrationThresholdScore;
+        $new_assignment->extraCalibrations =  $assignment_params->extraCalibrations;
+        $new_assignment->calibrationStartDate =  $assignment_params->calibrationstartDate; #set these equal so calibration doesn't happen ??
+        $new_assignment->calibrationStopDate =  $assignment_params->calibrationStopDate;
 
                 #$new_assignment->assignmentID = 2;
 
-        $new_assignment->submissionType = "essay";
-        $new_assignment->name = "s";
+        $new_assignment->submissionType =  $assignment_params->submissionType;
+        $new_assignment->name =  $assignment_params->assignment_name;
 
-        $submissionSettingsType = "essaySubmissionSettings";
+        $submissionSettingsType = $new_assignment->submissionType . "SubmissionSettings";
 
-        $new_assignment->autoAssignEssayTopic = 0;
+        $new_assignment->autoAssignEssayTopic =  $assignment_params->autoAssignEssayTopic;
 
         $new_assignment->submissionSettings = new $submissionSettingsType();
 
-        $new_assignment->submissionSettings->essayWordLimit = 1000;
+        $new_assignment->submissionSettings->essayWordLimit = $assignment_params->essayWordLimit;
         $dataMgr->saveAssignment($new_assignment, $assignmentType);
         $assignmentID = $db->lastInsertId();
-        return $assignmentID;
+        return array($assignmentID, $new_assignment);
     }
 
 
-function setupCourse($num_students=10, $courseName=10){
+function setupCourse($num_students=10){
 
 
 
@@ -156,7 +158,7 @@ function setupCourse($num_students=10, $courseName=10){
         "browsable" : "true"}' ;
 
 
-    $new_course_id = createTestCourse($courseName);
+    $new_course_id = createTestCourse($json);
 
 
 
@@ -164,9 +166,15 @@ function setupCourse($num_students=10, $courseName=10){
     addStudentsToCourse($num_students);
 
 
-    $assignmentID = createAssignment();
-
+    $assignment_and_id = createAssignment();
+    $assignment = $assignment_and_id[1];
+    $assignmentID = $assignment_and_id[0];
+    
     mockSubmissions($new_course_id,$assignmentID);
+    
+    setup_radio_question($assignment, 5);
+
+
 }
     ?>
 

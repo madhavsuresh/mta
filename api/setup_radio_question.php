@@ -1,5 +1,5 @@
 <?php
-require_once("peerreview/inc/common.php");
+require_once("../peerreview/inc/common.php");
 
 
 function setup_radio_question($assignment, $num_options){

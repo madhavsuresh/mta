@@ -1,10 +1,10 @@
 <?php
-require_once ("inc/common.php");
-require_once("inc/datamanager.php");
-require_once("submission_api.php");
+require_once ("../inc/common.php");
+require_once("../inc/datamanager.php");
+require_once("submit.php");
 #require_once("try.php");
-require_once("inc/assignment.php");
-require_once("inc/ids.php");
+require_once("../inc/assignment.php");
+require_once("../inc/ids.php");
 require_once("setup_radio_question.php");
 
 

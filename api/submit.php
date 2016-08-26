@@ -1,8 +1,8 @@
 <?php
-require_once("inc/common.php");
-require_once("inc/datamanager.php");
-require_once("peerreview/inc/datamanagers/pdoassignmentdatamanager.php");
-require_once("config.php");
+require_once("../inc/common.php");
+require_once("../inc/datamanager.php");
+require_once("../peerreview/inc/datamanagers/pdoassignmentdatamanager.php");
+require_once("../config.php");
 
 function mockSubmissions($courseID, $assignmentID){
     global $dataMgr, $NOW;

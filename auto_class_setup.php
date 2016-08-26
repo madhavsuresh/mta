@@ -10,10 +10,7 @@ require_once("setup_radio_question.php");
 
 function createTestCourse($json){
     global $dataMgr, $NOW;
-
-
     $course_vars = (json_decode($json));
-
 
     $courseObj = new stdClass();
 
@@ -74,13 +71,7 @@ function createTestCourse($json){
     }
 
 
-
-
-
 function setupCourse($num_students=10){
-
-
-
     $json = '{
         "name": "thename",
         "displayName": "thedisplayname",
@@ -88,12 +79,7 @@ function setupCourse($num_students=10){
         "registrationType": "Open",
         "browsable" : "true"}' ;
 
-
     $new_course_id = createTestCourse($json);
-
-
-
-
     addStudentsToCourse($num_students);
 
 

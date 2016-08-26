@@ -1,6 +1,7 @@
 <?php
 require '../vendor/autoload.php';
 require_once("../inc/common.php");
+require '../auto_class_setup.php';
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 
@@ -13,7 +14,7 @@ $app->get('/', function (Request $request, Response $response) {
 });
 $app->get('/hello/{name}', function (Request $request, Response $response) {
     $name = $request->getAttribute('name');
-    $response->getBody()->write("Hello, $name");
+    $response->getBody()->write("Hello, esstsefjsdf");
 
     return $response;
 });
@@ -29,6 +30,13 @@ $app->get('/getallsubmissions/{course}/{assignmentID}', function (Request $reque
 	$dataMgr->setCourseFromName($request->getAttribute('course'));
 	
 });
+
+$app->post('/createcourse/{num}', function(Request $request, Response $response) use ($dataMgr) {
+	$num_students = $request->getAttribute('num');
+	setupCourse($num_students);
+	$response->getBody()->write("Hello, test");
+	return $response;
+ });
 
 //TODO: proper exception handling. 
 $app->post('/uploadpeermatch/{course}/{assignmentID}', function (Request $request, Response $response) use ($dataMgr) {

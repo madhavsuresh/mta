@@ -8,23 +8,17 @@ require_once("../inc/ids.php");
 require_once("setup_radio_question.php");
 
 
-function createTestCourse($json){
+function create_course($course_params){
     global $dataMgr, $NOW;
-    $course_vars = (json_decode($json));
+    # $course_vars = (json_decode($json));
 
     $courseObj = new stdClass();
-
-    $courseObj->name = "test";
-
-    $courseObj->name .= substr(md5(microtime()),rand(0,26),5); #random 5 chr str to allow uniqueness
+    $courseObj->name = $course_params['name'];
     echo $courseObj->name;
-
-    #$courseObj->name = $courseName;
-
-    $courseObj->displayName = $courseObj->name;
-    $courseObj->authType = $course_vars->authType;
-    $courseObj->registrationType = $course_vars->registrationType;
-    $courseObj->browsable = isset_bool($course_vars->browsable);
+    $courseObj->displayName = $course_params['displayName'];
+    $courseObj->authType = $course_params->['authType'];
+    $courseObj->registrationType = $course_params->['registrationType'];
+    $courseObj->browsable = isset_bool($course_params>['browsable']);
 
     $db = $dataMgr->getDatabase();
     $db->beginTransaction();
@@ -34,15 +28,23 @@ function createTestCourse($json){
     $new_course_id = $sh->fetchall();
     $new_course_id = $new_course_id[0]->course_id + 1;
 
-    $dataMgr->createCourse($courseObj->name, $courseObj->displayName, $courseObj->authType, $courseObj->registrationType, $courseObj->browsable);
+    $dataMgr->createCourse($course_params['name'], $course_params['displayName'], $course_params['authType'], $course_params['registrationType'], isset_bool($course_params['browsable']);
 
     $dataMgr->setCourseFromID(new CourseID($new_course_id));
     $db->commit();
     return $new_course_id;
 }
 
+function addUserToCourse($course_name, $user_params) {
+	global $dataMgr;
+	$authMgr = $dataMgr->createAuthManager();
+	$dataMgr->setCourseFromName($course_name);
+	$dataMgr->addUser($user_params['username'], $user_params['first_name'], $user_params['last_name'], $user_params['user_id'], $user_params['type']);
+	$authMgr->addUserAuthentication($user_params['username'], $user_params['password']	
 
-    function addStudentsToCourse($num_students){
+}
+
+	function addStudentsToCourse($num_students){
         #assumes the dataMgr has been set to the right course
         global $dataMgr;
         $authMgr = $dataMgr->createAuthManager();

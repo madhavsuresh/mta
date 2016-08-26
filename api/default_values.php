@@ -40,8 +40,23 @@ $assignment_defaults = json_encode(array(
     "assignmentName"=> "test assignment",
     "autoAssignEssayTopic"=> "0"));
 
+$name = "test" . substr(md5(microtime(), rand(0, 26), 5)); # random unique 5 char str    
+
 $class_defaults = json_encode(array(
-"
-    
+	"name" => $name,
+	"displayName" => $name,
+	"authType" => "pdo",
+	"registrationType" => "Open"
+	"browsable" => "true"));
+
+$username = "Nathan" . substr(md5(microtime(), rand(0, 26), 4));
+
+$user_defaults = json_encode(array(
+	"username" => $username,
+	"password" => '123',
+	"first_name" => $username,
+	"last_name" => "Test",
+	"user_id" => rand(0, 10000),
+	"type" => "student"));
 
 ?>

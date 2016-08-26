@@ -1,7 +1,8 @@
 <?php
 require '../vendor/autoload.php';
 require_once("../inc/common.php");
-require '../auto_class_setup.php';
+require_once("default_values.php");
+require_once("create_class.php");
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 
@@ -30,6 +31,15 @@ $app->get('/getallsubmissions/{course}/{assignmentID}', function (Request $reque
 	$dataMgr->setCourseFromName($request->getAttribute('course'));
 	
 });
+
+$app->post('/createassignment/{courseName}', function (Request $request, Response $response) use ($dataMgr){
+    $course_name = $request->getAtttribute('courseName');
+    $user_assignment_settings = $request->getBody();
+    $default = $assignment_defaults_json; 
+    $assignment_params = fill_and_decode_json($default, $user_assignment_settings);
+    createAssignment($assignment_params,$course_name); 
+});
+
 
 $app->post('/createcourse/{num}', function(Request $request, Response $response) use ($dataMgr) {
 	$num_students = $request->getAttribute('num');

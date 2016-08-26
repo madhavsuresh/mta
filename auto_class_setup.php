@@ -8,7 +8,7 @@ require_once("inc/ids.php");
 
 
 
-    function createTestCourse($courseName){
+    function createTestCourse($courseName, $json){
         global $dataMgr, $NOW;
 
 
@@ -22,7 +22,7 @@ require_once("inc/ids.php");
         $courseObj->name .= substr(md5(microtime()),rand(0,26),5); #random 5 chr str to allow uniqueness
         echo $courseObj->name;
 
-        $courseObj->name = $courseName;
+        #$courseObj->name = $courseName;
 
         $courseObj->displayName = $courseObj->name;
         $courseObj->authType = $course_vars->authType;
@@ -144,7 +144,7 @@ require_once("inc/ids.php");
     }
 
 
-function setupCourse($num_students=10, $courseName=10){
+function setupCourse($num_students=10, $courseName='test_course'){
 
 
 
@@ -156,7 +156,7 @@ function setupCourse($num_students=10, $courseName=10){
         "browsable" : "true"}' ;
 
 
-    $new_course_id = createTestCourse($courseName);
+    $new_course_id = createTestCourse($courseName, $json);
 
 
 

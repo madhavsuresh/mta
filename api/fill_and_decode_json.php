@@ -4,13 +4,9 @@
         $passed_array = json_decode($passed_json);
         
         foreach($passed_array as $key => $value) {
-            
-            
+           $default_array[$key] = $value;    
         }
     
-
-    }
-    
-
-
+    return $passed_array;
+    }  
 ?>

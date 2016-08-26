@@ -2,10 +2,9 @@
 require_once("default_values.php");
 require_once("../inc/common.php");
 require_once("fill_defaults.php");
-    function createAssignment($json){
+    function createAssignment($assignment_params, $course_name){
         global $dataMgr, $NOW;
-        $assignment_params = json_decode($json);
-
+        $dataMgr->setCourseFromName($course_name);
         $db = $dataMgr->getDatabase();
         
         $assignmentType = $assignment_params->assignmentType;

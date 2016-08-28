@@ -3,6 +3,8 @@ require '../vendor/autoload.php';
 require_once("../inc/common.php");
 require_once("default_values.php");
 require_once("create_class.php");
+require_once("fill_and_decode_json.php");
+require_once("create_assignment.php"); 
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 
@@ -33,9 +35,11 @@ $app->get('/getallsubmissions/{course}/{assignmentID}', function (Request $reque
 });
 
 $app->post('/createassignment/{courseName}', function (Request $request, Response $response) use ($dataMgr){
-    $course_name = $request->getAtttribute('courseName');
+    $course_name = $request->getAttribute('courseName');
     $user_assignment_settings = $request->getBody();
-    $default = $assignment_defaults_json; 
+    
+    $default = get_assignment_defaults(); 
+	#$response->getBody()->write($default->AssignmentType);
     $assignment_params = fill_and_decode_json($default, $user_assignment_settings);
     createAssignment($assignment_params,$course_name); 
 });

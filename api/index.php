@@ -33,9 +33,20 @@ $app->get('/getallsubmissions/{course}/{assignmentID}', function (Request $reque
 	$dataMgr->setCourseFromName($request->getAttribute('course'));
 	
 });
+$app->post('/makesubmissions/', function (Request $request, Response $response) use
+    ($dataMgr){#takes in course name and assignment id
+        $params = $request->getBody();
+        $params = json_decode($params,true);
+        mockSubmissions($params["courseID"], $params["assignmentID"]); 
+});
 
+$app->post('createrubric/{courseName}',function(Request $request, Response $response) use ($dataMgr){
+    $course_name = $request->getAttribute('courseName');
+
+});
 $app->post('/createassignment/{courseName}', function (Request $request, Response $response) use ($dataMgr){
     $course_name = $request->getAttribute('courseName');
+    $dataMgr->setCourseFromName($course_name);
     $user_assignment_settings = $request->getBody();
     
     $default = get_assignment_defaults(); 

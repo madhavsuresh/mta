@@ -46,10 +46,22 @@ function get_assignment_defaults(){
     global $assignment_defaults; # do this better
     return $assignment_defaults;
 }
-
+$default_radio_button_options = array(
+    "A" => 5,
+    "B" => 4,
+    "C" => 3,
+    "D" => 2,
+    "F" => 1);
+$review_question_defaults = json_encode(array(
+    "name" => "Default Name", 
+    "question_text" => "This is the default question.",
+    "class" => "RadioButtonQuestion",
+    "hidden" => "0",
+    "radio_button_options" => $default_radio_button_options
+    ));
 
     
-$name = "test" . substr(md5(microtime(), rand(0, 26), 5)); # random unique 5 char str    
+$name = "test" . substr(md5(microtime()), rand(0, 26), 5); # random unique 5 char str    
 
 $class_defaults = json_encode(array(
 	"name" => $name,
@@ -58,7 +70,7 @@ $class_defaults = json_encode(array(
 	"registrationType" => "Open",
 	"browsable" => "true"));
 
-$username = "Nathan" . substr(md5(microtime(), rand(0, 26), 4));
+$username = "Nathan" . substr(md5(microtime()), rand(0, 26), 4);
 
 $user_defaults = json_encode(array(
 	"username" => $username,

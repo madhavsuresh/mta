@@ -2,33 +2,20 @@
 require_once("../peerreview/inc/common.php");
 
 
-function setup_radio_question($assignment, $num_options){
-    
-    $json = '{"name": "testname", 
-    "question_text" : "please answer question?",
-    "class" : "RadioButtonQuestion",
-    "hiden" : "0"}';
-    $json = json_decode($json);
+function setup_radio_question($assignment, $review_params){
+    #assumes new radio/peer review rubric. 
 
-    # sets question id to null bc auto gen. other params are set to default
-    $question = new RadioButtonQuestion(NULL, $json->name, $json->question_text); 
-
-    for ($i = 1; $i <= $num_options; $i++){
-        $option = new RadioButtonOption(chr($i+64), $i);
+    # sets question id to null bc auto gen. 
+    $question = new RadioButtonQuestion(NULL, 
+                                        $review_params["name"],
+                                        $review_params["question_text"]); 
+    $radio_button_options = $review_params["radio_button_options"];
+    foreach($radio_button_options as $key => $value){
+        $option = new RadioButtonOption($key, $value);
         $question->options[] = $option; 
-
-    } 
-    $assignment->saveReviewQuestion($question);
-    
-
-
     }
 
-
-
-
-
-
-
-
+    $assignment->saveReviewQuestion($question);
+    
+    }
 ?>

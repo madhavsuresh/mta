@@ -16,9 +16,9 @@ function create_course($course_params){
     $courseObj->name = $course_params['name'];
     echo $courseObj->name;
     $courseObj->displayName = $course_params['displayName'];
-    $courseObj->authType = $course_params->['authType'];
-    $courseObj->registrationType = $course_params->['registrationType'];
-    $courseObj->browsable = isset_bool($course_params>['browsable']);
+    $courseObj->authType = $course_params['authType'];
+    $courseObj->registrationType = $course_params['registrationType'];
+    $courseObj->browsable = isset_bool($course_params['browsable']);
 
     $db = $dataMgr->getDatabase();
     $db->beginTransaction();
@@ -28,7 +28,7 @@ function create_course($course_params){
     $new_course_id = $sh->fetchall();
     $new_course_id = $new_course_id[0]->course_id + 1;
 
-    $dataMgr->createCourse($course_params['name'], $course_params['displayName'], $course_params['authType'], $course_params['registrationType'], isset_bool($course_params['browsable']);
+    $dataMgr->createCourse($course_params['name'], $course_params['displayName'], $course_params['authType'], $course_params['registrationType'], isset_bool($course_params['browsable']));
 
     $dataMgr->setCourseFromID(new CourseID($new_course_id));
     $db->commit();
@@ -40,7 +40,7 @@ function addUserToCourse($course_name, $user_params) {
 	$authMgr = $dataMgr->createAuthManager();
 	$dataMgr->setCourseFromName($course_name);
 	$dataMgr->addUser($user_params['username'], $user_params['first_name'], $user_params['last_name'], $user_params['user_id'], $user_params['type']);
-	$authMgr->addUserAuthentication($user_params['username'], $user_params['password']	
+	$authMgr->addUserAuthentication($user_params['username'], $user_params['password']);	
 
 }
 

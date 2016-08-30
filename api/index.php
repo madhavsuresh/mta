@@ -33,6 +33,23 @@ $app->get('/getallsubmissions/{course}/{assignmentID}', function (Request $reque
 	$dataMgr->setCourseFromName($request->getAttribute('course'));
 	
 });
+
+$app->get('/getallassignments/{courseName}', function (Request $request, Response $response) use ($dataMgr){
+    $dataMgr->setCourseFromName($request->getAttribute("courseName"));
+    #$db = $dataMgr->getDatabase();
+
+    #$db->beginTransaction();
+    #$sh = $db->prepare("SELECT name, assignmentID FROM assignments WHERE courseID = ?;");
+    #$sh->execute(array($dataMgr->courseID));
+    #$assignments = $sh->fetchall();
+    $assignments = $dataMgr->getAssignments();
+    $newResponse = $response->withJson($assignments);
+    return $newResponse;
+        
+
+});
+
+
 $app->post('/makesubmissions/', function (Request $request, Response $response) use
     ($dataMgr){#takes in course name and assignment id
         $params = $request->getBody();
@@ -40,8 +57,18 @@ $app->post('/makesubmissions/', function (Request $request, Response $response) 
         mockSubmissions($params["courseID"], $params["assignmentID"]); 
 });
 
-$app->post('createrubric/{courseName}',function(Request $request, Response $response) use ($dataMgr){
+$app->post('/createrubric/{courseName}/{assignmentID}',function(Request $request, Response $response) use ($dataMgr){
     $course_name = $request->getAttribute('courseName');
+    $dataMgr->setCourseFromName($course_name);
+    #actually don't think you even need the course name, but not 100% about the whole mta system so its here
+    $assignment_id = $request->getAttribute('assignmentID');
+    $assignment = $dataMgr->getAssignment(new AssignmentID($assignment_id)); 
+    
+    $params = $request->getBody();
+    $default = get_rubric_defaults();
+    $rubric_params = fill_and_decode_json($default, $params);
+
+    setup_radio_question($assignment, $rubric_params);
 
 });
 $app->post('/createassignment/{courseName}', function (Request $request, Response $response) use ($dataMgr){

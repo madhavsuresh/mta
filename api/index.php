@@ -5,6 +5,7 @@ require_once("default_values.php");
 require_once("create_class.php");
 require_once("fill_and_decode_json.php");
 require_once("create_assignment.php"); 
+require_once("update_review_question.php");
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 
@@ -45,8 +46,23 @@ $app->get('/getallassignments/{courseName}', function (Request $request, Respons
     $assignments = $dataMgr->getAssignments();
     $newResponse = $response->withJson($assignments);
     return $newResponse;
-        
+});
 
+$app->get('/rubrics/get/{assignmentID}',function (Request $request, Response $response) use ($dataMgr){
+
+    $assignment = $dataMgr->getAssignment(new AssignmentID($request->getAttribute("assignmentID")));
+    $questions = $assignment->getReviewQuestions($assignment);
+    $newResponse = $response->withJson($questions);
+    return $newResponse;
+});
+
+$app->post('/rubrics/update/{assignmentID}/{questionID}',function(Request $request, Response $response) use($dataMgr){
+    //TODO Make this a patch
+    $params = $request->getBody();
+    $params = json_decode($params,true);
+    $assignment = $dataMgr->getAssignment(new AssignmentID($request->getAttribute("assignmentID")));
+    update_review_question($assignment, $params, $request->getAttribute("questionID"));
+    $response->getBody()->write("finished");
 });
 
 
@@ -56,6 +72,8 @@ $app->post('/makesubmissions/', function (Request $request, Response $response) 
         $params = json_decode($params,true);
         mockSubmissions($params["courseID"], $params["assignmentID"]); 
 });
+
+
 
 $app->post('/createrubric/{courseName}/{assignmentID}',function(Request $request, Response $response) use ($dataMgr){
     $course_name = $request->getAttribute('courseName');
@@ -80,6 +98,10 @@ $app->post('/createassignment/{courseName}', function (Request $request, Respons
 	#$response->getBody()->write($default->AssignmentType);
     $assignment_params = fill_and_decode_json($default, $user_assignment_settings);
     createAssignment($assignment_params,$course_name); 
+});
+
+$app->post('assignment/update/{courseID}/{assignmentID}', function( Request $request, Response $response) use ($dataMgr){
+    
 });
 
 

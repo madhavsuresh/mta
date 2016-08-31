@@ -52,6 +52,7 @@ $default_radio_button_options = array(
     "C" => 3,
     "D" => 2,
     "F" => 1);
+global $review_question_defaults;
 $review_question_defaults = json_encode(array(
     "name" => "Default Name", 
     "question_text" => "This is the default question.",
@@ -59,8 +60,10 @@ $review_question_defaults = json_encode(array(
     "hidden" => "0",
     "radio_button_options" => $default_radio_button_options
     ));
-
-    
+function get_rubric_defaults(){
+    global $review_question_defaults;
+    return $review_question_defaults;
+} 
 $name = "test" . substr(md5(microtime()), rand(0, 26), 5); # random unique 5 char str    
 
 $class_defaults = json_encode(array(

@@ -30,9 +30,51 @@ $app->get('/getallstudents/{course}', function (Request $request, Response $resp
 });
 
 $app->get('/getallsubmissions/{course}/{assignmentID}', function (Request $request, Response $response) use ($dataMgr) {
-	$dataMgr->setCourseFromName($request->getAttribute('course'));
+	$dataMgr->setCourseFromName($request->getAttribute('course'));	
+});
+
+$app->get('/course/get', function (Request $request, Response $response) use ($dataMgr) {
+	# needs JSON validation
+	$params = $request->getBody();
+	$params = json_decode($params, true);
+	$courseID = new CourseID($params['courseID']);
+	$dataMgr->setCourseFromID($courseID);
+
+	$courseInfo = $dataMgr->getCourseInfo($courseID);
+	return $response->withJson($courseInfo);
+});
+
+$app->post('/course/create', function (Request $request, Response $response) use ($dataMgr) {	
+	# needs JSON validation
+	$params = $request->getBody();
+	$params = json_decode($params, true);
+
+	$dataMgr->createCourse($params['name'], $params['displayName'], $params['authType'], $params['registrationType'], isset_bool($params['browsable']));
+	return $response;
+});
+
+
+$app->post('/course/update', function (Request $request, Response $response) use ($dataMgr) {	
+	# needs JSON validation
+	$params = $request->getBody();
+	$params = json_decode($params, true);
+	$courseID = new CourseID($params['courseID']);
+	$dataMgr->setCourseFromID($courseID);
+
 	
 });
+
+$app->post('/course/delete', function (Request $request, Response $response) use ($dataMgr) {	
+	# needs JSON validation
+	$params = $request->getBody();
+	$params = json_decode($params, true);
+	$courseID = new CourseID($params['courseID']);
+	$dataMgr->setCourseFromID($courseID);
+
+	$dataMgr->deleteCourse($courseID);
+	return $response;	
+});
+
 $app->post('/makesubmissions/', function (Request $request, Response $response) use
     ($dataMgr){#takes in course name and assignment id
         $params = $request->getBody();

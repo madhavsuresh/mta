@@ -308,7 +308,7 @@ $app->post('/peermatch/create', function (Request $request, Response $response) 
 })->add($jsonDecodeMW);
 
 
-/*
+
 $app->post('/peermatch/delete', function (Request $request, Response $response) use ($dataMgr) {
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$schema = decode_json_throw_errors(file_get_contents('./peermatch_json/delete/request.json'));
@@ -318,12 +318,15 @@ $app->post('/peermatch/delete', function (Request $request, Response $response) 
 		print_r($validator->errors());
 		return NULL;
 	}
+	 */
 	$db = $dataMgr->getDatabase();
 	$assignmentID = $json_body->assignmentID;
-	$getAllMatches = $db->prepare("SELECT * from peer_review_assignment_submissions where assignmentID = ?");
-	$getSubmissionIds = $db->prepare("SELECT submissionid FROM PEER_REVIEW_ASSIGNMENT_SUBMISSIONS where authorID = ? and assignmentID = ?");
-	$checkForMatch = $db->prepare("SELECT matchID FROM PEER_REVIEW_ASSIGNMENT_MATCHES where submissionID=? AND reviewerID = ?;");
-}
- */
+	$getAllMatches = $db->prepare("SELECT * from PEER_REVIEW_ASSIGNMENT_MATCHES where assignmentID = ?");
+	$deleteAllMatches = $db->prepare("DELETE from PEER_REVIEW_ASSIGNMENT_MATCHES where assignmentID = ?");
+	$getAllMatches->execute(array($assignmentID));
+	$allMatches = $getAllMatches->fetchAll();
+	$deleteAllMatches->execute(array($assignmentID));
+})->add($jsonDecodeMW);
+
 
 $app->run();

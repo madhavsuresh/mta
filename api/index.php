@@ -67,11 +67,11 @@ $app->post('/validate', function (Request $request, Response $response) {
 
 ################# COURSE ########################
 
-$app->get('/course/get', function (Request $request, Respo    nse $response) use ($dataMgr) {
+$app->get('/course/get', function (Request $request, Response $response) use ($dataMgr) {
     //TODO ADD ERROR CATCHING
-    # $schema = json_decode(file_get_contents('./json/cour    se/get/request.json'));
+    # $schema = json_decode(file_get_contents('./json/course/get/request.json'));
 	$json_body = json_decode($request->getBody());
-	/*$validator = new League\JsonGuard\Validator($json_bo    dy, $schema);
+	/*$validator = new League\JsonGuard\Validator($json_body, $schema);
     if($validator->fails()) {
         print_r($validator->errors());
         return NULL;
@@ -85,35 +85,35 @@ $app->get('/course/get', function (Request $request, Respo    nse $response) use
 	return $response->withJson($courseInfo);
 });
 
-$app->post('/course/create', function (Request $request, R    esponse $response) use ($dataMgr) {
+$app->post('/course/create', function (Request $request, Response $response) use ($dataMgr) {
     # needs JSON validation
     //TODO ADD ERROR CATCHING
     $params = $request->getBody();
 	$params = json_decode($params, true);
  
-	$dataMgr->createCourse($params['name'], $params['displ    ayName'], $params['authType'], $params['registrationType']    , isset_bool($params['browsable']));
+	$dataMgr->createCourse($params['name'], $params['displayName'], $params['authType'], $params['registrationType'], isset_bool($params['browsable']));
     return $response;
  });
   
-$app->post('/course/update', function (Request $request, R    esponse $response) use ($dataMgr) {
+$app->post('/course/update', function (Request $request, Response $response) use ($dataMgr) {
     # needs JSON validation
     //TODO ADD ERROR CATCHING
 	$params = $request->getBody();
     $params = json_decode($params, true);
     $courseID = new CourseID($params['courseID']);
     $dataMgr->setCourseFromID($courseID);
-    $courseInfo = (array) $dataMgr->getCourseInfo($courseI    D);
+    $courseInfo = (array) $dataMgr->getCourseInfo($courseID);
  
     foreach($params as $key => $value) {
         $temp = $params[$key];
         $courseInfo[$key] = $temp;
     }
-    $dataMgr->setCourseInfo($courseID, $courseInfo['name']    , $courseInfo['displayName'], $courseInfo['authType'], $co    urseInfo['registrationType'], isset_bool($courseInfo['brow    sable']));
+    $dataMgr->setCourseInfo($courseID, $courseInfo['name'], $courseInfo['displayName'], $courseInfo['authType'], $courseInfo['registrationType'], isset_bool($courseInfo['browsable']));
 	 
-    return $response->withJson($dataMgr->getCourseInfo($co    urseID));
+    return $response->withJson($dataMgr->getCourseInfo($courseID));
  });
 
-$app->post('/course/delete', function (Request $request, Response $response)     use ($dataMgr) {
+$app->post('/course/delete', function (Request $request, Response $response) use ($dataMgr) {
 	# needs JSON validation
     //TODO ADD ERROR CATCHING
     $params = $request->getBody();

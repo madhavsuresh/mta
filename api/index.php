@@ -8,24 +8,9 @@ use \JsonSchema\Validator as JsonValidator;
 $config['displayErrorDetails'] = true;
 $config['addContentLengthHeader'] = false;
 $container = new \Slim\Container;
-/*
-$container['schemaArray'] =  function() {
-	$schemaArray = [];
-//	$schemaArray['/peermatch/get'] = decode_json_throw_errors(file_get_contents('schemas/peermatch/get.schema'));
-	return $schemaArray;
-};
- */
-//$app = new \Slim\App($container,["settings" => $config]);
 $app = new \Slim\App(["settings"=>$config]);
 
 
-
-$app->get('/hello/{name}', function (Request $request, Response $response) {
-    $name = $request->getAttribute('name');
-    $response->getBody()->write("Hello, $name");
-
-    return $response;
-});
 
 function decode_json_throw_errors($inputString) {
 	$json_body = json_decode($inputString);
@@ -69,7 +54,7 @@ $jsonvalidatemw = function ($request, $response, $next) {
 
 $app->post('/validate', function (Request $request, Response $response) {
 	$json_body = $request->getAttribute('requestDecodedJson');
-	$schema = json_decode(file_get_contents('./peermatch/get/request.json'));
+	$schema = decode_json_throw_errors(file_get_contents('./peermatch/get/request.json'));
 	$validator = new League\JsonGuard\Validator($json_body, $schema);
 	if ($validator->fails()) {
 		print_r($validator->errors());
@@ -79,48 +64,56 @@ $app->post('/validate', function (Request $request, Response $response) {
 	//$schemaArray = $myService->schemaArray;
 })->add($jsonDecodeMW);
 
-$app->get('/peermatch/create', function (Request $request, Response $response) {
-
-});
-
-
-//TODO: proper exception handling. 
-$app->post('/uploadpeermatch/{course}/{assignmentID}', function (Request $request, Response $response) use ($dataMgr) {
-	//probably should check type information. 
-	$assignmentID = $request->getAttribute('assignmentID');
-	$body = $request->getBody();
+$app->get('/peermatch/get/',  function (Request $request, Response $response) use ($dataMgr) {
+	$json_body = $request->getAttribute('requestDecodedJson');
+	$schema = decode_json_throw_errors(file_get_contents('./peermatch_json/get/request.json'));
+	$validator = new League\JsonGuard\Validator($json_body, $schema);
+	if ($validator->fails()) {
+		print_r($validator->errors());
+		return NULL;
+		throw new Exception(sprintf("[peermatch][get] Validation failed %s", $stringempty));
+	} 
+	$assignmentID = $json_body->assignmentID;
 	$db = $dataMgr->getDatabase();
-	$matchings = json_decode($body, $assoc = true);
+	$sh = $db->prepare("SELECT  peer_review_assignment_submissions.authorID, peer_review_assignment_matches.reviewerID
+       			FROM peer_review_assignment_submissions JOIN peer_review_assignment_matches ON
+       		peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID
+       		WHERE peer_review_assignment_submissions.assignmentID = ?
+       		ORDER BY peer_review_assignment_submissions.authorID");
+	$sh->execute(array($assignmentID));
+        $reviewerAssignment = array();
+        while($res = $sh->fetch())
+        {
+            if(!array_key_exists($res->authorID, $reviewerAssignment))
+            {
+                $reviewerAssignment[$res->authorID] = array();
+            }
+            array_push($reviewerAssignment[$res->authorID], $res->reviewerID);
+        }
+	$return_array['matchesMap'] = $reviewerAssignment;
+	$newResponse = $response->withJson($return_array);
+	return $newResponse;
+})->add($jsonDecodeMW);
 
-	//TODO:change this into middleware
-	switch (json_last_error()) {
-	case JSON_ERROR_NONE:
-		break;
-	case JSON_ERROR_DEPTH:
-		echo ' - Maximum stack depth exceeded';
-		break;
-	case JSON_ERROR_STATE_MISMATCH:
-		echo ' - Underflow or the modes mismatch';
-		break;
-	case JSON_ERROR_CTRL_CHAR:
-		echo ' - Unexpected control character found';
-		break;
-	case JSON_ERROR_SYNTAX:
-		echo ' - Syntax error, malformed JSON';
-		break;
-	case JSON_ERROR_UTF8:
-		echo ' - Malformed UTF-8 characters, possibly incorrectly encoded';
-		break;
-	default:
-		echo ' - Unknown error';
-		break;
+$app->post('/peermatch/create', function (Request $request, Response $response) use ($dataMgr) {
+	$json_body = $request->getAttribute('requestDecodedJson');
+	$schema = decode_json_throw_errors(file_get_contents('./peermatch_json/create/request.json'));
+	$validator = new League\JsonGuard\Validator($json_body, $schema);
+	if ($validator->fails()) {
+		print_r($validator->errors());
+		return NULL;
 	}
+	$db = $dataMgr->getDatabase();
+	$assignmentID = $json_body->assignmentID;
+	$peerMatches = $json_body->peerMatches;
 	$getSubmissionIds = $db->prepare("SELECT submissionid FROM PEER_REVIEW_ASSIGNMENT_SUBMISSIONS where authorID = ? and assignmentID = ?");
 	$checkForMatch = $db->prepare("SELECT matchID FROM PEER_REVIEW_ASSIGNMENT_MATCHES where submissionID=? AND reviewerID = ?;");
 	$insertMatch = $db->prepare("INSERT INTO PEER_REVIEW_ASSIGNMENT_MATCHES (submissionID, reviewerID, instructorForced, calibrationState) values (?,?,0,'none')");
-	foreach ($matchings as $studentID => $matchingMap) {
+	foreach ($peerMatches as $peerMatch) {
 			$db->beginTransaction();
+			$studentID = $peerMatch->studentID;
 			$getSubmissionIds->execute(array($studentID, $assignmentID));
+			$matchingList = $peerMatch->matchList;
 			$res  = $getSubmissionIds->fetch();
 			//TODO: do we really need this?? check the type output for pdo object fetch()
 			//TODO: this should probably be an error, return an error code
@@ -131,15 +124,36 @@ $app->post('/uploadpeermatch/{course}/{assignmentID}', function (Request $reques
 				continue;
 			}
 
-			foreach($matchingMap as $matchedReviewer) {
+			foreach($matchingList as $matchedReviewer) {
 				$checkForMatch->execute(array($submissionID, $matchedReviewer));
 				
 				if (!$checkForMatch->fetch()){
 					$insertMatch->execute(array($submissionID, $matchedReviewer));
 				}
 			}
+			 
 			$db->commit();
 	}
-});
+
+})->add($jsonDecodeMW);
+
+
+/*
+$app->post('/peermatch/delete', function (Request $request, Response $response) use ($dataMgr) {
+	$json_body = $request->getAttribute('requestDecodedJson');
+	$schema = decode_json_throw_errors(file_get_contents('./peermatch_json/delete/request.json'));
+	$validator = new League\JsonGuard\Validator($json_body, $schema);
+	/*
+	if ($validator->fails()) {
+		print_r($validator->errors());
+		return NULL;
+	}
+	$db = $dataMgr->getDatabase();
+	$assignmentID = $json_body->assignmentID;
+	$getAllMatches = $db->prepare("SELECT * from peer_review_assignment_submissions where assignmentID = ?");
+	$getSubmissionIds = $db->prepare("SELECT submissionid FROM PEER_REVIEW_ASSIGNMENT_SUBMISSIONS where authorID = ? and assignmentID = ?");
+	$checkForMatch = $db->prepare("SELECT matchID FROM PEER_REVIEW_ASSIGNMENT_MATCHES where submissionID=? AND reviewerID = ?;");
+}
+ */
 
 $app->run();

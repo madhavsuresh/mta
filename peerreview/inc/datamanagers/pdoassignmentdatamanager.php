@@ -236,7 +236,6 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         {
             $sh->execute(array($assignment->assignmentID, $id));
         }
-
         //Now we need to save the data for our type
         $this->submissionHelpers[$assignment->submissionType]->saveAssignmentSubmissionSettings($assignment, $newAssignment);
     }
@@ -350,6 +349,7 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             break;
         default:
             throw new Exception("Unhandled question type '$type'");
+        $sh = $this->prepareQuery("insertReviewAnswerQuery", "INSERT INTO peer_review_assignment_review_answers (matchID, questionID, answerInt, answerText, reviewTimestamp) VALUES (?, ?, ?, ?, ".$this->from_unixtime("?").");");
         }
         return $question;
     }

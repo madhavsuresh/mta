@@ -78,13 +78,8 @@ $app->post('/course/delete', function (Request $request, Response $response) use
 
 $app->get('/getallassignments/{courseName}', function (Request $request, Response $response) use ($dataMgr){
     $dataMgr->setCourseFromName($request->getAttribute("courseName"));
-    #$db = $dataMgr->getDatabase();
-
-    #$db->beginTransaction();
-    #$sh = $db->prepare("SELECT name, assignmentID FROM assignments WHERE courseID = ?;");
-    #$sh->execute(array($dataMgr->courseID));
-    #$assignments = $sh->fetchall();
     $assignments = $dataMgr->getAssignments();
+    print_r($assignments[0]);
     $newResponse = $response->withJson($assignments);
     return $newResponse;
 });
@@ -114,7 +109,6 @@ $app->post('/makesubmissions/', function (Request $request, Response $response) 
 });
 
 
-
 $app->post('/createrubric/{courseName}/{assignmentID}',function(Request $request, Response $response) use ($dataMgr){
     $course_name = $request->getAttribute('courseName');
     $dataMgr->setCourseFromName($course_name);
@@ -129,19 +123,47 @@ $app->post('/createrubric/{courseName}/{assignmentID}',function(Request $request
     setup_radio_question($assignment, $rubric_params);
 
 });
-$app->post('/createassignment/{courseName}', function (Request $request, Response $response) use ($dataMgr){
-    $course_name = $request->getAttribute('courseName');
-    $dataMgr->setCourseFromName($course_name);
-    $user_assignment_settings = $request->getBody();
+$app->post('/assignment/create', function (Request $request, Response $response) use ($dataMgr){
     
-    $default = get_assignment_defaults(); 
-	#$response->getBody()->write($default->AssignmentType);
-    $assignment_params = fill_and_decode_json($default, $user_assignment_settings);
-    createAssignment($assignment_params,$course_name); 
+    
+    $params = $request->getBody();
+    $params = json_decode($params, true);
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
+    
+    $assignment = createAssignment($params); 
 });
 
-$app->post('assignment/update/{courseID}/{assignmentID}', function( Request $request, Response $response) use ($dataMgr){
+$app->post('/assignment/update', function( Request $request, Response $response) use ($dataMgr){
+    $json_params = $request->getBody();
+
+       
+    $params = json_decode($json_params,true); 
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
+
+    $old_assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
+    $assignment_type = $params['assignmentType'];
+    foreach ($params as $key => $value){
+     #   print_r($key);
+      #  print_r("\n");
+        if ($key == 'assignmentID'){
+            continue;
+        }
+        elseif($key == "submissionSettings"){
+            #print_r($value);
+            #print_r("\n");
+            #print_r($value["autoAssignEssayTopic"]);
+            if ($value["autoAssignEssayTopic"] == ""){
+                    $value["autoAssignEssayTopic"] = 0;
+            }
+            #print_r($value); 
+        }
+        $old_assignment->$key = $value; 
+    }
+    #print_r($old_assignment);
+    $new_assignment = $old_assignment;
+    $dataMgr->saveAssignment($new_assignment, $assignment_type);    
     
+
 });
 
 

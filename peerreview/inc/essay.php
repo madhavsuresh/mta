@@ -150,6 +150,7 @@ class EssayPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelper
     function saveAssignmentSubmissionSettings(PeerReviewAssignment $assignment, $isNewAssignment)
     {
         //Delete any old topics, and just write in the new ones
+        
         $sh = $this->prepareQuery("deleteAssignmentEssaySubmissionSettingsQuery", "DELETE FROM peer_review_assignment_essay_settings WHERE assignmentID = ?;");
         $sh->execute(array($assignment->assignmentID));
 

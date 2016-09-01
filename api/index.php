@@ -13,31 +13,19 @@ $config['displayErrorDetails'] = true;
 $config['addContentLengthHeader'] = false;
 $app = new \Slim\App(["settings" => $config]);
 
-$app->get('/', function (Request $request, Response $response) {
-	$response->getBody()->write("Hello, $rootUri");
-});
-$app->get('/hello/{name}', function (Request $request, Response $response) {
-    $name = $request->getAttribute('name');
-    $response->getBody()->write("Hello, esstsefjsdf");
-
-    return $response;
-});
-
-$app->get('/getallstudents/{course}', function (Request $request, Response $response) use ($dataMgr) {
-	$dataMgr->setCourseFromName($request->getAttribute('course'));
-	$students = $dataMgr->getStudents();
-	$newResponse = $response->withJson($students);
-	return $newResponse;
-});
-
-$app->get('/getallsubmissions/{course}/{assignmentID}', function (Request $request, Response $response) use ($dataMgr) {
-	$dataMgr->setCourseFromName($request->getAttribute('course'));	
-});
+####################### COURSE ########################
 
 $app->get('/course/get', function (Request $request, Response $response) use ($dataMgr) {
-	# needs JSON validation
-	$params = $request->getBody();
-	$params = json_decode($params, true);
+	//TODO ADD ERROR CATCHING
+	# $schema = json_decode(file_get_contents('./json/course/get/request.json'));
+	$json_body = json_decode($request->getBody());
+	/*$validator = new League\JsonGuard\Validator($json_body, $schema);
+	if($validator->fails()) {
+		print_r($validator->errors());
+		return NULL;
+		throw new Exception("RIP");
+	}*/
+	$params = (array) $json_body;	
 	$courseID = new CourseID($params['courseID']);
 	$dataMgr->setCourseFromID($courseID);
 
@@ -47,6 +35,7 @@ $app->get('/course/get', function (Request $request, Response $response) use ($d
 
 $app->post('/course/create', function (Request $request, Response $response) use ($dataMgr) {	
 	# needs JSON validation
+	//TODO ADD ERROR CATCHING
 	$params = $request->getBody();
 	$params = json_decode($params, true);
 
@@ -57,16 +46,25 @@ $app->post('/course/create', function (Request $request, Response $response) use
 
 $app->post('/course/update', function (Request $request, Response $response) use ($dataMgr) {	
 	# needs JSON validation
+	//TODO ADD ERROR CATCHING
 	$params = $request->getBody();
 	$params = json_decode($params, true);
 	$courseID = new CourseID($params['courseID']);
 	$dataMgr->setCourseFromID($courseID);
-
+	$courseInfo = (array) $dataMgr->getCourseInfo($courseID);
 	
+	foreach($params as $key => $value) {
+		$temp = $params[$key];	
+		$courseInfo[$key] = $temp;
+	}
+	$dataMgr->setCourseInfo($courseID, $courseInfo['name'], $courseInfo['displayName'], $courseInfo['authType'], $courseInfo['registrationType'], isset_bool($courseInfo['browsable']));
+
+	return $response->withJson($dataMgr->getCourseInfo($courseID));
 });
 
 $app->post('/course/delete', function (Request $request, Response $response) use ($dataMgr) {	
 	# needs JSON validation
+	//TODO ADD ERROR CATCHING
 	$params = $request->getBody();
 	$params = json_decode($params, true);
 	$courseID = new CourseID($params['courseID']);
@@ -75,6 +73,8 @@ $app->post('/course/delete', function (Request $request, Response $response) use
 	$dataMgr->deleteCourse($courseID);
 	return $response;	
 });
+
+########################### GRADES #######################
 
 $app->get('/getallassignments/{courseName}', function (Request $request, Response $response) use ($dataMgr){
     $dataMgr->setCourseFromName($request->getAttribute("courseName"));

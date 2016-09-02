@@ -170,7 +170,7 @@ $app->post('/assignment/update', function( Request $request, Response $response)
 
 
 #################### PEERREVIEWS ######################333
-$app->get('/rubrics/get',function (Request $request, Response $response) use ($dataMgr){
+$app->get('/rubric/get',function (Request $request, Response $response) use ($dataMgr){
 
     $params = json_decode($request->getBody(),true);
 

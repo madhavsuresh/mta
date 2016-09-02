@@ -1,7 +1,6 @@
 <?php
 require '../vendor/autoload.php';
 require_once("../inc/common.php");
-require_once("default_values.php");
 require_once("create_class.php");
 require_once("api_lib.php");
 use \Psr\Http\Message\ServerRequestInterface as Request;

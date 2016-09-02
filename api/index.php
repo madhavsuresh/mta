@@ -1,6 +1,8 @@
 <?php
 require '../vendor/autoload.php';
 require_once("../inc/common.php");
+require_once("api_lib.php");
+
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 use \JsonSchema\Validator as JsonValidator;
@@ -124,6 +126,98 @@ $app->post('/course/delete', function (Request $request, Response $response) use
     $dataMgr->deleteCourse($courseID);
     return $response;
 });
+
+####################### ASSIGNMENTS ###########################3
+$app->get('/assignments/get/all', function (Request $request, Response $response) use ($dataMgr){
+
+
+    $params = json_decode($request->getBody(), true);
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
+    $assignments = $dataMgr->getAssignments();
+    $newResponse = $response->withJson($assignments);
+    return $newResponse;
+});
+
+$app->post('/assignment/create', function (Request $request, Response $response) use ($dataMgr){
+    
+    $params = $request->getBody();
+    $params = json_decode($params, true);
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
+    $assignment = createAssignment($params); 
+});
+
+$app->post('/assignment/update', function( Request $request, Response $response) use ($dataMgr){
+    $json_params = $request->getBody();
+    $params = json_decode($json_params,true); 
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
+    $assignment = createAssignment($params);
+    
+});
+
+
+
+#################### PEERREVIEWS ######################333
+$app->get('/rubrics/get',function (Request $request, Response $response) use ($dataMgr){
+
+    $params = json_decode($request->getBody(),true);
+
+    $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
+    $questions = $assignment->getReviewQuestions($assignment);
+    $newResponse = $response->withJson($questions);
+    return $newResponse;
+});
+
+$app->post('/rubric/update',function(Request $request, Response $response) use($dataMgr){
+    //TODO Make this a patch
+    $params = $request->getBody();
+    $params = json_decode($params,true);
+    $assignment = $dataMgr->getAssignment(new AssignmentID($params["assignmentID"]));
+    update_review_question($assignment, $params); 
+    $response->getBody()->write("finished");
+});
+
+$app->post('/makesubmissions', function (Request $request, Response $response) use
+    ($dataMgr){#takes in course name and assignment id
+        $params = $request->getBody();
+        $params = json_decode($params,true);
+        mockSubmissions($params["courseID"], $params["assignmentID"]); 
+});
+
+
+$app->post('/rubric/create',function(Request $request, Response $response) use ($dataMgr){
+    
+    $params = json_decode($request->getBody(),true);
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
+    #actually don't think you even need the course name, but not 100% about the whole mta system so its here
+    unset($params['courseID']); #get rid of it cause not needed for the rubric
+    $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID'])); 
+    setup_radio_question($assignment, $params);
+
+});
+
+$app->get('/peerreviewscores/get', function(Request $request, Response $response) use($dataMgr){
+
+    $params = json_decode($request->getBody(),true);
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
+    $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
+    $review = $assignment->getReview(new MatchID($params['matchID']));
+    $newResponse = $response->withJson($review);
+    return $newResponse;
+});
+
+
+$app->post('/peerreviewscores/create', function(Request $request, Response $response) use($dataMgr){
+
+    $params = json_decode($request->getBody(),true);
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
+    $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
+    make_peer_review($assignment, $params);
+});
+
+
+
+
+
 
 ########################### GRADES #######################
 

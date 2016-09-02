@@ -5,7 +5,7 @@ require_once("../inc/datamanager.php");
 require_once("../peerreview/inc/datamanagers/pdoassignmentdatamanager.php");
 require_once("../config.php");
 
-function mockSubmissions($courseID, $assignmentID){
+function mock_submissions($courseID, $assignmentID){
     global $dataMgr, $NOW;
     $text_to_add = "The ouick brown fox jumped over the fence";
     $DELETE_FLAG = FALSE; # i don't think this should ever be set...
@@ -40,21 +40,26 @@ function mockSubmissions($courseID, $assignmentID){
        echo $e->getMessage();
     }
 }
+function update_assignment($assignment_params){
+    global $dataMgr;
+    $assignment = $dataMgr->getAssignment(new AssignmentID($assignment_params["assignmentID"]));
 
+    save_assignment($assignment, $assignment_params);
+}
 
+function create_assignment($assignment_params){
+    global $dataMgr;
+    $assignmentType = $assignment_params["assignmentType"];
+    $assignment = $dataMgr->createAssignmentInstance(null, $assignmentType);
+    save_assignment($assignment, $assignment_params);
+}
 
-function createAssignment($assignment_params){
+function save_assignment($assignment, $assignment_params){
    global $dataMgr; 
     $assignmentType = $assignment_params['assignmentType'];
     $submission_type = $assignment_params['submissionType'];
     $submissionSettingsType = $submission_type ."SubmissionSettings";
 
-    if (array_key_exists('assignmentID', $assignment_params)){
-        $assignment = $dataMgr->getAssignment(new     AssignmentID($assignment_params["assignmentID"]));
-    }
-    else{
-        $assignment = $dataMgr->createAssignmentInstance(null, $assignmentType);
-    }    
     foreach ($assignment_params as $key => $value){
         if ($key == "submissionSettings"){
             $assignment->submissionSettings = new $submissionSettingsType(); 
@@ -70,7 +75,7 @@ function createAssignment($assignment_params){
     return $assignment;
 }
 
-function setup_radio_question($assignment, $rubric_params){
+function create_radio_question($assignment, $rubric_params){
     #assumes new radio/peer review rubric. 
 
     # sets question id to null bc auto gen. 
@@ -87,7 +92,7 @@ function setup_radio_question($assignment, $rubric_params){
     }
 
 
-function update_review_question(PeerReviewAssignment $assignment, $new_question_params){
+function update_radio_question(PeerReviewAssignment $assignment, $new_question_params){
     #assuming completly filled in and validated. 
     $questionID = $new_question_params["questionID"];
     unset($new_question_params["questionID"]);

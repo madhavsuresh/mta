@@ -128,14 +128,27 @@ $app->post('/course/delete', function (Request $request, Response $response) use
 });
 
 ####################### ASSIGNMENTS ###########################3
-$app->get('/assignments/get/all', function (Request $request, Response $response) use ($dataMgr){
+$app->get('/assignment/get', function (Request $request, Response $response) use ($dataMgr){
 
 
     $params = json_decode($request->getBody(), true);
     $dataMgr->setCourseFromID(new CourseID($params['courseID']));
-    $assignments = $dataMgr->getAssignments();
-    $newResponse = $response->withJson($assignments);
-    return $newResponse;
+    
+    if ($params["assignmentIDs"] == "all"){
+    
+        $assignments = $dataMgr->getAssignments();
+        $newResponse = $response->withJson($assignments);
+        return $newResponse;
+    }
+    else {
+        $assignment = array(); 
+        foreach ($params["assignmentIDs"] as $id){
+            $assignments[] = $dataMgr->getAssignment(new AssignmentID($id));
+        }
+        $newResponse = $response->withJson($assignments);
+        return $newResponse;
+    }
+
 });
 
 $app->post('/assignment/create', function (Request $request, Response $response) use ($dataMgr){
@@ -143,14 +156,14 @@ $app->post('/assignment/create', function (Request $request, Response $response)
     $params = $request->getBody();
     $params = json_decode($params, true);
     $dataMgr->setCourseFromID(new CourseID($params['courseID']));
-    $assignment = createAssignment($params); 
+    $assignment = create_assignment($params); 
 });
 
 $app->post('/assignment/update', function( Request $request, Response $response) use ($dataMgr){
     $json_params = $request->getBody();
     $params = json_decode($json_params,true); 
     $dataMgr->setCourseFromID(new CourseID($params['courseID']));
-    $assignment = createAssignment($params);
+    $assignment = update_assignment($params);
     
 });
 
@@ -172,17 +185,9 @@ $app->post('/rubric/update',function(Request $request, Response $response) use($
     $params = $request->getBody();
     $params = json_decode($params,true);
     $assignment = $dataMgr->getAssignment(new AssignmentID($params["assignmentID"]));
-    update_review_question($assignment, $params); 
+    update_radio_question($assignment, $params); 
     $response->getBody()->write("finished");
 });
-
-$app->post('/makesubmissions', function (Request $request, Response $response) use
-    ($dataMgr){#takes in course name and assignment id
-        $params = $request->getBody();
-        $params = json_decode($params,true);
-        mockSubmissions($params["courseID"], $params["assignmentID"]); 
-});
-
 
 $app->post('/rubric/create',function(Request $request, Response $response) use ($dataMgr){
     
@@ -191,7 +196,7 @@ $app->post('/rubric/create',function(Request $request, Response $response) use (
     #actually don't think you even need the course name, but not 100% about the whole mta system so its here
     unset($params['courseID']); #get rid of it cause not needed for the rubric
     $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID'])); 
-    setup_radio_question($assignment, $params);
+    create_radio_question($assignment, $params);
 
 });
 
@@ -206,6 +211,14 @@ $app->get('/peerreviewscores/get', function(Request $request, Response $response
 });
 
 
+############################ STUDENT SIDE TESTING ###############
+$app->post('/makesubmissions', function (Request $request, Response $response) use
+    ($dataMgr){#takes in course name and assignment id
+        $params = $request->getBody();
+        $params = json_decode($params,true);
+        mockSubmissions($params["courseID"], $params["assignmentID"]); 
+});
+
 $app->post('/peerreviewscores/create', function(Request $request, Response $response) use($dataMgr){
 
     $params = json_decode($request->getBody(),true);
@@ -213,9 +226,6 @@ $app->post('/peerreviewscores/create', function(Request $request, Response $resp
     $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
     make_peer_review($assignment, $params);
 });
-
-
-
 
 
 

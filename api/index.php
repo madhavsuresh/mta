@@ -3,9 +3,6 @@ require '../vendor/autoload.php';
 require_once("../inc/common.php");
 require_once("default_values.php");
 require_once("create_class.php");
-require_once("fill_and_decode_json.php");
-require_once("create_assignment.php"); 
-require_once("update_review_question.php");
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 
@@ -76,32 +73,36 @@ $app->post('/course/delete', function (Request $request, Response $response) use
 
 ########################### GRADES #######################
 
-$app->get('/getallassignments/{courseName}', function (Request $request, Response $response) use ($dataMgr){
-    $dataMgr->setCourseFromName($request->getAttribute("courseName"));
+$app->get('/assignments/get/all', function (Request $request, Response $response) use ($dataMgr){
+
+
+    $params = json_decode($request->getBody(), true);
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
     $assignments = $dataMgr->getAssignments();
-    print_r($assignments[0]);
     $newResponse = $response->withJson($assignments);
     return $newResponse;
 });
 
-$app->get('/rubrics/get/{assignmentID}',function (Request $request, Response $response) use ($dataMgr){
+$app->get('/rubrics/get',function (Request $request, Response $response) use ($dataMgr){
 
-    $assignment = $dataMgr->getAssignment(new AssignmentID($request->getAttribute("assignmentID")));
+    $params = json_decode($request->getBody(),true);
+
+    $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
     $questions = $assignment->getReviewQuestions($assignment);
     $newResponse = $response->withJson($questions);
     return $newResponse;
 });
 
-$app->post('/rubrics/update/{assignmentID}/{questionID}',function(Request $request, Response $response) use($dataMgr){
+$app->post('/rubric/update',function(Request $request, Response $response) use($dataMgr){
     //TODO Make this a patch
     $params = $request->getBody();
     $params = json_decode($params,true);
-    $assignment = $dataMgr->getAssignment(new AssignmentID($request->getAttribute("assignmentID")));
-    update_review_question($assignment, $params, $request->getAttribute("questionID"));
+    $assignment = $dataMgr->getAssignment(new AssignmentID($params["assignmentID"]));
+    update_review_question($assignment, $params); 
     $response->getBody()->write("finished");
 });
 
-$app->post('/makesubmissions/', function (Request $request, Response $response) use
+$app->post('/makesubmissions', function (Request $request, Response $response) use
     ($dataMgr){#takes in course name and assignment id
         $params = $request->getBody();
         $params = json_decode($params,true);
@@ -109,61 +110,52 @@ $app->post('/makesubmissions/', function (Request $request, Response $response) 
 });
 
 
-$app->post('/createrubric/{courseName}/{assignmentID}',function(Request $request, Response $response) use ($dataMgr){
-    $course_name = $request->getAttribute('courseName');
-    $dataMgr->setCourseFromName($course_name);
-    #actually don't think you even need the course name, but not 100% about the whole mta system so its here
-    $assignment_id = $request->getAttribute('assignmentID');
-    $assignment = $dataMgr->getAssignment(new AssignmentID($assignment_id)); 
+$app->post('/rubric/create',function(Request $request, Response $response) use ($dataMgr){
     
-    $params = $request->getBody();
-    $default = get_rubric_defaults();
-    $rubric_params = fill_and_decode_json($default, $params);
-
-    setup_radio_question($assignment, $rubric_params);
+    $params = json_decode($request->getBody(),true);
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
+    #actually don't think you even need the course name, but not 100% about the whole mta system so its here
+    unset($params['courseID']); #get rid of it cause not needed for the rubric
+    $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID'])); 
+    setup_radio_question($assignment, $params);
 
 });
+
+$app->get('/peerreviewscores/get', function(Request $request, Response $response) use($dataMgr){
+
+    $params = json_decode($request->getBody(),true);
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
+    $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
+    $review = $assignment->getReview(new MatchID($params['matchID']));
+    print_r($review);
+    $newResponse = $response->withJson($review);
+    return $newResponse;
+});
+
+
+$app->post('/peerreviewscores/create', function(Request $request, Response $response) use($dataMgr){
+
+    $params = json_decode($request->getBody(),true);
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
+    $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
+    make_peer_review($assignment, $params);
+});
+
+
 $app->post('/assignment/create', function (Request $request, Response $response) use ($dataMgr){
-    
     
     $params = $request->getBody();
     $params = json_decode($params, true);
     $dataMgr->setCourseFromID(new CourseID($params['courseID']));
-    
     $assignment = createAssignment($params); 
 });
 
 $app->post('/assignment/update', function( Request $request, Response $response) use ($dataMgr){
     $json_params = $request->getBody();
-
-       
     $params = json_decode($json_params,true); 
     $dataMgr->setCourseFromID(new CourseID($params['courseID']));
-
-    $old_assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
-    $assignment_type = $params['assignmentType'];
-    foreach ($params as $key => $value){
-     #   print_r($key);
-      #  print_r("\n");
-        if ($key == 'assignmentID'){
-            continue;
-        }
-        elseif($key == "submissionSettings"){
-            #print_r($value);
-            #print_r("\n");
-            #print_r($value["autoAssignEssayTopic"]);
-            if ($value["autoAssignEssayTopic"] == ""){
-                    $value["autoAssignEssayTopic"] = 0;
-            }
-            #print_r($value); 
-        }
-        $old_assignment->$key = $value; 
-    }
-    #print_r($old_assignment);
-    $new_assignment = $old_assignment;
-    $dataMgr->saveAssignment($new_assignment, $assignment_type);    
+    $assignment = createAssignment($params);
     
-
 });
 
 

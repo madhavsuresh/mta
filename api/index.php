@@ -227,7 +227,7 @@ $app->post('/peerreviewscores/create', function(Request $request, Response $resp
     make_peer_review($assignment, $params);
 });
 
-$app->post('/getcourseidfromname', function (Request $request, Response $response) use($dataMgr)) {
+$app->get('/getcourseidfromname', function (Request $request, Response $response) use ($dataMgr) {
 	$params = $request->getBody();
     $params = json_decode($params,true);
 	$dataMgr->setCourseFromName($params['courseName']);

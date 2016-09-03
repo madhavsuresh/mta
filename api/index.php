@@ -9,8 +9,16 @@ use \JsonSchema\Validator as JsonValidator;
 
 $config['displayErrorDetails'] = true;
 $config['addContentLengthHeader'] = false;
+$config['determineRouteBeforeAppMiddleware'] = true;
 $container = new \Slim\Container;
-$app = new \Slim\App(["settings"=>$config]);
+//$container['settings'] = $config;
+//print_r($container['settings']['displayErrorDetails']);
+$container['dataMgr'] = $dataMgr;
+$validationPaths = ['peermatch_get' => 'json/peermatch/get/', 
+'peermatch_create' => 'json/peermatch/create/'];
+$container['validationPaths'] = $validationPaths;
+//$app = new \Slim\App(['settings'=> $config]); //$container); 
+$app = new \Slim\App($container); //$container); 
 
 
 
@@ -49,10 +57,31 @@ $jsonDecodeMW = function ($request, $response, $next) {
 };
 
 $jsonvalidatemw = function ($request, $response, $next) {
-	$json_body = json_decode($request->getBody());
-	$validator = new JsonValidator;
-	$validator->check($data, (object)['$ref' => 'file://' . realpath('./peermatch_get.json')]);
+	$json_body = $request->getAttribute('requestDecodedJson');
+	$route_name = $request->getAttribute('route')->getName();
+	//TODO: maybe surround this with a try/catch
+	$request_schema = decode_json_throw_errors(file_get_contents('./json/' . $route_name . 'request.json'));
+	$validator = new League\JsonGuard\Validator($json_body, $request_schema);
+	if ($validator->fails()) {
+		print_r($validator->errors());
+		return NULL;
+	}
+	$next($request, $response);
+	$response_schema = decode_json_throw_errors(file_get_contents('./json/' . $route . 'response.json'));
+	$validator = new League\JsonGuard\Validator($json_body, $response_schema);
+	if ($validator->fails()) {
+		print_r($validator->errors());
+		return NULL;
+	}
+	return $response;
 };
+
+$app->get('/test', function (Request $request, Response $response) {
+	$resourceURI = $request->getUri();
+	//print_r($request->getAttribute('route'));
+	$route = $request->getAttribute('route');
+	$target = $request->getRequestTarget();
+})->setName("peermatch/create/")->add($jsonvalidatemw)->add($jsonDecodeMW);
 
 $app->post('/validate', function (Request $request, Response $response) {
 	$json_body = $request->getAttribute('requestDecodedJson');
@@ -234,7 +263,8 @@ $app->get('/getcourseidfromname', function (Request $request, Response $response
 
 # NEXT SECTION OF ENDPOINTS TO ADD
 
-$app->get('/peermatch/get/',  function (Request $request, Response $response) use ($dataMgr) {
+#/peermatch/get
+$app->get('/peermatch/get/',  function (Request $request, Response $response) {
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$schema = decode_json_throw_errors(file_get_contents('./peermatch_json/get/request.json'));
 	$validator = new League\JsonGuard\Validator($json_body, $schema);
@@ -243,6 +273,7 @@ $app->get('/peermatch/get/',  function (Request $request, Response $response) us
 		return NULL;
 		throw new Exception(sprintf("[peermatch][get] Validation failed %s", $stringempty));
 	} 
+	$dataMgr = $this->dataMgr;
 	$assignmentID = $json_body->assignmentID;
 	$db = $dataMgr->getDatabase();
 	$sh = $db->prepare("SELECT  peer_review_assignment_submissions.authorID, peer_review_assignment_matches.reviewerID
@@ -263,7 +294,7 @@ $app->get('/peermatch/get/',  function (Request $request, Response $response) us
 	$return_array['matchesMap'] = $reviewerAssignment;
 	$newResponse = $response->withJson($return_array);
 	return $newResponse;
-})->add($jsonDecodeMW);
+})->add($jsonDecodeMW)->setName('peermatch_get');
 
 $app->post('/peermatch/create', function (Request $request, Response $response) use ($dataMgr) {
 	$json_body = $request->getAttribute('requestDecodedJson');
@@ -305,8 +336,7 @@ $app->post('/peermatch/create', function (Request $request, Response $response) 
 			$db->commit();
 	}
 
-})->add($jsonDecodeMW);
-
+})->add($jsonDecodeMW)->setName('peermatch/create/m');
 
 
 $app->post('/peermatch/delete', function (Request $request, Response $response) use ($dataMgr) {
@@ -321,11 +351,14 @@ $app->post('/peermatch/delete', function (Request $request, Response $response) 
 	 */
 	$db = $dataMgr->getDatabase();
 	$assignmentID = $json_body->assignmentID;
+	$db->beginTransaction();
 	$getAllMatches = $db->prepare("SELECT * from PEER_REVIEW_ASSIGNMENT_MATCHES where assignmentID = ?");
 	$deleteAllMatches = $db->prepare("DELETE from PEER_REVIEW_ASSIGNMENT_MATCHES where assignmentID = ?");
 	$getAllMatches->execute(array($assignmentID));
 	$allMatches = $getAllMatches->fetchAll();
 	$deleteAllMatches->execute(array($assignmentID));
+	$db->commit();
+
 })->add($jsonDecodeMW);
 
 

@@ -14,6 +14,7 @@ $container = new \Slim\Container;
 //$container['settings'] = $config;
 //print_r($container['settings']['displayErrorDetails']);
 $container['dataMgr'] = $dataMgr;
+$container['settings']['displayErrorDetails'] = true;
 $validationPaths = ['peermatch_get' => 'json/peermatch/get/', 
 'peermatch_create' => 'json/peermatch/create/'];
 $container['validationPaths'] = $validationPaths;
@@ -67,12 +68,14 @@ $jsonvalidatemw = function ($request, $response, $next) {
 		return NULL;
 	}
 	$next($request, $response);
-	$response_schema = decode_json_throw_errors(file_get_contents('./json/' . $route . 'response.json'));
-	$validator = new League\JsonGuard\Validator($json_body, $response_schema);
+	$response_schema = decode_json_throw_errors(file_get_contents('./json/' . $route_name . 'response.json'));
+	
+	$validator = new League\JsonGuard\Validator(json_decode($response->getBody()), $response_schema);
 	if ($validator->fails()) {
 		print_r($validator->errors());
 		return NULL;
 	}
+	
 	return $response;
 };
 
@@ -266,15 +269,9 @@ $app->get('/getcourseidfromname', function (Request $request, Response $response
 #/peermatch/get
 $app->get('/peermatch/get/',  function (Request $request, Response $response) {
 	$json_body = $request->getAttribute('requestDecodedJson');
-	$schema = decode_json_throw_errors(file_get_contents('./peermatch_json/get/request.json'));
-	$validator = new League\JsonGuard\Validator($json_body, $schema);
-	if ($validator->fails()) {
-		print_r($validator->errors());
-		return NULL;
-		throw new Exception(sprintf("[peermatch][get] Validation failed %s", $stringempty));
-	} 
 	$dataMgr = $this->dataMgr;
 	$assignmentID = $json_body->assignmentID;
+	//TODO: handle exceptions and errors around the database calls
 	$db = $dataMgr->getDatabase();
 	$sh = $db->prepare("SELECT  peer_review_assignment_submissions.authorID, peer_review_assignment_matches.reviewerID
        			FROM peer_review_assignment_submissions JOIN peer_review_assignment_matches ON
@@ -282,19 +279,26 @@ $app->get('/peermatch/get/',  function (Request $request, Response $response) {
        		WHERE peer_review_assignment_submissions.assignmentID = ?
        		ORDER BY peer_review_assignment_submissions.authorID");
 	$sh->execute(array($assignmentID));
-        $reviewerAssignment = array();
+	//Note, authorID is authorID for submission, 
+	//reviewerID is person matched to review submission, by authorID, on assignmentID
+	$peerMatchDBMap = array();
         while($res = $sh->fetch())
         {
-            if(!array_key_exists($res->authorID, $reviewerAssignment))
+            if(!array_key_exists($res->authorID, $peerMatchDBMap))
             {
-                $reviewerAssignment[$res->authorID] = array();
+                $peerMatchDBMap[$res->authorID] = array('studentID' => (int)$res->authorID, 'matchList'=> array());
             }
-            array_push($reviewerAssignment[$res->authorID], $res->reviewerID);
+            array_push($peerMatchDBMap[$res->authorID]['matchList'], (int)$res->reviewerID);
         }
-	$return_array['matchesMap'] = $reviewerAssignment;
+	$peerMatchesArray = array();
+	foreach ($peerMatchDBMap as $peerMatch) {
+		array_push($peerMatchesArray, $peerMatch);
+	}
+	$return_array['peerMatches'] = $peerMatchesArray;
+	$return_array['assignmentID'] = $assignmentID;
 	$newResponse = $response->withJson($return_array);
 	return $newResponse;
-})->add($jsonDecodeMW)->setName('peermatch_get');
+})->add($jsonvalidatemw)->add($jsonDecodeMW)->setName('peermatch/get/');
 
 $app->post('/peermatch/create', function (Request $request, Response $response) use ($dataMgr) {
 	$json_body = $request->getAttribute('requestDecodedJson');

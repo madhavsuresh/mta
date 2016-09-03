@@ -1,0 +1,37 @@
+{
+  "title": "/peermatch/get response",
+  "description": "format for GET response to /peermatch/get",
+  "type": "object",
+  "required": [
+    "assignmentID",
+    "peerMatches"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "assignmentID": {
+      "type": "integer"
+    },
+    "peerMatches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "studentID",
+          "matchList"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "studentID": {
+            "type": "integer"
+          },
+          "matchList": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    }
+  }
+}

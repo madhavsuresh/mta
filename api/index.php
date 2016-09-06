@@ -70,21 +70,17 @@ $app->post('/validate', function (Request $request, Response $response) {
 ################# COURSE ########################
 
 $app->get('/course/get', function (Request $request, Response $response) use ($dataMgr) {
-    //TODO ADD ERROR CATCHING
-    # $schema = json_decode(file_get_contents('./json/course/get/request.json'));
 	$json_body = json_decode($request->getBody());
-	/*$validator = new League\JsonGuard\Validator($json_body, $schema);
-    if($validator->fails()) {
-        print_r($validator->errors());
-        return NULL;
-        throw new Exception("RIP");
-    }*/
     $params = (array) $json_body;
-    $courseID = new CourseID($params['courseID']);
-    $dataMgr->setCourseFromID($courseID);
-
-    $courseInfo = $dataMgr->getCourseInfo($courseID);
-	return $response->withJson($courseInfo);
+    if (isset($params['courseID'])) {	
+		$courseID = new CourseID($params['courseID']);
+		$dataMgr->setCourseFromID($courseID);
+		$returnVal = $dataMgr->getCourseInfo($courseID);
+	}
+	else {
+		$returnVal = $dataMgr->getCourses();
+	}
+	return $response->withJson($returnVal);
 });
 
 $app->post('/course/create', function (Request $request, Response $response) use ($dataMgr) {

@@ -137,7 +137,7 @@ $app->post('/user/create', function (Request $request, Response $response) use (
 		$dataMgr->addUser($user['username'], $user['firstName'], $user['lastName'], $user['studentID'], $user['userType']);
 	}
  
-    return $response;#->withJson($dataMgr->getUsers());
+    return $response->withJson($dataMgr->getUsers());
 });
 
 $app->post('/user/update', function (Request $request, Response $response) use ($dataMgr) {
@@ -152,7 +152,7 @@ $app->post('/user/update', function (Request $request, Response $response) use (
 			$user_id = $dataMgr->getUserID($user['username']);
 			$student_info = (array) $dataMgr->getUserInfo($user_id);
 			foreach ($user as $key => $value) {
-				if($key != 'username' && $key != 'userType' && !empty($user[$key])) {
+				if($key != 'username' && !empty($user[$key])) {
 					$student_info[$key] = $user[$key];	
 				}
 			}
@@ -179,7 +179,7 @@ $app->post('/user/delete', function (Request $request, Response $response) use (
 		}
 	}
 	print_r($user_id);
-    return $response; #->withJson($dataMgr->getUsers());
+    return $response->withJson($dataMgr->getUsers());
 });
 
 $app->get('/user/get', function (Request $request, Response $response) use ($dataMgr) {

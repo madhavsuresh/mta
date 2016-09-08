@@ -123,7 +123,89 @@ $app->post('/course/delete', function (Request $request, Response $response) use
     return $response;
 });
 
-####################### ASSIGNMENTS ###########################3
+####################### USERS #################################
+
+$app->post('/user/create', function (Request $request, Response $response) use ($dataMgr) {
+    //TODO ADD ERROR CATCHING
+    $params = $request->getBody();
+    $params = json_decode($params, true);
+    $courseID = new CourseID($params['courseID']);
+    $dataMgr->setCourseFromID($courseID);
+
+	foreach($params['users'] as $user) {
+		# markingLoad?
+		$dataMgr->addUser($user['username'], $user['firstName'], $user['lastName'], $user['studentID'], $user['userType']);
+	}
+ 
+    return $response;#->withJson($dataMgr->getUsers());
+});
+
+$app->post('/user/update', function (Request $request, Response $response) use ($dataMgr) {
+    //TODO ADD ERROR CATCHING
+    $params = $request->getBody();
+	$params = json_decode($params, true);
+    $courseID = new CourseID($params['courseID']);
+    $dataMgr->setCourseFromID($courseID);
+	
+	foreach ($params['users'] as $user) {
+		if($dataMgr->isUserByName($user['username'])) {
+			$user_id = $dataMgr->getUserID($user['username']);
+			$student_info = (array) $dataMgr->getUserInfo($user_id);
+			foreach ($user as $key => $value) {
+				if($key != 'username' && $key != 'userType' && !empty($user[$key])) {
+					$student_info[$key] = $user[$key];	
+				}
+			}
+			$dataMgr->updateUser($user_id, $student_info['username'], $student_info['firstName'], $student_info['lastName'], $student_info['studentID'], $student_info['userType']);
+		}
+	}
+ 
+    return $response->withJson($dataMgr->getUsers());
+});
+
+
+$app->post('/user/delete', function (Request $request, Response $response) use ($dataMgr) {
+    //TODO ADD ERROR CATCHING
+    $params = $request->getBody();
+	$params = json_decode($params, true);
+    $courseID = new CourseID($params['courseID']);
+    $dataMgr->setCourseFromID($courseID);
+	print_r($params);
+
+	for($x = 0; $x < count($params['users']); $x++) {
+		if($dataMgr->isUserByName($params['users'][$x])) {
+			$user_id = $dataMgr->getUserID($params['users'][$x]);
+			$dataMgr->dropUser($user_id);
+		}
+	}
+	print_r($user_id);
+    return $response; #->withJson($dataMgr->getUsers());
+});
+
+$app->get('/user/get', function (Request $request, Response $response) use ($dataMgr) {
+	$json_body = json_decode($request->getBody());
+    $params = (array) $json_body;
+	$student_info = array();
+	$courseID = new CourseID($params['courseID']);
+	$dataMgr->setCourseFromID($courseID);
+	
+	if (isset($params['users'])) {
+		for($x = 0; $x < count($params['users']); $x++) {
+			if($dataMgr->isUserByName($params['users'][$x])) {
+				$user_id = $dataMgr->getUserID($params['users'][$x]);
+				$student_info[] = $dataMgr->getUserInfo($user_id);
+			}
+		}
+		$return_val	= $student_info;
+	}
+	else {
+		$return_val = $dataMgr->getUsers();
+	}
+	return $response->withJson($return_val);
+});
+
+####################### ASSIGNMENTS ###########################
+
 $app->get('/assignment/get', function (Request $request, Response $response) use ($dataMgr){
 
 

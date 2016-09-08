@@ -131,10 +131,12 @@ $app->post('/user/create', function (Request $request, Response $response) use (
     $params = json_decode($params, true);
     $courseID = new CourseID($params['courseID']);
     $dataMgr->setCourseFromID($courseID);
+	$authMgr = $dataMgr->createAuthManager();
 
 	foreach($params['users'] as $user) {
 		# markingLoad?
 		$dataMgr->addUser($user['username'], $user['firstName'], $user['lastName'], $user['studentID'], $user['userType']);
+		$authMgr->addUserAuthentication($user['username'], $user['password']);
 	}
  
     return $response->withJson($dataMgr->getUsers());

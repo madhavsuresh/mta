@@ -170,7 +170,6 @@ $app->post('/user/delete', function (Request $request, Response $response) use (
 	$params = json_decode($params, true);
     $courseID = new CourseID($params['courseID']);
     $dataMgr->setCourseFromID($courseID);
-	print_r($params);
 
 	for($x = 0; $x < count($params['users']); $x++) {
 		if($dataMgr->isUserByName($params['users'][$x])) {
@@ -178,7 +177,6 @@ $app->post('/user/delete', function (Request $request, Response $response) use (
 			$dataMgr->dropUser($user_id);
 		}
 	}
-	print_r($user_id);
     return $response->withJson($dataMgr->getUsers());
 });
 

@@ -11,14 +11,11 @@ $config['displayErrorDetails'] = true;
 $config['addContentLengthHeader'] = false;
 $config['determineRouteBeforeAppMiddleware'] = true;
 $container = new \Slim\Container;
-//$container['settings'] = $config;
-//print_r($container['settings']['displayErrorDetails']);
 $container['dataMgr'] = $dataMgr;
 $container['settings']['displayErrorDetails'] = true;
 $validationPaths = ['peermatch_get' => 'json/peermatch/get/', 
 'peermatch_create' => 'json/peermatch/create/'];
 $container['validationPaths'] = $validationPaths;
-//$app = new \Slim\App(['settings'=> $config]); //$container); 
 $app = new \Slim\App($container); //$container); 
 
 
@@ -50,6 +47,21 @@ function decode_json_throw_errors($inputString) {
 	return $json_body;
 }
 
+function getSchema($route_name) { 
+	list($data_type, $endpoint) = explode(":", $route_name, 2);
+	$full_schema = decode_json_throw_errors(file_get_contents('./json/' . $data_type . '.json'));
+	$request_schema ='';
+	$response_schema = '';
+	foreach ($full_schema->links as $endpoint_schema) { 
+		//TODO: this is ugly
+		if (strcmp(str_replace('"','',json_encode($endpoint_schema->title)), $endpoint) == 0) { 
+		  $request_schema = $endpoint_schema->schema;
+		  $response_schema = $endpoint_schema->targetSchema;
+		}
+	}
+	return array($request_schema, $response_schema);
+}
+
 $jsonDecodeMW = function ($request, $response, $next) {
 	$json_body = decode_json_throw_errors($request->getBody());
 	$request = $request->withAttribute('requestDecodedJson', $json_body);
@@ -57,46 +69,29 @@ $jsonDecodeMW = function ($request, $response, $next) {
 	return $response;	
 };
 
-$jsonvalidatemw = function ($request, $response, $next) {
+$jsonvalidateMW = function ($request, $response, $next) {
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$route_name = $request->getAttribute('route')->getName();
 	//TODO: maybe surround this with a try/catch
-	$request_schema = decode_json_throw_errors(file_get_contents('./json/' . $route_name . 'request.json'));
+	//$request_schema = decode_json_throw_errors(file_get_contents('./json/' . $route_name . 'request.json'));
+	list($request_schema, $response_schema) = getSchema($route_name);
 	$validator = new League\JsonGuard\Validator($json_body, $request_schema);
 	if ($validator->fails()) {
 		print_r($validator->errors());
 		return NULL;
 	}
 	$next($request, $response);
-	$response_schema = decode_json_throw_errors(file_get_contents('./json/' . $route_name . 'response.json'));
+	//$response_schema = decode_json_throw_errors(file_get_contents('./json/' . $route_name . 'response.json'));
 	
-	$validator = new League\JsonGuard\Validator(json_decode($response->getBody()), $response_schema);
-	if ($validator->fails()) {
-		print_r($validator->errors());
-		return NULL;
+	if(json_decode($response->getBody())){
+		$validator = new League\JsonGuard\Validator(json_decode($response->getBody()), $response_schema);
+		if ($validator->fails()) {
+			print_r($validator->errors());
+			return NULL;
+		}
 	}
-	
 	return $response;
 };
-
-$app->get('/test', function (Request $request, Response $response) {
-	$resourceURI = $request->getUri();
-	//print_r($request->getAttribute('route'));
-	$route = $request->getAttribute('route');
-	$target = $request->getRequestTarget();
-})->setName("peermatch/create/")->add($jsonvalidatemw)->add($jsonDecodeMW);
-
-$app->post('/validate', function (Request $request, Response $response) {
-	$json_body = $request->getAttribute('requestDecodedJson');
-	$schema = decode_json_throw_errors(file_get_contents('./peermatch/get/request.json'));
-	$validator = new League\JsonGuard\Validator($json_body, $schema);
-	if ($validator->fails()) {
-		print_r($validator->errors());
-	} else {
-		echo "not";
-	}
-	//$schemaArray = $myService->schemaArray;
-})->add($jsonDecodeMW);
 
 
 ################# COURSE ########################
@@ -298,16 +293,10 @@ $app->get('/peermatch/get/',  function (Request $request, Response $response) {
 	$return_array['assignmentID'] = $assignmentID;
 	$newResponse = $response->withJson($return_array);
 	return $newResponse;
-})->add($jsonvalidatemw)->add($jsonDecodeMW)->setName('peermatch/get/');
+})->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:get');
 
 $app->post('/peermatch/create', function (Request $request, Response $response) use ($dataMgr) {
 	$json_body = $request->getAttribute('requestDecodedJson');
-	$schema = decode_json_throw_errors(file_get_contents('./peermatch_json/create/request.json'));
-	$validator = new League\JsonGuard\Validator($json_body, $schema);
-	if ($validator->fails()) {
-		print_r($validator->errors());
-		return NULL;
-	}
 	$db = $dataMgr->getDatabase();
 	$assignmentID = $json_body->assignmentID;
 	$peerMatches = $json_body->peerMatches;
@@ -339,31 +328,27 @@ $app->post('/peermatch/create', function (Request $request, Response $response) 
 			 
 			$db->commit();
 	}
-
-})->add($jsonDecodeMW)->setName('peermatch/create/m');
+})->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:create');
 
 
 $app->post('/peermatch/delete', function (Request $request, Response $response) use ($dataMgr) {
 	$json_body = $request->getAttribute('requestDecodedJson');
-	$schema = decode_json_throw_errors(file_get_contents('./peermatch_json/delete/request.json'));
-	$validator = new League\JsonGuard\Validator($json_body, $schema);
-	/*
-	if ($validator->fails()) {
-		print_r($validator->errors());
-		return NULL;
-	}
-	 */
 	$db = $dataMgr->getDatabase();
 	$assignmentID = $json_body->assignmentID;
 	$db->beginTransaction();
-	$getAllMatches = $db->prepare("SELECT * from PEER_REVIEW_ASSIGNMENT_MATCHES where assignmentID = ?");
-	$deleteAllMatches = $db->prepare("DELETE from PEER_REVIEW_ASSIGNMENT_MATCHES where assignmentID = ?");
-	$getAllMatches->execute(array($assignmentID));
-	$allMatches = $getAllMatches->fetchAll();
+	//$getAllMatches = $db->prepare("SELECT * from PEER_REVIEW_ASSIGNMENT_MATCHES where assignmentID = ?");
+
+	$deleteAllMatches = $db->prepare("DELETE FROM peer_review_assignment_matches
+			WHERE submissionID in (
+				SELECT peer_review_assignment_submissions.submissionID 
+				FROM peer_review_assignment_submissions 
+				INNER JOIN peer_review_assignment_matches ON (peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID) 
+				WHERE peer_review_assignment_submissions.assignmentID = ?)");
+	//$getAllMatches->execute(array($assignmentID));
+	//$allMatches = $getAllMatches->fetchAll();
 	$deleteAllMatches->execute(array($assignmentID));
 	$db->commit();
-
-})->add($jsonDecodeMW);
+})->setName('peermatch:delete')->add($jsonvalidateMW)->add($jsonDecodeMW);
 
 
 $app->run();

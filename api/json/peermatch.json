@@ -1,5 +1,5 @@
 {
-  "id": "http://json-schema.org/draft-04/schema#",
+  "id": "schemata/peermatch",
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "FIXME - Peermatch",
   "description": "FIXME",
@@ -32,12 +32,14 @@
         "additionalProperties": "false",
         "properties": {
           "studentID": {
-            "$ref": "#/definitions/userID"
+            "type": "integer",
+            "description": "userID from keyed from users table, can be student/TA/instructor"
           },
           "matchList": {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/userID"
+              "type": "integer",
+              "description": "userID from keyed from users table, can be student/TA/instructor"
             }
           }
         }
@@ -46,6 +48,7 @@
   },
   "links": [
     {
+      "title": "get",
       "description": "list all peermatches for an assignment",
       "href": "/peermatch/get",
       "method": "POST",
@@ -58,7 +61,8 @@
         "additionalProperties": "false",
         "properties": {
           "assignmentID": {
-            "$ref": "#/definitions/assignmentID"
+            "description": "unique assignment ID used in MTA",
+            "type": "integer"
           }
         }
       },
@@ -70,13 +74,36 @@
         "additionalProperties": "false",
         "properties": {
           "assignmentID": {
-            "$ref": "#/definitions/assignmentID"
+            "description": "unique assignment ID used in MTA",
+            "type": "integer"
           },
           "peerMatches": {
-            "$ref": "#/definitions/peerMatches"
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "studentID",
+                "matchList"
+              ],
+              "additionalProperties": "false",
+              "properties": {
+                "studentID": {
+                  "type": "integer",
+                  "description": "userID from keyed from users table, can be student/TA/instructor"
+                },
+                "matchList": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "description": "userID from keyed from users table, can be student/TA/instructor"
+                  }
+                }
+              }
+            }
           },
           "errors": {
-            "$ref": "#/definitions/peerMatches"
+            "description": "error output from api call",
+            "type": "string"
           }
         }
       }
@@ -94,10 +121,32 @@
         "additionalProperties": "false",
         "properties": {
           "assignmentID": {
-            "$ref": "#/definitions/assignmentID"
+            "description": "unique assignment ID used in MTA",
+            "type": "integer"
           },
           "peerMatches": {
-            "$ref": "#/definitions/peerMatches"
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "studentID",
+                "matchList"
+              ],
+              "additionalProperties": "false",
+              "properties": {
+                "studentID": {
+                  "type": "integer",
+                  "description": "userID from keyed from users table, can be student/TA/instructor"
+                },
+                "matchList": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "description": "userID from keyed from users table, can be student/TA/instructor"
+                  }
+                }
+              }
+            }
           }
         },
         "type": [
@@ -109,7 +158,8 @@
           "object"
         ],
         "properties": {
-          "$ref": "#/definitions/errors"
+          "description": "error output from api call",
+          "type": "string"
         }
       },
       "title": "create"
@@ -119,7 +169,7 @@
       "href": "/peermatch/{(%2Fschemata%2Fpeermatch%23%2Fdefinitions%2Fidentity)}",
       "method": "DELETE",
       "rel": "destroy",
-      "title": "Delete",
+      "title": "delete",
       "schema": {
         "type": "object",
         "required": [
@@ -128,11 +178,20 @@
         "additionalProperties": "false",
         "properties": {
           "assignmentID": {
-            "$ref": "#/definitions/assignmentID"
+            "description": "unique assignment ID used in MTA",
+            "type": "integer"
+          }
+        }
+      },
+      "targetSchema": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "description": "error output from api call",
+            "type": "string"
           }
         }
       }
     }
-  ],
-  "id": "schemata/peermatch"
+  ]
 }

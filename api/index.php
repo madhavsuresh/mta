@@ -19,7 +19,6 @@ $container['validationPaths'] = $validationPaths;
 $app = new \Slim\App($container); //$container); 
 
 
-
 function decode_json_throw_errors($inputString) {
 	$json_body = json_decode($inputString);
 	switch (json_last_error()) {
@@ -172,7 +171,7 @@ $app->get('/assignment/get', function (Request $request, Response $response) use
         return $newResponse;
     }
 
-});
+})->setName('assignment:get')->add($jsonvalidateMW)->add($jsonDecodeMW);
 
 $app->post('/assignment/create', function (Request $request, Response $response) use ($dataMgr){
     
@@ -180,7 +179,7 @@ $app->post('/assignment/create', function (Request $request, Response $response)
     $params = json_decode($params, true);
     $dataMgr->setCourseFromID(new CourseID($params['courseID']));
     $assignment = create_assignment($params); 
-});
+})->setName('assignment:create')->add($jsonvalidateMW)->add($jsonDecodeMW);
 
 $app->post('/assignment/update', function( Request $request, Response $response) use ($dataMgr){
     $json_params = $request->getBody();
@@ -188,7 +187,7 @@ $app->post('/assignment/update', function( Request $request, Response $response)
     $dataMgr->setCourseFromID(new CourseID($params['courseID']));
     $assignment = update_assignment($params);
     
-});
+})->setName('assignment:update')->add($jsonvalidateMW)->add($jsonDecodeMW);
 
 
 
@@ -329,7 +328,6 @@ $app->post('/peermatch/create', function (Request $request, Response $response) 
 			$db->commit();
 	}
 })->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:create');
-
 
 $app->post('/peermatch/delete', function (Request $request, Response $response) use ($dataMgr) {
 	$json_body = $request->getAttribute('requestDecodedJson');

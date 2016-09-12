@@ -30,8 +30,8 @@
 			"minItems": 2,
 			"additionalItems": false,
 			"items": [
-			{"$ref": "#/definitions/submissionID"},
-			{"$ref": "#/definitions/userID"}
+			{"$ref": "#/definitions/userID"},
+			{"$ref": "#/definitions/submissionID"}
 			]
 		},
     "peerMatchesList": {

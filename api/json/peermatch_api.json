@@ -26,13 +26,13 @@
 			"description": "submissionID with corresponding assignmentID"
 		},
 		"peerMatch": {
-			"type": "array", 
-			"minItems": 2,
-			"additionalItems": false,
-			"items": [
-			{"$ref": "#/definitions/submissionID"},
-			{"$ref": "#/definitions/userID"}
-			]
+			"type": "object", 
+			"required" : ["reviewerID", "submissionID"],
+			"additionalProperties": false,
+			"properties": {
+			"reviewerID": {"$ref": "#/definitions/userID"},
+			"submissionID" : {"$ref": "#/definitions/submissionID"}
+			}
 		},
     "peerMatchesList": {
 			"type": "array",

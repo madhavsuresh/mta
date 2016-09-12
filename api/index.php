@@ -299,8 +299,8 @@ $app->post('/peermatch/create', function (Request $request, Response $response) 
 	$db = $dataMgr->getDatabase();
 	$assignmentID = $json_body->assignmentID;
 	$peerMatch = $json_body->peerMatch;
-	$submissionID = $peerMatch[0];  //see schema, peerMatch is a list of tuples, (submissionID, reviewerID)
-	$reviewerID = $peerMatch[1];
+	$submissionID = $peerMatch->submissionID;  
+	$reviewerID = $peerMatch->reviewerID;
 	insertSinglePeerMatch($db, $submissionID, $reviewerID, $assignmentID);
 	return $response;
 })->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:create');
@@ -311,8 +311,8 @@ $app->post('/peermatch/create_bulk', function (Request $request, Response $respo
 	$assignmentID = $json_body->assignmentID;
 	$peerMatches = $json_body->peerMatches;
 	foreach ($peerMatches as $peerMatch) { 
-		$submissionID = $peerMatch[0];  //see schema, peerMatch is a list of tuples, (submissionID, reviewerID)
-		$reviewerID = $peerMatch[1];
+		$submissionID = $peerMatch->submissionID;  
+		$reviewerID = $peerMatch->reviewerID;
 		insertSinglePeerMatch($db, $submissionID, $reviewerID);
 	}
 })->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:create_bulk');

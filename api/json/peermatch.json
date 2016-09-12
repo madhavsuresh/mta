@@ -1,5 +1,5 @@
 {
-  "id": "schemata/peermatch",
+  "id": "peermatch",
   "$schema": "http://json-schema.org/draft-04/schema#",
   "title": "FIXME - Peermatch",
   "description": "FIXME",

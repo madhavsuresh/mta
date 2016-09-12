@@ -261,75 +261,93 @@ $app->get('/getcourseidfromname', function (Request $request, Response $response
 # NEXT SECTION OF ENDPOINTS TO ADD
 
 #/peermatch/get
-$app->get('/peermatch/get/',  function (Request $request, Response $response) {
+$app->get('/peermatch/get',  function (Request $request, Response $response) {
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$dataMgr = $this->dataMgr;
 	$assignmentID = $json_body->assignmentID;
 	//TODO: handle exceptions and errors around the database calls
 	$db = $dataMgr->getDatabase();
-	$sh = $db->prepare("SELECT  peer_review_assignment_submissions.authorID, peer_review_assignment_matches.reviewerID
+	$sh = $db->prepare("SELECT  peer_review_assignment_submissions.submissionID, peer_review_assignment_matches.reviewerID
        			FROM peer_review_assignment_submissions JOIN peer_review_assignment_matches ON
        		peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID
        		WHERE peer_review_assignment_submissions.assignmentID = ?
-       		ORDER BY peer_review_assignment_submissions.authorID");
+       		ORDER BY peer_review_assignment_submissions.submissionID");
 	$sh->execute(array($assignmentID));
 	//Note, authorID is authorID for submission, 
 	//reviewerID is person matched to review submission, by authorID, on assignmentID
-	$peerMatchDBMap = array();
-        while($res = $sh->fetch())
-        {
-            if(!array_key_exists($res->authorID, $peerMatchDBMap))
-            {
-                $peerMatchDBMap[$res->authorID] = array('studentID' => (int)$res->authorID, 'matchList'=> array());
-            }
-            array_push($peerMatchDBMap[$res->authorID]['matchList'], (int)$res->reviewerID);
-        }
-	$peerMatchesArray = array();
-	foreach ($peerMatchDBMap as $peerMatch) {
-		array_push($peerMatchesArray, $peerMatch);
+	$peerMatches = array();
+	while($res = $sh->fetch()) {
+					$peerMatches[] = array((int)$res->submissionID, (int)$res->reviewerID);
 	}
-	$return_array['peerMatches'] = $peerMatchesArray;
+	$return_array['peerMatches'] = $peerMatches;
 	$return_array['assignmentID'] = $assignmentID;
 	$newResponse = $response->withJson($return_array);
 	return $newResponse;
 })->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:get');
 
+$app->post('/peermatch/test', function (Request $request, Response $response) use ($dataMgr) {
+	$json_body = $request->getAttribute('requestDecodedJson');
+ 	$peerMatches = $json_body->peerMatches;
+	print_r($peerMatches);
+	foreach ($peerMatches as $peerMatch) { 
+		//verify that submissionID is valid, userID is valid
+	}
+})->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:create_bulk');
+
+function insertSinglePeerMatch($db, $submissionID, $reviewerID, $assignmentID) {
+		$checkValidSubmissionID = $db->prepare("SELECT submissionid from PEER_REVIEW_ASSIGNMENT_SUBMISSIONS where submissionID = ? and assignmentID = ?");
+		$checkValidUserID = $db->prepare("SELECT userID from USERS where userID =?");
+		$checkForMatch = $db->prepare("SELECT matchID FROM PEER_REVIEW_ASSIGNMENT_MATCHES where submissionID=? AND reviewerID = ?;");
+		$insertMatch = $db->prepare("INSERT INTO PEER_REVIEW_ASSIGNMENT_MATCHES (submissionID, reviewerID, instructorForced, calibrationState) values (?,?,0,'none')");
+		//verify if valid submission
+		$db->beginTransaction();
+		$checkValidSubmissionID->execute(array($submissionID, $assignmentID));	
+		$res = $checkValidSubmissionID->fetch();
+		if (!$res){
+			$db->commit();
+			throw new Exception("not a valid submission ID");
+		}
+		$checkValidUserID->execute(array($reviewerID));
+		$res = $checkValidUserID->fetch();
+		//TODO: log what kind of review is here
+		if (!$res){
+			$db->commit();
+			throw new Exception("not a valid reviewer ID");
+		}
+		$checkForMatch->execute(array($submissionID, $reviewerID));
+		$res = $checkForMatch->fetch();
+		if (!$res){
+						$insertMatch->execute(array($submissionID, $reviewerID));
+		} else {
+						//TODO: log, match already exists
+		}
+		$db->commit();
+}
+
 $app->post('/peermatch/create', function (Request $request, Response $response) use ($dataMgr) {
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$db = $dataMgr->getDatabase();
 	$assignmentID = $json_body->assignmentID;
-	$peerMatches = $json_body->peerMatches;
-	$getSubmissionIds = $db->prepare("SELECT submissionid FROM PEER_REVIEW_ASSIGNMENT_SUBMISSIONS where authorID = ? and assignmentID = ?");
-	$checkForMatch = $db->prepare("SELECT matchID FROM PEER_REVIEW_ASSIGNMENT_MATCHES where submissionID=? AND reviewerID = ?;");
-	$insertMatch = $db->prepare("INSERT INTO PEER_REVIEW_ASSIGNMENT_MATCHES (submissionID, reviewerID, instructorForced, calibrationState) values (?,?,0,'none')");
-	foreach ($peerMatches as $peerMatch) {
-			$db->beginTransaction();
-			$studentID = $peerMatch->studentID;
-			$getSubmissionIds->execute(array($studentID, $assignmentID));
-			$matchingList = $peerMatch->matchList;
-			$res  = $getSubmissionIds->fetch();
-			//TODO: do we really need this?? check the type output for pdo object fetch()
-			//TODO: this should probably be an error, return an error code
-			if ($res) {
-				$submissionID = $res->submissionID;
-			} else {
-				$db->commit();
-				continue;
-			}
-
-			foreach($matchingList as $matchedReviewer) {
-				$checkForMatch->execute(array($submissionID, $matchedReviewer));
-				
-				if (!$checkForMatch->fetch()){
-					$insertMatch->execute(array($submissionID, $matchedReviewer));
-				}
-			}
-			 
-			$db->commit();
-	}
+	$peerMatch = $json_body->peerMatch;
+	$submissionID = $peerMatch[0];  //see schema, peerMatch is a list of tuples, (submissionID, reviewerID)
+	$reviewerID = $peerMatch[1];
+	insertSinglePeerMatch($db, $submissionID, $reviewerID, $assignmentID);
+	return $response;
 })->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:create');
 
-$app->post('/peermatch/delete', function (Request $request, Response $response) use ($dataMgr) {
+$app->post('/peermatch/create_bulk', function (Request $request, Response $response) use ($dataMgr) {
+	$json_body = $request->getAttribute('requestDecodedJson');
+	$db = $dataMgr->getDatabase();
+	$assignmentID = $json_body->assignmentID;
+	$peerMatches = $json_body->peerMatches;
+	foreach ($peerMatches as $peerMatch) { 
+		$submissionID = $peerMatch[0];  //see schema, peerMatch is a list of tuples, (submissionID, reviewerID)
+		$reviewerID = $peerMatch[1];
+		insertSinglePeerMatch($db, $submissionID, $reviewerID);
+	}
+})->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:create_bulk');
+
+$app->post('/peermatch/delete_all', function (Request $request, Response $response) use ($dataMgr) {
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$db = $dataMgr->getDatabase();
 	$assignmentID = $json_body->assignmentID;
@@ -346,7 +364,7 @@ $app->post('/peermatch/delete', function (Request $request, Response $response) 
 	//$allMatches = $getAllMatches->fetchAll();
 	$deleteAllMatches->execute(array($assignmentID));
 	$db->commit();
-})->setName('peermatch:delete')->add($jsonvalidateMW)->add($jsonDecodeMW);
+})->setName('peermatch:delete_all')->add($jsonvalidateMW)->add($jsonDecodeMW);
 
 
 $app->run();

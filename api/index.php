@@ -375,7 +375,18 @@ $app->get('/getcourseidfromname', function (Request $request, Response $response
 	return $response->withJson($dataMgr->courseID);
 });
 
-$app->get('/peermatch/get/',  function (Request $request, Response $response) use ($dataMgr) {
+########################### GRADES #######################
+
+# NEXT SECTION OF ENDPOINTS TO ADD
+
+#/peermatch/get
+#TODO: This should be under the users endpoint, not the peermatch endpoint
+$app->get('/peermatch/get_submission_ids'), function (Request $request, Response $response) {
+   $json_body = $request->getAttribute('requestDecodedJson');
+   
+});
+$app->get('/peermatch/get',  function (Request $request, Response $response) {
+>>>>>>> f418700... end of day 9/12
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$dataMgr = $this->dataMgr;
 	$assignmentID = $json_body->assignmentID;
@@ -427,7 +438,7 @@ $app->post('/peermatch/create_bulk', function (Request $request, Response $respo
 	foreach ($peerMatches as $peerMatch) { 
 		$submissionID = $peerMatch->submissionID;  
 		$reviewerID = $peerMatch->reviewerID;
-		insertSinglePeerMatch($db, $submissionID, $reviewerID);
+		insertSinglePeerMatch($db, $submissionID, $reviewerID, $assignmentID);
 	}
 })->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:create_bulk');
 

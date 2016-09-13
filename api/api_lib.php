@@ -133,6 +133,11 @@ function make_peer_review($assignment, $params){
     $assignment->saveReview($review);
 }
 
+function getSubmissionIDs($db, $assignmentID) { 
+	$getSubmissionIDS = $db->prepare("SELECT submissionid from PEER_REVIEW_ASSIGNMENT_SUBMISSIONS where assignmentID = ?");
+	
+}
+
 function insertSinglePeerMatch($db, $submissionID, $reviewerID, $assignmentID) {
 	$checkValidSubmissionID = $db->prepare("SELECT submissionid from PEER_REVIEW_ASSIGNMENT_SUBMISSIONS where submissionID = ? and assignmentID = ?");
 	$checkValidUserID = $db->prepare("SELECT userID from USERS where userID =?");

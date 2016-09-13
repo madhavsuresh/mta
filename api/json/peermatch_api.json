@@ -113,7 +113,7 @@
       }
     },
     {
-      "description": "Create a new peermatch,[fill in details] ",
+      "description": "Takes a list of peer matches and creates new peermatch",
 			"title" : "create_bulk",
       "href": "/peermatch/create_bulk",
       "method": "POST",
@@ -171,7 +171,36 @@
 	  }
 	}
       }
-    }
+    },
+    {
+ 			"description": "Get all submissions for a given assignment",
+      "method": "GET",
+      "rel" : "list",
+      "title": "get_submission_ids",
+      "schema": {
+ 				"type": "object",
+				"required": ["assignmentID"],
+ 				"additionalProperties" : "false",
+				"properties": {
+					"assignmentID": {
+						"$ref": "#/definitions/assignmentID"
+					}
+				}
+			}, 
+			"targetSchema" : {
+				"type" : "object",
+				"required": ["submissionList"],
+				"additionalProperties": "false",
+				"properties": {
+					"submissionList" : {
+						"type": "array",
+						"items": {
+										{"$ref": "#/definitions/assignmentID"}
+						}
+					}
+				}
+			}
+		}
   ],
   "id": "schemata/peermatch"
 }

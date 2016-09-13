@@ -230,6 +230,7 @@ $app->get('/user/get', function (Request $request, Response $response) use ($dat
 	return $response->withJson($return_val);
 });
 
+
 ####################### ASSIGNMENTS ###########################
 
 $app->get('/assignment/get', function (Request $request, Response $response) use ($dataMgr){
@@ -301,7 +302,6 @@ $app->post('/rubric/create',function(Request $request, Response $response) use (
     unset($params['courseID']); #get rid of it cause not needed for the rubric
     $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID'])); 
     create_radio_question($assignment, $params);
-
 });
 
 $app->get('/peerreviewscores/get', function(Request $request, Response $response) use($dataMgr){
@@ -314,13 +314,26 @@ $app->get('/peerreviewscores/get', function(Request $request, Response $response
     return $newResponse;
 });
 
+############################ GRADES #############################
+
+$app->post('/grades/create', function(Request $request, Response $response) use($dataMgr){
+    $params = json_decode($request->getBody(),true);
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
+    $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
+    
+	foreach($params['grades'] as $value) {
+		$assignment->saveSubmissionMark(new Mark($value[1], null, true), new SubmissionID($value[0]));
+	}
+	
+    return $response;
+});
 
 ############################ STUDENT SIDE TESTING ###############
 $app->post('/makesubmissions', function (Request $request, Response $response) use
     ($dataMgr){#takes in course name and assignment id
         $params = $request->getBody();
         $params = json_decode($params,true);
-        mockSubmissions($params["courseID"], $params["assignmentID"]); 
+        mock_submissions($params["courseID"], $params["assignmentID"]); 
 });
 
 $app->post('/peerreviewscores/create', function(Request $request, Response $response) use($dataMgr){
@@ -338,12 +351,7 @@ $app->get('/getcourseidfromname', function (Request $request, Response $response
 	return $response->withJson($dataMgr->courseID);
 });
 
-########################### GRADES #######################
-
-# NEXT SECTION OF ENDPOINTS TO ADD
-
-#/peermatch/get
-$app->get('/peermatch/get',  function (Request $request, Response $response) {
+$app->get('/peermatch/get/',  function (Request $request, Response $response) use ($dataMgr) {
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$dataMgr = $this->dataMgr;
 	$assignmentID = $json_body->assignmentID;

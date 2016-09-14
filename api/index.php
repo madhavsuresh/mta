@@ -157,7 +157,90 @@ $app->post('/course/delete', function (Request $request, Response $response) use
     return $response;
 });
 
-####################### ASSIGNMENTS ###########################3
+####################### USERS #################################
+
+$app->post('/user/create', function (Request $request, Response $response) use ($dataMgr) {
+    //TODO ADD ERROR CATCHING
+    $params = $request->getBody();
+    $params = json_decode($params, true);
+    $courseID = new CourseID($params['courseID']);
+    $dataMgr->setCourseFromID($courseID);
+	$authMgr = $dataMgr->createAuthManager();
+
+	foreach($params['users'] as $user) {
+		# markingLoad?
+		$dataMgr->addUser($user['username'], $user['firstName'], $user['lastName'], $user['studentID'], $user['userType']);
+		$authMgr->addUserAuthentication($user['username'], $user['password']);
+	}
+ 
+    return $response->withJson($dataMgr->getUsers());
+});
+
+$app->post('/user/update', function (Request $request, Response $response) use ($dataMgr) {
+    //TODO ADD ERROR CATCHING
+    $params = $request->getBody();
+	$params = json_decode($params, true);
+    $courseID = new CourseID($params['courseID']);
+    $dataMgr->setCourseFromID($courseID);
+	
+	foreach ($params['users'] as $user) {
+		if($dataMgr->isUserByName($user['username'])) {
+			$user_id = $dataMgr->getUserID($user['username']);
+			$student_info = (array) $dataMgr->getUserInfo($user_id);
+			foreach ($user as $key => $value) {
+				if($key != 'username' && !empty($user[$key])) {
+					$student_info[$key] = $user[$key];	
+				}
+			}
+			$dataMgr->updateUser($user_id, $student_info['username'], $student_info['firstName'], $student_info['lastName'], $student_info['studentID'], $student_info['userType']);
+		}
+	}
+ 
+    return $response->withJson($dataMgr->getUsers());
+});
+
+
+$app->post('/user/delete', function (Request $request, Response $response) use ($dataMgr) {
+    //TODO ADD ERROR CATCHING
+    $params = $request->getBody();
+	$params = json_decode($params, true);
+    $courseID = new CourseID($params['courseID']);
+    $dataMgr->setCourseFromID($courseID);
+
+	for($x = 0; $x < count($params['users']); $x++) {
+		if($dataMgr->isUserByName($params['users'][$x])) {
+			$user_id = $dataMgr->getUserID($params['users'][$x]);
+			$dataMgr->dropUser($user_id);
+		}
+	}
+    return $response->withJson($dataMgr->getUsers());
+});
+
+$app->get('/user/get', function (Request $request, Response $response) use ($dataMgr) {
+	$json_body = json_decode($request->getBody());
+    $params = (array) $json_body;
+	$student_info = array();
+	$courseID = new CourseID($params['courseID']);
+	$dataMgr->setCourseFromID($courseID);
+	
+	if (isset($params['users'])) {
+		for($x = 0; $x < count($params['users']); $x++) {
+			if($dataMgr->isUserByName($params['users'][$x])) {
+				$user_id = $dataMgr->getUserID($params['users'][$x]);
+				$student_info[] = $dataMgr->getUserInfo($user_id);
+			}
+		}
+		$return_val	= $student_info;
+	}
+	else {
+		$return_val = $dataMgr->getUsers();
+	}
+	return $response->withJson($return_val);
+});
+
+
+####################### ASSIGNMENTS ###########################
+
 $app->get('/assignment/get', function (Request $request, Response $response) use ($dataMgr){
 
 
@@ -227,26 +310,54 @@ $app->post('/rubric/create',function(Request $request, Response $response) use (
     unset($params['courseID']); #get rid of it cause not needed for the rubric
     $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID'])); 
     create_radio_question($assignment, $params);
-
 });
 
-$app->get('/peerreviewscores/get', function(Request $request, Response $response) use($dataMgr){
-
+/*$app->get('/peerreviewscores/get', function(Request $request, Response $response) use($dataMgr){
     $params = json_decode($request->getBody(),true);
     $dataMgr->setCourseFromID(new CourseID($params['courseID']));
     $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
     $review = $assignment->getReview(new MatchID($params['matchID']));
     $newResponse = $response->withJson($review);
     return $newResponse;
+});*/
+
+$app->get('/peerreviewscores/get', function(Request $request, Response $response) use($dataMgr){
+    $params = json_decode($request->getBody(),true);
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
+    $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
+    # $review = $assignment->getReview(new MatchID($params['matchID']));
+	$db = $dataMgr->getDatabase();
+    $submissionIDs = getSubmissionIDsForAssignment($db, new AssignmentID($params['assignmentID']));
+	print_r($submissionIDs[0]);
+	
+	$reviews = array();
+	foreach($submissionIDs as $id) {
+		$reviews[$id] = $assignment->getReviewsForSubmission(new SubmissionID($id)));
+	}
+    $newResponse = $response->withJson($reviews);
+    return $newResponse;
 });
 
+############################ GRADES #############################
+
+$app->post('/grades/create', function(Request $request, Response $response) use($dataMgr){
+    $params = json_decode($request->getBody(),true);
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
+    $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
+    
+	foreach($params['grades'] as $value) {
+		$assignment->saveSubmissionMark(new Mark($value[1], null, true), new SubmissionID($value[0]));
+	}
+	
+    return $response;
+});
 
 ############################ STUDENT SIDE TESTING ###############
 $app->post('/makesubmissions', function (Request $request, Response $response) use
     ($dataMgr){#takes in course name and assignment id
         $params = $request->getBody();
         $params = json_decode($params,true);
-        mockSubmissions($params["courseID"], $params["assignmentID"]); 
+        mock_submissions($params["courseID"], $params["assignmentID"]); 
 });
 
 $app->post('/peerreviewscores/create', function(Request $request, Response $response) use($dataMgr){
@@ -264,12 +375,7 @@ $app->get('/getcourseidfromname', function (Request $request, Response $response
 	return $response->withJson($dataMgr->courseID);
 });
 
-########################### GRADES #######################
-
-# NEXT SECTION OF ENDPOINTS TO ADD
-
-#/peermatch/get
-$app->get('/peermatch/get',  function (Request $request, Response $response) {
+$app->get('/peermatch/get/',  function (Request $request, Response $response) use ($dataMgr) {
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$dataMgr = $this->dataMgr;
 	$assignmentID = $json_body->assignmentID;

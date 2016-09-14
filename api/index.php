@@ -271,7 +271,14 @@ $app->post('/assignment/update', function( Request $request, Response $response)
     
 })->setName('assignment:update')->add($jsonvalidateMW)->add($jsonDecodeMW);
 
+$app->post('/assignment/delete', function( Request $request, Response $response) use ($dataMgr){
 
+    $json_params = $request->getBody();
+    $params = json_decode($json_params, true);
+    $assignmentID = new AssignmentID ($params["assignmentID"]);
+    $dataMgr->deleteAssignment($assignmentID); 
+
+});
 
 #################### PEERREVIEWS ######################333
 $app->get('/rubric/get',function (Request $request, Response $response) use ($dataMgr){
@@ -303,7 +310,19 @@ $app->post('/rubric/create',function(Request $request, Response $response) use (
     create_radio_question($assignment, $params);
 });
 
+$app->post('/rubric/delete', function( Request $request, Response $response) use ($dataMgr){
+
+    $json_params = $request->getBody();
+    $params = json_decode($json_params, true);
+    $assignmentID = new AssignmentID ($params["assignmentID"]);
+    $assignment = $dataMgr->getAssignment($assignmentID);
+    $questionID = new QuestionID ($params["questionID"]);
+    $assignment->deleteReviewQuestion($questionID);
+});
+
+
 /*$app->get('/peerreviewscores/get', function(Request $request, Response $response) use($dataMgr){
+>>>>>>> madhav/master
     $params = json_decode($request->getBody(),true);
     $dataMgr->setCourseFromID(new CourseID($params['courseID']));
     $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
@@ -323,7 +342,7 @@ $app->get('/peerreviewscores/get', function(Request $request, Response $response
 	
 	$reviews = array();
 	foreach($submissionIDs as $id) {
-		$reviews[$id] = $assignment->getReviewsForSubmission(new SubmissionID($id)));
+		$reviews[$id] = $assignment->getReviewsForSubmission(new SubmissionID($id));
 	}
     $newResponse = $response->withJson($reviews);
     return $newResponse;

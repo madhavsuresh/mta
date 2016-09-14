@@ -3,7 +3,7 @@ require_once("inc/common.php");
 require_once("peerreview/inc/calibrationutils.php");
 try
 {
-    //Has the course been set?
+       //Has the course been set?
     if(!$dataMgr->courseName)
     {
         //Nope, run up the course picker for people

@@ -34,6 +34,18 @@
 			"submissionID" : {"$ref": "#/definitions/submissionID"}
 			}
 		},
+		"pairPeerSubmissionID": {
+			"type": "object",
+			"required": ["peerID", "submissionID"],
+			"properties": {
+				"peerID":  {
+								"$ref": "#/definitions/userID"
+				},
+				"submissionID": {
+					"$ref": "#definitions/submissionID"
+				}
+				}
+			},
     "peerMatchesList": {
 			"type": "array",
       "items": {
@@ -71,7 +83,7 @@
             "$ref": "#/definitions/assignmentID"
           },
           "peerMatches": {
-            "$ref": "#/definitions/peerMatches"
+            "$ref": "#/definitions/peerMatchesList"
           },
           "errors": {
             "$ref": "#/definitions/errors"
@@ -113,7 +125,7 @@
       }
     },
     {
-      "description": "Create a new peermatch,[fill in details] ",
+      "description": "Takes a list of peer matches and creates new peermatch",
 			"title" : "create_bulk",
       "href": "/peermatch/create_bulk",
       "method": "POST",
@@ -171,7 +183,94 @@
 	  }
 	}
       }
-    }
+    },
+    {
+ 			"description": "Get all submissions for a given assignment",
+      "method": "GET",
+      "rel" : "list",
+      "title": "get_submission_ids",
+      "schema": {
+ 				"type": "object",
+				"required": ["assignmentID"],
+ 				"additionalProperties" : "false",
+				"properties": {
+					"assignmentID": {
+						"$ref": "#/definitions/assignmentID"
+					}
+				}
+			}, 
+			"targetSchema" : {
+				"type" : "object",
+				"required": ["submissionList"],
+				"additionalProperties": "false",
+				"properties": {
+					"submissionList" : {
+						"type": "array",
+						"items": {
+										"$ref": "#/definitions/submissionID"
+						}
+					}
+				}
+			}
+		},
+    {
+ 			"description": "Get all peers for a given assignment",
+      "method": "GET",
+      "rel" : "list",
+      "title": "get_peer_ids",
+      "schema": {
+ 				"type": "object",
+				"required": ["assignmentID"],
+ 				"additionalProperties" : "false",
+				"properties": {
+					"assignmentID": {
+						"$ref": "#/definitions/assignmentID"
+					}
+				}
+			}, 
+			"targetSchema" : {
+				"type" : "object",
+				"required": ["peerList"],
+				"additionalProperties": "false",
+				"properties": {
+					"submissionList" : {
+						"type": "array",
+						"items": {
+										"$ref": "#/definitions/userID"
+						}
+					}
+				}
+			}
+		},
+		{
+ 			"description": "Get all peers for a given assignment",
+      "method": "GET",
+      "rel" : "list",
+      "title": "get_peer_and_submission_ids",
+      "schema": {
+ 				"type": "object",
+				"required": ["assignmentID"],
+ 				"additionalProperties" : "false",
+				"properties": {
+					"assignmentID": {
+						"$ref": "#/definitions/assignmentID"
+					}
+				}
+			}, 
+			"targetSchema" : {
+				"type" : "object",
+				"required": ["peerSubmissionPairs"],
+				"additionalProperties": "false",
+				"properties": {
+								"peerSubmissionPairs" : {
+								"type": "array",
+								"items":{
+								"$ref": "#/definitions/pairPeerSubmissionID"
+								}
+								}
+				}
+			}
+		}
   ],
   "id": "schemata/peermatch"
 }

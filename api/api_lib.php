@@ -133,6 +133,34 @@ function make_peer_review($assignment, $params){
     $assignment->saveReview($review);
 }
 
+function get_peers_from_assignment($db, $assignmentID) { 
+	$sh = $db->prepare("SELECT authorID from PEER_REVIEW_ASSIGNMENT_SUBMISSIONS where assignmentID = ?");
+	$sh->execute(array($assignmentID));
+  $peerIDList = array();
+  while ($res = $sh->fetch()) {
+	 $peerIDList[] = (int)$res->authorID;
+	}
+  return $peerIDList;
+}
+function get_peers_submission_from_assignment($db, $assignmentID) { 
+	$sh = $db->prepare("SELECT authorID,submissionID from PEER_REVIEW_ASSIGNMENT_SUBMISSIONS where assignmentID = ?");
+	$sh->execute(array($assignmentID));
+  $peerSubmissionPairs = array();
+  while ($res = $sh->fetch()) {
+	 $peerSubmissionPairs[] = array('peerID' => (int)$res->authorID, 'submissionID' =>(int)$res->submissionID);
+	}
+  return $peerSubmissionPairs;
+}
+function get_submissions_from_assignment($db, $assignmentID) { 
+	$sh = $db->prepare("SELECT submissionid from PEER_REVIEW_ASSIGNMENT_SUBMISSIONS where assignmentID = ?");
+	$sh->execute(array($assignmentID));
+  $submissionIDList = array();
+  while ($res = $sh->fetch()) {
+	 $submissionIDList[] = (int)$res->submissionID;
+	}
+  return $submissionIDList;
+}
+
 function insertSinglePeerMatch($db, $submissionID, $reviewerID, $assignmentID) {
 	$checkValidSubmissionID = $db->prepare("SELECT submissionid from PEER_REVIEW_ASSIGNMENT_SUBMISSIONS where submissionID = ? and assignmentID = ?");
 	$checkValidUserID = $db->prepare("SELECT userID from USERS where userID =?");

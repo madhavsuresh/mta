@@ -17,15 +17,6 @@ $validationPaths = ['peermatch_get' => 'json/peermatch/get/',
 'peermatch_create' => 'json/peermatch/create/'];
 $container['validationPaths'] = $validationPaths;
 $app = new \Slim\App($container); //$container); 
-$app->add(new \Slim\Middleware\HttpBasicAuthentication([
-    "path" => "/", /* or ["/admin", "/api"] */
-    "realm" => "Protected",
-    "secure" => false,
-    "users" => [
-        "root" => "t00r",
-        "user" => "passw0rd"
-    ]]));
-
 
 function decode_json_throw_errors($inputString) {
 	$json_body = json_decode($inputString);
@@ -375,7 +366,49 @@ $app->get('/getcourseidfromname', function (Request $request, Response $response
 	return $response->withJson($dataMgr->courseID);
 });
 
-$app->get('/peermatch/get/',  function (Request $request, Response $response) use ($dataMgr) {
+########################### GRADES #######################
+
+# NEXT SECTION OF ENDPOINTS TO ADD
+
+#/peermatch/get
+#TODO: This should be under the users endpoint, not the peermatch endpoint
+$app->get('/peermatch/get_submission_ids', function (Request $request, Response $response) {
+   $json_body = $request->getAttribute('requestDecodedJson');
+	 $dataMgr = $this->dataMgr;
+	 $db = $dataMgr->getDatabase();
+   $assignmentID = $json_body->assignmentID;
+   $submissionIDList =  get_submissions_from_assignment($db, $assignmentID);
+   $return_array['submissionList'] = $submissionIDList;
+	 $new_response = $response->withJson($return_array);
+  return $new_response;
+})->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:get_submission_ids');
+
+$app->get('/peermatch/get_peer_ids', function (Request $request, Response $response) {
+   $json_body = $request->getAttribute('requestDecodedJson');
+	 $dataMgr = $this->dataMgr;
+	 $db = $dataMgr->getDatabase();
+   $assignmentID = $json_body->assignmentID;
+   $peerIDList =  get_peers_from_assignment($db, $assignmentID);
+   $return_array['peerList'] = $peerIDList;
+	 $new_response = $response->withJson($return_array);
+	 return $new_response;
+})->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:get_peer_ids');
+
+$app->get('/peermatch/get_peer_and_submission_ids', function (Request $request, Response $response) {
+   $json_body = $request->getAttribute('requestDecodedJson');
+	 $dataMgr = $this->dataMgr;
+	 $db = $dataMgr->getDatabase();
+   $assignmentID = $json_body->assignmentID;
+   $peerSubmissionPairs =  get_peers_submission_from_assignment($db, $assignmentID);
+   $return_array['peerSubmissionPairs'] = $peerSubmissionPairs;
+	 #print_r($peerSubmissionPairs);
+	 $new_response = $response->withJson($return_array);
+	 return $new_response;
+})->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:get_peer_and_submission_ids');
+
+
+$app->get('/peermatch/get',  function (Request $request, Response $response) {
+>>>>>>> f418700... end of day 9/12
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$dataMgr = $this->dataMgr;
 	$assignmentID = $json_body->assignmentID;
@@ -391,12 +424,12 @@ $app->get('/peermatch/get/',  function (Request $request, Response $response) us
 	//reviewerID is person matched to review submission, by authorID, on assignmentID
 	$peerMatches = array();
 	while($res = $sh->fetch()) {
-					$peerMatches[] = array((int)$res->submissionID, (int)$res->reviewerID);
+					$peerMatches[] = array('submissionID' => (int)$res->submissionID, 'reviewerID' => (int)$res->reviewerID);
 	}
 	$return_array['peerMatches'] = $peerMatches;
 	$return_array['assignmentID'] = $assignmentID;
-	$newResponse = $response->withJson($return_array);
-	return $newResponse;
+	$new_response = $response->withJson($return_array);
+	return $new_response;
 })->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:get');
 
 $app->post('/peermatch/test', function (Request $request, Response $response) use ($dataMgr) {
@@ -427,7 +460,7 @@ $app->post('/peermatch/create_bulk', function (Request $request, Response $respo
 	foreach ($peerMatches as $peerMatch) { 
 		$submissionID = $peerMatch->submissionID;  
 		$reviewerID = $peerMatch->reviewerID;
-		insertSinglePeerMatch($db, $submissionID, $reviewerID);
+		insertSinglePeerMatch($db, $submissionID, $reviewerID, $assignmentID);
 	}
 })->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:create_bulk');
 

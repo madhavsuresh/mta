@@ -17,6 +17,14 @@ $validationPaths = ['peermatch_get' => 'json/peermatch/get/',
 'peermatch_create' => 'json/peermatch/create/'];
 $container['validationPaths'] = $validationPaths;
 $app = new \Slim\App($container); //$container); 
+$app->add(new \Slim\Middleware\HttpBasicAuthentication([
+    "path" => "/", /* or ["/admin", "/api"] */
+    "realm" => "Protected",
+    "secure" => false,
+    "users" => [
+        "root" => "t00r",
+        "user" => "passw0rd"
+    ]]));
 
 
 function decode_json_throw_errors($inputString) {

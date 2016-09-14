@@ -304,13 +304,29 @@ $app->post('/rubric/create',function(Request $request, Response $response) use (
     create_radio_question($assignment, $params);
 });
 
-$app->get('/peerreviewscores/get', function(Request $request, Response $response) use($dataMgr){
-
+/*$app->get('/peerreviewscores/get', function(Request $request, Response $response) use($dataMgr){
     $params = json_decode($request->getBody(),true);
     $dataMgr->setCourseFromID(new CourseID($params['courseID']));
     $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
     $review = $assignment->getReview(new MatchID($params['matchID']));
     $newResponse = $response->withJson($review);
+    return $newResponse;
+});*/
+
+$app->get('/peerreviewscores/get', function(Request $request, Response $response) use($dataMgr){
+    $params = json_decode($request->getBody(),true);
+    $dataMgr->setCourseFromID(new CourseID($params['courseID']));
+    $assignment = $dataMgr->getAssignment(new AssignmentID($params['assignmentID']));
+    # $review = $assignment->getReview(new MatchID($params['matchID']));
+	$db = $dataMgr->getDatabase();
+    $submissionIDs = getSubmissionIDsForAssignment($db, new AssignmentID($params['assignmentID']));
+	print_r($submissionIDs[0]);
+	
+	$reviews = array();
+	foreach($submissionIDs as $id) {
+		$reviews[$id] = $assignment->getReviewsForSubmission(new SubmissionID($id)));
+	}
+    $newResponse = $response->withJson($reviews);
     return $newResponse;
 });
 

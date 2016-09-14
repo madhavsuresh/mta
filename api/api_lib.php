@@ -162,4 +162,26 @@ function insertSinglePeerMatch($db, $submissionID, $reviewerID, $assignmentID) {
 	}
 	$db->commit();
 }
+
+function getSubmissionIDsForAssignment($db, $assignmentID) {
+	$checkValidAssignmentID = $db->prepare("SELECT assignmentID from PEER_REVIEW_ASSIGNMENT where assignmentID = ?");
+	$getSubmissionIDs = $db->prepare("SELECT submissionID from PEER_REVIEW_ASSIGNMENT_SUBMISSIONS where assignmentID = ?");
+	$db->beginTransaction();
+	$checkValidAssignmentID->execute(array($assignmentID));
+	$res = $checkValidAssignmentID->fetch();
+	if (!$res){
+		$db->commit();
+		throw new Exception("not a valid assignment ID");
+	}
+	else {	
+		$getSubmissionIDs->execute(array($assignmentID));
+		$submissions = array();
+		while($res = $getSubmissionIDs->fetch()) {
+			$submissions[] = (int)$res->submissionID;
+		}
+		return $submissions;
+	}
+	$db->commit();
+}
+
 ?>

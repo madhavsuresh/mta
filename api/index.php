@@ -316,7 +316,6 @@ $app->get('/peerreviewscores/get', function(Request $request, Response $response
     # $review = $assignment->getReview(new MatchID($params['matchID']));
 	$db = $dataMgr->getDatabase();
     $submissionIDs = getSubmissionIDsForAssignment($db, new AssignmentID($params['assignmentID']));
-	print_r($submissionIDs[0]);
 	
 	$reviews = array();
 	foreach($submissionIDs as $id) {

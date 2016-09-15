@@ -13,9 +13,6 @@ $config['determineRouteBeforeAppMiddleware'] = true;
 $container = new \Slim\Container;
 $container['dataMgr'] = $dataMgr;
 $container['settings']['displayErrorDetails'] = true;
-$validationPaths = ['peermatch_get' => 'json/peermatch/get/', 
-'peermatch_create' => 'json/peermatch/create/'];
-$container['validationPaths'] = $validationPaths;
 $app = new \Slim\App($container); //$container); 
 
 function decode_json_throw_errors($inputString) {
@@ -323,7 +320,7 @@ $app->get('/peerreviewscores/get', function(Request $request, Response $response
 	
 	$reviews = array();
 	foreach($submissionIDs as $id) {
-		$reviews[$id] = $assignment->getReviewsForSubmission(new SubmissionID($id)));
+		$reviews[$id] = $assignment->getReviewsForSubmission(new SubmissionID($id));
 	}
     $newResponse = $response->withJson($reviews);
     return $newResponse;
@@ -379,7 +376,7 @@ $app->get('/peermatch/get_submission_ids', function (Request $request, Response 
    $assignmentID = $json_body->assignmentID;
    $submissionIDList =  get_submissions_from_assignment($db, $assignmentID);
    $return_array['submissionList'] = $submissionIDList;
-	 $new_response = $response->withJson($return_array);
+   $new_response = $response->withJson($return_array);
   return $new_response;
 })->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:get_submission_ids');
 
@@ -408,7 +405,6 @@ $app->get('/peermatch/get_peer_and_submission_ids', function (Request $request, 
 
 
 $app->get('/peermatch/get',  function (Request $request, Response $response) {
->>>>>>> f418700... end of day 9/12
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$dataMgr = $this->dataMgr;
 	$assignmentID = $json_body->assignmentID;
@@ -442,6 +438,7 @@ $app->post('/peermatch/test', function (Request $request, Response $response) us
 })->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:create_bulk');
 
 $app->post('/peermatch/create', function (Request $request, Response $response) use ($dataMgr) {
+ 	//TODO: change from reviewerID to peerID
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$db = $dataMgr->getDatabase();
 	$assignmentID = $json_body->assignmentID;

@@ -284,6 +284,16 @@ $app->post('/assignment/update', function( Request $request, Response $response)
     
 })->setName('assignment:update')->add($jsonvalidateMW)->add($jsonDecodeMW);
 
+$app->get('/assignment/courseID_from_assignmentID', function (Request $request, Response $response) { 
+  $json_body = $request->getAttribute('requestDecodedJson');
+  $dataMgr = $this->dataMgr;
+  $db = $dataMgr->getDatabase();
+  $assignmentID = $json_body->assignmentID;
+  $courseID = getCourseIDFromAssignmentID($db, $assignmentID);
+  $return_array['courseID'] = $courseID;
+  $new_response = $response->withJson($return_array);
+  return $new_response;
+})->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('assignment:courseIDassignmentID');
 
 
 #################### PEERREVIEWS ######################333

@@ -17,7 +17,10 @@ try
     //TODO: do not show login screen
     if (array_key_exists('REMOTE_USER', $_SERVER)) {
  	list($userName, $domain) = explode("@", $_SERVER['REMOTE_USER'], 2);
-        $loginAttemptFailed = !$authMgr->performLogin($userName, '');
+        $loginAttemptFailed = !$authMgr->performLogin($userName, 'HTACCESS'); //constant password since we have already authenticated
+	if ($loginAttemptFailed) {
+            $content .= "<div> not a valid mta user</div>";
+	}
     }
     if(isset($_POST["username"])){ $username = $_POST['username']; }
 

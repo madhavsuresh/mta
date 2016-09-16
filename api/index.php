@@ -147,6 +147,22 @@ $app->post('/course/delete', function (Request $request, Response $response) use
 
 ####################### USERS #################################
 
+$app->get('/user/get_tas_from_courseid', function (Request $request, Response $response) {
+    $json_body = $request->getAttribute('requestDecodedJson');
+    $dataMgr = $this->dataMgr;
+    $courseID = $json_body->courseID;
+    $db = $dataMgr->getDatabase();
+    $sh = $db->prepare("SELECT userID FROM users WHERE  userType='marker' AND courseID=?;");
+    $sh->execute(array($courseID));
+    $markers = array();
+    while($res = $sh->fetch()) {
+      $markers[] = (int)$res->userID;
+    }
+    $return_array['taIDs'] = $markers;
+    $new_response = $response->withJson($return_array);
+    return $new_response;
+})->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('user:tacourseid');
+
 $app->post('/user/create', function (Request $request, Response $response) use ($dataMgr) {
     //TODO ADD ERROR CATCHING
     $params = $request->getBody();

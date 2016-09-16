@@ -14,6 +14,11 @@ try
 {
     $loginAttemptFailed = false;
     $username = '';
+    //TODO: do not show login screen
+    if (array_key_exists('REMOTE_USER', $_SERVER)) {
+ 	list($userName, $domain) = explode("@", $_SERVER['REMOTE_USER'], 2);
+        $loginAttemptFailed = !$authMgr->performLogin($userName, '');
+    }
     if(isset($_POST["username"])){ $username = $_POST['username']; }
 
     if (array_key_exists("action", $_POST) && $_POST["action"]=="login")

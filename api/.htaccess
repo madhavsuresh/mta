@@ -1,5 +1,5 @@
 <IfModule mod_rewrite.c>
- ReWriteBase "/~william/mta/api/"
+ ReWriteBase "/~madhav/peermatch/mta/api/"
  RewriteEngine On
  RewriteCond %{REQUEST_FILENAME} !-f
  RewriteCond %{REQUEST_FILENAME} !-d

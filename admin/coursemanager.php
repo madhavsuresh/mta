@@ -71,7 +71,7 @@ try
 
         //TODO: Make this a bit less of a hack
         $content .= "<tr><td>Authentication Type: </td><td><select name='authType' id='authType'>";
-        foreach(array("pdo" => "PDO", "ldap" => "LDAP", "multilevel" => "LDAP with PDO Fallback") as $method => $name){
+        foreach(array("htaccess" => "HTAccess", "pdo" => "PDO", "ldap" => "LDAP", "multilevel" => "LDAP with PDO Fallback") as $method => $name){
             $content .= "<option";
             if($courseObj->authType == $method)
                 $content .= " selected=selected";

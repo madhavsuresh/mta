@@ -1,26 +1,58 @@
 {
 	"id"	:	"http://json-schema.org/draft-04/schema#",
-	"$schema"	:	"http://json-schema.org/draft-04/schema#",
-	"title"	:	"Users",
-	"description"	:	"Deals with users",
-	"stability"	:	"Prototype",
-	"strictProperties"	:	true,
-	"type"	:	["object"],
-	"definitions"	: {
+		"$schema"	:	"http://json-schema.org/draft-04/schema#",
+		"title"	:	"Users",
+		"description"	:	"Deals with users",
+		"stability"	:	"Prototype",
+		"strictProperties"	:	true,
+		"type"	:	["object"],
+		"definitions"	: {
 			"courseID"	: {
 				"description"	:	"Unique course identifier used in MTA",
 				"type"	: "integer"
 			},
 			"users"	: {
-					"description"	:	"Unique usernames",
-					"type"	:	"string"
+				"description"	:	"Unique usernames",
+				"type"	:	"string"
 			},
 			"errors"	:	{
 				"description"	: "Error output from API call",
-				"type"	:	"string",
+				"type"	:	"string"
+			},
+			"userID" : {
+				"description": "id set by mta for users ids",
+				"type": "integer"
 			}
-	},
-	"links"	:	[
+		},
+		"links"	:	[
+		{
+			"description"	: "Get TA ids from courseID",
+			"href"	:	"/users/get_tas_from_courseid",
+			"title"	:	"tacourseid",
+			"method"	:	"POST",
+			"rel"	:	"list",
+			"schema" : {
+				"type": "object",
+				"required" : ["courseID"],
+				"additionalProperties": false,
+				"properties" : {
+				  "courseID": { 
+				    "$ref": "#/definitions/courseID"
+				  }
+				}
+			},
+			"targetSchema" : {
+			 	"type": "object",
+				"requried": ["taIDs"],
+				"additionalProperties": false,
+				"properties": {
+				  "taIDs" : {
+				    "type": "array",
+				    "items" : { "$ref" : "#/definitions/userID"}
+				  }
+				}
+			}
+		},
 		{
 			"description"	: "Add users to a course",
 			"href"	:	"/users/create",

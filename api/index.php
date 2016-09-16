@@ -273,7 +273,17 @@ $app->post('/assignment/create', function (Request $request, Response $response)
     $params = $request->getBody();
     $params = json_decode($params, true);
     $dataMgr->setCourseFromID(new CourseID($params['courseID']));
-    $assignment = create_assignment($params); 
+		$assignment = create_assignment($params);
+
+		$db = $dataMgr->getDatabase();
+		//TODO: could be a race condition
+		$sh = $db->prepare("SELECT MAX(assignmentID) AS id FROM assignments");
+		$sh->execute();
+		$newID = $sh->fetch();
+		$return_array['assignmentID'] = (int) $newID->id;
+	
+		return $response->withJson($return_array);
+
 })->setName('assignment:create')->add($jsonvalidateMW)->add($jsonDecodeMW);
 
 $app->post('/assignment/update', function( Request $request, Response $response) use ($dataMgr){
@@ -383,7 +393,7 @@ $app->post('/peerreviewscores/create', function(Request $request, Response $resp
 
 $app->get('/getcourseidfromname', function (Request $request, Response $response) use ($dataMgr) {
 	$params = $request->getBody();
-    $params = json_decode($params,true);
+  $params = json_decode($params,true);
 	$dataMgr->setCourseFromName($params['courseName']);
 	return $response->withJson($dataMgr->courseID);
 });
@@ -428,6 +438,18 @@ $app->get('/peermatch/get_peer_and_submission_ids', function (Request $request, 
 	 return $new_response;
 })->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:get_peer_and_submission_ids');
 
+
+
+$app->get('/getmatchesforsubmission', function (Request $request, Response $response) use ($dataMgr) {
+	$params = $request->getBody();
+	$params = json_decode($params,true);
+	$dataMgr->setCourseFromID(new courseID($params['courseID']));
+	
+	$match_ids = getMatchIDsForSubmission($params["assignmentID"], $params["submissionID"]);
+		
+	return $response->withJson($match_ids);
+
+});
 
 $app->get('/peermatch/get',  function (Request $request, Response $response) {
 	$json_body = $request->getAttribute('requestDecodedJson');

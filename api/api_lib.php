@@ -219,4 +219,11 @@ function getCourseIDFromAssignmentID($db, $assignmentID) {
    return $res->courseID;
 }
 
+function getMatchIDsForSubmission($assignmentID, $submissionID){
+	global $dataMgr;
+
+	$assignment = $dataMgr->getAssignment(new AssignmentID($assignmentID));	
+	$submissionID = new SubmissionID($submissionID);
+	return $assignment->getMatchesForSubmission($submissionID);
+}
 ?>

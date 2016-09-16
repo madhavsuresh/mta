@@ -212,4 +212,11 @@ function getSubmissionIDsForAssignment($db, $assignmentID) {
 	$db->commit();
 }
 
+function getCourseIDFromAssignmentID($db, $assignmentID) {
+   $sh = $db->prepare('SELECT courseId FROM assignments where assignmentID=?');
+   $sh->execute(array($assignmentID));
+   $res = $sh->fetch();
+   return $res->courseID;
+}
+
 ?>

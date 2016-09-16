@@ -480,6 +480,26 @@
 				"$ref" : "#/definitions/errors"
 			}
 		}
+	},
+	{
+		"description" : "get courseID from assignmentID",
+		"href" : "/assignment/courseID_from_assignmentID",
+		"method" : "POST",
+		"title" : "courseIDassignmentID",
+		"rel" : "get",
+		"schema" : {
+			"type": "object",
+			"required": ["assignmentID"],
+			"properties" : {
+				"$ref" : "#/definitions/assignmentID"
+			}
+		},
+		"targetSchema" : {
+			"type": "object",
+			"properties" : {
+				"$ref" : "#/definitions/courseID"
+			}
+		}
 	}
 	]
 }

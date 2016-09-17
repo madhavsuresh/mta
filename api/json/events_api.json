@@ -1,0 +1,135 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "definitions": {
+        "assignmentID": {
+            "description": "unique assignment ID used in MTA",
+            "type": "integer"
+        },
+        "courseID": {
+            "description": "numeric courseID",
+            "type": "integer"
+        },
+        "dateRan": {
+            "description": "datetime for when job was run",
+            "format": "datetime",
+            "type": "string"
+        },
+        "details": {
+            "description": "verbose output of operation performed",
+            "type": "string"
+        },
+        "errors": {
+            "description": "error output from api call",
+            "type": "string"
+        },
+        "job": {
+            "descripton": "job type",
+            "type": "string"
+        },
+        "notificationID": {
+            "descripton": "primary key for job_notifcations table",
+            "type": "integer"
+        },
+        "seen": {
+            "description": "checked if seen in notifications console",
+            "type": "integer"
+        },
+        "success": {
+            "description": "checked if seen in notifications console",
+            "type": "integer"
+        },
+        "summary": {
+            "description": "summary of operation performed",
+            "type": "string"
+        },
+        "event": {
+            "additionalProperties": false,
+            "description": "object representing job_notifications in mta",
+            "properties": {
+                "assignmentID": {
+                    "$ref": "#/definitions/assignmentID"
+                },
+                "courseID": {
+                    "$ref": "#/definitions/courseID"
+                },
+                "dateRan": {
+                    "$ref": "#/definitions/dateRan"
+                },
+                "details": {
+                    "$ref": "#/definitions/details"
+                },
+                "job": {
+                    "$ref": "#/definitions/job"
+                },
+                "notificationID": {
+                    "$ref": "#/definitions/notificationID"
+                },
+                "seen": {
+                    "$ref": "#/definitions/seen"
+                },
+                "success": {
+                    "$ref": "#/definitions/success"
+                },
+                "summary": {
+                    "$ref": "#/definitions/summary"
+                }
+            },
+            "required": [
+                "assignmentID",
+                "courseID",
+                "notificationID",
+                "job",
+                "dateRan",
+                "success",
+                "seen",
+                "summary",
+                "details"
+            ],
+            "type": "object"
+        },
+        "eventList": {
+            "items": {
+                "$ref": "#/definitions/event"
+            },
+            "type": "array"
+        }
+    },
+    "description": "FIXME",
+    "id": "schemata/events",
+    "links": [
+        {
+            "description": "get all events",
+            "href": "/events/get_all",
+            "method": "GET",
+            "rel": "list",
+	    "title": "get_all",
+            "schema": {
+                "additionalProperties": "false",
+                "properties": {},
+                "type": "object"
+            },
+            "targetSchema": {
+                "additionalProperties": "false",
+                "properties": {
+                    "errors": {
+                        "$ref": "#/definitions/errors"
+                    },
+                    "eventList": {
+                        "$ref": "#/definitions/eventList"
+                    }
+                },
+                "required": [
+                    "eventList"
+                ],
+                "type": "object"
+            },
+            "title": "getall"
+        }
+    ],
+    "stability": "prototype",
+    "strictProperties": true,
+    "title": "Events",
+    "type": [
+        "object"
+    ]
+}

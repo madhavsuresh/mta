@@ -227,13 +227,23 @@ function getMatchIDsForSubmission($assignmentID, $submissionID){
 	return $assignment->getMatchesForSubmission($submissionID);
 }
 
-function getAssignmentsFromCourse($db, $courseID) {
-    $sh = $db->prepare("SELECT peer_review_assignment.assignmentID, courseID, 
-        submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate
-        markPostDate FROM peer_review_assignment JOIN assignments ON 
-        peer_review_assignment.assignmentID = assignments.assignmentID WHERE
-        assignments.courseID = ? ORDER BY datetime(submissionStartDate) ASC");
-    $sh->execute(array($courseID));
+function getAssignmentsFromCourse($db, $courseID, $assignmentID) {
+    $sh;
+    if ($assignmentID) {
+        $sh = $db->prepare("SELECT peer_review_assignment.assignmentID, courseID, 
+            submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate
+            markPostDate FROM peer_review_assignment JOIN assignments ON 
+            peer_review_assignment.assignmentID = assignments.assignmentID WHERE
+            assignments.courseID = ? and assignments.assignmentID = ?");
+        $sh->execute(array($courseID, $assignmentID));
+    } else{
+        $sh = $db->prepare("SELECT peer_review_assignment.assignmentID, courseID, 
+            submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate
+            markPostDate FROM peer_review_assignment JOIN assignments ON 
+            peer_review_assignment.assignmentID = assignments.assignmentID WHERE
+            assignments.courseID = ? ORDER BY datetime(submissionStartDate) ASC");
+        $sh->execute(array($courseID));
+    }
     $assignments = array();
     while ($res = $sh->fetch()) {
         $typed_res = clone $res;
@@ -243,6 +253,28 @@ function getAssignmentsFromCourse($db, $courseID) {
     }
     return $assignments;
     
+}
+
+function getEvents($db, $courseID, $assignmentID) {
+    $sh;
+    if ($assignmentID) {
+        $sh = $db->prepare("SELECT * from job_notifications where courseID = ? and assignmentID = ?");
+        $sh->execute(array($courseID, $assignmentID));
+    } else {
+        $sh = $db->prepare("SELECT * from job_notifications where courseID = ? ORDER BY datetime(dateRan) ASC");
+        $sh->execute(array($courseID));
+    }
+	$eventList = array();
+	while($res = $sh->fetch()) {
+		$typed_res = clone $res;
+		$typed_res->notificationID = (int)$typed_res->notificationID;
+		$typed_res->assignmentID = (int)$typed_res->assignmentID;
+		$typed_res->courseID = (int)$typed_res->courseID;
+		$typed_res->seen = (int)$typed_res->seen;
+		$typed_res->success = (int)$typed_res->success;
+		$eventList[] = $typed_res;
+	}
+    return $eventList;
 }
 
 ?>

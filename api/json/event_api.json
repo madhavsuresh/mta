@@ -104,16 +104,18 @@
     },
     "links": [
         {
-            "description": "get all events for a course",
-            "href": "/events/get_all",
+            "description": "get events for a course, if no assignmentID is provided, all events are returned",
+            "href": "/event/get",
             "method": "GET",
             "rel": "list",
-	    "title": "get_all",
+	    "title": "get",
             "schema": {
                 "additionalProperties": "false",
                 "type": "object",
+                "required": ["courseID"],
                 "properties": {
-		    "courseID": {"$ref": "#/definitions/courseID"}
+		    "courseID": {"$ref": "#/definitions/courseID"},
+		    "assignmentID": {"$ref": "#/definitions/assignmentID"}
 		}
             },
             "targetSchema": {

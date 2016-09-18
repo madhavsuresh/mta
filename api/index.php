@@ -269,7 +269,7 @@ $app->get('/assignment/get', function (Request $request, Response $response) use
         return $newResponse;
     }
 
-})->setName('assignment:get')->add($jsonvalidateMW)->add($jsonDecodeMW);
+})->setName('assignment:get')->add($jsonDecodeMW);
 
 $app->post('/assignment/create', function (Request $request, Response $response) use ($dataMgr){
     
@@ -314,7 +314,11 @@ $app->get('/assignment/get_all_from_course',
         $dataMgr = $this->dataMgr;
         $db = $dataMgr->getDatabase();
         $courseID = $json_body->courseID;
-        $assignments = getAssignmentsFromCourse($db, $courseID); 
+        $assignmentID = null;
+        if (property_exists($json_body, "assignmentID")) {
+            $assignmentID = $json_body->assignmentID;
+        }
+        $assignments = getAssignmentsFromCourse($db, $courseID, $assignmentID); 
         $return_array['assignmentList'] = $assignments;
         $new_response = $response->withJson($return_array);
         return $new_response;
@@ -546,26 +550,19 @@ $app->post('/peermatch/delete_all', function (Request $request, Response $respon
 
 ########################EVENTS################################################
 //TODO: make this not plural
-$app->get('/events/get_all', function (Request $request, Response $response) {
+$app->get('/event/get', function (Request $request, Response $response) {
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$dataMgr = $this->dataMgr;
 	$db = $dataMgr->getDatabase();
 	$courseID = $json_body->courseID;
-	$sh = $db->prepare("SELECT * from job_notifications where courseID = ?");
-	$sh->execute(array($courseID));
-	$eventList = array();
-	while($res = $sh->fetch()) {
-		$typed_res = clone $res;
-		$typed_res->notificationID = (int)$typed_res->notificationID;
-		$typed_res->assignmentID = (int)$typed_res->assignmentID;
-		$typed_res->courseID = (int)$typed_res->courseID;
-		$typed_res->seen = (int)$typed_res->seen;
-		$typed_res->success = (int)$typed_res->success;
-		$eventList[] = $typed_res;
-	}
+    $assignmentID = null;
+    if (property_exists($json_body, "assignmentID")) {
+        $assignmentID = $json_body->assignmentID;
+    }
+    $eventList = getEvents($db, $courseID, $assignmentID);
 	$return_array['eventList'] = $eventList;
 	$new_response = $response->withJson($return_array);
 	return $new_response;
-})->setName('events:get_all')->add($jsonvalidateMW)->add($jsonDecodeMW);
+})->setName('event:get')->add($jsonvalidateMW)->add($jsonDecodeMW);
 
 $app->run();

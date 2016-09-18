@@ -70,6 +70,9 @@ $jsonvalidateMW = function ($request, $response, $next) {
 	//TODO: maybe surround this with a try/catch
 	//$request_schema = decode_json_throw_errors(file_get_contents('./json/' . $route_name . 'request.json'));
 	list($request_schema, $response_schema) = getSchema($route_name);
+	if ($request_schema == null) {
+		throw new Exception('empty request schema');
+	}
 	$validator = new League\JsonGuard\Validator($json_body, $request_schema);
 	if ($validator->fails()) {
 		print_r($validator->errors());
@@ -451,6 +454,8 @@ $app->get('/getmatchesforsubmission', function (Request $request, Response $resp
 
 });
 
+########################PEERMATCH################################################
+
 $app->get('/peermatch/get',  function (Request $request, Response $response) {
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$dataMgr = $this->dataMgr;
@@ -467,7 +472,7 @@ $app->get('/peermatch/get',  function (Request $request, Response $response) {
 	//reviewerID is person matched to review submission, by authorID, on assignmentID
 	$peerMatches = array();
 	while($res = $sh->fetch()) {
-					$peerMatches[] = array('submissionID' => (int)$res->submissionID, 'reviewerID' => (int)$res->reviewerID);
+		$peerMatches[] = array('submissionID' => (int)$res->submissionID, 'reviewerID' => (int)$res->reviewerID);
 	}
 	$return_array['peerMatches'] = $peerMatches;
 	$return_array['assignmentID'] = $assignmentID;
@@ -527,5 +532,27 @@ $app->post('/peermatch/delete_all', function (Request $request, Response $respon
 	$db->commit();
 })->setName('peermatch:delete_all')->add($jsonvalidateMW)->add($jsonDecodeMW);
 
+########################EVENTS################################################
+$app->get('/events/get_all', function (Request $request, Response $response) {
+	$json_body = $request->getAttribute('requestDecodedJson');
+	$dataMgr = $this->dataMgr;
+	$db = $dataMgr->getDatabase();
+	$courseID = $json_body->courseID;
+	$sh = $db->prepare("SELECT * from job_notifications where courseID = ?");
+	$sh->execute(array($courseID));
+	$eventList = array();
+	while($res = $sh->fetch()) {
+		$typed_res = clone $res;
+		$typed_res->notificationID = (int)$typed_res->notificationID;
+		$typed_res->assignmentID = (int)$typed_res->assignmentID;
+		$typed_res->courseID = (int)$typed_res->courseID;
+		$typed_res->seen = (int)$typed_res->seen;
+		$typed_res->success = (int)$typed_res->success;
+		$eventList[] = $typed_res;
+	}
+	$return_array['eventList'] = $eventList;
+	$new_response = $response->withJson($return_array);
+	return $new_response;
+})->setName('events:get_all')->add($jsonvalidateMW)->add($jsonDecodeMW);
 
 $app->run();

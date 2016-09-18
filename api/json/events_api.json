@@ -1,5 +1,13 @@
 {
+    "id": "http://json-schema.org/draft-04/schema#",
     "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "events",
+    "description": "events api endpoint, backed by job_notifications on mta end",
+    "stability": "prototype",
+    "strictProperties": true,
+    "type": [
+      "object"
+    ],
     "definitions": {
         "assignmentID": {
             "description": "unique assignment ID used in MTA",
@@ -94,19 +102,19 @@
             "type": "array"
         }
     },
-    "description": "FIXME",
-    "id": "schemata/events",
     "links": [
         {
-            "description": "get all events",
+            "description": "get all events for a course",
             "href": "/events/get_all",
             "method": "GET",
             "rel": "list",
 	    "title": "get_all",
             "schema": {
                 "additionalProperties": "false",
-                "properties": {},
-                "type": "object"
+                "type": "object",
+                "properties": {
+		    "courseID": {"$ref": "#/definitions/courseID"}
+		}
             },
             "targetSchema": {
                 "additionalProperties": "false",
@@ -122,8 +130,7 @@
                     "eventList"
                 ],
                 "type": "object"
-            },
-            "title": "getall"
+            }
         }
     ],
     "stability": "prototype",

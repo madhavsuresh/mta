@@ -504,6 +504,47 @@
 				"$ref" : "#/definitions/courseID"
 			}
 		}
-	}
+	},
+    {
+		"description" : "get all assignments from a course",
+		"href" : "/assignment/get_all_from_course",
+		"method" : "GET",
+		"title" : "all_from_course",
+		"rel" : "list",
+		"schema" : {
+			"type": "object",
+			"required": ["courseID"],
+			"properties" : {
+                "courseID": {
+                    "$ref" : "#/definitions/courseID"
+                }
+			}
+		},
+		"targetSchema" : {
+			"type": "object",
+            "required": ["assignmentList"],
+			"properties" : {
+                "assignmentList": {
+                    "type": "array",
+                     "items": {
+                        "assignmentList": {
+                            "type": "object",
+                            "required": ["assignmentID", "courseID", 
+                                "submissionStartDate", "submissionStopDate", "reviewStartDate", "reviewStopDate", "markPostDate"],
+                            "properties": {
+                                "assignmentID": { "$ref":"#/definitions/assignmentID"},
+                                "courseID": { "$ref":"#/definitions/courseID"},
+                                "submissionStartDate": { "$ref":"#/definitions/submissionStartDate"},
+                                "submissionStopDate": { "$ref":"#/definitions/submissionStartDate"},
+                                "reviewStartDate": { "$ref":"#/definitions/reviewStartDate"},
+                                "reviewStopDate": { "$ref":"#/definitions/reviewStopDate"},
+                                "markPostDate": { "$ref":"#/definitions/markPostDate"}
+                            }
+                        }
+                     }
+			}
+		}
+    }
+    }
 	]
 }

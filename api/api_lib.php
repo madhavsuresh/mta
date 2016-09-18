@@ -226,4 +226,23 @@ function getMatchIDsForSubmission($assignmentID, $submissionID){
 	$submissionID = new SubmissionID($submissionID);
 	return $assignment->getMatchesForSubmission($submissionID);
 }
+
+function getAssignmentsFromCourse($db, $courseID) {
+    $sh = $db->prepare("SELECT peer_review_assignment.assignmentID, courseID, 
+        submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate
+        markPostDate FROM peer_review_assignment JOIN assignments ON 
+        peer_review_assignment.assignmentID = assignments.assignmentID WHERE
+        assignments.courseID = ? ORDER BY datetime(submissionStartDate) ASC");
+    $sh->execute(array($courseID));
+    $assignments = array();
+    while ($res = $sh->fetch()) {
+        $typed_res = clone $res;
+        $typed_res->assignmentID = (int)$typed_res->assignmentID;
+        $typed_res->courseID = (int)$typed_res->courseID;
+        $assignments[] = $typed_res;
+    }
+    return $assignments;
+    
+}
+
 ?>

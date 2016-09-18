@@ -308,6 +308,18 @@ $app->get('/assignment/courseID_from_assignmentID', function (Request $request, 
   return $new_response;
 })->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('assignment:courseIDassignmentID');
 
+$app->get('/assignment/get_all_from_course', 
+    function (Request $request, Response $response) {
+        $json_body = $request->getAttribute('requestDecodedJson');
+        $dataMgr = $this->dataMgr;
+        $db = $dataMgr->getDatabase();
+        $courseID = $json_body->courseID;
+        $assignments = getAssignmentsFromCourse($db, $courseID); 
+        $return_array['assignmentList'] = $assignments;
+        $new_response = $response->withJson($return_array);
+        return $new_response;
+})->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('assignment:all_from_course');
+
 
 #################### PEERREVIEWS ######################333
 $app->get('/rubric/get',function (Request $request, Response $response) use ($dataMgr){
@@ -533,6 +545,7 @@ $app->post('/peermatch/delete_all', function (Request $request, Response $respon
 })->setName('peermatch:delete_all')->add($jsonvalidateMW)->add($jsonDecodeMW);
 
 ########################EVENTS################################################
+//TODO: make this not plural
 $app->get('/events/get_all', function (Request $request, Response $response) {
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$dataMgr = $this->dataMgr;

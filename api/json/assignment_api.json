@@ -495,7 +495,7 @@
 			"type": "object",
 			"required": ["assignmentID"],
 			"properties" : {
-				"$ref" : "#/definitions/assignmentID"
+				"assignmentID" : {"$ref" : "#/definitions/assignmentID"}
 			}
 		},
 		"targetSchema" : {

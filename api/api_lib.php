@@ -231,14 +231,14 @@ function getAssignmentsFromCourse($db, $courseID, $assignmentID) {
     $sh;
     if ($assignmentID) {
         $sh = $db->prepare("SELECT peer_review_assignment.assignmentID, courseID, 
-            submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate
+            submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate,
             markPostDate FROM peer_review_assignment JOIN assignments ON 
             peer_review_assignment.assignmentID = assignments.assignmentID WHERE
             assignments.courseID = ? and assignments.assignmentID = ?");
         $sh->execute(array($courseID, $assignmentID));
     } else{
         $sh = $db->prepare("SELECT peer_review_assignment.assignmentID, courseID, 
-            submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate
+            submissionStartDate, submissionStopDate, reviewStartDate, reviewStopDate,
             markPostDate FROM peer_review_assignment JOIN assignments ON 
             peer_review_assignment.assignmentID = assignments.assignmentID WHERE
             assignments.courseID = ? ORDER BY datetime(submissionStartDate) ASC");

@@ -1,7 +1,7 @@
 {
     "id": "http://json-schema.org/draft-04/schema#",
     "$schema": "http://json-schema.org/draft-04/schema#",
-    "title": "events",
+    "title": "Events",
     "description": "events api endpoint, backed by job_notifications on mta end",
     "stability": "prototype",
     "strictProperties": true,
@@ -85,11 +85,8 @@
             "required": [
                 "assignmentID",
                 "courseID",
-                "notificationID",
                 "job",
-                "dateRan",
                 "success",
-                "seen",
                 "summary",
                 "details"
             ],
@@ -112,10 +109,10 @@
             "schema": {
                 "additionalProperties": "false",
                 "type": "object",
-                "required": ["courseID"],
+                "required": ["assignmentID"],
                 "properties": {
-		    "courseID": {"$ref": "#/definitions/courseID"},
-		    "assignmentID": {"$ref": "#/definitions/assignmentID"}
+		    "courseID": {"$ref": "#/definitions/assignmentID"},
+		    "courseID": {"$ref": "#/definitions/courseID"}
 		}
             },
             "targetSchema": {
@@ -133,12 +130,31 @@
                 ],
                 "type": "object"
             }
+        },
+	{
+            "description": "create a single event for a course",
+            "href": "/event/create",
+            "method": "POST",
+            "rel": "create",
+	    "title": "create",
+            "schema": {
+                "additionalProperties": "false",
+                "type": "object",
+                "required": ["courseID"],
+                "properties": {
+		    "courseID": {"$ref": "#/definitions/courseID"},
+		    "assignmentID": {"$ref": "#/definitions/assignmentID"}
+		}
+            },
+            "targetSchema": {
+                "additionalProperties": "false",
+                "properties": {
+                    "errors": {
+                        "$ref": "#/definitions/errors"
+                    }
+                },
+                "type": "object"
+            }
         }
-    ],
-    "stability": "prototype",
-    "strictProperties": true,
-    "title": "Events",
-    "type": [
-        "object"
     ]
 }

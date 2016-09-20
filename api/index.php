@@ -565,4 +565,13 @@ $app->get('/event/get', function (Request $request, Response $response) {
 	return $new_response;
 })->setName('event:get')->add($jsonvalidateMW)->add($jsonDecodeMW);
 
+$app->post('/event/create', function (Request $request, Response $response) {
+	$dataMgr = $this->dataMgr;
+	$json_body = $request->getAttribute('requestDecodedJson');
+	$j = $json_body;
+	$dataMgr->createNotification(new AssignmentID($j->assignmentID), $j->job, $j->success, 
+		$j->summary, $j->details);
+
+})->setName('event:create')->add($jsonvalidateMW)->add($jsonDecodeMW);
+
 $app->run();

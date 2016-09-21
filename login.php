@@ -20,6 +20,7 @@ try
         $loginAttemptFailed = !$authMgr->performLogin($userName, 'HTACCESS'); //constant password since we have already authenticated
 	if ($loginAttemptFailed) {
             $content .= "<div> not a valid mta user</div>";
+	    render_page();
 	}
     }
     if(isset($_POST["username"])){ $username = $_POST['username']; }

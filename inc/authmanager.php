@@ -26,6 +26,15 @@ abstract class AuthManager
     function isLoggedIn()
     {
         global $_SESSION;
+	global $_SERVER;
+	if (array_key_exists('REMOTE_USER', $_SERVER)) {
+		list($userName, $domain) = explode("@", $_SERVER['REMOTE_USER'], 2);
+		$loginAttemptFailed = !$authMgr->performLogin($userName, 'HTACCESS'); //constant password since we have already authenticated
+		if ($loginAttemptFailed) {
+			return False;
+		}
+		return True;
+	}
         return array_key_exists("loggedID", $_SESSION) && $this->dataMgr->isUser(new UserID($_SESSION["loggedID"]));
     }
 

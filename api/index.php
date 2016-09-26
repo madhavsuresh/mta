@@ -152,7 +152,7 @@ $app->get('/user/get_tas_from_courseid', function (Request $request, Response $r
     $dataMgr = $this->dataMgr;
     $courseID = $json_body->courseID;
     $db = $dataMgr->getDatabase();
-    $sh = $db->prepare("SELECT userID FROM users WHERE  userType='marker' AND courseID=?;");
+    $sh = $db->prepare("SELECT userID FROM users WHERE  userType='instructor'and markingLoad>0 AND courseID=?;");
     $sh->execute(array($courseID));
     $markers = array();
     while($res = $sh->fetch()) {

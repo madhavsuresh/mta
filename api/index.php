@@ -532,7 +532,7 @@ $app->post('/peermatch/insert_review_mark', function (Request $request, Response
 	$dataMgr = $this->dataMgr;
 	$db = $dataMgr->getDatabase();
 	$matchID = $json_body->matchID;
-	$score = $json_body->score;
+	$score = $json_body->grade;
 	insertSingleReviewMark($db, $matchID, $score);
 })->add($jsonDecodeMW);
 
@@ -544,7 +544,7 @@ $app->post('/peermatch/insert_review_marks_bulk', function (Request $request, Re
 	$reviewMarks = $json_body->reviewMarks;
 	foreach ($reviewMarks as $reviewMark) {
 		$matchID = $reviewMark->matchID;
-		$score = $reviewMark->score;
+		$score = $reviewMark->grade;
 		insertSingleReviewMark($db, $matchID, $score);
 	}
 })->add($jsonDecodeMW);

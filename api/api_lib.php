@@ -165,7 +165,9 @@ function insertSingleReviewMark($db, $matchID, $score) {
 	//for now ignoring lots of stuff
 	$array = array("matchID" => $matchID, "score"=>$score, "comments"=>'created from api', "automatic"=>1, "reviewPoints"=>1, "reviewMarkTimestamp"=>time());
 	//$sh = $db->prepare('INSERT into peer_review_assignment_review_marks  (matchID, score, automatic, reviewPoints, reviewMarkTimestamp) VALUES(?,?,?,?,?)');
-	$sh = $db->prepare("INSERT INTO peer_review_assignment_review_marks (matchID, score, comments, automatic, reviewPoints, reviewMarkTimestamp) VALUES (:matchID, :score, :comments, :automatic, :reviewPoints, datetime(:reviewMarkTimestamp,'unixepoch'));");
+	$sh = $db->prepare("INSERT OR IGNORE INTO peer_review_assignment_review_marks (matchID, score, comments, automatic, reviewPoints, reviewMarkTimestamp) VALUES (:matchID, :score, :comments, :automatic, :reviewPoints, datetime(:reviewMarkTimestamp,'unixepoch'));");
+	$sh->execute($array);
+	$sh = $db->prepare("UPDATE peer_review_assignment_review_marks SET score=:score, comments=:comments, automatic=:automatic, reviewPoints=:reviewPoints, reviewMarkTimestamp=datetime(:reviewMarkTimestamp,'unixepoch') WHERE matchID=:matchID;");
 	$sh->execute($array);
 }
 

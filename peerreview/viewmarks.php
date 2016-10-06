@@ -105,7 +105,7 @@ try
                     else if($NOW < grace($assignment->appealStopDate))
                     {
                         //Show them a link to launching an appeal
-                        $html .= "<br><br><a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$assignedReviewIndex&appealtype=reviewmark")."'>Appeal Review Mark </a><br>";
+                        //$html .= "<br><br><a href='".get_redirect_url("peerreview/editappeal.php?assignmentid=$assignment->assignmentID&reviewid=$assignedReviewIndex&appealtype=reviewmark")."'>Appeal Review Mark </a><br>";
                     }
                     $reviewCount++;
                     break;

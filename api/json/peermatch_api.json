@@ -17,6 +17,16 @@
       "type": "integer",
       "description": "userID from keyed from users table, can be student/TA/instructor"
     },
+    "matchID": {
+	    "type": "integer",
+	    "description": "matchID is the mta primary key for each match"
+    },
+    "matchIDList": {
+	    "type": "array",
+	    "items":{
+		    "$ref": "#/definitions/matchID"
+	    }
+    },
     "errors": {
       "description": "error output from api call",
       "type": "string"
@@ -88,6 +98,35 @@
           "errors": {
             "$ref": "#/definitions/errors"
           }
+        }
+      }
+    },
+    {
+      "description": "Delete matches keyed by match ID ",
+      "title" : "delete_match_bulk",
+      "href": "/peermatch/delete_match_bulk",
+      "method": "POST",
+      "rel": "destroy",
+      "schema": {
+        "required": [
+          "matchIDList"
+        ],
+        "additionalProperties": "false",
+        "properties": {
+          "matchIDList": {
+            "$ref": "#/definitions/matchIDList"
+          }
+        },
+        "type": [
+          "object"
+        ]
+      },
+      "targetSchema": {
+        "type": [
+          "object"
+        ],
+        "properties": {
+          "$ref": "#/definitions/errors"
         }
       }
     },

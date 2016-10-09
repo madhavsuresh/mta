@@ -527,6 +527,16 @@ $app->post('/peermatch/delete_all', function (Request $request, Response $respon
 	$db->commit();
 })->setName('peermatch:delete_all')->add($jsonvalidateMW)->add($jsonDecodeMW);
 
+$app->post('/peermatch/delete_match_bulk', function (Request $request, Response $response) {
+	$json_body = $request->getAttribute('requestDecodedJson');
+	$dataMgr = $this->dataMgr;
+	$db = $dataMgr->getDatabase();
+	$matchIDList = $json_body->matchIDList;
+	foreach ($matchIDList as $matchID) {
+		deleteMatchByID($db, $matchID);
+	}
+})->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:delete_match_bulk');
+
 $app->post('/peermatch/insert_review_mark', function (Request $request, Response $response) {
 	$json_body = $request->getAttribute('requestDecodedJson');
 	$dataMgr = $this->dataMgr;

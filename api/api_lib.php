@@ -236,4 +236,9 @@ function getMatchIDsForSubmission($assignmentID, $submissionID){
 	$submissionID = new SubmissionID($submissionID);
 	return $assignment->getMatchesForSubmission($submissionID);
 }
+
+function deleteMatchByID($db, $matchID) {
+	$sh = $db->prepare('DELETE from peer_review_assignment_matches where matchID=?');
+	$sh->execute(array($matchID));
+}
 ?>

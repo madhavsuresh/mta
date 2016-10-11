@@ -370,6 +370,11 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         {
             $sh = $this->db->prepare("UPDATE peer_review_assignment_questions SET questionName=?, questionText=?, hidden=? WHERE questionID=?;");
             $sh->execute(array($question->name, $question->question, $question->hidden, $question->questionID));
+            if ($question->displayPriority!=0)
+	    {
+                $sh = $this->db->prepare("UPDATE peer_review_assignment_questions SET displayPriority=? WHERE questionID=?;");
+                $sh->execute(array($question->displayPriority,$question->questionID));
+	    }
         }
         //Now do the rest of the saving for each type
         switch(get_class($question))

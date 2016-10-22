@@ -564,8 +564,8 @@ $app->post('/peermatch/swap_peer_review', function (Request $request, Response $
 	$dataMgr = $this->dataMgr;
 	$db = $dataMgr->getDatabase();
 	$matchID = $json_body->matchID;
-	$reviewerToSwapId = $json_body->reviewerToSwapID;
-	swapReviewer($matchID, $reviewerToSwapID);
+	$reviewerToSwapID = $json_body->reviewerToSwapID;
+	swapReviewer($db, $matchID, $reviewerToSwapID);
 })->add($jsonDecodeMW);
 
 

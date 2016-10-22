@@ -559,6 +559,15 @@ $app->post('/peermatch/insert_review_marks_bulk', function (Request $request, Re
 	}
 })->add($jsonDecodeMW);
 
+$app->post('/peermatch/swap_peer_review', function (Request $request, Response $response) {
+	$json_body = $request->getAttribute('requestDecodedJson');
+	$dataMgr = $this->dataMgr;
+	$db = $dataMgr->getDatabase();
+	$matchID = $json_body->matchID;
+	$reviewerToSwapId = $json_body->reviewerToSwapID;
+	swapReviewer($matchID, $reviewerToSwapID);
+})->add($jsonDecodeMW);
+
 
 
 $app->run();

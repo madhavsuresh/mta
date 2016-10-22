@@ -66,10 +66,12 @@ class Mark
             $str = precisionFloat($this->score);
             if(!is_null($outOf))
                 $str .= "/$outOf";
+	    /*
             if(strlen($this->comments) != 0)
                 $str .= "+";
             if($this->isAutomatic)
                 $str .= "A";
+	     */
             return $str;
         }
         return "--";

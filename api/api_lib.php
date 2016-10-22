@@ -241,4 +241,10 @@ function deleteMatchByID($db, $matchID) {
 	$sh = $db->prepare('DELETE from peer_review_assignment_matches where matchID=?');
 	$sh->execute(array($matchID));
 }
+
+function swapReviewer($db, $matchID, $reviewerToSwapID) {
+	$sh = $db->prepare('UPDATE peer_review_assignment_matches set reviewerID=? where matchid=?;');
+	$sh->execute(array($reviewerToSwapID, $matchID));
+}
+
 ?>

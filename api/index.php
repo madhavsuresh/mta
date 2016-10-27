@@ -383,6 +383,9 @@ $app->post('/makesubmissions', function (Request $request, Response $response) u
         mock_submissions($params["courseID"], $params["assignmentID"]); 
 });
 
+
+
+
 $app->post('/peerreviewscores/create', function(Request $request, Response $response) use($dataMgr){
 
     $params = json_decode($request->getBody(),true);
@@ -568,6 +571,32 @@ $app->post('/peermatch/swap_peer_review', function (Request $request, Response $
 	swapReviewer($db, $matchID, $reviewerToSwapID);
 })->add($jsonDecodeMW);
 
+$app->post('/peerreviewscores/create_int', function(Request $request, Response $response) {
+	$json_body  = $request->getAttribute('requestDecodedJson');
+	$dataMgr = $this->dataMgr;
+	$matchID = $json_body->matchID;
+	$answerInt= $json_body->answerInt;
+	$questionID = $json_body->questionID;
+	$db = $dataMgr->getDatabase();
+        $sh = $db->prepare("INSERT or IGNORE INTO peer_review_assignment_review_answers (matchID, questionID, answerInt, answerText, reviewTimestamp) VALUES (?, ?, ?, ?, ?)");
+	$sh->execute(array($matchID, $questionID, $answerInt, NULL, time()));
+        $sh = $db->prepare("UPDATE peer_review_assignment_review_answers set answerInt=?, reviewTimestamp=? where matchID = ? and questionID=?");
+	$sh->execute(array($answerInt, time(), $matchID, $questionID));
+})->add($jsonDecodeMW);
+
+$app->post('/peerreviewscores/create_text', function(Request $request, Response $response) {
+	$json_body  = $request->getAttribute('requestDecodedJson');
+	print_r($json_body);
+	$dataMgr = $this->dataMgr;
+	$matchID = $json_body->matchID;
+	$answerText= $json_body->answerText;
+	$questionID = $json_body->questionID;
+	$db = $dataMgr->getDatabase();
+        $sh = $db->prepare("INSERT or IGNORE INTO peer_review_assignment_review_answers (matchID, questionID, answerInt, answerText, reviewTimestamp) VALUES (?, ?, ?, ?, ?)");
+	$sh->execute(array($matchID, $questionID, NULL, $answerText, time()));
+        $sh = $db->prepare("UPDATE peer_review_assignment_review_answers set answerText=?, reviewTimestamp=? where matchID = ? and questionID=?");
+	$sh->execute(array($answerText, time(), $matchID, $questionID));
+})->add($jsonDecodeMW);
 
 
 $app->run();

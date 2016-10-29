@@ -44,11 +44,12 @@ try
         $matchID = $reviewAssignments[$id];
         
         //Check to make sure that they haven't already submitted this
-        if($isCalibration)
-            $assignmentWithSubmission = $dataMgr->getAssignment($dataMgr->getAssignmentDataManager("peerreview")->getAssignmentIDForMatchID($matchID));
-            if($assignmentWithSubmission->getReviewMark($matchID)->isValid){
-                redirect_to_page("peerreview/viewcalibration.php?assignmentid=$assignment->assignmentID&calibration=".$_GET["calibration"]);
-        }
+        if($isCalibration) { 
+		$assignmentWithSubmission = $dataMgr->getAssignment($dataMgr->getAssignmentDataManager("peerreview")->getAssignmentIDForMatchID($matchID));
+		if($assignmentWithSubmission->getReviewMark($matchID)->isValid){
+			redirect_to_page("peerreview/viewcalibration.php?assignmentid=$assignment->assignmentID&calibration=".$_GET["calibration"]);
+		}
+	}
         
         $submission = $assignmentWithSubmission->getSubmission($matchID);
         if($assignmentWithSubmission->reviewExists($matchID)){

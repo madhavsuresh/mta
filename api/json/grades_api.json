@@ -1,0 +1,83 @@
+{
+	"id"	:	"http://json-schema.org/draft-04/schema#",
+		"$schema"	:	"http://json-schema.org/draft-04/schema#",
+		"title"	:	"Grades",
+		"description"	:	"Grades api endpoint",
+		"stability"	:	"Prototype",
+		"strictProperties"	:	true,
+		"type"	:	["object"],
+		"definitions"	: {
+			"matchID" : {
+				"description" : "match id for peer review",
+				"type": "integer"
+			},
+			"submissionID" : {
+				"description" : "submissionID for student submission",
+				"type": "integer"
+			},
+			"score" : {
+				"description": "score value",
+				"type": "number"
+			},
+		"peerReviewScore": {
+			"type": "object", 
+			"required" : ["matchID", "score"],
+			"additionalProperties": false,
+			"properties": {
+			"matchID": {"$ref": "#/definitions/matchID"},
+			"score" : {"$ref": "#/definitions/score"}
+			}
+		},
+		"submissionScore": {
+			"type": "object", 
+			"required" : ["submissionID", "score"],
+			"additionalProperties": false,
+			"properties": {
+			"matchID": {"$ref": "#/definitions/submissionID"},
+			"score" : {"$ref": "#/definitions/score"}
+			}
+		}
+		},
+		"links"	:	[
+		{
+			"description"	: "Get grades for peerreviews",
+			"href"	:	"/grades/peerreviews",
+			"title"	:	"peerreviews",
+			"method"	:	"GET",
+			"rel"	:	"list",
+			"schema" : {
+			},
+			"targetSchema" : {
+			 	"type": "object",
+				"requried": ["scores"],
+				"additionalProperties": false,
+				"properties": {
+				  "scores" : {
+				    "type": "array",
+				    "items" : { "$ref" : "#/definitions/peerReviewScore"}
+				  }
+				}
+			}
+		},
+		{
+			"description"	: "Get grades from submissions",
+			"href"	:	"/grades/submissions",
+			"title"	:	"submissions",
+			"method":	"GET",
+			"rel"	:	"list",
+			"schema" : {
+			},
+			"targetSchema" : {
+			 	"type": "object",
+				"requried": ["scores"],
+				"additionalProperties": false,
+				"properties": {
+				  "scores" : {
+				    "type": "array",
+				    "items" : { "$ref" : "#/definitions/submissionScore"}
+				  }
+				}
+			}
+		}
+	]
+}

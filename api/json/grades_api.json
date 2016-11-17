@@ -33,7 +33,7 @@
 			"required" : ["submissionID", "score"],
 			"additionalProperties": false,
 			"properties": {
-			"matchID": {"$ref": "#/definitions/submissionID"},
+			"submissionID": {"$ref": "#/definitions/submissionID"},
 			"score" : {"$ref": "#/definitions/score"}
 			}
 		}

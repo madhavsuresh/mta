@@ -375,16 +375,31 @@ $app->post('/grades/create', function(Request $request, Response $response) use(
     return $response;
 });
 
-############################ STUDENT SIDE TESTING ###############
+$app->get('/grades/submissions', function(Request $request, Response $response) { 
+    $dataMgr = $this->dataMgr;
+    $db = $dataMgr->getDatabase();
+    $res = getAllSubmissionGrades($db);
+    $ret_array['scores'] = $res;
+    $newResponse = $response->withJson($ret_array);
+    return $newResponse;
+})->add($jsonvalidateMW)->setName('grades:submissions');
+
+$app->get('/grades/peerreviews', function(Request $request, Response $response) {
+    $dataMgr = $this->dataMgr;
+    $db = $dataMgr->getDatabase();
+    $res = getAllPeerReviewGrades($db);
+    $ret_array['scores'] = $res;
+    $newResponse = $response->withJson($ret_array);
+    return $newResponse;
+})->add($jsonvalidateMW)->setName('grades:peerreviews');
+
+############################ STUDENT SIDE TESTING ############### 
 $app->post('/makesubmissions', function (Request $request, Response $response) use
     ($dataMgr){#takes in course name and assignment id
         $params = $request->getBody();
         $params = json_decode($params,true);
         mock_submissions($params["courseID"], $params["assignmentID"]); 
 });
-
-
-
 
 $app->post('/peerreviewscores/create', function(Request $request, Response $response) use($dataMgr){
 
@@ -586,7 +601,6 @@ $app->post('/peerreviewscores/create_int', function(Request $request, Response $
 
 $app->post('/peerreviewscores/create_text', function(Request $request, Response $response) {
 	$json_body  = $request->getAttribute('requestDecodedJson');
-	print_r($json_body);
 	$dataMgr = $this->dataMgr;
 	$matchID = $json_body->matchID;
 	$answerText= $json_body->answerText;
@@ -597,6 +611,7 @@ $app->post('/peerreviewscores/create_text', function(Request $request, Response 
         $sh = $db->prepare("UPDATE peer_review_assignment_review_answers set answerText=?, reviewTimestamp=? where matchID = ? and questionID=?");
 	$sh->execute(array($answerText, time(), $matchID, $questionID));
 })->add($jsonDecodeMW);
+
 
 
 $app->run();

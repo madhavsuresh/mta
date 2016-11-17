@@ -247,4 +247,30 @@ function swapReviewer($db, $matchID, $reviewerToSwapID) {
 	$sh->execute(array($reviewerToSwapID, $matchID));
 }
 
+
+function getAllSubmissionGrades($db) {
+	$sh = $db->prepare('SELECT submissionID, score FROM peer_review_assignment_submission_marks');
+	$sh->execute();
+	$results = $sh->fetchall();
+	$ret = [];
+	foreach ($results as $pair) {
+		$pair->submissionID = (int)$pair->submissionID;
+		$pair->score = (double)$pair->score;
+		$ret[] = $pair;
+	}
+	return $ret;
+}
+
+function getAllPeerReviewGrades($db) {
+	$sh = $db->prepare('SELECT matchID, score FROM peer_review_assignment_review_marks');
+	$sh->execute();
+	$results = $sh->fetchall();
+	$ret = [];
+	foreach ($results as $pair) {
+		$pair->matchID = (int)$pair->matchID;
+		$pair->score = (double)$pair->score;
+		$ret[] = $pair;
+	}
+	return $ret;
+}
 ?>

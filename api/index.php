@@ -475,7 +475,8 @@ $app->get('/peermatch/get',  function (Request $request, Response $response) {
 	$assignmentID = $json_body->assignmentID;
 	//TODO: handle exceptions and errors around the database calls
 	$db = $dataMgr->getDatabase();
-	$sh = $db->prepare("SELECT  peer_review_assignment_submissions.submissionID, peer_review_assignment_matches.reviewerID
+	$sh = $db->prepare("SELECT  peer_review_assignment_submissions.submissionID, peer_review_assignment_matches.reviewerID,
+		peer_review_assignment_matches.matchID
        			FROM peer_review_assignment_submissions JOIN peer_review_assignment_matches ON
        		peer_review_assignment_matches.submissionID = peer_review_assignment_submissions.submissionID
        		WHERE peer_review_assignment_submissions.assignmentID = ?
@@ -485,7 +486,10 @@ $app->get('/peermatch/get',  function (Request $request, Response $response) {
 	//reviewerID is person matched to review submission, by authorID, on assignmentID
 	$peerMatches = array();
 	while($res = $sh->fetch()) {
-					$peerMatches[] = array('submissionID' => (int)$res->submissionID, 'reviewerID' => (int)$res->reviewerID);
+		$peerMatches[] = array('submissionID' =>
+			(int)$res->submissionID,
+			'reviewerID' => (int)$res->reviewerID,
+			'matchID' => (int)$res->matchID);
 	}
 	$return_array['peerMatches'] = $peerMatches;
 	$return_array['assignmentID'] = $assignmentID;

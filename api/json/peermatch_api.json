@@ -41,7 +41,8 @@
 			"additionalProperties": false,
 			"properties": {
 			"reviewerID": {"$ref": "#/definitions/userID"},
-			"submissionID" : {"$ref": "#/definitions/submissionID"}
+			"submissionID" : {"$ref": "#/definitions/submissionID"},
+			"matchID" : {"$ref": "#/definitions/matchID"}
 			}
 		},
 		"pairPeerSubmissionID": {

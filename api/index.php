@@ -615,7 +615,6 @@ $app->post('/peerreviewscores/create_text', function(Request $request, Response 
 })->add($jsonDecodeMW);
 
 $app->get('/appeals/get', function(Request $request, Response $response) {
-	$json_body = $request->getAttribute('requestDecodedJson');
 	$dataMgr = $this->dataMgr;
 	$db = $dataMgr->getDatabase();
 	$sh = $db->prepare('SELECT * from peer_review_assignment_appeal_messages');
@@ -635,6 +634,22 @@ $app->get('/appeals/get', function(Request $request, Response $response) {
 	return $new_response;
 });
 
+//HARDCODED resolvedAppeal
+$app->post('/appeals/set_as_resolved', function(Request $request, Response $response) {
+	$json_body = $request->getAttribute('requestDecodedJson');
+	$dataMgr = $this->dataMgr;
+	$db = $dataMgr->getDatabase();
+	$sh = $db->prepare('UPDATE peer_review_assignment_appeal_messages 
+		set appealType="resolvedAppeal" where appealMessageID=?');
+	$sh->execute(array($json_body->appealMessageID));
+})->add($jsonDecodeMW);
 
+$app->post('/appeals/create_appeal_type', function(Request $request, Response $response) {
+	$json_body = $request->getAttribute('requestDecodedJson');
+	$dataMgr = $this->dataMgr;
+	$db = $dataMgr->getDatabase();
+	$sh = $db->prepare('insert or ignore into appealtype (value) values (?)');
+	$sh->execute(array($json_body->appealType));
+})->add($jsonDecodeMW);
 
 $app->run();

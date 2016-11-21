@@ -456,8 +456,6 @@ $app->get('/peermatch/get_peer_and_submission_ids', function (Request $request, 
 	 return $new_response;
 })->add($jsonvalidateMW)->add($jsonDecodeMW)->setName('peermatch:get_peer_and_submission_ids');
 
-
-
 $app->get('/getmatchesforsubmission', function (Request $request, Response $response) use ($dataMgr) {
 	$params = $request->getBody();
 	$params = json_decode($params,true);
@@ -615,6 +613,27 @@ $app->post('/peerreviewscores/create_text', function(Request $request, Response 
         $sh = $db->prepare("UPDATE peer_review_assignment_review_answers set answerText=?, reviewTimestamp=? where matchID = ? and questionID=?");
 	$sh->execute(array($answerText, time(), $matchID, $questionID));
 })->add($jsonDecodeMW);
+
+$app->get('/appeals/get', function(Request $request, Response $response) {
+	$json_body = $request->getAttribute('requestDecodedJson');
+	$dataMgr = $this->dataMgr;
+	$db = $dataMgr->getDatabase();
+	$sh = $db->prepare('SELECT * from peer_review_assignment_appeal_messages');
+	$sh->execute();
+	$results = $sh->fetchall();
+	$ret = [];
+	foreach ($results as $appeal) {
+		$appeal->appealMessageID = (int)$appeal->appealMessageID;
+		$appeal->matchID = (int)$appeal->matchID;
+		$appeal->authorID = (int)$appeal->authorID;
+		$appeal->viewedByStudent = (int)$appeal->viewedByStudent;
+		$ret[] = $appeal;
+	}
+	$ret_array = [];
+	$ret_array['appeals'] = $ret;
+	$new_response = $response->withJson($ret_array);
+	return $new_response;
+});
 
 
 

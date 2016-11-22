@@ -60,7 +60,7 @@ try
         }
 
         //If we're after the stop date, we better be sure that this appeal exists
-        if(grace($assignment->appealStopDate) < $NOW && !$assignment->appealExists($review->matchID, $appealType))
+        if($appealType == "review" && grace($assignment->appealStopDate) < $NOW && !$assignment->appealExists($review->matchID, $appealType))
         {
             $content .= "Appeal submissions are closed";
             render_page();

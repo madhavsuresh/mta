@@ -48,7 +48,7 @@ try
         function getTabHTML(SubmissionID $submissionID, $showSubmissionMark, $showStudentReviews, $showInstructorReviews, $showReviewMarks, $showAppealLinks)
         {
             global $USERID, $assignment, $dataMgr, $NOW;
-            $html  = "<h1>Submission</h1>\n";
+            $html  = "<h1 class='submission-header'>Submission</h1>\n";
             #Show the submission
             try
             {
@@ -78,7 +78,7 @@ try
                     continue;
                 if($review->reviewerID->id == $USERID->id)
                 {
-                    $html .= "<h1>My Review</h1>\n";
+                    $html .= "<h1 class='review-header'>My Review</h1>\n";
                     $html .= $review->getHTML();
                     $html .= "<h2 class='altHeader'>My Review Mark</h2>\n";
                     $html .= $assignment->getReviewMark($review->matchID)->getHTML($assignment->maxReviewScore);
@@ -112,8 +112,8 @@ try
                     break;
                 }
             }
-			
-			//Get the calibration reviewer if this is a calibration submission 
+
+			//Get the calibration reviewer if this is a calibration submission
 			$calibrationReviewer = $dataMgr->getCalibrationReviewer($submissionID);
 			$numReviews = $assignment->defaultNumberOfReviews;
             //Show them the reviews that this submission
@@ -128,7 +128,7 @@ try
                     {
                         if(sizeof($review->answers) == 0)
                             continue;
-                        if($calibrationReviewer != NULL && $reviewCount > ($numReviews-1)) 
+                        if($calibrationReviewer != NULL && $reviewCount > ($numReviews-1))
                 			break;
 						//Do not show the calibration key for covert reviews
 						if($review->reviewerID->id == $calibrationReviewer)
@@ -136,15 +136,15 @@ try
                         if($dataMgr->isInstructor($review->reviewerID)) {
                             if(!$showInstructorReviews)
                                 continue;
-                            $html.= "<h1>Review $reviewCount (Instructor Review)</h1>\n";
+                            $html.= "<h1 class='review-header'>Review $reviewCount (Instructor Review)</h1>\n";
                         } else {
                             if(!$showStudentReviews)
                                 continue;
                             if($dataMgr->isMarker($review->reviewerID)) {
-                              $html.= "<h1>Review $reviewCount (TA Review)</h1>\n";
+                              $html.= "<h1 class='review-header'>Review $reviewCount (TA Review)</h1>\n";
                             }
                             else {
-                              $html.= "<h1>Review $reviewCount</h1>\n";
+                              $html.= "<h1 class='review-header'>Review $reviewCount</h1>\n";
                             }
                         }
 

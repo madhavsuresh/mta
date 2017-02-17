@@ -80,6 +80,7 @@ try
 
         $errors = $submission->loadFromPost($_POST);
 
+
         $assignment->saveSubmission($submission);
 
         $content .= "Submission saved - check to make sure that it looks right below. You may edit your submission by returning to the home page.\n";

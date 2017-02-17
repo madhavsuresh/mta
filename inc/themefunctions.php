@@ -295,13 +295,13 @@ function render_exception_page($exception)
     //$content .= "<h3>The server beasts have eaten your request!</h3>";
     $content  = "<h1>Error</h1>";
     $content .= "<h3>Something seems to have gone wrong</h3>";
-    
+
     //Do we show the full exception or just the message
     if(isset($SHOW_EXCEPTION_STACK_TRACE) && $SHOW_EXCEPTION_STACK_TRACE)
         $content .= cleanString($exception);
     else
         $content .= cleanString($exception->getMessage());
-    
+
     //$content .= "<br><br><center><a href='http://theoatmeal.com'><img src='".get_ui_url(false)."tumbeasts.png'/></a></ceter>\n";
 
     $dump  = $exception."\n\n";
@@ -336,4 +336,3 @@ function get_default_menu_items()
     }
     return $menu;
 }
-

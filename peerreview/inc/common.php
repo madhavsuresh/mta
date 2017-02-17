@@ -10,6 +10,7 @@ $PEER_REVIEW_SUBMISSION_TYPES = array(
     "essay" => "Essay",
     "articleresponse" => "Article Response",
     "image" => "Image",
+    "document" => "Document",
     "code" => "Code"
 );
 
@@ -70,4 +71,3 @@ function count_valid_peer_review_marks_for_assignments(UserID $student, $assignm
     }
     return $scores;
 }
-

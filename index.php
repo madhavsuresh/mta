@@ -16,7 +16,7 @@ try
 	                $content .= "<a href='$SITEURL$courseObj->name'/>$courseObj->displayName</a><br>";
 	        }
 		}
-		else 
+		else
 		{
 			foreach($dataMgr->getCourses() as $courseObj)
 	        {
@@ -35,18 +35,18 @@ try
 
         #Figure out what courses are availible, and display them to the user (showing what roles they have)
         $assignments = $dataMgr->getAssignments();
-		
+
 		if($dataMgr->isInstructor($USERID))
         {
 			require_once("notifications.php");
 		}
-		
+
 		#TO-DO Section and Calibration Section processing
 		if($dataMgr->isStudent($USERID))
-		{		
+		{
 			require_once("tasks_student.php");
 		}
-		
+
 		if($dataMgr->isMarker($USERID))
 		{
 			require_once("tasks_TA.php");
@@ -62,7 +62,7 @@ try
 			$content .= "<td><a title='Course Configuration' href='".get_redirect_url("editcourseconfiguration.php")."'>Course Configuration</a></td>\n";
             $content .= "</tr></table><br>\n";
         }
-		
+
         $content .= "<h1>Assignments</h1>\n";
         $currentRowIndex = 0;
         foreach($assignments as $assignment)
@@ -100,4 +100,3 @@ try
 }
 
 ?>
-

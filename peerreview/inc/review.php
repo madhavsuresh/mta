@@ -16,17 +16,20 @@ class Review
     function getHTML($showHiddenQuestions=false)
     {
         #The first line contains the score that this review gave, we need to gobble it up
-        $html = "<h2>Score for Submission: ".precisionFloat($this->getScore())."<h2>\n";
+        $html = "<h2 class='submission-score'>Score for Submission: ".precisionFloat($this->getScore())."<h2>\n";
 
         #Now we can start loading up questions
+        $count = 1;
         foreach($this->assignment->getReviewQuestions() as $question)
         {
             if($showHiddenQuestions || !$question->hidden)
             {
+                $count++;
+                $mod = $count % 2;
                 if(array_key_exists($question->questionID->id, $this->answers)) {
-                    $html .= $question->getHTML($this->answers[$question->questionID->id]);
+                    $html .= "<div class='question".$mod."'>".$question->getHTML($this->answers[$question->questionID->id])."</div>";
                 } else {
-                    $html .= $question->getHTML(null);
+                    $html .= "<div class='question".$mod."'>".$question->getHTML(null)."</div>";
                 }
                 $html .= "\n";
             }
@@ -74,9 +77,9 @@ class Review
             }
             $html .= "\n";
         }
-		
+
 		if(ISSET($this->reviewTimestamp)) $html .= "<h4>Last Updated: ".date("Y-m-d H:i:s",$this->reviewTimestamp)."</h4>";
-		
+
         return $html;
     }
 
@@ -111,4 +114,3 @@ class Review
         return $score;
     }
 };
-

@@ -129,7 +129,8 @@ class DocumentPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelpe
     function saveAssignmentSubmissionSettings(PeerReviewAssignment $assignment, $isNewAssignment)
     {
         //Delete any old settings, and just write in the new ones
-        $sh = $this->prepareQuery("saveDocumentAssignmentSubmissionSettingsQuery", "INSERT INTO peer_review_assignment_document_settings (assignmentID, documentExtension) VALUES (?, ?) ON DUPLICATE KEY UPDATE documentExtension = ?;");
+        //$sh = $this->prepareQuery("saveDocumentAssignmentSubmissionSettingsQuery", "INSERT INTO peer_review_assignment_document_settings (assignmentID, documentExtension) VALUES (?, ?) ON DUPLICATE KEY UPDATE documentExtension = ?;");
+        $sh = $this->prepareQuery("saveDocumentAssignmentSubmissionSettingsQuery", "REPLACE INTO peer_review_assignment_document_settings (assignmentID, documentExtension) VALUES (?, ?);");
         $sh->execute(array($assignment->assignmentID, $assignment->submissionSettings->extension, $assignment->submissionSettings->extension));
     }
 
@@ -162,7 +163,8 @@ class DocumentPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelpe
         //$sh->execute(array($document->submissionID, $document->document));
 
         // This is more standard for this codebase.
-        $sh = $this->prepareQuery("saveDocumentSubmissionQuery", "INSERT INTO peer_review_assignment_document (submissionID, `document`) VALUES (?, ?) DUPLICATE KEY UPDATE document = ?;");
+        //$sh = $this->prepareQuery("saveDocumentSubmissionQuery", "INSERT INTO peer_review_assignment_document (submissionID, `document`) VALUES (?, ?) ON DUPLICATE KEY UPDATE document = ?;");
+        $sh = $this->prepareQuery("saveDocumentSubmissionQuery", "REPLACE INTO peer_review_assignment_document (submissionID, `document`) VALUES (?, ?);");
         $sh->execute(array($document->submissionID, $document->document, $document->document));
     }
 }

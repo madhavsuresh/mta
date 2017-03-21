@@ -1,0 +1,160 @@
+{
+    "id": "http://json-schema.org/draft-04/schema#",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Events",
+    "description": "events api endpoint, backed by job_notifications on mta end",
+    "stability": "prototype",
+    "strictProperties": true,
+    "type": [
+      "object"
+    ],
+    "definitions": {
+        "assignmentID": {
+            "description": "unique assignment ID used in MTA",
+            "type": "integer"
+        },
+        "courseID": {
+            "description": "numeric courseID",
+            "type": "integer"
+        },
+        "dateRan": {
+            "description": "datetime for when job was run",
+            "format": "datetime",
+            "type": "string"
+        },
+        "details": {
+            "description": "verbose output of operation performed",
+            "type": "string"
+        },
+        "errors": {
+            "description": "error output from api call",
+            "type": "string"
+        },
+        "job": {
+            "descripton": "job type",
+            "type": "string"
+        },
+        "notificationID": {
+            "descripton": "primary key for job_notifcations table",
+            "type": "integer"
+        },
+        "seen": {
+            "description": "checked if seen in notifications console",
+            "type": "integer"
+        },
+        "success": {
+            "description": "checked if seen in notifications console",
+            "type": "integer"
+        },
+        "summary": {
+            "description": "summary of operation performed",
+            "type": "string"
+        },
+        "event": {
+            "additionalProperties": false,
+            "description": "object representing job_notifications in mta",
+            "properties": {
+                "assignmentID": {
+                    "$ref": "#/definitions/assignmentID"
+                },
+                "courseID": {
+                    "$ref": "#/definitions/courseID"
+                },
+                "dateRan": {
+                    "$ref": "#/definitions/dateRan"
+                },
+                "details": {
+                    "$ref": "#/definitions/details"
+                },
+                "job": {
+                    "$ref": "#/definitions/job"
+                },
+                "notificationID": {
+                    "$ref": "#/definitions/notificationID"
+                },
+                "seen": {
+                    "$ref": "#/definitions/seen"
+                },
+                "success": {
+                    "$ref": "#/definitions/success"
+                },
+                "summary": {
+                    "$ref": "#/definitions/summary"
+                }
+            },
+            "required": [
+                "assignmentID",
+                "courseID",
+                "job",
+                "success",
+                "summary",
+                "details"
+            ],
+            "type": "object"
+        },
+        "eventList": {
+            "items": {
+                "$ref": "#/definitions/event"
+            },
+            "type": "array"
+        }
+    },
+    "links": [
+        {
+            "description": "get events for a course, if no assignmentID is provided, all events are returned",
+            "href": "/event/get",
+            "method": "GET",
+            "rel": "list",
+	    "title": "get",
+            "schema": {
+                "additionalProperties": "false",
+                "type": "object",
+                "required": ["assignmentID"],
+                "properties": {
+		    "courseID": {"$ref": "#/definitions/assignmentID"},
+		    "courseID": {"$ref": "#/definitions/courseID"}
+		}
+            },
+            "targetSchema": {
+                "additionalProperties": "false",
+                "properties": {
+                    "errors": {
+                        "$ref": "#/definitions/errors"
+                    },
+                    "eventList": {
+                        "$ref": "#/definitions/eventList"
+                    }
+                },
+                "required": [
+                    "eventList"
+                ],
+                "type": "object"
+            }
+        },
+	{
+            "description": "create a single event for a course",
+            "href": "/event/create",
+            "method": "POST",
+            "rel": "create",
+	    "title": "create",
+            "schema": {
+                "additionalProperties": "false",
+                "type": "object",
+                "required": ["courseID"],
+                "properties": {
+		    "courseID": {"$ref": "#/definitions/courseID"},
+		    "assignmentID": {"$ref": "#/definitions/assignmentID"}
+		}
+            },
+            "targetSchema": {
+                "additionalProperties": "false",
+                "properties": {
+                    "errors": {
+                        "$ref": "#/definitions/errors"
+                    }
+                },
+                "type": "object"
+            }
+        }
+    ]
+}

@@ -109,9 +109,9 @@
             "schema": {
                 "additionalProperties": "false",
                 "type": "object",
-                "required": ["assignmentID"],
+                "required": ["courseID"],
                 "properties": {
-		    "courseID": {"$ref": "#/definitions/assignmentID"},
+		    "assignmentID": {"$ref": "#/definitions/assignmentID"},
 		    "courseID": {"$ref": "#/definitions/courseID"}
 		}
             },

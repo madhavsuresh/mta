@@ -652,4 +652,29 @@ $app->post('/appeals/create_appeal_type', function(Request $request, Response $r
 	$sh->execute(array($json_body->appealType));
 })->add($jsonDecodeMW);
 
+########################EVENTS################################################
+//TODO: make this not plural
+$app->get('/event/get', function (Request $request, Response $response) {
+	$json_body = $request->getAttribute('requestDecodedJson');
+	$dataMgr = $this->dataMgr;
+	$db = $dataMgr->getDatabase();
+	$courseID = $json_body->courseID;
+    $assignmentID = null;
+    if (property_exists($json_body, "assignmentID")) {
+        $assignmentID = $json_body->assignmentID;
+    }
+    $eventList = getEvents($db, $courseID, $assignmentID);
+	$return_array['eventList'] = $eventList;
+	$new_response = $response->withJson($return_array);
+	return $new_response;
+})->setName('event:get')->add($jsonvalidateMW)->add($jsonDecodeMW);
+
+$app->post('/event/create', function (Request $request, Response $response) {
+	$dataMgr = $this->dataMgr;
+	$json_body = $request->getAttribute('requestDecodedJson');
+	$j = $json_body;
+	$dataMgr->createNotification(new AssignmentID($j->assignmentID), $j->job, $j->success, 
+		$j->summary, $j->details);
+
+})->setName('event:create')->add($jsonvalidateMW)->add($jsonDecodeMW);
 $app->run();

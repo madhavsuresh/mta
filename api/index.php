@@ -229,15 +229,16 @@ $app->get('/user/get', function (Request $request, Response $response) use ($dat
 	
 	if (isset($params['users'])) {
 		for($x = 0; $x < count($params['users']); $x++) {
-			if($dataMgr->isUserByName($params['users'][$x])) {
-				$user_id = $dataMgr->getUserID($params['users'][$x]);
-				$student_info[] = $dataMgr->getUserInfo($user_id);
+			if($dataMgr->isUser(new UserID((int)$params['users'][$x]))) {
+				#$user_id = $dataMgr->getUserID($params['users'][$x]);
+				$student_info[] = $dataMgr->getUserInfo(new UserID((int)$params['users'][$x]));
 			}
 		}
 		$return_val	= $student_info;
 	}
 	else {
 		$return_val = $dataMgr->getUsers();
+		
 	}
 	return $response->withJson($return_val);
 });
@@ -266,7 +267,7 @@ $app->get('/assignment/get', function (Request $request, Response $response) use
         return $newResponse;
     }
 
-})->setName('assignment:get')->add($jsonvalidateMW)->add($jsonDecodeMW);
+})->add($jsonDecodeMW);
 
 $app->post('/assignment/create', function (Request $request, Response $response) use ($dataMgr){
     
@@ -633,16 +634,6 @@ $app->get('/appeals/get', function(Request $request, Response $response) {
 	$new_response = $response->withJson($ret_array);
 	return $new_response;
 });
-
-//HARDCODED resolvedAppeal
-$app->post('/appeals/set_as_resolved', function(Request $request, Response $response) {
-	$json_body = $request->getAttribute('requestDecodedJson');
-	$dataMgr = $this->dataMgr;
-	$db = $dataMgr->getDatabase();
-	$sh = $db->prepare('UPDATE peer_review_assignment_appeal_messages 
-		set appealType="resolvedAppeal" where appealMessageID=?');
-	$sh->execute(array($json_body->appealMessageID));
-})->add($jsonDecodeMW);
 
 $app->post('/appeals/create_appeal_type', function(Request $request, Response $response) {
 	$json_body = $request->getAttribute('requestDecodedJson');

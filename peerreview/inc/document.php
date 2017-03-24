@@ -1,9 +1,12 @@
 <?php
 require_once(dirname(__FILE__)."/submission.php");
+require_once("common.php");
+
 
 class DocumentSubmission extends Submission
 {
     public $document= "";
+    public $partnerID= "";
 
     function _loadFromPost($POST)
     {
@@ -14,17 +17,23 @@ class DocumentSubmission extends Submission
 
             //Try and get the image data
             $this->document = file_get_contents($_FILES["documentfile"]["tmp_name"]);
+	    $this->partnerID = $POST["partnerID"];
     }
 
     function _getHTML($showHidden)
     {
         global $page_scripts;
+        global $dataMgr; 
+	$userDisplayMap = $dataMgr->getUserDisplayMap();
         $script = get_ui_url(false)."prettify/run_prettify.js";
         if(strlen($this->submissionSettings->language)){
             $script .= "?lang=".$this->submissionSettings->language;
         }
         $page_scripts[] = $script;
         $html = "";
+	if($this->partnerID) { 
+		$html .="<p> Partner: ".$userDisplayMap[$this->partnerID];
+	}
         if(strlen($this->document)) {
             $html .= "<p>Document has been uploaded.</p>";
         }
@@ -51,6 +60,14 @@ class DocumentSubmission extends Submission
     function _getFormHTML()
     {
         $html = "";
+        global $dataMgr; 
+	$userDisplayMap = $dataMgr->getUserDisplayMap();
+	$html .= "Partner netID: <select name='partnerID'>";
+	foreach ($userDisplayMap as $userID => $name) { 
+		$html .= "<option value='$userID'> '$name' </option>";
+	}
+	$html .= "</select>";
+        $html .= "";
         $html .= "<input type='hidden' name='documentMode' id='hiddenDocumentMode'>";
         $html .= "<div id='documentFileDiv'>";
         $html .= "Document File: <input type='file' name='documentfile' id='documentFile'/><br><br>";
@@ -148,11 +165,12 @@ class DocumentPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelpe
     function getAssignmentSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
         $document = new DocumentSubmission($assignment->submissionSettings, $submissionID);
-        $sh = $this->prepareQuery("getDocumentSubmissionQuery", "SELECT `document` FROM peer_review_assignment_document WHERE submissionID = ?;");
+        $sh = $this->prepareQuery("getDocumentSubmissionQuery", "SELECT `document`, `partner_id` FROM peer_review_assignment_document WHERE submissionID = ?;");
         $sh->execute(array($submissionID));
         if(!$res = $sh->fetch())
             throw new Exception("Failed to get document submission '$submissionID'");
         $document->document = $res->document;
+	$document->partnerID = $res->partner_id;
         return $document;
     }
 
@@ -164,8 +182,11 @@ class DocumentPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelpe
 
         // This is more standard for this codebase.
         //$sh = $this->prepareQuery("saveDocumentSubmissionQuery", "INSERT INTO peer_review_assignment_document (submissionID, `document`) VALUES (?, ?) ON DUPLICATE KEY UPDATE document = ?;");
-        $sh = $this->prepareQuery("saveDocumentSubmissionQuery", "REPLACE INTO peer_review_assignment_document (submissionID, `document`) VALUES (?, ?);");
+        $saveDocumentSubmissionQuery = $this->prepareQuery("saveDocumentSubmissionQuery", "REPLACE INTO peer_review_assignment_document (submissionID, `document`, `partner_id`) VALUES (?, ?, ?);");
+#	$sh = $this->prepareQuery("savePartnerMapDocumentSubmissionQuery", "REPLACE INTO peer_review_partner_submission_map (submissionID, submissionOwnerID, submissionPartnerID) VALUES (?, ?, ?)");
         //$sh->execute(array($document->submissionID, $document->document, $document->document));
-        $sh->execute(array($document->submissionID, $document->document));
+        $saveDocumentSubmissionQuery->execute(array($document->submissionID, $document->document, $document->partnerID));
+	$savePartnerMappingQuery = $this->prepareQuery("savePartnerMappingQuery", "REPLACE INTO peer_review_partner_submission_map (submissionID, submissionOwnerID, submissionPartnerID) VALUES (?,?,?);");
+	$savePartnerMappingQuery->execute(array($document->submissionID, $document->authorID, $document->partnerID));
     }
 }

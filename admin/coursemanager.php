@@ -93,7 +93,7 @@ try
             $extra = "checked";
 
         $content .= "<tr><td>Browsable: </td><td><input type='checkbox' name='browsable' id='browsable' $extra /></td></tr>\n";
-        $content .= "<tr><td>Grace Period: </td><td><input type='text' name='gracePeriod' id='gracePeriod' value='$courseObj->gracePeriod'/></td></tr>\n";
+        $content .= "<tr><td>Grace Period (in minutes): </td><td><input type='text' name='gracePeriod' id='gracePeriod' value='$courseObj->gracePeriod'/></td></tr>\n";
         $content .= "</td></tr>\n";
         $content .= "</table>\n";
         $content .= "<input type='submit' value='Save'/>\n";

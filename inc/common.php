@@ -74,7 +74,7 @@ try
     $HTML_PURIFIER = NULL;
     $PRETTYURLS = isset($_GET["prettyurls"]);
     $NOW = time();
-    $GRACETIME = $dataMgr->getGracePeriod();
+    $GRACETIME = 60*$dataMgr->getGracePeriod();
 
     /** Stuff that's needed by the template */
     $content="";

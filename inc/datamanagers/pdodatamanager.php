@@ -140,7 +140,7 @@ class PDODataManager extends DataManager
     function setCourseFromID(CourseID $id)
     {
         //Get the course information
-        $sh = $this->db->prepare("SELECT name, displayName, authType, registrationType FROM course WHERE courseID = ?;");
+        $sh = $this->db->prepare("SELECT name, displayName, authType, registrationType, gracePeriod FROM course WHERE courseID = ?;");
         $sh->execute(array($id));
         if(!$res = $sh->fetch())
         {
@@ -151,12 +151,13 @@ class PDODataManager extends DataManager
         $this->courseDisplayName = $res->displayName;
         $this->authMgrType = $res->authType;
         $this->registrationType = $res->registrationType;
+	$this->gracePeriod = $res->gracePeriod;
     }
 
 
     function setCourseFromName($name)
     {
-        $sh = $this->db->prepare("SELECT courseID, displayName, authType, registrationType FROM course WHERE name = ?;");
+        $sh = $this->db->prepare("SELECT courseID, displayName, authType, registrationType, gracePeriod FROM course WHERE name = ?;");
         $sh->execute(array($name));
         if(!$res = $sh->fetch())
         {
@@ -167,6 +168,7 @@ class PDODataManager extends DataManager
         $this->courseDisplayName = $res->displayName;
         $this->authMgrType = $res->authType;
         $this->registrationType = $res->registrationType;
+	$this->gracePeriod = $res->gracePeriod;
     }
 
     function addUser($username, $firstName, $lastName, $studentID, $type='student', $markingLoad=0)
@@ -199,6 +201,10 @@ class PDODataManager extends DataManager
 			$sh = $this->db->prepare("UPDATE users SET username = ?, firstName = ?, lastName = ?, studentID = ?, userType = ? WHERE userID = ?;");
         	$sh->execute(array($username, $firstName, $lastName, $studentID, $type, $id));
 		}*/
+    }
+
+    function getGracePeriod() {
+	    return $this->gracePeriod;
     }
 
     function getUserID($username)
@@ -551,21 +557,21 @@ class PDODataManager extends DataManager
 
     function getCourseInfo(CourseID $id)
     {
-        $sh = $this->db->prepare("SELECT courseID, name, displayName, courseID, authType, registrationType, browsable FROM course where courseID = ?;");
+        $sh = $this->db->prepare("SELECT courseID, name, displayName, courseID, authType, registrationType, browsable, gracePeriod FROM course where courseID = ?;");
         $sh->execute(array($id));
         return $sh->fetch();
     }
 
-    function setCourseInfo(CourseID $id, $name, $displayName, $authType, $regType, $browsable)
+    function setCourseInfo(CourseID $id, $name, $displayName, $authType, $regType, $browsable, $gracePeriod)
     {
-        $sh = $this->db->prepare("UPDATE course SET name = ?, displayName = ?, authType = ?, registrationType = ?, browsable = ? WHERE courseID = ?;");
-        $sh->execute(array($name, $displayName, $authType, $regType, $browsable, $id));
+        $sh = $this->db->prepare("UPDATE course SET name = ?, displayName = ?, authType = ?, registrationType = ?, browsable = ?, gracePeriod = ? WHERE courseID = ?;");
+        $sh->execute(array($name, $displayName, $authType, $regType, $browsable, $gracePeriod, $id));
     }
 
-    function createCourse($name, $displayName, $authType, $regType, $browsable)
+    function createCourse($name, $displayName, $authType, $regType, $browsable, $gracePeriod)
     {
-        $sh = $this->db->prepare("INSERT INTO course (name, displayName, authType, registrationType, browsable) VALUES (?, ?, ?, ?, ?);");
-        $sh->execute(array($name, $displayName, $authType, $regType, $browsable));
+        $sh = $this->db->prepare("INSERT INTO course (name, displayName, authType, registrationType, browsable, gracePeriod) VALUES (?, ?, ?, ?, ?, ?);");
+        $sh->execute(array($name, $displayName, $authType, $regType, $browsable, $gracePeriod));
     }
 	
 	function deleteCourse(CourseID $id)

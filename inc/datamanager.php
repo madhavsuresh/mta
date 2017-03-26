@@ -8,6 +8,7 @@ abstract class DataManager
     public $courseDisplayName = NULL;
     protected $authMgrType;
     protected $registrationType;
+    protected $gracePeriod = NULL;
     private $assignmentNameTypeMap = array();
 
     function __construct()
@@ -106,8 +107,8 @@ abstract class DataManager
     abstract function assignmentExists(AssignmentID $id);
     abstract function getCourses();
     abstract function getCourseInfo(CourseID $id);
-    abstract function setCourseInfo(CourseID $id, $name, $displayName, $authType, $regType, $browsable);
-    abstract function createCourse($name, $displayName, $authType, $regType, $browsable);
+    abstract function setCourseInfo(CourseID $id, $name, $displayName, $authType, $regType, $browsable, $gracePeriod);
+    abstract function createCourse($name, $displayName, $authType, $regType, $browsable, $gracePeriod);
 
     function getAssignments()
     {

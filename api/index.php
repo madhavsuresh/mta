@@ -111,7 +111,7 @@ $app->post('/course/create', function (Request $request, Response $response) use
     $params = $request->getBody();
 	$params = json_decode($params, true);
  
-	$dataMgr->createCourse($params['name'], $params['displayName'], $params['authType'], $params['registrationType'], isset_bool($params['browsable']));
+	$dataMgr->createCourse($params['name'], $params['displayName'], $params['authType'], $params['registrationType'], isset_bool($params['browsable']), $params['gracePeriod']);
     return $response;
  });
   
@@ -128,7 +128,8 @@ $app->post('/course/update', function (Request $request, Response $response) use
         $temp = $params[$key];
         $courseInfo[$key] = $temp;
     }
-    $dataMgr->setCourseInfo($courseID, $courseInfo['name'], $courseInfo['displayName'], $courseInfo['authType'], $courseInfo['registrationType'], isset_bool($courseInfo['browsable']));
+    $dataMgr->setCourseInfo($courseID, $courseInfo['name'], $courseInfo['displayName'], $courseInfo['authType'], $courseInfo['registrationType'], isset_bool($courseInfo['browsable'], 
+	    $courseInfo['gracePeriod']));
 	 
     return $response->withJson($dataMgr->getCourseInfo($courseID));
  });
@@ -174,7 +175,7 @@ $app->post('/user/create', function (Request $request, Response $response) use (
 	foreach($params['users'] as $user) {
 		# markingLoad?
 		$dataMgr->addUser($user['username'], $user['firstName'], $user['lastName'], $user['studentID'], $user['userType']);
-		$authMgr->addUserAuthentication($user['username'], $user['password']);
+		#$authMgr->addUserAuthentication($user['username'], $user['password']);
 	}
  
     return $response->withJson($dataMgr->getUsers());

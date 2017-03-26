@@ -1,6 +1,7 @@
 <?php
 session_start();
 
+error_reporting(0);
 //First off, we need to figure out the path to the MTA install
 $pos = strpos(dirname(__FILE__),DIRECTORY_SEPARATOR.'inc');
 $path = substr(__FILE__, 0, $pos);
@@ -29,7 +30,6 @@ function mta_error_handler($errno, $errstr, $errfile, $errline) {
   return false;
 }
 //set_error_handler('mta_error_handler');
-#error_reporting(E_ALL);
 #ini_set('display_errors','On');
 
 try
@@ -74,7 +74,7 @@ try
     $HTML_PURIFIER = NULL;
     $PRETTYURLS = isset($_GET["prettyurls"]);
     $NOW = time();
-    $GRACETIME = 15*60;//15 minutes
+    $GRACETIME = $dataMgr->getGracePeriod();
 
     /** Stuff that's needed by the template */
     $content="";

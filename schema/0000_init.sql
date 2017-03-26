@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS `course` (
   `authType` varchar(128) NOT NULL,
   `registrationType` varchar(128) NOT NULL,
   `browsable` tinyint(1) NOT NULL DEFAULT '1',
+  `gracePeriod` int(11) NOT NULL DEFAULT '900',
   PRIMARY KEY (`courseID`),
   UNIQUE KEY `course_name_2` (`name`),
   KEY `course_name` (`name`)

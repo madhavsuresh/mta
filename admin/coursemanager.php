@@ -9,6 +9,7 @@ try
     $courseObj->authType = "";
     $courseObj->registrationType = "";
     $courseObj->browsable = true;
+    $courseObj->gracePeriod = "";
 
     if(array_key_exists("save", $_GET))
     {
@@ -21,13 +22,14 @@ try
         $courseObj->authType = $_POST["authType"];
         $courseObj->registrationType = $_POST["registrationType"];
         $courseObj->browsable = isset_bool($_POST["browsable"]);
+	$courseObj->gracePeriod = $_POST["gracePeriod"];
 
         if(!is_null($courseObj->courseID)){
             //We're updating
-            $dataMgr->setCourseInfo($courseObj->courseID, $courseObj->name, $courseObj->displayName, $courseObj->authType, $courseObj->registrationType, $courseObj->browsable);
+            $dataMgr->setCourseInfo($courseObj->courseID, $courseObj->name, $courseObj->displayName, $courseObj->authType, $courseObj->registrationType, $courseObj->browsable, $courseObj->gracePeriod);
         }else{
             //We're making a new course
-            $dataMgr->createCourse($courseObj->name, $courseObj->displayName, $courseObj->authType, $courseObj->registrationType, $courseObj->browsable);
+            $dataMgr->createCourse($courseObj->name, $courseObj->displayName, $courseObj->authType, $courseObj->registrationType, $courseObj->browsable, $courseObj->gracePeriod);
         }
         //Now that save is done, we can just fall back to the regular editor
     }
@@ -91,6 +93,7 @@ try
             $extra = "checked";
 
         $content .= "<tr><td>Browsable: </td><td><input type='checkbox' name='browsable' id='browsable' $extra /></td></tr>\n";
+        $content .= "<tr><td>Grace Period: </td><td><input type='text' name='gracePeriod' id='gracePeriod' value='$courseObj->gracePeriod'/></td></tr>\n";
         $content .= "</td></tr>\n";
         $content .= "</table>\n";
         $content .= "<input type='submit' value='Save'/>\n";

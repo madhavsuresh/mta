@@ -32,6 +32,11 @@ class DocumentSubmission extends Submission
 	    global $dataMgr;
 	    $db = $dataMgr->getDatabase();
 	    global $USERID;
+	    if(isset($POST["deleteSubmissionCheck"]) && !strncmp("DELETE", $POST["deleteSubmissionText"],6)) {
+		    $sh = $db->prepare("DELETE from peer_review_assignment_submissions WHERE submissionID = ?");
+		    $sh->execute(array($this->submissionID->id));
+		    redirect_to_main();
+	    }
 	    if(isset($POST["removePartner"])) {
 		    $sh = $db->prepare("DELETE from peer_review_partner_submission_map where
 			    		submissionID=? and submissionPartnerID=?");
@@ -122,9 +127,14 @@ class DocumentSubmission extends Submission
 	if ($this->partnerID == $USERID->id) {
 		$html .="<strong>".$userDisplayMap[$this->authorID->id]." </strong>has set you as their partner <br/>";
 		$html .="If this is incorrect, check here to remove yourself as a partner (submit button below PDF)<br> ";
-        	$html .= "<input type='checkbox' name='removePartner' $tmp />&nbsp;Remove Self from Partner Pair<br><br>\n";
+        	$html .= "<input type='checkbox' name='removePartner'/>&nbsp;Remove Self from Partner Pair<br><br>\n";
 
 	} else {
+		if($this->submissionID) {
+			$html .= "If you would like to delete your submission, check the box, and type DELETE (in caps) <br/>";
+			$html .=" Delete Submission: <input type='checkbox' name='deleteSubmissionCheck'> &nbsp&nbsp";
+			$html .="<input type='text' name='deleteSubmissionText' value=''/> <br/>";
+		}
 		$html .= "Partner netID: <select name='partnerID'>";
 		if ($this->partnerID) {
 			$partnerName = $userDisplayMap[$this->partnerID];
@@ -139,6 +149,9 @@ class DocumentSubmission extends Submission
 
 		foreach ($userDisplayMap as $userID => $name) { 
 			if ($userID == $this->partnerID) {
+				continue;
+			}
+			if (strncmp("Anonymous", $name, 9) == 0) {
 				continue;
 			}
 			if (in_array($userID, $instructors)) {

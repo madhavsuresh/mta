@@ -38,7 +38,7 @@ abstract class Submission
         $tmp = '';
         if($this->noPublicUse)
             $tmp = 'checked';
-        $html .= "<input type='checkbox' name='nopublicuse' $tmp />&nbsp;Do not use my submission anonymously in public<br><br>\n";
+        #$html .= "<input type='checkbox' name='nopublicuse' $tmp />&nbsp;Do not use my submission anonymously in public<br><br>\n";
         return $html;
     }
 

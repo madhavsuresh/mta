@@ -166,11 +166,11 @@ class DocumentSubmission extends Submission
         $html .= "<div id='documentFileDiv'>";
 	if ($this->partnerID != $USERID->id) {
 		if(strlen($this->document)){
-			$html .= "Document File: <input type='file' name='documentfile' id='documentFile'/><br>
+			$html .= "Document File (<6mB): <input type='file' name='documentfile' id='documentFile'/><br>
 				(Choose a file only if you want to modify the current upload) 
 				<br> <br>";
 		} else {
-			$html .= "Document File: <input type='file' name='documentfile' id='documentFile'/><br><br>";
+			$html .= "Document File (<6mB): <input type='file' name='documentfile' id='documentFile'/><br><br>";
 		}
 	}
         if(strlen($this->document)) {

@@ -669,4 +669,18 @@ $app->post('/event/create', function (Request $request, Response $response) {
 		$j->summary, $j->details);
 
 })->setName('event:create')->add($jsonvalidateMW)->add($jsonDecodeMW);
+
+#################PARTNERS######################
+
+$app->get('/partner/get', function (Request $request, Response $response) {
+	$json_body = $request->getAttribute('requestDecodedJson');
+	$dataMgr = $this->dataMgr;
+	$db = $dataMgr->getDatabase();
+	$assignmentID = $json_body->assignmentID;
+	$return_array = getPartnerPairsForAssignemnt($db, $assignmentID);
+	$new_response = $response->withJson($return_array);
+	return $new_response;
+})->setName('partner:get')->add($jsonvalidateMW)->add($jsonDecodeMW);
+
+
 $app->run();

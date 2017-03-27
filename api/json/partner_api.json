@@ -1,0 +1,82 @@
+{
+    "id": "http://json-schema.org/draft-04/schema#",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title": "Partner",
+    "description": "partner api endpoint, backed by peer_review_partner_submission_map on mta end",
+    "stability": "prototype",
+    "strictProperties": true,
+    "type": [
+      "object"
+    ],
+    "definitions": {
+        "assignmentID": {
+            "description": "unique assignment ID used in MTA",
+            "type": "integer"
+        },
+	"userID": {
+		"type": "integer",
+		"description": "userID from keyed from users table, can be student/TA/instructor"
+	},
+	"submissionID" : {
+		"type": "integer",
+		"description": "submissionID with corresponding assignmentID"
+	},
+	"partnerPairAndSubmission": {
+		"type": "object",
+		"required": ["peerOwnerID","peerPartnerID", "submissionID"],
+		"properties": {
+			"peerOwnerID":  {
+				"$ref": "#/definitions/userID"
+			},
+			"peerPartnerID":  {
+				"$ref": "#/definitions/userID"
+			},
+			"submissionID": {
+				"$ref": "#definitions/submissionID"
+			}
+		}
+	},
+	"partnerPairAndSubmissionList": {
+		"type": "array",
+		"items": {
+			"$ref":"#/definitions/partnerPairAndSubmission"
+		}
+	}
+    },
+    "links": [
+        {
+            "description": "get events for a course, if no assignmentID is provided, all events are returned",
+            "href": "/partner/get",
+            "method": "GET",
+            "rel": "list",
+	    "title": "get",
+            "schema": {
+                "additionalProperties": "false",
+                "type": "object",
+                "required": ["assignmentID"],
+                "properties": {
+		    "assignmentID": {"$ref": "#/definitions/assignmentID"}
+		}
+            },
+            "targetSchema": {
+                "additionalProperties": "false",
+                "properties": {
+			"assignmentID": {
+				"$ref": "#/definitions/assignmentID"
+			},
+                    "errors": {
+                        "$ref": "#/definitions/errors"
+                    },
+                    "partnerPairAndSubmissionList": {
+                        "$ref": "#/definitions/partnerPairAndSubmissionList"
+                    }
+                },
+                "required": [
+                    "partnerPairAndSubmissionList",
+		    "assignmentID"
+                ],
+                "type": "object"
+            }
+        }
+    ]
+}

@@ -295,4 +295,21 @@ function getEvents($db, $courseID, $assignmentID) {
 	}
     return $eventList;
 }
+
+function getPartnerPairsForAssignemnt($db, $assignmentID) {
+	$sh = $db->prepare('SELECT peer_review_partner_submission_map.submissionID, submissionOwnerID, submissionPartnerID from peer_review_partner_submission_map join 
+		peer_review_assignment_submissions on peer_review_partner_submission_map.submissionID = peer_review_assignment_submissions.submissionID
+		WHERE  peer_review_assignment_submissions.assignmentID = ?');
+	$sh->execute(array($assignmentID));
+	$partnerPairAndSubmissionList = array();
+	while ($res = $sh->fetch()) {
+		$partnerPairAndSubmissionList[] = array('submissionID' =>
+			(int) $res->submissionID, 
+			'peerOwnerID' => (int)$res->submissionOwnerID,
+			'peerPartnerID' => (int) $res->submissionPartnerID);
+	}
+	$return_array['partnerPairAndSubmissionList'] = $partnerPairAndSubmissionList;
+	$return_array['assignmentID'] = $assignmentID;
+	return $return_array;
+}
 ?>

@@ -28,8 +28,19 @@ try
         }
         return false;
     }
+    function isPartnerForCurrentSubmission() {
+        global $USERID, $submission;
+	    if(isset($submission->partnerID)) {
+		    if ($submission->partnerID == $USERID->id) {
+			    return true;
+		    }
+	    }
+	    return false;
+    }
 
-    if($submission->authorID == $USERID->id || $dataMgr->isMarker($USERID) || isReviewerForCurrentAssignment()) {
+    if($submission->authorID == $USERID->id || isPartnerForCurrentSubmission()
+	    || $dataMgr->isMarker($USERID) || isReviewerForCurrentAssignment()) {
+
         $submission->_dumpRaw($download, true);
         exit(0);
     }else{

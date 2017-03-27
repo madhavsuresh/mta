@@ -8,22 +8,68 @@ class DocumentSubmission extends Submission
     public $document= "";
     public $partnerID= "";
 
+    function checkIfValidPartner($dataMgr, $partnerID, $submissionID) {
+	    $assignment = get_peerreview_assignment();
+	    try {
+	    $partnerSubmissionID = $assignment->getSubmissionID(new UserID($partnerID));
+	    }catch(Exception $e) {}
+		    if ($partnerSubmissionID !=NULL && 
+			    $partnerSubmission->id != $submissionID->id) {
+			    throw new Exception("Invalid partner. Your chosen partner may already have a submission.
+				    Any updates made have been discarded. Please return to the homepage and try again. ");
+	    }
+    }
+
     function _loadFromPost($POST)
     {
             //There better be a file
             global $_FILES;
-            if ($_FILES["documentfile"]["error"] > 0)
-                throw new Exception("File upload error: " . $_FILES["documentfile"]["error"]);;
+	    global $dataMgr;
+	    $db = $dataMgr->getDatabase();
+	    global $USERID;
+	    if(isset($POST["removePartner"])) {
+		    $sh = $db->prepare("DELETE from peer_review_partner_submission_map where
+			    		submissionID=? and submissionPartnerID=?");
+		    $sh->execute(array($this->submissionID->id, $USERID->id));
+		    $sh = $db->prepare("UPDATE peer_review_assignment_document set partnerID=0 
+			    where submissionID =?");
+		    $sh->execute(array($this->submissionID->id));
+		    redirect_to_main();
+	    }
+	    if ($_FILES["documentfile"]["error"] == 4 &&
+		     $this->submissionID != NULL) { 
 
-            //Try and get the image data
-            $this->document = file_get_contents($_FILES["documentfile"]["tmp_name"]);
-	    $this->partnerID = $POST["partnerID"];
+		     $sh = $db->prepare( "SELECT `document`, 
+			     `partnerID` FROM peer_review_assignment_document 
+			     WHERE submissionID = ?;");
+		     $sh->execute(array($this->submissionID->id));
+		     $res = $sh->fetch();
+		     if ($res->document == NULL) {
+			     throw new Exception("No file uploaded, please return to the homepage and edit your submission to include a file!");
+		     } else {
+			     $this->document = $res->document;
+			     $this->checkIfValidPartner($dataMgr, $POST["partnerID"], $this->submissionID);
+			     $this->partnerID = $POST["partnerID"];
+		     }
+		    //check if there's already an associated file with the submission
+
+	    } else if ($_FILES["documentfile"]["error"] == 4 && $this->submissionID == NULL) {
+		    throw new Exception("No file uploaded, please return to the homepage and edit your submission to include a file!");
+	    } else if ($_FILES["documentfile"]["error"] > 0){
+                throw new Exception("File upload error: " . $_FILES["documentfile"]["error"]);;
+	    } else {
+		    //Try and get the image data
+		    $this->document = file_get_contents($_FILES["documentfile"]["tmp_name"]);
+		    $this->checkIfValidPartner($dataMgr, $POST["partnerID"], $this->submissionID);
+		    $this->partnerID = $POST["partnerID"];
+	    }
     }
 
     function _getHTML($showHidden)
     {
         global $page_scripts;
         global $dataMgr; 
+	global $USERID;
 	$userDisplayMap = $dataMgr->getUserDisplayMap();
         $script = get_ui_url(false)."prettify/run_prettify.js";
         if(strlen($this->submissionSettings->language)){
@@ -32,7 +78,11 @@ class DocumentSubmission extends Submission
         $page_scripts[] = $script;
         $html = "";
 	if($this->partnerID) { 
-		$html .="<p> Partner: ".$userDisplayMap[$this->partnerID];
+		if ($this->partnerID != $USERID->id) {
+			$html .="<p> Partner: ".$userDisplayMap[$this->partnerID];
+		} else {
+			$html .="<p> Partner: ".$userDisplayMap[$this->authorID->id];
+		}
 	}
         if(strlen($this->document)) {
             $html .= "<p>Document has been uploaded.</p>";
@@ -61,16 +111,50 @@ class DocumentSubmission extends Submission
     {
         $html = "";
         global $dataMgr; 
+	global $USERID;
 	$userDisplayMap = $dataMgr->getUserDisplayMap();
-	$html .= "Partner netID: <select name='partnerID'>";
-	foreach ($userDisplayMap as $userID => $name) { 
-		$html .= "<option value='$userID'> '$name' </option>";
+	$instructors = $dataMgr->getInstructors();
+	if ($this->partnerID == $USERID->id) {
+		$html .="<strong>".$userDisplayMap[$this->authorID->id]." </strong>has set you as their partner <br/>";
+		$html .="If this is incorrect, check here to remove yourself as a partner (submit button below PDF)<br> ";
+        	$html .= "<input type='checkbox' name='removePartner' $tmp />&nbsp;Remove Self from Partner Pair<br><br>\n";
+
+	} else {
+		$html .= "Partner netID: <select name='partnerID'>";
+		if ($this->partnerID) {
+			$partnerName = $userDisplayMap[$this->partnerID];
+			$html .="<option value='$this->partnerID' selected=selected>
+				$partnerName (selected partner) </option>";
+			$html .="<option value='0' >
+			----No Partner---- </option>";
+		} else {
+			$html .="<option value='0' selected=selected>
+			----No Partner---- </option>";
+		}
+
+		foreach ($userDisplayMap as $userID => $name) { 
+			if ($userID == $this->partnerID) {
+				continue;
+			}
+			if (in_array($userID, $instructors)) {
+				continue;
+			}
+			$html .= "<option value='$userID'> $name </option>";
+		}
+		$html .= "</select>";
 	}
-	$html .= "</select>";
         $html .= "";
         $html .= "<input type='hidden' name='documentMode' id='hiddenDocumentMode'>";
         $html .= "<div id='documentFileDiv'>";
-        $html .= "Document File: <input type='file' name='documentfile' id='documentFile'/><br><br>";
+	if ($this->partnerID != $USERID->id) {
+		if(strlen($this->document)){
+			$html .= "Document File: <input type='file' name='documentfile' id='documentFile'/><br>
+				(Choose a file only if you want to modify the current upload) 
+				<br> <br>";
+		} else {
+			$html .= "Document File: <input type='file' name='documentfile' id='documentFile'/><br><br>";
+		}
+	}
         if(strlen($this->document)) {
           $html .= "<embed width='800' height='500' src='".get_redirect_url("peerreview/rawviewsubmission.php?submission=$this->submissionID&download=0")."'></embed><br>";
           $html .= "<a href='".get_redirect_url("peerreview/rawviewsubmission.php?submission=$this->submissionID&download=1")."'>Download</a><br>";
@@ -165,12 +249,16 @@ class DocumentPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelpe
     function getAssignmentSubmission(PeerReviewAssignment $assignment, SubmissionID $submissionID)
     {
         $document = new DocumentSubmission($assignment->submissionSettings, $submissionID);
-        $sh = $this->prepareQuery("getDocumentSubmissionQuery", "SELECT `document`, `partner_id` FROM peer_review_assignment_document WHERE submissionID = ?;");
+	$sh = $this->prepareQuery("getDocumentSubmissionQuery", "SELECT `document`, 
+		`partnerID` FROM peer_review_assignment_document 
+	       	WHERE submissionID = ?;");
         $sh->execute(array($submissionID));
+	#$sh = $this->prepareQuery("getAuthorFromSubmission", "SELECT `authorID` from 
         if(!$res = $sh->fetch())
             throw new Exception("Failed to get document submission '$submissionID'");
         $document->document = $res->document;
-	$document->partnerID = $res->partner_id;
+	$document->partnerID = $res->partnerID;
+#	$document->authorID = $res->authorID;
         return $document;
     }
 
@@ -182,11 +270,16 @@ class DocumentPDOPeerReviewSubmissionHelper extends PDOPeerReviewSubmissionHelpe
 
         // This is more standard for this codebase.
         //$sh = $this->prepareQuery("saveDocumentSubmissionQuery", "INSERT INTO peer_review_assignment_document (submissionID, `document`) VALUES (?, ?) ON DUPLICATE KEY UPDATE document = ?;");
-        $saveDocumentSubmissionQuery = $this->prepareQuery("saveDocumentSubmissionQuery", "REPLACE INTO peer_review_assignment_document (submissionID, `document`, `partner_id`) VALUES (?, ?, ?);");
+        $saveDocumentSubmissionQuery = $this->prepareQuery("saveDocumentSubmissionQuery", "REPLACE INTO peer_review_assignment_document (submissionID, `document`, `partnerID`) VALUES (?, ?, ?);");
 #	$sh = $this->prepareQuery("savePartnerMapDocumentSubmissionQuery", "REPLACE INTO peer_review_partner_submission_map (submissionID, submissionOwnerID, submissionPartnerID) VALUES (?, ?, ?)");
         //$sh->execute(array($document->submissionID, $document->document, $document->document));
         $saveDocumentSubmissionQuery->execute(array($document->submissionID, $document->document, $document->partnerID));
-	$savePartnerMappingQuery = $this->prepareQuery("savePartnerMappingQuery", "REPLACE INTO peer_review_partner_submission_map (submissionID, submissionOwnerID, submissionPartnerID) VALUES (?,?,?);");
-	$savePartnerMappingQuery->execute(array($document->submissionID, $document->authorID, $document->partnerID));
+	if ($document->partnerID != 0) { 
+		$savePartnerMappingQuery = $this->prepareQuery("savePartnerMappingQuery", "REPLACE INTO peer_review_partner_submission_map (submissionID, submissionOwnerID, submissionPartnerID) VALUES (?,?,?);");
+		$savePartnerMappingQuery->execute(array($document->submissionID, $document->authorID, $document->partnerID));
+	} else {
+		$deletePartnerMapping  = $this->prepareQuery("getPartnerMappingQuery", "DELETE from peer_review_partner_submission_map where submissionID = ?");
+		$deletePartnerMapping->execute(array($document->submissionID));
+	}
     }
 }

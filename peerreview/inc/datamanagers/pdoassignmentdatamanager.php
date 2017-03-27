@@ -669,7 +669,15 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             return  $this->submissionExistsQuery->fetch() != NULL;
         case "UserID":
             $this->submissionExistsByAuthorQuery->execute(array($assignment->assignmentID, $id));
-            return $this->submissionExistsByAuthorQuery->fetch() != NULL;
+	    if ($this->submissionExistsByAuthorQuery->fetch() == NULL) {
+		    $sh = $this->prepareQuery("submissionExistsPartnerMap","select peer_review_partner_submission_map.submissionID from peer_review_partner_submission_map
+			    inner join peer_review_assignment_submissions on (peer_review_partner_submission_map.submissionID = peer_review_assignment_submissions.submissionID) 
+			    where peer_review_partner_submission_map.submissionPartnerID=? and peer_review_assignment_submissions.assignmentID=?");
+		  $sh->execute(array($id, $assignment->assignmentID));
+		  return $sh->fetch() != NULL;
+	    } else {
+	      return True;
+	    }
         case "MatchID":
             $this->submissionExistsByMatchQuery->execute(array($id));
             return $this->submissionExistsByMatchQuery->fetch() != NULL;
@@ -701,6 +709,13 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
         case "UserID":
             $this->submissionExistsByAuthorQuery->execute(array($assignment->assignmentID, $id));
             $res = $this->submissionExistsByAuthorQuery->fetch();
+	    if (!$res) { 
+		    $sh = $this->prepareQuery("submissionExistsPartnerMap","select peer_review_partner_submission_map.submissionID from peer_review_partner_submission_map
+			    inner join peer_review_assignment_submissions on (peer_review_partner_submission_map.submissionID = peer_review_assignment_submissions.submissionID) 
+			    where peer_review_partner_submission_map.submissionPartnerID=? and peer_review_assignment_submissions.assignmentID=?");
+		  $sh->execute(array($id, $assignment->assignmentID));
+		  $res = $sh->fetch();
+	    }
             break;
         case "MatchID":
             $this->submissionExistsByMatchQuery->execute(array($id));
@@ -807,6 +822,21 @@ class PDOPeerReviewAssignmentDataManager extends AssignmentDataManager
             $sh = $this->prepareQuery("getSubmissionByAuthorQuery", "SELECT submissionID, authorID, noPublicUse, ".$this->unix_timestamp("submissionTimestamp")." as submissionTimestamp FROM peer_review_assignment_submissions WHERE assignmentID=? AND authorID=?;");
             $sh->execute(array($assignment->assignmentID, $id));
             $res = $sh->fetch();
+	    if ($res == NULL) {
+		    $sh = $this->prepareQuery("getSubmissionPartnerQuery", 
+		    "SELECT peer_review_assignment_submissions.submissionID as submissionID,
+			    peer_review_partner_submission_map.submissionOwnerID as authorID, 
+			    peer_review_assignment_submissions.noPublicUse as noPublicUse,
+			    ".$this->unix_timestamp("submissionTimestamp")." as submissionTimestamp 
+			    from peer_review_assignment_submissions 
+			    JOIN peer_review_partner_submission_map
+			    on
+			    peer_review_partner_submission_map.submissionID = peer_review_assignment_submissions.submissionID
+			    WHERE peer_review_partner_submission_map.submissionPartnerID=? AND
+			    peer_review_assignment_submissions.assignmentID = ?");
+		  $sh->execute(array($id, $assignment->assignmentID));
+		  $res = $sh->fetch();
+	    }
             break;
         case "MatchID":
             //They want to get the submission for the given review

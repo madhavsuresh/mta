@@ -11,12 +11,17 @@ class DocumentSubmission extends Submission
     function checkIfValidPartner($dataMgr, $partnerID, $submissionID) {
 	    $assignment = get_peerreview_assignment();
 	    try {
-	    $partnerSubmissionID = $assignment->getSubmissionID(new UserID($partnerID));
+		    $partnerSubmissionID = $assignment->getSubmissionID(new UserID($partnerID));
 	    }catch(Exception $e) {}
-		    if ($partnerSubmissionID !=NULL && 
-			    $partnerSubmission->id != $submissionID->id) {
+	    $isNewSubmission = !isset($submissionID) OR is_null($submissionID);
+	    if ($partnerSubmissionID != NULL && $isNewSubmission) {
 			    throw new Exception("Invalid partner. Your chosen partner may already have a submission.
 				    Any updates made have been discarded. Please return to the homepage and try again. ");
+	    }
+	    if ($partnerSubmissionID !=NULL && 
+		    $partnerSubmission->id != $submissionID->id) {
+		    throw new Exception("Invalid partner. Your chosen partner may already have a submission.
+			    Any updates made have been discarded. Please return to the homepage and try again. ");
 	    }
     }
 

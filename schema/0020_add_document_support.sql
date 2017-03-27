@@ -6,7 +6,7 @@
 
 CREATE TABLE IF NOT EXISTS `peer_review_assignment_document` (
 	`submissionID`	INTEGER,
-	`partner_id`    TEXT,
+	`partnerID`    INTEGER,
 	`document`	BLOB NOT NULL,
 	PRIMARY KEY(`submissionID`),
 	FOREIGN KEY(`submissionID`) REFERENCES `peer_review_assignment_submissions`(`submissionID`) ON DELETE CASCADE

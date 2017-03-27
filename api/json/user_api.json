@@ -22,6 +22,10 @@
 			"userID" : {
 				"description": "id set by mta for users ids",
 				"type": "integer"
+			},
+			"markingLoad" : {
+				"description": "markingLoad for instructors",
+				"type": "integer"
 			}
 		},
 		"links"	:	[
@@ -38,6 +42,9 @@
 				"properties" : {
 				  "courseID": { 
 				    "$ref": "#/definitions/courseID"
+				  },
+				  "markingLoad": { 
+				    "$ref": "#/definitions/markingLoad"
 				  }
 				}
 			},

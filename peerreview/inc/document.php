@@ -8,6 +8,19 @@ class DocumentSubmission extends Submission
     public $document= "";
     public $partnerID= "";
 
+    function isViewingReviewer($submissionID)
+    {
+        global $USERID, $assignment, $NOW;
+
+        $matches = $assignment->getMatchesForSubmission($submissionID);
+        foreach($matches as $match){
+            if($assignment->getReviewerByMatch($match) == $USERID->id){
+                return true;
+            }
+        }
+        return false;
+    }
+
     function checkIfValidPartner($dataMgr, $partnerID, $submissionID) {
 	    $assignment = get_peerreview_assignment();
 	    try {
@@ -87,19 +100,21 @@ class DocumentSubmission extends Submission
         }
         $page_scripts[] = $script;
         $html = "";
-	if($this->partnerID) { 
-		if ($this->partnerID != $USERID->id) {
-			$html .="<p> Partner: ".$userDisplayMap[$this->partnerID];
-		} else {
-			$html .="<p> Partner: ".$userDisplayMap[$this->authorID->id];
+	if(!$this->isViewingReviewer($this->submissionID)){
+		if($this->partnerID) { 
+			if ($this->partnerID != $USERID->id) {
+				$html .="<p> Partner: ".$userDisplayMap[$this->partnerID];
+			} else {
+				$html .="<p> Partner: ".$userDisplayMap[$this->authorID->id];
+			}
+		}
+		if(strlen($this->document)) {
+			$html .= "<p>Document has been uploaded.</p>";
+		}
+		else {
+			$html .= "<p>No document has been uploaded yet.</p>";
 		}
 	}
-        if(strlen($this->document)) {
-            $html .= "<p>Document has been uploaded.</p>";
-        }
-        else {
-            $html .= "<p>No document has been uploaded yet.</p>";
-        }
         $html .= "<embed width='765' height='500' src='".get_redirect_url("peerreview/rawviewsubmission.php?submission=$this->submissionID&download=0")."'></embed><br>";
         $html .= "<a href='".get_redirect_url("peerreview/rawviewsubmission.php?submission=$this->submissionID&download=1")."'>Download</a><br>";
 

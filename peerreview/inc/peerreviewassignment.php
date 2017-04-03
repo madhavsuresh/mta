@@ -295,7 +295,7 @@ class PeerReviewAssignment extends Assignment
                 $html .= "<td width=30%>";
                 $submissionExists = $this->dataMgr->submissionExists($this, $user);
                 $reviewAssignments = $this->dataMgr->getAssignedReviews($this, $user);
-                if(($submissionExists || $reviewAssignments) && $this->markPostDate < $NOW)
+                if(($submissionExists || $reviewAssignments) && $this->reviewStopDate < $NOW)
                 {
                     $html .= "<a href='".get_redirect_url("peerreview/viewmarks.php?assignmentid=$this->assignmentID")."''>View Marks</a>";
                     #Display this user's marks

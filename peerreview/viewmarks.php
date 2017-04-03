@@ -9,7 +9,7 @@ try
     $assignment = get_peerreview_assignment();
     $assignedReviews = $assignment->getAssignedReviews($USERID);
 
-    if($NOW < $assignment->markPostDate)
+    if($NOW < $assignment->reviewStopDate)
     {
         $content .= "Marks have not been posted yet\n";
     }
@@ -187,7 +187,12 @@ try
         if($assignment->submissionExists($USERID))
         {
             $content .= "<div id='tabs-$tabOffset'>\n";
-            $content .= getTabHTML($assignment->getSubmissionID($USERID), true, true, true, $assignment->showMarksForReviewsReceived, true);
+	    if($NOW < $assignment->markPostDate)
+	    {
+		    $content .= getTabHTML($assignment->getSubmissionID($USERID), true, true, false, $assignment->showMarksForReviewsReceived, true);
+	    } else { 
+		    $content .= getTabHTML($assignment->getSubmissionID($USERID), true, true, true, $assignment->showMarksForReviewsReceived, true);
+	    }
             $content .= "</div>\n";
             $tabOffset++;
         }
@@ -197,7 +202,12 @@ try
         {
             $tabIndex= $i+$tabOffset;
             $content .= "<div id='tabs-$tabIndex'>\n";
-            $content .= getTabHTML($assignment->getSubmissionID($assignedReviews[$i]), $assignment->showMarksForReviewedSubmissions, $assignment->showOtherReviewsByStudents, $assignment->showOtherReviewsByInstructors, $assignment->showMarksForOtherReviews, false);
+	    if($NOW < $assignment->markPostDate)
+	    {
+		    $content .= getTabHTML($assignment->getSubmissionID($assignedReviews[$i]), $assignment->showMarksForReviewedSubmissions, $assignment->showOtherReviewsByStudents, false , $assignment->showMarksForOtherReviews, false);
+	    } else { 
+		    $content .= getTabHTML($assignment->getSubmissionID($assignedReviews[$i]), $assignment->showMarksForReviewedSubmissions, $assignment->showOtherReviewsByStudents, $assignment->showOtherReviewsByInstructors, $assignment->showMarksForOtherReviews, false);
+	    }
             $content .= "</div>\n";
         }
 

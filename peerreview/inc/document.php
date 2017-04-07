@@ -32,7 +32,7 @@ class DocumentSubmission extends Submission
 				    Any updates made have been discarded. Please return to the homepage and try again. ");
 	    }
 	    if ($partnerSubmissionID !=NULL && 
-		    $partnerSubmission->id != $submissionID->id) {
+		    $partnerSubmissionID->id != $submissionID->id) {
 		    throw new Exception("Invalid partner. Your chosen partner may already have a submission.
 			    Any updates made have been discarded. Please return to the homepage and try again. ");
 	    }

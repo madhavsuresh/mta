@@ -112,6 +112,7 @@ try
         if($submissionID)
         {
             $content .= "<a title='View' href='".get_redirect_url("peerreview/viewer.php?assignmentid=$assignment->assignmentID&type0=submission&submissionid0=$submissionID")."'>$authorName</a>";
+            $content .= "<td align='right' width='18'><a target='_blank' title='Edit' href='".get_redirect_url("peerreview/editsubmission.php?assignmentid=$assignment->assignmentID&authorid=$authorID&close=1")."'><div class='icon edit'></div></a></td>\n";
         }
         else
         {

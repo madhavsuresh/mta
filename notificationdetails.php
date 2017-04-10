@@ -20,7 +20,7 @@ try
 		if(array_key_exists($notification->job, $jobnames))
 			$content .= "<h4>Job Type: ".$jobnames[$notification->job]."</h4>";
 		else
-			throw new Exception('Unknown notification job name');
+			$content .= "<h4>Job Type: ".$notification->job."</h4>";
 		
 		$content .= "<h4>Date ran: ".phpDate($notification->dateRan)."</h4>";
 		

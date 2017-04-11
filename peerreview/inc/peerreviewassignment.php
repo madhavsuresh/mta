@@ -302,7 +302,11 @@ class PeerReviewAssignment extends Assignment
                     $html .= "<br><table align='left' width='100%'>\n";
                     if($submissionExists)
                     {
-                        $html .= "<tr><td>Submission:</td><td>". $this->dataMgr->getSubmissionMark($this, $this->getSubmissionID($user))->getSummaryString($this->maxSubmissionScore) ."</td></tr>\n";
+			    if($NOW >= $this->markPostDate){ 
+				    $html .= "<tr><td>Submission:</td><td>". $this->dataMgr->getSubmissionMark($this, $this->getSubmissionID($user))->getSummaryString($this->maxSubmissionScore) ."</td></tr>\n";
+			    } else {
+				    $html .= "<tr>Grades not posted</tr>\n";
+			    }
 
                         $hasUpdate = false;
                         foreach($this->dataMgr->getMatchesForSubmission($this, $this->getSubmissionID($user)) as $matchID)
@@ -316,12 +320,14 @@ class PeerReviewAssignment extends Assignment
                     $id = 0;
                     foreach($reviewAssignments as $matchID)
                     {
-                        $html .= "<tr><td>Review ".($id+1).":</td><td>". $this->dataMgr->getReviewMark($this, $matchID)->getSummaryString($this->maxReviewScore)."</td></tr>\n";
-                        if($this->dataMgr->hasNewAppealMessage($this, $matchID, "reviewMark"))
-                        {
-                            $html .= "<tr><td colsplan='2'>(Mark appeal updated)</td></tr>\n";
-                        }
-                        $id++;
+			    if($NOW >= $this->markPostDate){ 
+				    $html .= "<tr><td>Review ".($id+1).":</td><td>". $this->dataMgr->getReviewMark($this, $matchID)->getSummaryString($this->maxReviewScore)."</td></tr>\n";
+				    if($this->dataMgr->hasNewAppealMessage($this, $matchID, "reviewMark"))
+				    {
+					    $html .= "<tr><td colsplan='2'>(Mark appeal updated)</td></tr>\n";
+				    }
+				    $id++;
+			    }
                     }
                     $html .= "</table><br>\n";
 

@@ -57,7 +57,7 @@ foreach($assignments as $assignment)
 			$reviewTask->html = 
 			"<table width='100%'><tr><td class='column1'><h4>$assignment->name</h4></td>
 			<td class='column2'>Review</td>
-			<td class='column3'><table><td>Your Review: $markerReviewStatus<br>$numMarkedStudentReviews of $numStudentReviews reviews are marked </td><td><a target='_blank' title='Edit' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid=$reviewObj->submissionID&matchid=$reviewObj->matchID&close=1&showall=1")."'><button>Grade</button></a></td></table></td>
+			<td class='column3'><table><td>Your Review: $markerReviewStatus<br></td><td><a target='_blank' title='Edit' href='".get_redirect_url("peerreview/editreview.php?assignmentid=$assignment->assignmentID&submissionid=$reviewObj->submissionID&matchid=$reviewObj->matchID&close=1&showall=1")."'><button>Grade</button></a></td></table></td>
 			<td class='column4'><span style='color:$color'>".phpDate($assignment->markPostDate)."</span></td></tr></table>\n";
 			insertTask($reviewTask, $reviewTasks);
 		}
@@ -94,6 +94,7 @@ foreach($assignments as $assignment)
         }
 	}
 
+	
 	$unansweredAppeals = $assignment->getUnansweredAppealsForMarker($USERID);
 
 	foreach($unansweredAppeals as $appealObj)
@@ -118,6 +119,7 @@ foreach($assignments as $assignment)
 		<td class='column4'><span style='color:$color'>".phpDate($assignment->appealStopDate)."</span></td></tr></table>\n";
 		insertTask($reviewTask, $reviewTasks);
 	}
+	 
 }
 
 $content .= "<div style='margin-bottom:20px'>";

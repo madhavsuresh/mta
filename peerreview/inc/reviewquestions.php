@@ -149,7 +149,7 @@
             {
                 if(!isset($answer->text))
                     throw new Exception("Answer does not have text component");
-                return cleanString($answer->text);
+                return "<div class='rubric-text-area-answer'>" .  cleanString($answer->text) . " </div>";
             }
             return "(No Answer)";
         }

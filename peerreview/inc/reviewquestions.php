@@ -26,7 +26,7 @@
 
         function getHTML(ReviewAnswer $answer = null)
         {
-            $html  = "<h2 class='rubric-question'>".$this->question."</h2>\n";
+            $html  = "<h2 class='rubric-question'>".$this->name."</h2>\n";
             $html .= "<div class='rubric-answer'>".$this->_getAnswerHTML($answer)."</div>\n<br>\n";
             return $html;
         }
@@ -77,6 +77,7 @@
         function getFormHTML(ReviewAnswer $answer = NULL)
         {
             $html  = "<h2>$this->question</h2>\n";
+            $html .= "<h2>$this->name</h2>\n";
             $html .= $this->_getFormHTML($answer);
             return $html;
         }

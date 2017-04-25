@@ -183,16 +183,23 @@
 
         function _getFormHTML(ReviewAnswer $answer = null)
         {
-            $html  = "<div class=errorMsg><div class='errorField' id='error_qid$this->questionID'></div></div>\n";
+	    $html = "<select name='qid$this->questionID' id='qid$this->questionID'>";
+	    if (!$answer) {
+		    $html .= "<option id='default' selected='selected' value='default'> --- </option>";
+	    } else { 
+		    $html .= "<option id='default' value='default'> --- </option>";
+	    }
             for($i = 0; $i < sizeof($this->options); $i++)
             {
-                $html .= "<input type='radio' name='qid$this->questionID' id='qid$this->questionID"."_$i' value='$i'";
+                $html .= "<option  name='qid$this->questionID' id='qid$this->questionID"."_$i' value='$i'";
                 if($answer && $answer->int == $i)
                 {
-                    $html .= " checked";
+                    $html .= " selected='selected'";
                 }
                 $html .= "><label for='qid$this->questionID"."_$i'>&nbsp;<span style='display:block;margin-left:30px;margin-top:-20px'>".cleanString($this->options[$i]->label)."</span></label><br>\n";
             }
+	    $html .= "</select>";
+            $html  .= "<br/><div class=errorMsg><div class='errorField' id='error_qid$this->questionID'></div></div><br/>\n";
 
             /*
             $html .= "<table width='100%'><tr>\n";
@@ -212,6 +219,13 @@
 
         function _getValidationCode()
         {
+		$code  = "if (document.getElementById('qid$this->questionID').value == 'default'){\n";
+		$code .= "$('#error_qid$this->questionID').html('Score must be selected');\n";
+		$code .= "$('#error_qid$this->questionID').parent().show();\n";
+		$code .= "error=true;}\n";
+		$code .= "else{ $('#error_qid$this->questionID').parent().hide();\n}";
+		return $code;
+		/*
             $code  = "$('#error_qid$this->questionID').html('').parent().hide();\n";
 
             $code .= "if ($('input[name=qid$this->questionID]:checked').length == 0) {\n";
@@ -220,6 +234,7 @@
             $code .= "$('#error_qid$this->questionID').parent().show();\n";
             $code .= "error=true;}\n";
             return $code;
+		 */
         }
 
         function _getOptionsFormHTML()

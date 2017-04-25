@@ -76,8 +76,8 @@
 
         function getFormHTML(ReviewAnswer $answer = NULL)
         {
-            $html  = "<h2>$this->question</h2>\n";
-            $html .= "<h2>$this->name</h2>\n";
+            $html = "<h2>$this->name</h2>\n";
+            $html .= "<p>$this->question</p>\n";
             $html .= $this->_getFormHTML($answer);
             return $html;
         }

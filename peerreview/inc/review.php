@@ -110,7 +110,6 @@ class Review
 			if(array_key_exists($question->questionID->id, $this->answers)) {
 				if ($question->name == 'Overall') {
 					$multiplier =  (intval($question->options[$this->answers[$question->questionID->id]->int]->label))/10;
-					print $multiplier;
 				} else {
 					$score += $question->getScore($this->answers[$question->questionID->id]);
 				}

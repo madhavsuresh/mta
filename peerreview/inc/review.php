@@ -103,14 +103,22 @@ class Review
     function getScore()
     {
         $score = 0;
+	$multiplier = 1;
         foreach($this->assignment->getReviewQuestions() as $question)
         {
-            if(array_key_exists($question->questionID->id, $this->answers)) {
-                $score += $question->getScore($this->answers[$question->questionID->id]);
-            } else {
-                $score += $question->getScore(null);
-            }
-        }
+
+			if(array_key_exists($question->questionID->id, $this->answers)) {
+				if ($question->name == 'Overall') {
+					$multiplier =  (intval($question->options[$this->answers[$question->questionID->id]->int]->label))/10;
+					print $multiplier;
+				} else {
+					$score += $question->getScore($this->answers[$question->questionID->id]);
+				}
+			} else {
+				$score += $question->getScore(null);
+			}
+		}
+	$score *= $multiplier;
         return $score;
     }
 };
